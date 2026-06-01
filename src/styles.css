@@ -1,1 +1,171 @@
-/* You can add global styles to this file, and also import other style files */
+/* Design tokens & base */
+:root {
+  --font: 'Onest', system-ui, -apple-system, sans-serif;
+
+  --color-bg: #f4f7fb;
+  --color-bg-elevated: #ffffff;
+  --color-navy: #0c1222;
+  --color-navy-soft: #151d32;
+  --color-navy-muted: #1e2a45;
+  --color-text: #0c1222;
+  --color-text-muted: #5c6b82;
+  --color-text-soft: #8b9bb5;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-accent: #00c4e0;
+  --color-accent-dark: #0099b3;
+  --color-accent-glow: rgba(0, 196, 224, 0.35);
+  --color-mint: #00e5a8;
+
+  --gradient-brand: linear-gradient(135deg, #00c4e0 0%, #00e5a8 100%);
+  --gradient-hero: linear-gradient(
+    155deg,
+    #0a0f1a 0%,
+    #121c32 40%,
+    #0f2438 70%,
+    #0c1222 100%
+  );
+  --gradient-card-shine: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.6) 100%
+  );
+
+  --shadow-xs: 0 1px 2px rgba(12, 18, 34, 0.04);
+  --shadow-sm: 0 4px 16px rgba(12, 18, 34, 0.06);
+  --shadow-md: 0 12px 40px rgba(12, 18, 34, 0.1);
+  --shadow-lg: 0 24px 64px rgba(12, 18, 34, 0.14);
+  --shadow-glow: 0 8px 32px var(--color-accent-glow);
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --header-h: 72px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.no-scroll {
+  overflow: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Section typography */
+.section-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 3rem;
+}
+
+.section-eyebrow {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 196, 224, 0.12);
+  color: var(--color-accent-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.section-header h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.85rem, 4vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-navy);
+}
+
+.section-subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+/* Page hero (inner pages) */
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--gradient-hero);
+  color: #fff;
+  padding: 4rem 2rem;
+}
+
+.page-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 55%;
+  height: 140%;
+  background: radial-gradient(circle, rgba(0, 196, 224, 0.2) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 45%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 229, 168, 0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.page-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.page-hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.page-hero p {
+  margin: 0 0 1.75rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1.1rem;
+  line-height: 1.65;
+}
+
+.page-hero .btn-primary {
+  box-shadow: var(--shadow-glow);
+}

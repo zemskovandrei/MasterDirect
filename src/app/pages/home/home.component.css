@@ -1,0 +1,106 @@
+.portfolio-teaser {
+  padding: 5.5rem 2rem;
+  background: linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg) 100%);
+  position: relative;
+}
+
+.portfolio-teaser::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, 80%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.portfolio-teaser .portfolio-container {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.teaser-sample {
+  margin: 2.5rem 0;
+}
+
+.teaser-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.teaser-actions a {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+}
+
+.teaser-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  text-align: center;
+  min-width: 120px;
+  padding: 1.25rem 2rem;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.stat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat strong {
+  display: block;
+  font-size: 2.25rem;
+  font-weight: 800;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.stat span {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.services .service-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.hero-actions a.btn-primary,
+.hero-actions a.btn-secondary {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+}
+
+.features .section-header,
+.services .section-header,
+.portfolio-teaser .section-header {
+  margin-bottom: 3rem;
+}
+
+/* дубли padding убран — задаёт layout.css */

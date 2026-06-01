@@ -1,0 +1,83 @@
+<figure class="before-after" [class.ba-featured]="featured()" [class.ba-split]="layout() === 'split'">
+  @if (layout() === 'compare') {
+    <div class="ba-compare-card">
+      <div
+        class="ba-compare"
+        [style.--pos-num]="sliderPos()"
+        role="img"
+        [attr.aria-label]="work().title + ': сравнение до и после'"
+      >
+        <img
+          class="ba-img ba-img-after"
+          [src]="work().afterImage"
+          [alt]="work().title + ' — после ремонта'"
+          loading="lazy"
+          draggable="false"
+        />
+
+        <div class="ba-before-layer">
+          <img
+            class="ba-img ba-img-before"
+            [src]="work().beforeImage"
+            [alt]="work().title + ' — до ремонта'"
+            loading="lazy"
+            draggable="false"
+          />
+        </div>
+
+        <div class="ba-compare-labels">
+          <span class="ba-pill ba-pill-before">До</span>
+          <span class="ba-pill ba-pill-after">После</span>
+        </div>
+
+        <div class="ba-handle" aria-hidden="true">
+          <span class="ba-handle-line"></span>
+          <span class="ba-handle-knob">
+            <span class="ba-handle-arrows">⟷</span>
+          </span>
+        </div>
+
+        <input
+          type="range"
+          class="ba-range"
+          min="8"
+          max="92"
+          [value]="sliderPos()"
+          (input)="onSliderInput($event)"
+          [attr.aria-label]="'Сравнить до и после: ' + work().title"
+        />
+      </div>
+
+      <p class="ba-hint">
+        <span aria-hidden="true">↔</span>
+        Потяните ползунок, чтобы сравнить
+      </p>
+    </div>
+  } @else {
+    <div class="ba-card">
+      <div class="ba-images">
+        <div class="ba-side ba-side-before">
+          <span class="ba-label">До</span>
+          <img [src]="work().beforeImage" [alt]="work().title + ' — до'" loading="lazy" />
+        </div>
+        <div class="ba-divider" aria-hidden="true">
+          <span class="ba-arrow">→</span>
+        </div>
+        <div class="ba-side ba-side-after">
+          <span class="ba-label ba-label-after">После</span>
+          <img [src]="work().afterImage" [alt]="work().title + ' — после'" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  }
+
+  <figcaption class="ba-caption">
+    <div class="ba-caption-top">
+      <h4>{{ work().title }}</h4>
+      <span class="ba-tag">До / После</span>
+    </div>
+    @if (work().description) {
+      <p>{{ work().description }}</p>
+    }
+  </figcaption>
+</figure>

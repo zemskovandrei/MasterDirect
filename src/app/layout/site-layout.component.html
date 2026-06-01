@@ -1,0 +1,97 @@
+<div class="site-layout">
+  <header class="header">
+    <div class="header-container">
+      <a class="logo" routerLink="/">
+        <h1>{{ title() }}</h1>
+        <p class="tagline">Профессиональный ремонт и отделка</p>
+      </a>
+
+      <button
+        type="button"
+        class="menu-toggle"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        aria-controls="main-nav"
+        aria-label="Открыть меню"
+      >
+        <span class="menu-toggle-bar"></span>
+        <span class="menu-toggle-bar"></span>
+        <span class="menu-toggle-bar"></span>
+      </button>
+
+      <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
+        <ul>
+          <li>
+            <a routerLink="/" fragment="features" (click)="onNavClick()">Преимущества</a>
+          </li>
+          <li>
+            <a routerLink="/" fragment="services" (click)="onNavClick()">Услуги</a>
+          </li>
+          <li>
+            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">Портфолио</a>
+          </li>
+          <li>
+            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">Кабинет</a>
+          </li>
+          <li>
+            <a routerLink="/" fragment="estimate" (click)="onNavClick()">Смета</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="header-actions" [class.header-actions-open]="mobileMenuOpen()">
+        <button type="button" class="btn-primary" (click)="scrollToEstimate()">Получить смету</button>
+      </div>
+    </div>
+
+    @if (mobileMenuOpen()) {
+      <button
+        type="button"
+        class="nav-backdrop"
+        (click)="closeMobileMenu()"
+        aria-label="Закрыть меню"
+      ></button>
+    }
+  </header>
+
+  <main class="site-main">
+    <router-outlet />
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h2>{{ title() }}</h2>
+        <p>
+          Ремонт, отделка и мебель под заказ. Бригады и мастера публикуют работы «до / после» в
+          каталоге.
+        </p>
+        <button type="button" class="btn-primary footer-button" (click)="scrollToEstimate()">
+          Получить смету
+        </button>
+      </div>
+
+      <div class="footer-column">
+        <h3>Разделы</h3>
+        <ul>
+          <li><a routerLink="/portfolio">Портфолио</a></li>
+          <li><a routerLink="/cabinet">Кабинет мастера</a></li>
+          <li><a routerLink="/" fragment="estimate">Заявка на смету</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3>Подписка</h3>
+        <ul>
+          <li>Мастер — $5 / мес</li>
+          <li>Бригадир — $15 / мес</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 pro-remont</span>
+      <span>Каталог бригад и мастеров</span>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,98 @@
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <h1>Портфолио</h1>
+    <p>
+      Сравнивайте ремонт до и после — потяните ползунок на фото. Выберите бригаду или мастера под
+      вашу задачу.
+    </p>
+    <a routerLink="/cabinet" class="btn-primary">Разместить свои работы</a>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="catalog-inner">
+    <div class="catalog-tabs-wrap">
+    <div class="catalog-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'brigade'"
+        [attr.aria-selected]="activeTab() === 'brigade'"
+        (click)="setTab('brigade')"
+      >
+        Бригады ({{ store.brigades().length }})
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'worker'"
+        [attr.aria-selected]="activeTab() === 'worker'"
+        (click)="setTab('worker')"
+      >
+        Мастера ({{ store.workers().length }})
+      </button>
+    </div>
+    </div>
+
+  @if (activeTab() === 'brigade') {
+    <div class="performer-grid">
+      @for (p of store.brigades(); track p.id) {
+        <article class="performer-card">
+          <div class="performer-head">
+            <span class="performer-badge">Бригада</span>
+            <h2>
+              <a [routerLink]="performerLink('brigade', p.id)">{{ p.name }}</a>
+            </h2>
+            <p class="performer-specialty">{{ p.specialty }}</p>
+            <p class="performer-desc">{{ p.description }}</p>
+          </div>
+          @if (p.works[0]) {
+            <app-before-after [work]="p.works[0]" layout="split" />
+          }
+          <a [routerLink]="performerLink('brigade', p.id)" class="performer-more">
+            Все работы ({{ p.works.length }}) →
+          </a>
+        </article>
+      } @empty {
+        <p class="catalog-empty">Пока нет опубликованных бригад.</p>
+      }
+    </div>
+  } @else {
+    <div class="performer-grid">
+      @for (p of store.workers(); track p.id) {
+        <article class="performer-card">
+          <div class="performer-head">
+            <span class="performer-badge performer-badge-worker">Мастер</span>
+            <h2>
+              <a [routerLink]="performerLink('worker', p.id)">{{ p.name }}</a>
+            </h2>
+            <p class="performer-specialty">{{ p.specialty }}</p>
+            <p class="performer-desc">{{ p.description }}</p>
+          </div>
+          @if (p.works[0]) {
+            <app-before-after [work]="p.works[0]" layout="split" />
+          }
+          <a [routerLink]="performerLink('worker', p.id)" class="performer-more">
+            Все работы ({{ p.works.length }}) →
+          </a>
+        </article>
+      } @empty {
+        <p class="catalog-empty">Пока нет опубликованных мастеров.</p>
+      }
+    </div>
+  }
+
+    <aside class="catalog-pricing">
+      <h3>Публикация работ</h3>
+      <div class="pricing-mini">
+        <div>
+          <strong>$5</strong> / мес — мастер
+        </div>
+        <div>
+          <strong>$15</strong> / мес — бригадир
+        </div>
+      </div>
+      <a routerLink="/cabinet" class="btn-secondary">Оформить в кабинете</a>
+    </aside>
+  </div>
+</section>

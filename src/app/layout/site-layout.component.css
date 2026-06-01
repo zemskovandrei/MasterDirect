@@ -1,0 +1,25 @@
+.site-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-main {
+  flex: 1;
+}
+
+.logo {
+  text-decoration: none;
+  color: inherit;
+  flex: 0 0 auto;
+  min-width: 200px;
+  transition: opacity var(--transition);
+}
+
+.logo:hover {
+  opacity: 0.92;
+}
+
+.nav a.active {
+  color: var(--color-accent);
+}

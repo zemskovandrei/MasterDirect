@@ -1,0 +1,191 @@
+<section class="hero-slider">
+  <div class="slider-container">
+    <div class="slide" [ngStyle]="slideBackgroundStyle()">
+      <img class="slide-image" [src]="currentSlide()" alt="Интерьер после ремонта" />
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <h2>Преобразим ваше пространство</h2>
+        <p>Ремонт квартир, домов и отдельных помещений. Бригады и мастера под конкретные задачи.</p>
+        <div class="hero-actions">
+          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">Получить смету</a>
+          <a class="btn-secondary btn-large" routerLink="/portfolio">Каталог работ</a>
+        </div>
+        <div class="hero-tags" aria-label="Основные услуги">
+          <span>Плитка</span>
+          <span>Сантехника</span>
+          <span>Электрика</span>
+          <span>Отделка</span>
+          <span>Мебель под заказ</span>
+          <span>Под ключ</span>
+        </div>
+        <div class="hero-benefits">
+          <span>Бригада или мастер</span>
+          <span>Смета до начала</span>
+          <span>Работы до и после</span>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" aria-label="Предыдущий слайд">
+      &#10094;
+    </button>
+    <button type="button" class="slider-btn slider-btn-next" (click)="nextSlide()" aria-label="Следующий слайд">
+      &#10095;
+    </button>
+
+    <div class="slider-dots">
+      @for (dot of sliderDots; track dot; let i = $index) {
+        <span
+          class="dot"
+          [class.active]="currentSlideIndex() === i"
+          (click)="goToSlide(i)"
+          role="button"
+          [attr.aria-label]="'Слайд ' + (i + 1)"
+          tabindex="0"
+          (keydown.enter)="goToSlide(i)"
+        ></span>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="features-container">
+    <div class="section-header">
+      <span class="section-eyebrow">Преимущества</span>
+      <h2>Почему выбирают нас</h2>
+      <p class="section-subtitle">Бригады и мастера — под любую задачу по ремонту</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Выбор бригады</h3>
+        <p>Подберём команду под комплексный ремонт квартиры, дома или отдельного помещения</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Отдельные мастера</h3>
+        <p>Специалист под задачу: плитка, электрика, сантехника или отделка</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Работы до и после</h3>
+        <p>В каталоге — реальные проекты бригад и мастеров с фото «до» и «после»</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Ремонт под ключ</h3>
+        <p>От проекта до финальной уборки — полный цикл</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="services" id="services">
+  <div class="services-container">
+    <div class="section-header">
+      <span class="section-eyebrow">Услуги</span>
+      <h2>Наши услуги</h2>
+      <p class="section-subtitle">Бригада под ключ или отдельный мастер — под вашу задачу</p>
+    </div>
+    <div class="services-grid">
+      @for (service of services; track service.title) {
+        <article class="service-card">
+          <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+          <a class="service-link" routerLink="/" fragment="estimate">Заказать расчёт</a>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="portfolio-teaser" id="portfolio">
+  <div class="portfolio-container">
+    <div class="section-header">
+      <span class="section-eyebrow">Портфолио</span>
+      <h2>Каталог бригад и мастеров</h2>
+      <p class="section-subtitle">
+        Смотрите работы «до / после». Мастера и бригадиры публикуют проекты по подписке.
+      </p>
+    </div>
+
+    @if (portfolioStore.brigades()[0]; as brigade) {
+      @if (brigade.works[0]; as sample) {
+        <div class="teaser-sample">
+          <app-before-after [work]="sample" layout="compare" [featured]="true" />
+        </div>
+      }
+    }
+
+    <div class="teaser-actions">
+      <a routerLink="/portfolio" class="btn-primary btn-large">Смотреть портфолио</a>
+      <a routerLink="/cabinet" class="btn-secondary btn-large">Разместить свои работы</a>
+    </div>
+
+    <div class="teaser-stats">
+      <div class="stat">
+        <strong>{{ portfolioStore.brigades().length }}</strong>
+        <span>бригад</span>
+      </div>
+      <div class="stat">
+        <strong>{{ portfolioStore.workers().length }}</strong>
+        <span>мастеров</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="estimate" id="estimate">
+  <div class="estimate-container">
+    <div class="section-header">
+      <span class="section-eyebrow">Заявка</span>
+      <h2>Получить смету</h2>
+      <p class="section-subtitle">Оставьте заявку — перезвоним и обсудим объём работ</p>
+    </div>
+
+    @if (formSubmitted()) {
+      <div class="estimate-success" id="estimate-success" role="status">
+        <div class="estimate-success-icon">✓</div>
+        <h3>Заявка отправлена</h3>
+        <p>Мы свяжемся с вами в ближайшее время.</p>
+        <button type="button" class="btn-secondary" (click)="resetEstimateForm()">
+          Отправить ещё одну заявку
+        </button>
+      </div>
+    } @else {
+      <form class="estimate-form" [formGroup]="estimateForm" (ngSubmit)="submitEstimate()">
+        <div class="form-row">
+          <label class="form-field">
+            <span>Имя *</span>
+            <input type="text" formControlName="name" placeholder="Как к вам обращаться" autocomplete="name" />
+            @if (isInvalid('name')) {
+              <small class="form-error">Укажите имя (минимум 2 символа)</small>
+            }
+          </label>
+          <label class="form-field">
+            <span>Телефон *</span>
+            <input type="tel" formControlName="phone" placeholder="+7 (900) 123-45-67" autocomplete="tel" />
+            @if (isInvalid('phone')) {
+              <small class="form-error">Укажите корректный номер телефона</small>
+            }
+          </label>
+        </div>
+        <label class="form-field">
+          <span>Email</span>
+          <input type="email" formControlName="email" placeholder="email@example.com" autocomplete="email" />
+          @if (isInvalid('email')) {
+            <small class="form-error">Некорректный email</small>
+          }
+        </label>
+        <label class="form-field">
+          <span>Комментарий</span>
+          <textarea formControlName="message" rows="4" placeholder="Тип объекта, площадь, сроки..."></textarea>
+        </label>
+        <button type="submit" class="btn-primary btn-large estimate-submit">Отправить заявку</button>
+        <p class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных</p>
+      </form>
+    }
+  </div>
+</section>

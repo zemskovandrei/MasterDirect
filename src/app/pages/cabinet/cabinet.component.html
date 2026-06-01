@@ -1,0 +1,264 @@
+<section class="page-hero cabinet-hero">
+  <div class="page-hero-inner">
+    <h1>Кабинет мастера / бригадира</h1>
+    <p>
+      Создайте профиль, оформите подписку и публикуйте работы «до / после» в каталоге pro-remont.
+    </p>
+  </div>
+</section>
+
+<div class="cabinet">
+  <div class="cabinet-inner">
+    <div class="demo-banner" role="note">
+      <span aria-hidden="true">ℹ️</span>
+      <span>
+        <strong>Демо-режим.</strong> Подписка и загрузки сохраняются в браузере. Для реальных
+        платежей ($5 / $15) подключим сервер и Stripe.
+      </span>
+    </div>
+
+    @if (!store.currentPerformer()) {
+      <section class="register-panel">
+        <header class="register-header">
+          <span class="section-eyebrow">Регистрация</span>
+          <h2>Создайте профиль в каталоге</h2>
+          <p class="register-lead">
+            Выберите тариф, заполните данные — после этого оформите подписку и загружайте работы
+            «до / после».
+          </p>
+        </header>
+
+        <ol class="register-steps" aria-label="Этапы регистрации">
+          <li class="register-step register-step--active">
+            <span class="register-step-num">1</span>
+            <span class="register-step-text">Тип и данные</span>
+          </li>
+          <li class="register-step">
+            <span class="register-step-num">2</span>
+            <span class="register-step-text">Подписка</span>
+          </li>
+          <li class="register-step">
+            <span class="register-step-num">3</span>
+            <span class="register-step-text">Портфолио</span>
+          </li>
+        </ol>
+
+        <div class="register-layout">
+          <div class="register-block register-block--plans">
+            <h3 class="register-block-title">
+              <span class="register-block-icon" aria-hidden="true">①</span>
+              Тип аккаунта
+            </h3>
+
+            <div class="plan-cards">
+              <button
+                type="button"
+                class="plan-card"
+                [class.selected]="selectedPlan() === 'worker'"
+                (click)="selectPlan('worker')"
+              >
+                @if (selectedPlan() === 'worker') {
+                  <span class="plan-check" aria-hidden="true">✓</span>
+                }
+                <span class="plan-icon" aria-hidden="true">{{ planIcon('worker') }}</span>
+                <div class="plan-price-row">
+                  <span class="plan-price">$5</span>
+                  <span class="plan-period">/ месяц</span>
+                </div>
+                <h4>{{ plans.worker.title }}</h4>
+                <p class="plan-tagline">{{ plans.worker.description }}</p>
+                <ul class="plan-features">
+                  @for (f of plans.worker.features; track f) {
+                    <li>{{ f }}</li>
+                  }
+                </ul>
+              </button>
+
+              <button
+                type="button"
+                class="plan-card plan-card--brigade"
+                [class.selected]="selectedPlan() === 'brigade'"
+                (click)="selectPlan('brigade')"
+              >
+                @if (selectedPlan() === 'brigade') {
+                  <span class="plan-check" aria-hidden="true">✓</span>
+                }
+                <span class="plan-badge-popular">Популярный</span>
+                <span class="plan-icon" aria-hidden="true">{{ planIcon('brigade') }}</span>
+                <div class="plan-price-row">
+                  <span class="plan-price">$15</span>
+                  <span class="plan-period">/ месяц</span>
+                </div>
+                <h4>{{ plans.brigade.title }}</h4>
+                <p class="plan-tagline">{{ plans.brigade.description }}</p>
+                <ul class="plan-features">
+                  @for (f of plans.brigade.features; track f) {
+                    <li>{{ f }}</li>
+                  }
+                </ul>
+              </button>
+            </div>
+          </div>
+
+          <div class="register-block register-block--form">
+            <h3 class="register-block-title">
+              <span class="register-block-icon" aria-hidden="true">②</span>
+              Данные профиля
+            </h3>
+
+            <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
+              <label class="register-field" [class.register-field--error]="registerFieldInvalid('name')">
+                <span class="register-label">
+                  <span class="field-icon" aria-hidden="true">👤</span>
+                  Имя или название
+                  <em>обязательно</em>
+                </span>
+                <input
+                  type="text"
+                  formControlName="name"
+                  placeholder="Иван К. или «Бригада СтройКомфорт»"
+                  autocomplete="name"
+                />
+                @if (registerFieldInvalid('name')) {
+                  <small class="field-error">Минимум 2 символа</small>
+                }
+              </label>
+
+              <label class="register-field" [class.register-field--error]="registerFieldInvalid('specialty')">
+                <span class="register-label">
+                  <span class="field-icon" aria-hidden="true">🛠</span>
+                  Специализация
+                  <em>обязательно</em>
+                </span>
+                <input
+                  type="text"
+                  formControlName="specialty"
+                  placeholder="Плиточник, электрик, ремонт под ключ..."
+                />
+                @if (registerFieldInvalid('specialty')) {
+                  <small class="field-error">Укажите специализацию</small>
+                }
+              </label>
+
+              <label
+                class="register-field"
+                [class.register-field--error]="registerFieldInvalid('description')"
+              >
+                <span class="register-label">
+                  <span class="field-icon" aria-hidden="true">📝</span>
+                  О себе / о бригаде
+                  <em>обязательно</em>
+                </span>
+                <textarea
+                  formControlName="description"
+                  rows="4"
+                  placeholder="Опыт, район работы, типы объектов, гарантии..."
+                ></textarea>
+                @if (registerFieldInvalid('description')) {
+                  <small class="field-error">Напишите хотя бы 10 символов</small>
+                }
+              </label>
+
+              <div class="register-summary">
+                <span class="register-summary-label">Выбранный тариф</span>
+                <span class="register-summary-value">
+                  {{ plans[selectedPlan()].title }} — ${{ planPrice(selectedPlan()) }}/мес
+                </span>
+              </div>
+
+              <button type="submit" class="btn-primary btn-large register-submit">
+                Создать профиль и продолжить
+              </button>
+              <p class="register-note">
+                После создания вы оформите подписку и сможете загружать фото «до / после».
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    } @else {
+      @if (store.currentPerformer(); as performer) {
+        <section class="cabinet-panel profile-summary">
+          <div class="summary-head">
+            <div>
+              <span class="profile-badge">{{ performer.type === 'brigade' ? 'Бригадир' : 'Мастер' }}</span>
+              <h2>{{ performer.name }}</h2>
+              <p>{{ performer.specialty }}</p>
+            </div>
+            <div class="summary-actions">
+              <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
+                Открыть в каталоге
+              </a>
+              <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
+            </div>
+          </div>
+
+          @if (!performer.subscribed) {
+            <div class="subscribe-box">
+              <h3>Оформите подписку</h3>
+              <p>
+                Тариф: <strong>${{ planPrice(performer.type) }} / месяц</strong>
+                ({{ plans[performer.type].title }})
+              </p>
+              <ul>
+                @for (feature of plans[performer.type].features; track feature) {
+                  <li>{{ feature }}</li>
+                }
+              </ul>
+              <button type="button" class="btn-primary btn-large" (click)="subscribe()">
+                Оплатить ${{ planPrice(performer.type) }} (демо)
+              </button>
+            </div>
+          } @else {
+            <p class="subscribed-badge">✓ Подписка активна — профиль виден в каталоге</p>
+
+            <div class="upload-section">
+              <h3>Добавить работу «до / после»</h3>
+              @if (uploadSuccess()) {
+                <p class="upload-ok" role="status">Работа добавлена в портфолио!</p>
+              }
+              <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
+                <label class="form-field-light">
+                  <span>Название работы *</span>
+                  <input type="text" formControlName="title" placeholder="Ванная, кухня..." />
+                </label>
+                <label class="form-field-light">
+                  <span>Описание</span>
+                  <textarea formControlName="description" rows="2"></textarea>
+                </label>
+                <div class="upload-files">
+                  <label class="file-field">
+                    <span>Фото «До» *</span>
+                    <input type="file" accept="image/*" (change)="onFileSelected('before', $event)" />
+                    @if (beforePreview()) {
+                      <img [src]="beforePreview()!" alt="Превью до" class="file-preview" />
+                    }
+                  </label>
+                  <label class="file-field">
+                    <span>Фото «После» *</span>
+                    <input type="file" accept="image/*" (change)="onFileSelected('after', $event)" />
+                    @if (afterPreview()) {
+                      <img [src]="afterPreview()!" alt="Превью после" class="file-preview" />
+                    }
+                  </label>
+                </div>
+                <button type="submit" class="btn-primary">Загрузить в портфолио</button>
+              </form>
+            </div>
+
+            @if (performer.works.length > 0) {
+              <div class="my-works">
+                <h3>Мои работы ({{ performer.works.length }})</h3>
+                <div class="my-works-grid">
+                  @for (work of performer.works; track work.id) {
+                    <app-before-after [work]="work" layout="compare" />
+                  }
+                </div>
+              </div>
+            }
+          }
+        </section>
+      }
+    }
+  </div>
+</div>

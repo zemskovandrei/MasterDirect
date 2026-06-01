@@ -1,0 +1,77 @@
+@if (performer(); as p) {
+  <section class="profile-hero">
+    <div class="profile-hero-bg" aria-hidden="true"></div>
+    <div class="profile-hero-inner">
+      <a routerLink="/portfolio" class="back-link">← Каталог портфолио</a>
+      <div class="profile-hero-main">
+        <span class="profile-badge">{{ typeLabel() }}</span>
+        <h1>{{ p.name }}</h1>
+        <p class="profile-specialty">{{ p.specialty }}</p>
+        <p class="profile-desc">{{ p.description }}</p>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <strong>{{ p.works.length }}</strong>
+            <span>{{ p.works.length === 1 ? 'проект' : 'проектов' }}</span>
+          </div>
+          <div class="profile-stat">
+            <strong>До / После</strong>
+            <span>на каждый объект</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="showcase-works">
+    <div class="showcase-inner">
+      @if (p.works.length === 0) {
+        <div class="works-empty">
+          <span class="works-empty-icon" aria-hidden="true">📷</span>
+          <h2>Пока нет опубликованных работ</h2>
+          <p>Исполнитель скоро добавит проекты «до / после».</p>
+        </div>
+      } @else {
+        <div class="showcase-intro">
+          <span class="section-eyebrow">Трансформация</span>
+          <h2>До и после ремонта</h2>
+          <p class="section-subtitle">
+            Потяните ползунок на фото — сравните состояние объекта до работ и после сдачи.
+          </p>
+        </div>
+
+        @if (p.works[0]; as heroWork) {
+          <div class="showcase-featured">
+            <app-before-after [work]="heroWork" [featured]="true" layout="compare" />
+          </div>
+        }
+
+        @if (p.works.length > 1) {
+          <div class="showcase-more">
+            <h3 class="showcase-more-title">
+              <span>Ещё проекты</span>
+              <span class="showcase-count">{{ p.works.length - 1 }}</span>
+            </h3>
+            <div class="showcase-grid">
+              @for (work of p.works.slice(1); track work.id) {
+                <div class="showcase-grid-item">
+                  <app-before-after [work]="work" layout="compare" />
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="showcase-cta">
+          <p>Понравился результат? Оставьте заявку на похожий ремонт.</p>
+          <a routerLink="/" fragment="estimate" class="btn-primary btn-large">Получить смету</a>
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <section class="profile-not-found">
+    <h1>Исполнитель не найден</h1>
+    <p>Возможно, профиль снят с публикации или ссылка устарела.</p>
+    <a routerLink="/portfolio" class="btn-primary">В каталог</a>
+  </section>
+}

@@ -246,6 +246,37 @@
   }
 }
 
+.profile-reviews {
+  padding: 3rem 2rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+  border-top: 1px solid var(--color-border);
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.profile-review-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+}
+
+.profile-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
 .profile-not-found {
   min-height: 50vh;
   display: flex;

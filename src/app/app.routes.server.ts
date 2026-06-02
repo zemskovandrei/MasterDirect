@@ -4,5 +4,6 @@ export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'portfolio', renderMode: RenderMode.Prerender },
   { path: 'cabinet', renderMode: RenderMode.Prerender },
+  { path: 'moderation', renderMode: RenderMode.Prerender },
   { path: 'portfolio/**', renderMode: RenderMode.Server },
 ];

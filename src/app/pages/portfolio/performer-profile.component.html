@@ -22,6 +22,29 @@
     </div>
   </section>
 
+  @if (relevantReviews().length > 0) {
+    <section class="profile-reviews">
+      <div class="showcase-inner">
+        <div class="showcase-intro">
+          <span class="section-eyebrow">Отзывы</span>
+          <h2>Что клиенты пишут о {{ typeLabel() }}</h2>
+          <p class="section-subtitle">Одобренные отзывы публикуются вместе с реальными примерами работ.</p>
+        </div>
+        <div class="review-grid">
+          @for (review of relevantReviews(); track review.id) {
+            <article class="profile-review-card">
+              <p>{{ review.review }}</p>
+              <div class="profile-review-meta">
+                <strong>{{ review.name }}</strong>
+                <span>{{ review.category }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
   <section class="showcase-works">
     <div class="showcase-inner">
       @if (p.works.length === 0) {

@@ -14,6 +14,7 @@ export const routes: Routes = [
       { path: 'portfolio', component: PortfolioCatalogComponent },
       { path: 'portfolio/:type/:id', component: PerformerProfileComponent },
       { path: 'cabinet', component: CabinetComponent },
+      { path: 'moderation', component: CabinetComponent },
     ],
   },
 ];

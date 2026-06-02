@@ -40,7 +40,7 @@
           [class.active]="currentSlideIndex() === i"
           (click)="goToSlide(i)"
           role="button"
-          [attr.aria-label]="'Слайд ' + (i + 1)"
+          aria-label="Слайд {{ i + 1 }}"
           tabindex="0"
           (keydown.enter)="goToSlide(i)"
         ></span>
@@ -57,6 +57,11 @@
       <p class="section-subtitle">Бригады и мастера — под любую задачу по ремонту</p>
     </div>
     <div class="features-grid">
+      <a routerLink="/portfolio" class="feature-card feature-card-link">
+        <div class="feature-icon">✓</div>
+        <h3>Отзывы и портфолио</h3>
+        <p>Перейдите в портфолио, чтобы посмотреть реальные отзывы и результаты работ.</p>
+      </a>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
         <h3>Выбор бригады</h3>

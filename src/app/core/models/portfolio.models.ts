@@ -34,6 +34,24 @@ export interface CabinetSession {
   performerId: string;
 }
 
+export interface ReviewSubmission {
+  id: string;
+  name: string;
+  performerType: 'Мастер' | 'Бригада';
+  category: string;
+  review: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+export interface ReviewNotification {
+  id: string;
+  reviewId: string;
+  message: string;
+  link: string;
+  createdAt: string;
+}
+
 export const SUBSCRIPTION_PLANS: Record<PerformerType, SubscriptionPlan> = {
   worker: {
     type: 'worker',

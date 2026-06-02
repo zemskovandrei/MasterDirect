@@ -34,6 +34,27 @@
     </div>
     </div>
 
+    @if (reviewStore.approvedReviews().length > 0) {
+      <section class="catalog-reviews">
+        <div class="section-header">
+          <span class="section-eyebrow">Отзывы</span>
+          <h2>Отзывы из портфолио</h2>
+          <p class="section-subtitle">Одобренные отзывы публикуются здесь вместе с работами мастеров.</p>
+        </div>
+        <div class="review-grid">
+          @for (review of reviewStore.approvedReviews(); track review.id) {
+            <article class="review-card">
+              <p>{{ review.review }}</p>
+              <div class="review-meta">
+                <strong>{{ review.name }}</strong>
+                <span>{{ review.performerType }} · {{ review.category }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
   @if (activeTab() === 'brigade') {
     <div class="performer-grid">
       @for (p of store.brigades(); track p.id) {

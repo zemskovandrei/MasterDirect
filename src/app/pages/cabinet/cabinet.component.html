@@ -68,9 +68,7 @@
                 <h4>{{ plans.worker.title }}</h4>
                 <p class="plan-tagline">{{ plans.worker.description }}</p>
                 <ul class="plan-features">
-                  @for (f of plans.worker.features; track f) {
-                    <li>{{ f }}</li>
-                  }
+                  <li *ngFor="let f of plans.worker.features">{{ f }}</li>
                 </ul>
               </button>
 
@@ -92,9 +90,7 @@
                 <h4>{{ plans.brigade.title }}</h4>
                 <p class="plan-tagline">{{ plans.brigade.description }}</p>
                 <ul class="plan-features">
-                  @for (f of plans.brigade.features; track f) {
-                    <li>{{ f }}</li>
-                  }
+                  <li *ngFor="let f of plans.brigade.features">{{ f }}</li>
                 </ul>
               </button>
             </div>
@@ -178,22 +174,57 @@
       </section>
     } @else {
       @if (store.currentPerformer(); as performer) {
-        <section class="cabinet-panel profile-summary">
-          <div class="summary-head">
-            <div>
-              <span class="profile-badge">{{ performer.type === 'brigade' ? 'Бригадир' : 'Мастер' }}</span>
-              <h2>{{ performer.name }}</h2>
-              <p>{{ performer.specialty }}</p>
-            </div>
-            <div class="summary-actions">
-              <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
-                Открыть в каталоге
-              </a>
-              <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
-            </div>
-          </div>
+        <div class="cabinet-tabs">
+          <button
+            type="button"
+            class="tab-button"
+            [class.tab-button--active]="activeSection() === 'profile'"
+            (click)="setSection('profile')"
+          >
+            Профиль
+          </button>
+          <button
+            type="button"
+            class="tab-button"
+            [class.tab-button--active]="activeSection() === 'moderation'"
+            (click)="setSection('moderation')"
+          >
+            Модерация отзывов
+          </button>
+        </div>
 
-          @if (!performer.subscribed) {
+        @if (notifications().length > 0) {
+          <section class="notification-panel">
+            <div class="notification-panel-header">
+              <strong>Уведомления</strong>
+              <span>Новые публикации отзывов</span>
+            </div>
+            <ul class="notification-list">
+              <li *ngFor="let note of notifications()">
+                <a [routerLink]="note.link" class="notification-link">{{ note.message }}</a>
+                <time>{{ note.createdAt | date:'short' }}</time>
+              </li>
+            </ul>
+          </section>
+        }
+
+        @if (activeSection() === 'profile') {
+          <section class="cabinet-panel profile-summary">
+            <div class="summary-head">
+              <div>
+                <span class="profile-badge">{{ performer.type === 'brigade' ? 'Бригадир' : 'Мастер' }}</span>
+                <h2>{{ performer.name }}</h2>
+                <p>{{ performer.specialty }}</p>
+              </div>
+              <div class="summary-actions">
+                <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
+                  Открыть в каталоге
+                </a>
+                <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
+              </div>
+            </div>
+
+            @if (!performer.subscribed) {
             <div class="subscribe-box">
               <h3>Оформите подписку</h3>
               <p>
@@ -201,9 +232,7 @@
                 ({{ plans[performer.type].title }})
               </p>
               <ul>
-                @for (feature of plans[performer.type].features; track feature) {
-                  <li>{{ feature }}</li>
-                }
+                <li *ngFor="let feature of plans[performer.type].features">{{ feature }}</li>
               </ul>
               <button type="button" class="btn-primary btn-large" (click)="subscribe()">
                 Оплатить ${{ planPrice(performer.type) }} (демо)
@@ -258,6 +287,43 @@
             }
           }
         </section>
+      }
+        @if (activeSection() === 'moderation') {
+          <section class="review-moderation review-moderation--private">
+            <div class="section-header">
+              <span class="section-eyebrow">Личный раздел</span>
+              <h2>Новые отзывы на проверку</h2>
+              <p class="section-subtitle">
+                Этот раздел видите только вы. Подтверждайте отзывы, чтобы они начали появляться на сайте.
+              </p>
+            </div>
+
+            @if (reviewStore.pendingReviews().length > 0) {
+              <div class="reviews-table">
+                @for (review of reviewStore.pendingReviews(); track review.id) {
+                  <article class="review-card">
+                    <div class="review-card-meta">
+                      <strong>{{ review.name }}</strong>
+                      <span>{{ review.performerType }} / {{ review.category }}</span>
+                      <time>{{ review.createdAt | date:'short' }}</time>
+                    </div>
+                    <p>{{ review.review }}</p>
+                    <div class="review-actions">
+                      <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
+                        Отклонить
+                      </button>
+                      <button type="button" class="btn-primary" (click)="approveReview(review.id)">
+                        Подтвердить
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="review-empty">Новых отзывов пока нет. Все новые отзывы будут появляться здесь.</p>
+            }
+          </section>
+        }
       }
     }
   </div>

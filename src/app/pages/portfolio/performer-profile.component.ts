@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { ReviewStoreService } from '../../core/services/review-store.service';
 import { PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 
@@ -17,6 +18,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 export class PerformerProfileComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(PortfolioStoreService);
+  private readonly reviewStore = inject(ReviewStoreService);
 
   private readonly type = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('type') as PerformerType)),
@@ -34,6 +36,17 @@ export class PerformerProfileComponent {
       return undefined;
     }
     return this.store.getPerformer(type, id);
+  });
+
+  protected readonly relevantReviews = computed(() => {
+    const performer = this.performer();
+    if (!performer) {
+      return [];
+    }
+    const typeLabel = this.type() === 'brigade' ? 'Бригада' : 'Мастер';
+    return this.reviewStore.approvedReviews().filter(
+      (review) => review.performerType === typeLabel,
+    );
   });
 
   protected typeLabel(): string {

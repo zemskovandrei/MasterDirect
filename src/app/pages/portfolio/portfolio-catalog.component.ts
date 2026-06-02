@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { ReviewStoreService } from '../../core/services/review-store.service';
 import { PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 
@@ -14,6 +15,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 })
 export class PortfolioCatalogComponent {
   protected readonly store = inject(PortfolioStoreService);
+  protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly activeTab = signal<PerformerType>('brigade');
 
   setTab(tab: PerformerType) {

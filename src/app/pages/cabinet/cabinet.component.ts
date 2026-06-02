@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   PerformerType,
   SUBSCRIPTION_PLANS,
 } from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { ReviewStoreService } from '../../core/services/review-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 
 @Component({
@@ -18,11 +19,17 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 })
 export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   protected readonly store = inject(PortfolioStoreService);
+  protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly plans = SUBSCRIPTION_PLANS;
 
   protected readonly uploadSuccess = signal(false);
   protected readonly selectedPlan = signal<PerformerType>('worker');
+  protected readonly activeSection = signal<'profile' | 'moderation'>(
+    this.router.url.includes('/moderation') ? 'moderation' : 'profile',
+  );
+  protected readonly notifications = this.reviewStore.notifications;
 
   protected readonly registerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -127,6 +134,14 @@ export class CabinetComponent {
     this.afterPreview.set(null);
   }
 
+  approveReview(reviewId: string) {
+    this.reviewStore.approveReview(reviewId);
+  }
+
+  rejectReview(reviewId: string) {
+    this.reviewStore.rejectReview(reviewId);
+  }
+
   planPrice(type: PerformerType): number {
     return this.plans[type].priceUsd;
   }
@@ -138,5 +153,9 @@ export class CabinetComponent {
 
   planIcon(type: PerformerType): string {
     return type === 'brigade' ? '👷' : '🔧';
+  }
+
+  setSection(section: 'profile' | 'moderation') {
+    this.activeSection.set(section);
   }
 }

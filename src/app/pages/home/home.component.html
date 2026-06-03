@@ -1,31 +1,30 @@
+<!-- Hero section: главный экран с слайдером, заголовком и CTA -->
 <section class="hero-slider">
   <div class="slider-container">
     <div class="slide" [ngStyle]="slideBackgroundStyle()">
       <img class="slide-image" [src]="currentSlide()" alt="Интерьер после ремонта" />
       <div class="slide-overlay"></div>
       <div class="slide-content">
-        <h2>Преобразим ваше пространство</h2>
-        <p>Ремонт квартир, домов и отдельных помещений. Бригады и мастера под конкретные задачи.</p>
+        <h2>{{ translationService.translate('hero.title') }}</h2>
+        <p>{{ translationService.translate('hero.description') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">Получить смету</a>
-          <a class="btn-secondary btn-large" routerLink="/portfolio">Каталог работ</a>
+          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">{{ translationService.translate('button.getEstimate') }}</a>
+          <a class="btn-secondary btn-large" routerLink="/portfolio">{{ translationService.translate('button.viewPortfolio') }}</a>
         </div>
-        <div class="hero-tags" aria-label="Основные услуги">
-          <span>Плитка</span>
-          <span>Сантехника</span>
-          <span>Электрика</span>
-          <span>Отделка</span>
-          <span>Мебель под заказ</span>
-          <span>Под ключ</span>
+        <div class="hero-tags" aria-label="{{ translationService.translate('hero.tags') }}">
+          @for (tag of heroTags; track tag) {
+            <span>{{ translationService.translate(tag) }}</span>
+          }
         </div>
         <div class="hero-benefits">
-          <span>Бригада или мастер</span>
-          <span>Смета до начала</span>
-          <span>Работы до и после</span>
+          @for (benefit of heroBenefits; track benefit) {
+            <span>{{ translationService.translate(benefit) }}</span>
+          }
         </div>
       </div>
     </div>
 
+    <!-- Слайды управления: кнопки навигации и индикаторы -->
     <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" aria-label="Предыдущий слайд">
       &#10094;
     </button>
@@ -49,70 +48,73 @@
   </div>
 </section>
 
+<!-- Блок преимуществ: быстрые фичи и выгоды работы с сервисом -->
 <section class="features" id="features">
   <div class="features-container">
     <div class="section-header">
-      <span class="section-eyebrow">Преимущества</span>
-      <h2>Почему выбирают нас</h2>
-      <p class="section-subtitle">Бригады и мастера — под любую задачу по ремонту</p>
+      <span class="section-eyebrow">{{ translationService.translate('section.advantages') }}</span>
+      <h2>{{ translationService.translate('section.advantages.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.advantages.subtitle') }}</p>
     </div>
     <div class="features-grid">
       <a routerLink="/portfolio" class="feature-card feature-card-link">
         <div class="feature-icon">✓</div>
-        <h3>Отзывы и портфолио</h3>
-        <p>Перейдите в портфолио, чтобы посмотреть реальные отзывы и результаты работ.</p>
+        <h3>{{ translationService.translate('feature.reviews.title') }}</h3>
+        <p>{{ translationService.translate('feature.reviews.description') }}</p>
       </a>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Выбор бригады</h3>
-        <p>Подберём команду под комплексный ремонт квартиры, дома или отдельного помещения</p>
+        <h3>{{ translationService.translate('feature.team.title') }}</h3>
+        <p>{{ translationService.translate('feature.team.description') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Отдельные мастера</h3>
-        <p>Специалист под задачу: плитка, электрика, сантехника или отделка</p>
+        <h3>{{ translationService.translate('feature.specialists.title') }}</h3>
+        <p>{{ translationService.translate('feature.specialists.description') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Работы до и после</h3>
-        <p>В каталоге — реальные проекты бригад и мастеров с фото «до» и «после»</p>
+        <h3>{{ translationService.translate('feature.beforeAfter.title') }}</h3>
+        <p>{{ translationService.translate('feature.beforeAfter.description') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Ремонт под ключ</h3>
-        <p>От проекта до финальной уборки — полный цикл</p>
+        <h3>{{ translationService.translate('feature.turnkey.title') }}</h3>
+        <p>{{ translationService.translate('feature.turnkey.description') }}</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Блок услуг: список предлагаемых сервисов с ссылкой на форму сметы -->
 <section class="services" id="services">
   <div class="services-container">
     <div class="section-header">
-      <span class="section-eyebrow">Услуги</span>
-      <h2>Наши услуги</h2>
-      <p class="section-subtitle">Бригада под ключ или отдельный мастер — под вашу задачу</p>
+      <span class="section-eyebrow">{{ translationService.translate('section.services') }}</span>
+      <h2>{{ translationService.translate('section.services.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.services.subtitle') }}</p>
     </div>
     <div class="services-grid">
-      @for (service of services; track service.title) {
+      @for (service of services; track service.titleKey) {
         <article class="service-card">
           <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
-          <a class="service-link" routerLink="/" fragment="estimate">Заказать расчёт</a>
+          <h3>{{ translationService.translate(service.titleKey) }}</h3>
+          <p>{{ translationService.translate(service.descriptionKey) }}</p>
+          <a class="service-link" routerLink="/" fragment="estimate">{{ translationService.translate('button.orderQuote') }}</a>
         </article>
       }
     </div>
   </div>
 </section>
 
+<!-- Промо-портфолио: тизер каталога, пример работы и статистика -->
 <section class="portfolio-teaser" id="portfolio">
   <div class="portfolio-container">
     <div class="section-header">
-      <span class="section-eyebrow">Портфолио</span>
-      <h2>Каталог бригад и мастеров</h2>
+      <span class="section-eyebrow">{{ translationService.translate('section.portfolio') }}</span>
+      <h2>{{ translationService.translate('section.portfolio.title') }}</h2>
       <p class="section-subtitle">
-        Смотрите работы «до / после». Мастера и бригадиры публикуют проекты по подписке.
+        {{ translationService.translate('section.portfolio.description') }}
       </p>
     </div>
 
@@ -125,72 +127,75 @@
     }
 
     <div class="teaser-actions">
-      <a routerLink="/portfolio" class="btn-primary btn-large">Смотреть портфолио</a>
-      <a routerLink="/cabinet" class="btn-secondary btn-large">Разместить свои работы</a>
+      <a routerLink="/portfolio" class="btn-primary btn-large">{{ translationService.translate('button.viewPortfolio') }}</a>
+      <a routerLink="/cabinet" class="btn-secondary btn-large">{{ translationService.translate('button.publishWorks') }}</a>
     </div>
 
     <div class="teaser-stats">
       <div class="stat">
         <strong>{{ portfolioStore.brigades().length }}</strong>
-        <span>бригад</span>
+        <span>{{ translationService.translate('portfolio.stats.brigades') }}</span>
       </div>
       <div class="stat">
         <strong>{{ portfolioStore.workers().length }}</strong>
-        <span>мастеров</span>
+        <span>{{ translationService.translate('portfolio.stats.workers') }}</span>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Блок заявки на смету: форма связи с клиентом и состояние отправки -->
 <section class="estimate" id="estimate">
   <div class="estimate-container">
     <div class="section-header">
-      <span class="section-eyebrow">Заявка</span>
-      <h2>Получить смету</h2>
-      <p class="section-subtitle">Оставьте заявку — перезвоним и обсудим объём работ</p>
+      <span class="section-eyebrow">{{ translationService.translate('section.estimate') }}</span>
+      <h2>{{ translationService.translate('section.estimate.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.estimate.subtitle') }}</p>
     </div>
 
     @if (formSubmitted()) {
       <div class="estimate-success" id="estimate-success" role="status">
         <div class="estimate-success-icon">✓</div>
-        <h3>Заявка отправлена</h3>
-        <p>Мы свяжемся с вами в ближайшее время.</p>
+        <h3>{{ translationService.translate('form.success.title') }}</h3>
+        <p>{{ translationService.translate('form.success.message') }}</p>
         <button type="button" class="btn-secondary" (click)="resetEstimateForm()">
-          Отправить ещё одну заявку
+          {{ translationService.translate('button.registerAnother') }}
         </button>
       </div>
     } @else {
       <form class="estimate-form" [formGroup]="estimateForm" (ngSubmit)="submitEstimate()">
         <div class="form-row">
           <label class="form-field">
-            <span>Имя *</span>
-            <input type="text" formControlName="name" placeholder="Как к вам обращаться" autocomplete="name" />
+            <span>{{ translationService.translate('form.name.label') }}</span>
+            <input type="text" formControlName="name" placeholder="{{ translationService.translate('form.name.placeholder') }}" autocomplete="name" />
             @if (isInvalid('name')) {
-              <small class="form-error">Укажите имя (минимум 2 символа)</small>
+              <small class="form-error">{{ translationService.translate('form.error.name') }}</small>
             }
           </label>
           <label class="form-field">
-            <span>Телефон *</span>
-            <input type="tel" formControlName="phone" placeholder="+7 (900) 123-45-67" autocomplete="tel" />
+            <span>{{ translationService.translate('form.phone.label') }}</span>
+            <input type="tel" formControlName="phone" placeholder="{{ translationService.translate('form.phone.placeholder') }}" autocomplete="tel" />
             @if (isInvalid('phone')) {
-              <small class="form-error">Укажите корректный номер телефона</small>
+              <small class="form-error">{{ translationService.translate('form.error.phone') }}</small>
             }
           </label>
         </div>
         <label class="form-field">
-          <span>Email</span>
-          <input type="email" formControlName="email" placeholder="email@example.com" autocomplete="email" />
+          <span>{{ translationService.translate('form.email.label') }}</span>
+          <input type="email" formControlName="email" placeholder="{{ translationService.translate('form.email.placeholder') }}" autocomplete="email" />
           @if (isInvalid('email')) {
-            <small class="form-error">Некорректный email</small>
+            <small class="form-error">{{ translationService.translate('form.error.email') }}</small>
           }
         </label>
         <label class="form-field">
-          <span>Комментарий</span>
-          <textarea formControlName="message" rows="4" placeholder="Тип объекта, площадь, сроки..."></textarea>
+          <span>{{ translationService.translate('form.message.label') }}</span>
+          <textarea formControlName="message" rows="4" placeholder="{{ translationService.translate('form.message.placeholder') }}"></textarea>
         </label>
-        <button type="submit" class="btn-primary btn-large estimate-submit">Отправить заявку</button>
-        <p class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных</p>
+        <button type="submit" class="btn-primary btn-large estimate-submit">{{ translationService.translate('form.submit') }}</button>
+        <p class="form-note">{{ translationService.translate('form.note') }}</p>
       </form>
     }
   </div>
 </section>
+
+<!-- Конец главной страницы -->

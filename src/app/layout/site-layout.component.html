@@ -3,7 +3,7 @@
     <div class="header-container">
       <a class="logo" routerLink="/">
         <h1>{{ title() }}</h1>
-        <p class="tagline">Профессиональный ремонт и отделка</p>
+        <p class="tagline">{{ translationService.translate('tagline') }}</p>
       </a>
 
       <button
@@ -22,25 +22,49 @@
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
         <ul>
           <li>
-            <a routerLink="/" fragment="features" (click)="onNavClick()">Преимущества</a>
+            <a routerLink="/" fragment="features" (click)="onNavClick()">{{ translationService.translate('nav.features') }}</a>
           </li>
           <li>
-            <a routerLink="/" fragment="services" (click)="onNavClick()">Мастера</a>
+            <a routerLink="/" fragment="services" (click)="onNavClick()">{{ translationService.translate('nav.services') }}</a>
           </li>
           <li>
-            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">Портфолио</a>
+            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">{{ translationService.translate('nav.portfolio') }}</a>
           </li>
           <li>
-            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">Кабинет</a>
+            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">{{ translationService.translate('nav.cabinet') }}</a>
           </li>
           <li>
-            <a routerLink="/" fragment="estimate" (click)="onNavClick()">Смета</a>
+            <a routerLink="/" fragment="estimate" (click)="onNavClick()">{{ translationService.translate('nav.estimate') }}</a>
           </li>
         </ul>
       </nav>
 
       <div class="header-actions" [class.header-actions-open]="mobileMenuOpen()">
-        <button type="button" class="btn-primary" (click)="scrollToEstimate()">Получить смету</button>
+        <button type="button" class="btn-primary" (click)="scrollToEstimate()">
+          {{ translationService.translate('button.getEstimate') }}
+        </button>
+
+        <!-- Языковая панель: только круглое поле с флагом -->
+        <label class="language-switcher" for="site-language-select">
+          <span class="language-chip" aria-hidden="true">
+            <span class="language-flag">
+              {{ translationService.availableLanguages.find(lang => lang.code === translationService.language())?.flag }}
+            </span>
+          </span>
+          <select
+            id="site-language-select"
+            [value]="translationService.language()"
+            (change)="setLanguage($any($event.target).value)"
+            aria-label="{{ translationService.translate('aria.languageSelect') }}"
+          >
+            <option
+              *ngFor="let language of translationService.availableLanguages"
+              [value]="language.code"
+            >
+              {{ language.flag }} {{ language.code.toUpperCase() }}
+            </option>
+          </select>
+        </label>
       </div>
     </div>
 
@@ -63,29 +87,28 @@
       <div class="footer-brand">
         <h2>{{ title() }}</h2>
         <p>
-          Ремонт, отделка и мебель под заказ. Бригады и мастера публикуют работы «до / после» в
-          каталоге.
+          {{ translationService.translate('footer.brand') }}
         </p>
         <button type="button" class="btn-primary footer-button" (click)="scrollToEstimate()">
-          Получить смету
+          {{ translationService.translate('button.getEstimate') }}
         </button>
       </div>
 
       <div class="footer-column">
-        <h3>Разделы</h3>
+        <h3>{{ translationService.translate('footer.sections') }}</h3>
         <ul>
-          <li><a routerLink="/portfolio">Портфолио</a></li>
-          <li><a routerLink="/cabinet">Кабинет мастера</a></li>
-          <li><a routerLink="/moderation">Модерация отзывов</a></li>
-          <li><a routerLink="/" fragment="estimate">Заявка на смету</a></li>
+          <li><a routerLink="/portfolio">{{ translationService.translate('nav.portfolio') }}</a></li>
+          <li><a routerLink="/cabinet">{{ translationService.translate('nav.cabinet') }} {{ translationService.translate('footer.master') }}</a></li>
+          <li><a routerLink="/moderation">{{ translationService.translate('footer.moderation') }}</a></li>
+          <li><a routerLink="/" fragment="estimate">{{ translationService.translate('footer.requestEstimate') }}</a></li>
         </ul>
       </div>
 
       <div class="footer-column">
-        <h3>Подписка</h3>
+        <h3>{{ translationService.translate('footer.subscription') }}</h3>
         <ul>
-          <li>Мастер — $5 / мес</li>
-          <li>Бригадир — $15 / мес</li>
+          <li>{{ translationService.translate('footer.plan.worker') }}</li>
+          <li>{{ translationService.translate('footer.plan.brigade') }}</li>
         </ul>
       </div>
     </div>

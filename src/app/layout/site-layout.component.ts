@@ -1,6 +1,7 @@
 import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { TranslationService } from '../core/services/translation.service';
 
 @Component({
   selector: 'app-site-layout',
@@ -11,9 +12,14 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 })
 export class SiteLayoutComponent {
   private readonly platformId = inject(PLATFORM_ID);
+  protected readonly translationService = inject(TranslationService);
 
   protected readonly title = signal('pro-remont');
   protected readonly mobileMenuOpen = signal(false);
+
+  protected setLanguage(language: string) {
+    this.translationService.setLanguage(language as any);
+  }
 
   @HostListener('document:keydown.escape')
   onEscape() {

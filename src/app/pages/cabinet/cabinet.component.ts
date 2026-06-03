@@ -6,6 +6,7 @@ import {
   PerformerType,
   SUBSCRIPTION_PLANS,
 } from '../../core/models/portfolio.models';
+import { TranslationService } from '../../core/services/translation.service';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
@@ -22,6 +23,7 @@ export class CabinetComponent {
   private readonly router = inject(Router);
   protected readonly store = inject(PortfolioStoreService);
   protected readonly reviewStore = inject(ReviewStoreService);
+  protected readonly translationService = inject(TranslationService);
   protected readonly plans = SUBSCRIPTION_PLANS;
 
   protected readonly uploadSuccess = signal(false);
@@ -74,7 +76,7 @@ export class CabinetComponent {
     }
 
     if (file.size > 800_000) {
-      alert('Файл слишком большой. Выберите фото до 800 КБ (в продакшене лимит будет на сервере).');
+      alert(this.translationService.translate('cabinet.errors.largeFile'));
       input.value = '';
       return;
     }
@@ -105,7 +107,7 @@ export class CabinetComponent {
     const before = this.beforePreview();
     const after = this.afterPreview();
     if (!before || !after) {
-      alert('Загрузите оба фото: «до» и «после».');
+      alert(this.translationService.translate('cabinet.errors.missingPhotos'));
       return;
     }
 

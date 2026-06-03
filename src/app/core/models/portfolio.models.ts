@@ -3,9 +3,9 @@ export type PerformerType = 'brigade' | 'worker';
 export interface SubscriptionPlan {
   type: PerformerType;
   priceUsd: number;
-  title: string;
-  description: string;
-  features: string[];
+  titleKey: string;
+  descriptionKey: string;
+  featureKeys: string[];
 }
 
 export interface WorkProject {
@@ -56,24 +56,24 @@ export const SUBSCRIPTION_PLANS: Record<PerformerType, SubscriptionPlan> = {
   worker: {
     type: 'worker',
     priceUsd: 5,
-    title: 'Мастер',
-    description: 'Для отдельного специалиста',
-    features: [
-      'Профиль в каталоге мастеров',
-      'Загрузка работ «до / после»',
-      'Редактирование своего портфолио',
+    titleKey: 'cabinet.plan.worker.title',
+    descriptionKey: 'cabinet.plan.worker.description',
+    featureKeys: [
+      'cabinet.plan.feature.profile',
+      'cabinet.plan.feature.uploadWorks',
+      'cabinet.plan.feature.editPortfolio',
     ],
   },
   brigade: {
     type: 'brigade',
     priceUsd: 15,
-    title: 'Бригадир',
-    description: 'Для бригады и руководителя работ',
-    features: [
-      'Профиль бригады в каталоге',
-      'Загрузка проектов «до / после»',
-      'Неограниченное число работ в подписке',
-      'Приоритет в выдаче каталога',
+    titleKey: 'cabinet.plan.brigade.title',
+    descriptionKey: 'cabinet.plan.brigade.description',
+    featureKeys: [
+      'cabinet.plan.feature.companyProfile',
+      'cabinet.plan.feature.uploadWorks',
+      'cabinet.plan.feature.unlimited',
+      'cabinet.plan.feature.priority',
     ],
   },
 };

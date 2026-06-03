@@ -1,8 +1,8 @@
 <section class="page-hero cabinet-hero">
   <div class="page-hero-inner">
-    <h1>Кабинет мастера / бригадира</h1>
+    <h1>{{ translationService.translate('cabinet.hero.title') }}</h1>
     <p>
-      Создайте профиль, оформите подписку и публикуйте работы «до / после» в каталоге pro-remont.
+      {{ translationService.translate('cabinet.hero.description') }}
     </p>
   </div>
 </section>
@@ -12,34 +12,33 @@
     <div class="demo-banner" role="note">
       <span aria-hidden="true">ℹ️</span>
       <span>
-        <strong>Демо-режим.</strong> Подписка и загрузки сохраняются в браузере. Для реальных
-        платежей ($5 / $15) подключим сервер и Stripe.
+        <strong>{{ translationService.translate('cabinet.demo.title') }}</strong>
+        {{ translationService.translate('cabinet.demo.description') }}
       </span>
     </div>
 
     @if (!store.currentPerformer()) {
       <section class="register-panel">
         <header class="register-header">
-          <span class="section-eyebrow">Регистрация</span>
-          <h2>Создайте профиль в каталоге</h2>
+          <span class="section-eyebrow">{{ translationService.translate('cabinet.register.title') }}</span>
+          <h2>{{ translationService.translate('cabinet.register.title') }}</h2>
           <p class="register-lead">
-            Выберите тариф, заполните данные — после этого оформите подписку и загружайте работы
-            «до / после».
+            {{ translationService.translate('cabinet.register.description') }}
           </p>
         </header>
 
-        <ol class="register-steps" aria-label="Этапы регистрации">
+        <ol class="register-steps" aria-label="{{ translationService.translate('cabinet.step1') }}">
           <li class="register-step register-step--active">
             <span class="register-step-num">1</span>
-            <span class="register-step-text">Тип и данные</span>
+            <span class="register-step-text">{{ translationService.translate('cabinet.step1') }}</span>
           </li>
           <li class="register-step">
             <span class="register-step-num">2</span>
-            <span class="register-step-text">Подписка</span>
+            <span class="register-step-text">{{ translationService.translate('cabinet.step2') }}</span>
           </li>
           <li class="register-step">
             <span class="register-step-num">3</span>
-            <span class="register-step-text">Портфолио</span>
+            <span class="register-step-text">{{ translationService.translate('cabinet.step3') }}</span>
           </li>
         </ol>
 
@@ -47,7 +46,7 @@
           <div class="register-block register-block--plans">
             <h3 class="register-block-title">
               <span class="register-block-icon" aria-hidden="true">①</span>
-              Тип аккаунта
+              {{ translationService.translate('cabinet.accountType') }}
             </h3>
 
             <div class="plan-cards">
@@ -65,10 +64,10 @@
                   <span class="plan-price">$5</span>
                   <span class="plan-period">/ месяц</span>
                 </div>
-                <h4>{{ plans.worker.title }}</h4>
-                <p class="plan-tagline">{{ plans.worker.description }}</p>
+                <h4>{{ translationService.translate(plans.worker.titleKey) }}</h4>
+                <p class="plan-tagline">{{ translationService.translate(plans.worker.descriptionKey) }}</p>
                 <ul class="plan-features">
-                  <li *ngFor="let f of plans.worker.features">{{ f }}</li>
+                  <li *ngFor="let key of plans.worker.featureKeys">{{ translationService.translate(key) }}</li>
                 </ul>
               </button>
 
@@ -81,16 +80,16 @@
                 @if (selectedPlan() === 'brigade') {
                   <span class="plan-check" aria-hidden="true">✓</span>
                 }
-                <span class="plan-badge-popular">Популярный</span>
+                <span class="plan-badge-popular">{{ translationService.translate('cabinet.plan.popular') }}</span>
                 <span class="plan-icon" aria-hidden="true">{{ planIcon('brigade') }}</span>
                 <div class="plan-price-row">
                   <span class="plan-price">$15</span>
                   <span class="plan-period">/ месяц</span>
                 </div>
-                <h4>{{ plans.brigade.title }}</h4>
-                <p class="plan-tagline">{{ plans.brigade.description }}</p>
+                <h4>{{ translationService.translate(plans.brigade.titleKey) }}</h4>
+                <p class="plan-tagline">{{ translationService.translate(plans.brigade.descriptionKey) }}</p>
                 <ul class="plan-features">
-                  <li *ngFor="let f of plans.brigade.features">{{ f }}</li>
+                  <li *ngFor="let key of plans.brigade.featureKeys">{{ translationService.translate(key) }}</li>
                 </ul>
               </button>
             </div>
@@ -99,40 +98,40 @@
           <div class="register-block register-block--form">
             <h3 class="register-block-title">
               <span class="register-block-icon" aria-hidden="true">②</span>
-              Данные профиля
+              {{ translationService.translate('cabinet.profileData.title') }}
             </h3>
 
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
               <label class="register-field" [class.register-field--error]="registerFieldInvalid('name')">
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">👤</span>
-                  Имя или название
-                  <em>обязательно</em>
+                  {{ translationService.translate('cabinet.profileData.name.label') }}
+                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
                 </span>
                 <input
                   type="text"
                   formControlName="name"
-                  placeholder="Иван К. или «Бригада СтройКомфорт»"
+                  placeholder="{{ translationService.translate('cabinet.profileData.name.placeholder') }}"
                   autocomplete="name"
                 />
                 @if (registerFieldInvalid('name')) {
-                  <small class="field-error">Минимум 2 символа</small>
+                  <small class="field-error">{{ translationService.translate('cabinet.profileData.name.error') }}</small>
                 }
               </label>
 
               <label class="register-field" [class.register-field--error]="registerFieldInvalid('specialty')">
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">🛠</span>
-                  Специализация
-                  <em>обязательно</em>
+                  {{ translationService.translate('cabinet.profileData.specialty.label') }}
+                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
                 </span>
                 <input
                   type="text"
                   formControlName="specialty"
-                  placeholder="Плиточник, электрик, ремонт под ключ..."
+                  placeholder="{{ translationService.translate('cabinet.profileData.specialty.placeholder') }}"
                 />
                 @if (registerFieldInvalid('specialty')) {
-                  <small class="field-error">Укажите специализацию</small>
+                  <small class="field-error">{{ translationService.translate('cabinet.profileData.specialty.error') }}</small>
                 }
               </label>
 
@@ -142,31 +141,31 @@
               >
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">📝</span>
-                  О себе / о бригаде
-                  <em>обязательно</em>
+                  {{ translationService.translate('cabinet.profileData.about.label') }}
+                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
                 </span>
                 <textarea
                   formControlName="description"
                   rows="4"
-                  placeholder="Опыт, район работы, типы объектов, гарантии..."
+                  placeholder="{{ translationService.translate('cabinet.profileData.about.placeholder') }}"
                 ></textarea>
                 @if (registerFieldInvalid('description')) {
-                  <small class="field-error">Напишите хотя бы 10 символов</small>
+                  <small class="field-error">{{ translationService.translate('cabinet.profileData.about.error') }}</small>
                 }
               </label>
 
               <div class="register-summary">
-                <span class="register-summary-label">Выбранный тариф</span>
+                <span class="register-summary-label">{{ translationService.translate('cabinet.summary.label') }}</span>
                 <span class="register-summary-value">
-                  {{ plans[selectedPlan()].title }} — ${{ planPrice(selectedPlan()) }}/мес
+                  {{ translationService.translate(plans[selectedPlan()].titleKey) }} — ${{ planPrice(selectedPlan()) }}/мес
                 </span>
               </div>
 
               <button type="submit" class="btn-primary btn-large register-submit">
-                Создать профиль и продолжить
+                {{ translationService.translate('button.createProfile') }}
               </button>
               <p class="register-note">
-                После создания вы оформите подписку и сможете загружать фото «до / после».
+                {{ translationService.translate('cabinet.register.description') }}
               </p>
             </form>
           </div>
@@ -181,7 +180,7 @@
             [class.tab-button--active]="activeSection() === 'profile'"
             (click)="setSection('profile')"
           >
-            Профиль
+            {{ translationService.translate('cabinet.tabs.profile') }}
           </button>
           <button
             type="button"
@@ -189,15 +188,15 @@
             [class.tab-button--active]="activeSection() === 'moderation'"
             (click)="setSection('moderation')"
           >
-            Модерация отзывов
+            {{ translationService.translate('cabinet.tabs.moderation') }}
           </button>
         </div>
 
         @if (notifications().length > 0) {
           <section class="notification-panel">
             <div class="notification-panel-header">
-              <strong>Уведомления</strong>
-              <span>Новые публикации отзывов</span>
+              <strong>{{ translationService.translate('cabinet.notifications.title') }}</strong>
+              <span>{{ translationService.translate('cabinet.notifications.subtitle') }}</span>
             </div>
             <ul class="notification-list">
               <li *ngFor="let note of notifications()">
@@ -212,72 +211,72 @@
           <section class="cabinet-panel profile-summary">
             <div class="summary-head">
               <div>
-                <span class="profile-badge">{{ performer.type === 'brigade' ? 'Бригадир' : 'Мастер' }}</span>
+                <span class="profile-badge">{{ translationService.translate(performer.type === 'brigade' ? 'performer.brigade' : 'performer.worker') }}</span>
                 <h2>{{ performer.name }}</h2>
                 <p>{{ performer.specialty }}</p>
               </div>
               <div class="summary-actions">
                 <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
-                  Открыть в каталоге
+                  {{ translationService.translate('cabinet.profile.openCatalog') }}
                 </a>
-                <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
+                <button type="button" class="btn-text" (click)="signOut()">{{ translationService.translate('button.signOut') }}</button>
               </div>
             </div>
 
             @if (!performer.subscribed) {
             <div class="subscribe-box">
-              <h3>Оформите подписку</h3>
+              <h3>{{ translationService.translate('cabinet.subscribe.title') }}</h3>
               <p>
-                Тариф: <strong>${{ planPrice(performer.type) }} / месяц</strong>
-                ({{ plans[performer.type].title }})
+                {{ translationService.translate('cabinet.subscribe.label') }} <strong>${{ planPrice(performer.type) }} / {{ translationService.translate('cabinet.subscribe.period') }}</strong>
+                ({{ translationService.translate(plans[performer.type].titleKey) }})
               </p>
               <ul>
-                <li *ngFor="let feature of plans[performer.type].features">{{ feature }}</li>
+                <li *ngFor="let feature of plans[performer.type].featureKeys">{{ translationService.translate(feature) }}</li>
               </ul>
               <button type="button" class="btn-primary btn-large" (click)="subscribe()">
-                Оплатить ${{ planPrice(performer.type) }} (демо)
+                {{ translationService.translate('cabinet.subscribe.action') }} ${{ planPrice(performer.type) }}
               </button>
             </div>
           } @else {
-            <p class="subscribed-badge">✓ Подписка активна — профиль виден в каталоге</p>
+            <p class="subscribed-badge">{{ translationService.translate('cabinet.subscribe.active') }}</p>
 
             <div class="upload-section">
-              <h3>Добавить работу «до / после»</h3>
+              <h3>{{ translationService.translate('cabinet.upload.title') }}</h3>
               @if (uploadSuccess()) {
-                <p class="upload-ok" role="status">Работа добавлена в портфолио!</p>
+                <p class="upload-ok" role="status">{{ translationService.translate('cabinet.upload.success') }}</p>
               }
               <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
                 <label class="form-field-light">
-                  <span>Название работы *</span>
-                  <input type="text" formControlName="title" placeholder="Ванная, кухня..." />
+                  <span>{{ translationService.translate('cabinet.upload.workTitle.label') }}</span>
+                  <input type="text" formControlName="title" placeholder="{{ translationService.translate('cabinet.upload.workTitle.placeholder') }}" />
                 </label>
                 <label class="form-field-light">
-                  <span>Описание</span>
+                  <span>{{ translationService.translate('cabinet.upload.description.label') }}</span>
                   <textarea formControlName="description" rows="2"></textarea>
                 </label>
                 <div class="upload-files">
                   <label class="file-field">
-                    <span>Фото «До» *</span>
+                    <span>{{ translationService.translate('cabinet.upload.before.label') }}</span>
                     <input type="file" accept="image/*" (change)="onFileSelected('before', $event)" />
                     @if (beforePreview()) {
-                      <img [src]="beforePreview()!" alt="Превью до" class="file-preview" />
+                      <img [src]="beforePreview()!" alt="{{ translationService.translate('cabinet.upload.before.alt') }}" class="file-preview" />
                     }
                   </label>
                   <label class="file-field">
-                    <span>Фото «После» *</span>
+                    <span>{{ translationService.translate('cabinet.upload.after.label') }}</span>
                     <input type="file" accept="image/*" (change)="onFileSelected('after', $event)" />
                     @if (afterPreview()) {
-                      <img [src]="afterPreview()!" alt="Превью после" class="file-preview" />
+                      <img [src]="afterPreview()!" alt="{{ translationService.translate('cabinet.upload.after.alt') }}" class="file-preview" />
                     }
                   </label>
                 </div>
-                <button type="submit" class="btn-primary">Загрузить в портфолио</button>
+                <button type="submit" class="btn-primary">{{ translationService.translate('cabinet.upload.submit') }}</button>
               </form>
             </div>
 
             @if (performer.works.length > 0) {
               <div class="my-works">
-                <h3>Мои работы ({{ performer.works.length }})</h3>
+                <h3>{{ translationService.translate('cabinet.myWorks.title') }} ({{ performer.works.length }})</h3>
                 <div class="my-works-grid">
                   @for (work of performer.works; track work.id) {
                     <app-before-after [work]="work" layout="compare" />
@@ -291,10 +290,10 @@
         @if (activeSection() === 'moderation') {
           <section class="review-moderation review-moderation--private">
             <div class="section-header">
-              <span class="section-eyebrow">Личный раздел</span>
-              <h2>Новые отзывы на проверку</h2>
+              <span class="section-eyebrow">{{ translationService.translate('cabinet.moderation.eyebrow') }}</span>
+              <h2>{{ translationService.translate('cabinet.moderation.title') }}</h2>
               <p class="section-subtitle">
-                Этот раздел видите только вы. Подтверждайте отзывы, чтобы они начали появляться на сайте.
+                {{ translationService.translate('cabinet.moderation.subtitle') }}
               </p>
             </div>
 
@@ -310,17 +309,17 @@
                     <p>{{ review.review }}</p>
                     <div class="review-actions">
                       <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
-                        Отклонить
+                        {{ translationService.translate('cabinet.review.reject') }}
                       </button>
                       <button type="button" class="btn-primary" (click)="approveReview(review.id)">
-                        Подтвердить
+                        {{ translationService.translate('cabinet.review.approve') }}
                       </button>
                     </div>
                   </article>
                 }
               </div>
             } @else {
-              <p class="review-empty">Новых отзывов пока нет. Все новые отзывы будут появляться здесь.</p>
+              <p class="review-empty">{{ translationService.translate('cabinet.moderation.empty') }}</p>
             }
           </section>
         }

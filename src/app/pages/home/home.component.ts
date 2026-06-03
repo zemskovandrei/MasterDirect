@@ -3,12 +3,13 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 
 interface ServiceItem {
   icon: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
 }
 
 @Component({
@@ -22,41 +23,56 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
+  protected readonly translationService = inject(TranslationService);
 
   protected currentSlideIndex = signal(0);
   protected formSubmitted = signal(false);
 
+  protected readonly heroTags = [
+    'hero.tag.tile',
+    'hero.tag.plumbing',
+    'hero.tag.electric',
+    'hero.tag.finishing',
+    'hero.tag.furniture',
+    'hero.tag.turnkey',
+  ];
+
+  protected readonly heroBenefits = [
+    'hero.benefit.team',
+    'hero.benefit.quote',
+    'hero.benefit.beforeAfter',
+  ];
+
   protected readonly services: ServiceItem[] = [
     {
       icon: '🏠',
-      title: 'Мастер по ремонту под ключ',
-      description:
-        'Координирует весь процесс: демонтаж, черновые работы, отделка и сдача объекта.',
+      titleKey: 'service.turnkey.title',
+      descriptionKey: 'service.turnkey.description',
     },
     {
       icon: '🧱',
-      title: 'Плиточник-мастер',
-      description: 'Опытный мастер по плитке для ванной, кухни, прихожей и других зон.',
+      titleKey: 'service.tiler.title',
+      descriptionKey: 'service.tiler.description',
     },
     {
       icon: '⚡',
-      title: 'Электрик-мастер',
-      description: 'Специалист по разводке, щитам, освещению и безопасному монтажу.',
+      titleKey: 'service.electrician.title',
+      descriptionKey: 'service.electrician.description',
     },
     {
       icon: '🚿',
-      title: 'Сантехник-мастер',
-      description: 'Установка сантехники, замена труб и проверка на герметичность.',
+      titleKey: 'service.plumber.title',
+      descriptionKey: 'service.plumber.description',
     },
     {
       icon: '🎨',
-      title: 'Отделочник-мастер',
-      description: 'Штукатурка, покраска, обои и отделочные решения по вашему проекту.',
+      titleKey: 'service.finisher.title',
+      descriptionKey: 'service.finisher.description',
     },
     {
       icon: '🪑',
-      title: 'Мастер по мебели',
-      description: 'Индивидуальная мебель: кухни, шкафы, гардеробы и встроенные решения.',
+      titleKey: 'service.furniture.title',
+      descriptionKey: 'service.furniture.description',
     },
   ];
 

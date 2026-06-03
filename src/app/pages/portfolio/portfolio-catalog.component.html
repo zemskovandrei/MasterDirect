@@ -1,3 +1,4 @@
+<!-- Секция: блок верхнего заголовка портфолио -->
 <section class="page-hero">
   <div class="page-hero-inner">
     <h1>Портфолио</h1>
@@ -8,9 +9,9 @@
     <a routerLink="/cabinet" class="btn-primary">Разместить свои работы</a>
   </div>
 </section>
-
-<section class="catalog">
+<!-- Секция: каталог мастеров и бригад с вкладками --><section class="catalog">
   <div class="catalog-inner">
+    <!-- Вкладки выбора: бригады / мастера -->
     <div class="catalog-tabs-wrap">
     <div class="catalog-tabs" role="tablist">
       <button
@@ -34,6 +35,7 @@
     </div>
     </div>
 
+    <!-- Секция: отзывы портфолио, если они есть -->
     @if (reviewStore.approvedReviews().length > 0) {
       <section class="catalog-reviews">
         <div class="section-header">
@@ -55,6 +57,7 @@
       </section>
     }
 
+  <!-- Сетка бригад: отображается при активной вкладке Бригады -->
   @if (activeTab() === 'brigade') {
     <div class="performer-grid">
       @for (p of store.brigades(); track p.id) {
@@ -78,6 +81,7 @@
         <p class="catalog-empty">Пока нет опубликованных бригад.</p>
       }
     </div>
+  <!-- Сетка мастеров: отображается при активной вкладке Мастера -->
   } @else {
     <div class="performer-grid">
       @for (p of store.workers(); track p.id) {
@@ -103,6 +107,7 @@
     </div>
   }
 
+    <!-- Боковая панель: цены и ссылка на оформление публикации работ -->
     <aside class="catalog-pricing">
       <h3>Публикация работ</h3>
       <div class="pricing-mini">

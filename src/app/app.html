@@ -2,22 +2,20 @@
   <header class="header">
     <div class="header-container">
       <div class="logo">
-        <h1>{{ title() }}</h1>
-        <p class="tagline">Профессиональный ремонт и отделка</p>
+        <h1>SmartBuild.Tech</h1>
       </div>
 
       <nav class="nav">
         <ul>
           <li><a href="#features">Преимущества</a></li>
-          <li><a href="#services">Мастера</a></li>
+          <li><a href="/portfolio#workers">Мастера</a></li>
           <li><a href="#portfolio">Портфолио</a></li>
-          <li><a href="#contacts">Контакты</a></li>
+          <li><a href="#cabinet">Кабинет</a></li>
         </ul>
       </nav>
 
       <div class="header-actions">
-        <button class="btn-secondary">+7 (XXX) XXX-XX-XX</button>
-        <button class="btn-primary">Получить смету</button>
+        <a href="tel:+7XXXXXXXXXX" class="header-phone">+7 (XXX) XXX-XX-XX</a>
       </div>
     </div>
   </header>
@@ -34,21 +32,22 @@
             Ремонт квартир, домов и отдельных помещений. Бригады и мастера под конкретные задачи.
           </p>
           <div class="hero-actions">
-            <button class="btn-primary btn-large">Получить смету</button>
-            <button class="btn-secondary btn-large">Выбор бригады или мастера</button>
+            <a href="/portfolio#brigade-section" class="btn-primary btn-large">Выбрать бригаду</a>
+            <button class="btn-secondary btn-large">Каталог работ</button>
           </div>
           <div class="hero-tags" aria-label="Основные услуги">
-            <span>Плитка</span>
-            <span>Сантехника</span>
-            <span>Электрика</span>
-            <span>Отделка</span>
-            <span>Мебель под заказ</span>
-            <span>Под ключ</span>
+            <span *ngFor="let tag of ['Плитка', 'Сантехника', 'Электрика', 'Отделка', 'Мебель', 'Под ключ']">{{ tag }}</span>
           </div>
           <div class="hero-benefits">
-            <span>Бригада или мастер</span>
-            <span>Смета до начала</span>
-            <span>Поэтапное согласование</span>
+            <div class="benefit-item">
+              <span class="check">✓</span> Бригада или мастер
+            </div>
+            <div class="benefit-item">
+              <span class="check">✓</span> Смета до начала
+            </div>
+            <div class="benefit-item">
+              <span class="check">✓</span> Работы до и после
+            </div>
           </div>
         </div>
       </div>
@@ -77,9 +76,12 @@
 
   <!-- Portfolio Section -->
   <section class="portfolio" id="portfolio">
-    <div class="portfolio-container">
-      <h2>Примеры наших работ</h2>
-      <p class="section-subtitle">Реальные проекты, которые мы реализовали</p>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Наши работы</span>
+        <h2>Портфолио мастеров и бригад</h2>
+        <p class="section-subtitle">Реальные примеры отделки и ремонта. Посмотрите, как мы преображаем квартиры и дома.</p>
+      </div>
 
       <div class="gallery-container">
         <!-- Карточка 1: Современная квартира -->
@@ -162,82 +164,94 @@
     </div>
   </section>
 
+  <!-- Services Section -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Услуги</span>
+        <h2>Наши услуги</h2>
+        <p class="section-subtitle">Бригада под ключ или отдельный мастер — под вашу задачу</p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-card" *ngFor="let item of [
+          { t: 'Мастер по ремонту под ключ', d: 'Координирует весь процесс: демонтаж, черновые работы, отделка и сдача объекта.' },
+          { t: 'Плиточник-мастер', d: 'Опытный мастер по плитке для ванной, кухни, прихожей и других зон.' },
+          { t: 'Электрик-мастер', d: 'Специалист по разводке, щитам, освещению и безопасному монтажу.' },
+          { t: 'Сантехник-мастер', d: 'Установка сантехники, замена труб и проверка на герметичность.' },
+          { t: 'Отделочник-мастер', d: 'Штукатурка, покраска, обои и отделочные решения по вашему проекту.' },
+          { t: 'Мастер по мебели', d: 'Индивидуальная мебель: кухни, шкафы, гардеробы и встроенные решения.' }
+        ]">
+          <div class="card-content">
+            <h3>{{ item.t }}</h3>
+            <p>{{ item.d }}</p>
+          </div>
+          <a href="/portfolio#brigade-section" class="btn-text">Выбрать бригаду →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Features Section -->
   <section class="features" id="features">
-    <div class="features-container">
-      <h2>Почему выбирают нас</h2>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Преимущества</span>
+        <h2>Почему выбирают нас</h2>
+      </div>
 
       <div class="features-grid">
-        <div class="feature-card">
+        <div class="feature-card" *ngFor="let card of [
+          { t: 'Отзывы и портфолио', d: 'Перейдите в портфолио, чтобы посмотреть реальные отзывы и результаты работ.' },
+          { t: 'Выбор бригады', d: 'Подберём команду под комплексный ремонт квартиры, дома или отдельного помещения' },
+          { t: 'Отдельные мастера', d: 'Специалист под задачу: плитка, электрика, сантехника или отделка' },
+          { t: 'Работы до и после', d: 'В каталоге — реальные проекты бригад и мастеров с фото «до» и «после»' },
+          { t: 'Ремонт под ключ', d: 'От проекта до финальной уборки — полный цикл' }
+        ]">
           <div class="feature-icon">✓</div>
-          <h3>Выбор бригады</h3>
-          <p>Подберём команду под комплексный ремонт квартиры, дома или отдельного помещения</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">✓</div>
-          <h3>Отдельные мастера</h3>
-          <p>
-            Можно заказать специалиста под конкретную задачу: плитка, электрика, сантехника или
-            отделка
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">✓</div>
-          <h3>Гарантия качества</h3>
-          <p>Все работы выполняются с письменной гарантией</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">✓</div>
-          <h3>Ремонт под ключ</h3>
-          <p>От проекта до финальной уборки - полный цикл</p>
+          <h3>{{ card.t }}</h3>
+          <p>{{ card.d }}</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="footer" id="contacts">
-    <div class="footer-container">
+  <footer class="footer">
+    <div class="container footer-container">
       <div class="footer-brand">
-        <h2>{{ title() }}</h2>
-        <p>
-          Ремонт, отделка и мебель под заказ. Подберём бригаду или отдельного мастера под вашу
-          задачу.
-        </p>
+        <h2>SmartBuild.Tech</h2>
+        <p>Ремонт, отделка и мебель под заказ. Бригады и мастера публикуют работы «до / после» в каталоге.</p>
       </div>
 
-      <div class="footer-column" id="services">
+      <div class="footer-column">
         <h3>Мастера</h3>
         <ul>
           <li>Ремонт под ключ</li>
-          <li>Плиточные работы</li>
-          <li>Электрика и сантехника</li>
-          <li>Мебель под заказ</li>
+          <li>Плиточник-мастер</li>
+          <li>Электрик-мастер</li>
+          <li>Мастер по мебели</li>
         </ul>
       </div>
 
       <div class="footer-column">
-        <h3>Навигация</h3>
+        <h3>Разделы</h3>
         <ul>
           <li><a href="#portfolio">Портфолио</a></li>
-          <li><a href="#contacts">Контакты</a></li>
+          <li><a href="#contacts">Связаться</a></li>
         </ul>
       </div>
 
-      <div class="footer-contact">
+      <div class="footer-contact" id="contacts">
         <h3>Связаться</h3>
         <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
-        <a href="mailto:info@pro-remont.ru">info&#64;pro-remont.ru</a>
-        <button class="btn-primary footer-button">Получить смету</button>
+        <a href="mailto:info@smartbuild.tech">info&#64;smartbuild.tech</a>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <span>© 2026 pro-remont</span>
-      <span>Ремонт квартир, домов и отдельных помещений</span>
+      <span>© 2026 SmartBuild.Tech</span>
+      <span>Ремонт квартир, домов и отдельных помещений.</span>
     </div>
   </footer>
 </div>

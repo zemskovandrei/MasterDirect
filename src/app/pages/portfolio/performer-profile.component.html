@@ -1,22 +1,58 @@
 @if (performer(); as p) {
   <section class="profile-hero">
+    @if (heroImage(); as cover) {
+      <div class="profile-hero-cover" aria-hidden="true">
+        <img [src]="cover" alt="" />
+      </div>
+    }
     <div class="profile-hero-bg" aria-hidden="true"></div>
+
     <div class="profile-hero-inner">
       <a routerLink="/portfolio" class="back-link">← Каталог портфолио</a>
-      <div class="profile-hero-main">
-        <span class="profile-badge">{{ typeLabel() }}</span>
-        <h1>{{ p.name }}</h1>
-        <p class="profile-specialty">{{ p.specialty }}</p>
+
+      <div class="profile-hero-card">
+        <div class="profile-hero-top">
+          <div class="profile-avatar" aria-hidden="true">
+            @if (heroImage(); as thumb) {
+              <img class="profile-avatar-photo" [src]="thumb" alt="" />
+            } @else {
+              <span class="profile-avatar-icon">{{ typeIcon() }}</span>
+            }
+          </div>
+
+          <div class="profile-hero-head">
+            <span class="profile-badge">{{ typeLabel() }}</span>
+            <h1>{{ p.name }}</h1>
+            <p class="profile-specialty">{{ p.specialty }}</p>
+          </div>
+        </div>
+
         <p class="profile-desc">{{ p.description }}</p>
+
         <div class="profile-stats">
           <div class="profile-stat">
-            <strong>{{ p.works.length }}</strong>
-            <span>{{ p.works.length === 1 ? 'проект' : 'проектов' }}</span>
+            <span class="profile-stat-icon" aria-hidden="true">📁</span>
+            <div>
+              <strong>{{ p.works.length }}</strong>
+              <span>{{ p.works.length === 1 ? 'проект' : 'проектов' }}</span>
+            </div>
           </div>
           <div class="profile-stat">
-            <strong>До / После</strong>
-            <span>на каждый объект</span>
+            <span class="profile-stat-icon" aria-hidden="true">↔</span>
+            <div>
+              <strong>До / После</strong>
+              <span>на каждый объект</span>
+            </div>
           </div>
+          @if (relevantReviews().length > 0) {
+            <div class="profile-stat">
+              <span class="profile-stat-icon" aria-hidden="true">★</span>
+              <div>
+                <strong>{{ relevantReviews().length }}</strong>
+                <span>{{ relevantReviews().length === 1 ? 'отзыв' : 'отзывов' }}</span>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -85,8 +121,8 @@
         }
 
         <div class="showcase-cta">
-          <p>Понравился результат? Оставьте заявку на похожий ремонт.</p>
-          <a routerLink="/" fragment="estimate" class="btn-primary btn-large">Получить смету</a>
+          <p>Понравился результат? Выберите бригаду в каталоге.</p>
+          <a routerLink="/portfolio" fragment="brigade-section" class="btn-primary btn-large">Выбрать бригаду</a>
         </div>
       }
     </div>

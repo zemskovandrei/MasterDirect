@@ -1,0 +1,165 @@
+{
+  "locale": {
+    "ru": "Russian",
+    "en": "English",
+    "ge": "Georgian"
+  },
+  "app": {
+    "tagline": "Professional renovation and finishing",
+    "nav": {
+      "features": "Benefits",
+      "services": "Masters",
+      "portfolio": "Portfolio",
+      "cabinet": "Dashboard",
+      "estimate": "Estimate"
+    },
+    "actions": {
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "header": {
+      "langSelector": "Language selection"
+    },
+    "footer": {
+      "brand": "Renovation, finishing and custom furniture. Teams and masters publish before/after work in the catalog.",
+      "sections": "Sections",
+      "moderation": "Review moderation",
+      "subscription": "Subscription",
+      "plans": {
+        "master": "Master — $5 / mo",
+        "brigadier": "Team lead — $15 / mo"
+      },
+      "copyright": "© 2026 SmartBuild.Tech",
+      "catalog": "Catalog of teams and masters"
+    }
+  },
+  "home": {
+    "hero": {
+      "imageAlt": "Interior after renovation",
+      "title": "Transform your space",
+      "subtitle": "Renovation of apartments, houses and individual rooms. Teams and masters for specific tasks.",
+      "primary": "Choose a team",
+      "secondary": "Work catalog",
+      "tagsAria": "Main services",
+      "tags": {
+        "0": "Tiling",
+        "1": "Plumbing",
+        "2": "Electrical",
+        "3": "Finishing",
+        "4": "Custom furniture",
+        "5": "Turnkey"
+      },
+      "benefits": {
+        "0": "Team or master",
+        "1": "Estimate before start",
+        "2": "Before and after work"
+      },
+      "prevSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "slide": "Slide"
+    },
+    "features": {
+      "eyebrow": "Benefits",
+      "title": "Why choose us",
+      "subtitle": "Teams and masters for any renovation task",
+      "cards": {
+        "0": {
+          "title": "Reviews and portfolio",
+          "desc": "Go to the portfolio to see real reviews and work results."
+        },
+        "1": {
+          "title": "Team selection",
+          "desc": "We will find a team for full renovation of an apartment, house or room"
+        },
+        "2": {
+          "title": "Individual masters",
+          "desc": "A specialist for your task: tiling, electrical, plumbing or finishing"
+        },
+        "3": {
+          "title": "Before and after work",
+          "desc": "The catalog features real projects with before and after photos"
+        },
+        "4": {
+          "title": "Turnkey renovation",
+          "desc": "From design to final cleaning — the full cycle"
+        }
+      }
+    },
+    "services": {
+      "eyebrow": "Services",
+      "title": "Our services",
+      "subtitle": "Turnkey team or individual master — for your task",
+      "items": {
+        "turnkey": {
+          "title": "Turnkey renovation master",
+          "desc": "Coordinates the entire process: demolition, rough work, finishing and handover."
+        },
+        "tiler": {
+          "title": "Tiler",
+          "desc": "Experienced tiler for bathroom, kitchen, hallway and other areas."
+        },
+        "electrician": {
+          "title": "Electrician",
+          "desc": "Specialist in wiring, panels, lighting and safe installation."
+        },
+        "plumber": {
+          "title": "Plumber",
+          "desc": "Plumbing installation, pipe replacement and leak testing."
+        },
+        "finisher": {
+          "title": "Finisher",
+          "desc": "Plastering, painting, wallpaper and finishing solutions for your project."
+        },
+        "furniture": {
+          "title": "Furniture master",
+          "desc": "Custom furniture: kitchens, wardrobes, closets and built-in solutions."
+        }
+      }
+    },
+    "portfolio": {
+      "eyebrow": "Portfolio",
+      "title": "Catalog of teams and masters",
+      "subtitle": "See before/after work. Masters and team leads publish projects by subscription.",
+      "actions": {
+        "view": "View portfolio",
+        "place": "Publish your work"
+      },
+      "stats": {
+        "brigades": "teams",
+        "workers": "masters"
+      }
+    },
+    "estimate": {
+      "eyebrow": "Request",
+      "title": "Get estimate",
+      "subtitle": "Leave a request — we will call back and discuss the scope of work",
+      "form": {
+        "successTitle": "Request sent",
+        "successText": "We will contact you shortly.",
+        "reset": "Send another request",
+        "name": "Name *",
+        "namePlaceholder": "How should we address you",
+        "invalidName": "Enter a name (at least 2 characters)",
+        "phone": "Phone *",
+        "phonePlaceholder": "+1 (555) 123-4567",
+        "invalidPhone": "Enter a valid phone number",
+        "email": "Email",
+        "emailPlaceholder": "email@example.com",
+        "invalidEmail": "Invalid email",
+        "message": "Comment",
+        "messagePlaceholder": "Property type, area, timeline...",
+        "submit": "Send request",
+        "note": "By clicking the button, you agree to the processing of personal data"
+      }
+    }
+  },
+  "portfolio": {
+    "jump": {
+      "brigades": "Teams",
+      "workers": "Masters",
+      "smeta": "Estimate",
+      "smetaHint": "after choosing a team",
+      "inCatalog": "in catalog"
+    }
+  }
+}

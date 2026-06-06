@@ -49,6 +49,15 @@ export class PerformerProfileComponent {
     );
   });
 
+  protected readonly heroImage = computed(() => {
+    const performer = this.performer();
+    return performer?.works[0]?.afterImage ?? null;
+  });
+
+  protected readonly typeIcon = computed(() =>
+    this.type() === 'brigade' ? '👷' : '🔧',
+  );
+
   protected typeLabel(): string {
     return this.type() === 'brigade' ? 'Бригада' : 'Мастер';
   }

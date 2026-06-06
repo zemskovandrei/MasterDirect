@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60">
+  <style>
+    .text { font-family: Arial, sans-serif; font-weight: bold; font-size: 22px; fill: #333; }
+    .highlight { fill: #4CAF50; }
+  </style>
+  <text x="10" y="35" class="text">SmartBuild.</text>
+  <text x="155" y="35" class="text highlight">Tech</text>
+</svg>

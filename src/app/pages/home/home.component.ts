@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface ServiceItem {
   icon: string;
@@ -14,49 +14,46 @@ interface ServiceItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, RouterLink, BeforeAfterComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
-
+  protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
-  protected formSubmitted = signal(false);
 
   protected readonly services: ServiceItem[] = [
     {
       icon: '🏠',
-      title: 'Мастер по ремонту под ключ',
-      description:
-        'Координирует весь процесс: демонтаж, черновые работы, отделка и сдача объекта.',
+      title: 'home.services.items.turnkey.title',
+      description: 'home.services.items.turnkey.desc',
     },
     {
       icon: '🧱',
-      title: 'Плиточник-мастер',
-      description: 'Опытный мастер по плитке для ванной, кухни, прихожей и других зон.',
+      title: 'home.services.items.tiler.title',
+      description: 'home.services.items.tiler.desc',
     },
     {
       icon: '⚡',
-      title: 'Электрик-мастер',
-      description: 'Специалист по разводке, щитам, освещению и безопасному монтажу.',
+      title: 'home.services.items.electrician.title',
+      description: 'home.services.items.electrician.desc',
     },
     {
       icon: '🚿',
-      title: 'Сантехник-мастер',
-      description: 'Установка сантехники, замена труб и проверка на герметичность.',
+      title: 'home.services.items.plumber.title',
+      description: 'home.services.items.plumber.desc',
     },
     {
       icon: '🎨',
-      title: 'Отделочник-мастер',
-      description: 'Штукатурка, покраска, обои и отделочные решения по вашему проекту.',
+      title: 'home.services.items.finisher.title',
+      description: 'home.services.items.finisher.desc',
     },
     {
       icon: '🪑',
-      title: 'Мастер по мебели',
-      description: 'Индивидуальная мебель: кухни, шкафы, гардеробы и встроенные решения.',
+      title: 'home.services.items.furniture.title',
+      description: 'home.services.items.furniture.desc',
     },
   ];
 
@@ -72,27 +69,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly sliderDots = this.sliderImages.map((_, index) => index);
   protected currentSlide = signal(this.sliderImages[0]);
 
-  protected readonly estimateForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    phone: ['', [Validators.required, Validators.pattern(/^[\d\s()+-]{10,}$/)]],
-    email: ['', Validators.email],
-    message: [''],
-  });
-
   private slideIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit() {
-    this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
+    if (isPlatformBrowser(this.platformId)) {
+      this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
+    }
   }
 
   ngOnDestroy() {
     if (this.slideIntervalId !== undefined) {
       clearInterval(this.slideIntervalId);
     }
-  }
-
-  protected slideBackgroundStyle(): { [key: string]: string } {
-    return { 'background-image': `url("${encodeURI(this.currentSlide())}")` };
   }
 
   nextSlide() {
@@ -111,29 +99,5 @@ export class HomeComponent implements OnInit, OnDestroy {
   goToSlide(index: number) {
     this.currentSlideIndex.set(index);
     this.currentSlide.set(this.sliderImages[index]);
-  }
-
-  submitEstimate() {
-    if (this.estimateForm.invalid) {
-      this.estimateForm.markAllAsTouched();
-      return;
-    }
-    this.formSubmitted.set(true);
-    this.estimateForm.reset();
-    if (isPlatformBrowser(this.platformId)) {
-      document
-        .getElementById('estimate-success')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }
-
-  resetEstimateForm() {
-    this.formSubmitted.set(false);
-    this.estimateForm.reset();
-  }
-
-  isInvalid(controlName: 'name' | 'phone' | 'email'): boolean {
-    const control = this.estimateForm.get(controlName);
-    return !!control && control.invalid && control.touched;
   }
 }

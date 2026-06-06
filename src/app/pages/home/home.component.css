@@ -315,4 +315,15 @@
   margin-bottom: 3rem;
 }
 
+.hero-benefit-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition);
+}
+
+.hero-benefit-link:hover {
+  color: var(--color-accent-dark);
+}
+
 /* дубли padding убран — задаёт layout.css */

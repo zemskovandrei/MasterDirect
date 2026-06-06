@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { ReviewSubmission, ReviewNotification } from '../models/portfolio.models';
 
-const REVIEWS_KEY = 'pro-remont-reviews';
+const REVIEWS_KEY = 'smartbuild-tech-reviews';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewStoreService {

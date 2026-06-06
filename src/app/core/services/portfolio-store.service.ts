@@ -8,8 +8,8 @@ import {
 } from '../models/portfolio.models';
 import { SEED_PERFORMERS } from '../data/portfolio.seed';
 
-const PERFORMERS_KEY = 'pro-remont-performers';
-const SESSION_KEY = 'pro-remont-cabinet-session';
+const PERFORMERS_KEY = 'smartbuild-tech-performers';
+const SESSION_KEY = 'smartbuild-tech-cabinet-session';
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioStoreService {

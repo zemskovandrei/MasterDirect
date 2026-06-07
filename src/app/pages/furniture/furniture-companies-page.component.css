@@ -1,0 +1,4 @@
+.catalog-jump-link--active {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: var(--shadow-md);
+}

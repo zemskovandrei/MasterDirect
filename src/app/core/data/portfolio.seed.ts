@@ -6,6 +6,7 @@ function work(
   description: string,
   before: string,
   after: string,
+  verificationStatus: import('../models/portfolio.models').WorkVerificationStatus = 'verified',
 ): import('../models/portfolio.models').WorkProject {
   return {
     id,
@@ -14,6 +15,8 @@ function work(
     beforeImage: before,
     afterImage: after,
     createdAt: new Date().toISOString(),
+    verificationStatus,
+    verifiedAt: verificationStatus === 'verified' ? new Date().toISOString() : undefined,
   };
 }
 

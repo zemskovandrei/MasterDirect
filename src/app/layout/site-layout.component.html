@@ -2,7 +2,7 @@
   <header class="header">
     <div class="header-container">
       <a class="logo" routerLink="/" [attr.aria-label]="title()">
-        <img src="assets/logo.svg" [attr.alt]="title()" class="logo-img" />
+        <span class="logo-text">{{ title() }}</span>
       </a>
 
       <button
@@ -18,46 +18,6 @@
         <span class="menu-toggle-bar"></span>
       </button>
 
-      <!-- Language hover dropdown -->
-      <aside class="lang-panel" [attr.aria-label]="translation.t('app.header.langSelector')">
-        <button
-          type="button"
-          class="lang-trigger"
-          aria-haspopup="menu"
-          aria-controls="lang-menu"
-          [attr.aria-label]="translation.t('locale.' + translation.locale())"
-        >
-          <span class="lang-panel-flag" aria-hidden="true">{{
-            getLocaleFlag(translation.locale())
-          }}</span>
-          <span class="lang-panel-initials">{{ getLocaleInitials(translation.locale()) }}</span>
-        </button>
-
-        <div
-          class="lang-menu"
-          id="lang-menu"
-          role="menu"
-          [attr.aria-label]="translation.t('app.header.langSelector')"
-        >
-          @for (l of localeOptions; track l) {
-            <button
-              type="button"
-              class="lang-menu-item"
-              [class.lang-menu-item-active]="translation.locale() === l"
-              (click)="selectLocale(l)"
-              role="menuitemradio"
-              [attr.aria-checked]="translation.locale() === l ? 'true' : 'false'"
-              [attr.aria-label]="translation.t('locale.' + l)"
-            >
-              <span class="lang-panel-flag" aria-hidden="true">{{ getLocaleFlag(l) }}</span>
-              <span class="lang-menu-item-name">
-                {{ translation.t('locale.' + l) }}
-              </span>
-            </button>
-          }
-        </div>
-      </aside>
-
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
         <ul>
           <li>
@@ -67,31 +27,25 @@
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               (click)="onNavClick()"
-              >{{ translation.t('app.nav.features') }}</a
             >
+              {{ translation.t('app.nav.features') }}
+            </a>
           </li>
           <li>
-            <a routerLink="/portfolio" fragment="workers" (click)="onNavClick()">{{
-              translation.t('app.nav.services')
-            }}</a>
+            <a routerLink="/brigades" routerLinkActive="active" (click)="onNavClick()">
+              {{ translation.t('app.nav.brigades') }}
+            </a>
           </li>
           <li>
-            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">{{
-              translation.t('app.nav.portfolio')
-            }}</a>
+            <a routerLink="/masters" routerLinkActive="active" (click)="onNavClick()">
+              {{ translation.t('app.nav.masters') }}
+            </a>
           </li>
           <li>
-            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">{{
-              translation.t('app.nav.cabinet')
-            }}</a>
+            <a routerLink="/furniture" routerLinkActive="active" (click)="onNavClick()">
+              {{ translation.t('app.nav.furniture') }}
+            </a>
           </li>
-          @if (adminAuth.isAdmin()) {
-            <li>
-              <a routerLink="/moderation" routerLinkActive="active" (click)="onNavClick()">{{
-                translation.t('app.nav.moderation')
-              }}</a>
-            </li>
-          }
         </ul>
       </nav>
     </div>
@@ -121,26 +75,23 @@
         <h3>{{ translation.t('app.footer.sections') }}</h3>
         <ul>
           <li>
-            <a routerLink="/portfolio">{{ translation.t('app.nav.portfolio') }}</a>
+            <a routerLink="/" fragment="features">{{ translation.t('app.nav.features') }}</a>
           </li>
           <li>
-            <a routerLink="/cabinet">{{ translation.t('app.nav.cabinet') }}</a>
+            <a routerLink="/brigades">{{ translation.t('app.nav.brigades') }}</a>
           </li>
-        </ul>
-      </div>
-
-      <div class="footer-column">
-        <h3>{{ translation.t('app.footer.subscription') }}</h3>
-        <ul>
-          <li>{{ translation.t('app.footer.plans.master') }}</li>
-          <li>{{ translation.t('app.footer.plans.brigadier') }}</li>
+          <li>
+            <a routerLink="/masters">{{ translation.t('app.nav.masters') }}</a>
+          </li>
+          <li>
+            <a routerLink="/furniture">{{ translation.t('app.nav.furniture') }}</a>
+          </li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
       <span>{{ translation.t('app.footer.copyright') }}</span>
-      <span>{{ translation.t('app.footer.catalog') }}</span>
     </div>
   </footer>
 </div>

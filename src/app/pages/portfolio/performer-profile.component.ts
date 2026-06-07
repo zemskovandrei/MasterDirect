@@ -20,8 +20,8 @@ export class PerformerProfileComponent {
   private readonly store = inject(PortfolioStoreService);
   private readonly reviewStore = inject(ReviewStoreService);
 
-  private readonly type = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('type') as PerformerType)),
+  protected readonly type = toSignal(
+    this.route.data.pipe(map((d) => d['performerType'] as PerformerType)),
     { initialValue: 'brigade' as PerformerType },
   );
 
@@ -60,5 +60,9 @@ export class PerformerProfileComponent {
 
   protected typeLabel(): string {
     return this.type() === 'brigade' ? 'Бригада' : 'Мастер';
+  }
+
+  protected catalogLink(): string {
+    return this.type() === 'brigade' ? '/brigades' : '/masters';
   }
 }

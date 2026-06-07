@@ -1,0 +1,84 @@
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <h1>{{ translation.t('brigades.title') }}</h1>
+    <p>{{ translation.t('brigades.subtitle') }}</p>
+    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('brigades.cta') }}</a>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="catalog-inner">
+    <section
+      class="catalog-group catalog-group--brigade brigade-picker"
+      id="brigade-section"
+      [class.attention-pulse]="highlightBrigades()"
+    >
+      <header class="catalog-group-header">
+        <div class="catalog-group-label">
+          <span class="catalog-group-icon" aria-hidden="true">👷</span>
+          <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
+        </div>
+        <h2>{{ translation.t('brigades.pickTitle') }}</h2>
+        <p class="catalog-group-lead">{{ translation.t('brigades.pickLead') }}</p>
+        <p class="catalog-group-count">
+          {{ store.brigades().length }} {{ translation.t('brigades.inCatalog') }}
+        </p>
+      </header>
+
+      <div class="performer-grid">
+        @for (p of store.brigades(); track p.id) {
+          <article
+            class="performer-card performer-card--brigade performer-card--selectable"
+            [class.performer-card--selected]="selectedBrigadeId() === p.id"
+            role="button"
+            tabindex="0"
+            [attr.aria-pressed]="selectedBrigadeId() === p.id"
+            (click)="selectBrigade(p.id)"
+            (keydown.enter)="selectBrigade(p.id)"
+            (keydown.space)="$event.preventDefault(); selectBrigade(p.id)"
+          >
+            <div class="performer-head">
+              <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
+              @if (selectedBrigadeId() === p.id) {
+                <span class="performer-selected-mark" aria-hidden="true">✓</span>
+              }
+              <h3>{{ p.name }}</h3>
+              <p class="performer-specialty">{{ p.specialty }}</p>
+              <p class="performer-desc">{{ p.description }}</p>
+            </div>
+            @if (p.works[0]) {
+              <app-before-after [work]="p.works[0]" layout="split" />
+            }
+            <a
+              [routerLink]="performerLink(p.id)"
+              class="performer-more"
+              (click)="$event.stopPropagation()"
+            >
+              {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
+            </a>
+          </article>
+        } @empty {
+          <p class="catalog-empty">{{ translation.t('brigades.empty') }}</p>
+        }
+      </div>
+    </section>
+
+    <section class="estimate-panel" id="smeta-section">
+      <span
+        class="smeta-btn-wrap"
+        (mouseenter)="onSmetaHintEnter()"
+        (mouseleave)="onSmetaHintLeave()"
+      >
+        <button
+          type="button"
+          id="smeta-btn"
+          class="estimate-view-btn"
+          [disabled]="!isBrigadeSelected()"
+          (click)="viewEstimate()"
+        >
+          {{ translation.t('app.nav.estimate') }}
+        </button>
+      </span>
+    </section>
+  </div>
+</section>

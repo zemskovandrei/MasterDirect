@@ -1,0 +1,87 @@
+<div class="verify-page">
+  <header class="verify-header">
+    <span class="verify-logo">SmartBuild.Tech</span>
+    <p class="verify-tagline">Подтверждение выполненной работы</p>
+  </header>
+
+  <main class="verify-card">
+    @switch (pageState()) {
+      @case ('loading') {
+        <p class="verify-message">Загрузка…</p>
+      }
+
+      @case ('invalid') {
+        <div class="verify-result verify-result--error">
+          <span class="verify-result-icon" aria-hidden="true">!</span>
+          <h1>Ссылка недействительна</h1>
+          <p>
+            Ссылка уже использована, срок её действия истёк или работа была удалена.
+            Попросите мастера отправить новую ссылку.
+          </p>
+        </div>
+      }
+
+      @case ('done') {
+        @if (resultStatus() === 'verified') {
+          <div class="verify-result verify-result--success">
+            <span class="verify-result-icon" aria-hidden="true">✓</span>
+            <h1>Спасибо за подтверждение!</h1>
+            <p>
+              Работа «{{ workTitle() }}» отмечена как проверенная заказчиком.
+              На карточке в каталоге появится зелёная отметка безопасности.
+            </p>
+          </div>
+        } @else {
+          <div class="verify-result verify-result--neutral">
+            <span class="verify-result-icon" aria-hidden="true">✕</span>
+            <h1>Отклонено</h1>
+            <p>
+              Вы сообщили, что не являетесь заказчиком этой работы. Мастеру будет показан статус
+              «Отклонено клиентом».
+            </p>
+          </div>
+        }
+      }
+
+      @default {
+        <div class="verify-preview">
+          <span class="verify-eyebrow">Запрос от мастера</span>
+          <h1>Подтвердите выполнение работы</h1>
+          <p class="verify-lead">
+            Мастер <strong>{{ performerName() }}</strong> указал вас как заказчика для работы
+            <strong>«{{ workTitle() }}»</strong>.
+          </p>
+          @if (workDescription()) {
+            <p class="verify-description">{{ workDescription() }}</p>
+          }
+          <p class="verify-question">
+            Вы подтверждаете, что этот ремонт выполнен качественно и в срок?
+          </p>
+        </div>
+
+        <div class="verify-actions">
+          <button
+            type="button"
+            class="verify-btn verify-btn--confirm"
+            [disabled]="submitting()"
+            (click)="confirm()"
+          >
+            Да, подтверждаю
+          </button>
+          <button
+            type="button"
+            class="verify-btn verify-btn--reject"
+            [disabled]="submitting()"
+            (click)="reject()"
+          >
+            Нет, это не моя работа
+          </button>
+        </div>
+
+        <p class="verify-footnote">
+          Ссылка одноразовая. После ответа повторно открыть страницу будет нельзя.
+        </p>
+      }
+    }
+  </main>
+</div>

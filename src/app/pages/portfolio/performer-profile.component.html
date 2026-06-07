@@ -8,7 +8,7 @@
     <div class="profile-hero-bg" aria-hidden="true"></div>
 
     <div class="profile-hero-inner">
-      <a routerLink="/portfolio" class="back-link">← Каталог портфолио</a>
+      <a [routerLink]="catalogLink()" class="back-link">← {{ type() === 'brigade' ? 'К бригадам' : 'К мастерам' }}</a>
 
       <div class="profile-hero-card">
         <div class="profile-hero-top">
@@ -122,7 +122,7 @@
 
         <div class="showcase-cta">
           <p>Понравился результат? Выберите бригаду в каталоге.</p>
-          <a routerLink="/portfolio" fragment="brigade-section" class="btn-primary btn-large">Выбрать бригаду</a>
+          <a routerLink="/brigades" class="btn-primary btn-large">Выбрать бригаду</a>
         </div>
       }
     </div>
@@ -131,6 +131,6 @@
   <section class="profile-not-found">
     <h1>Исполнитель не найден</h1>
     <p>Возможно, профиль снят с публикации или ссылка устарела.</p>
-    <a routerLink="/portfolio" class="btn-primary">В каталог</a>
+    <a [routerLink]="catalogLink()" class="btn-primary">{{ type() === 'brigade' ? 'К бригадам' : 'К мастерам' }}</a>
   </section>
 }

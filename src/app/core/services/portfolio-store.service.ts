@@ -5,8 +5,26 @@ import {
   PerformerProfile,
   PerformerType,
   WorkProject,
+  WorkVerificationStatus,
 } from '../models/portfolio.models';
 import { SEED_PERFORMERS } from '../data/portfolio.seed';
+import {
+  buildVerificationUrl,
+  generateVerificationCode,
+  generateVerificationToken,
+  normalizeClientContact,
+} from '../utils/work-verification.util';
+
+export interface WorkVerificationContext {
+  work: WorkProject;
+  performer: PerformerProfile;
+}
+
+export interface AddWorkResult {
+  work: WorkProject;
+  verificationLink: string | null;
+  verificationCode: string | null;
+}
 
 const PERFORMERS_KEY = 'smartbuild-tech-performers';
 const SESSION_KEY = 'smartbuild-tech-cabinet-session';
@@ -84,12 +102,23 @@ export class PortfolioStoreService {
 
   addWork(
     performerId: string,
-    data: { title: string; description: string; beforeImage: string; afterImage: string },
-  ): WorkProject | null {
+    data: {
+      title: string;
+      description: string;
+      beforeImage: string;
+      afterImage: string;
+      clientContact?: string;
+    },
+  ): AddWorkResult | null {
     const performer = this.performersSignal().find((p) => p.id === performerId);
     if (!performer?.subscribed) {
       return null;
     }
+
+    const clientContact = normalizeClientContact(data.clientContact ?? '');
+    const wantsVerification = !!clientContact;
+    const verificationToken = wantsVerification ? generateVerificationToken() : undefined;
+    const verificationCode = wantsVerification ? generateVerificationCode() : undefined;
 
     const work: WorkProject = {
       id: `work-${Date.now()}`,
@@ -98,13 +127,95 @@ export class PortfolioStoreService {
       beforeImage: data.beforeImage,
       afterImage: data.afterImage,
       createdAt: new Date().toISOString(),
+      verificationStatus: wantsVerification ? 'pending' : 'not_requested',
+      clientContact,
+      verificationToken,
+      verificationCode,
     };
 
     this.performersSignal.update((list) =>
       list.map((p) => (p.id === performerId ? { ...p, works: [work, ...p.works] } : p)),
     );
     this.persist();
-    return work;
+
+    const origin = this.appOrigin();
+    return {
+      work,
+      verificationLink: verificationToken ? buildVerificationUrl(verificationToken, origin) : null,
+      verificationCode: verificationCode ?? null,
+    };
+  }
+
+  getVerificationContext(token: string): WorkVerificationContext | null {
+    const normalized = token.trim();
+    if (!normalized) {
+      return null;
+    }
+
+    for (const performer of this.performersSignal()) {
+      const work = performer.works.find(
+        (item) => item.verificationToken === normalized && item.verificationStatus === 'pending',
+      );
+      if (work) {
+        return { work, performer };
+      }
+    }
+    return null;
+  }
+
+  respondToVerification(
+    token: string,
+    action: 'confirm' | 'reject',
+  ): { status: WorkVerificationStatus; work: WorkProject } | null {
+    const context = this.getVerificationContext(token);
+    if (!context) {
+      return null;
+    }
+
+    const nextStatus: WorkVerificationStatus = action === 'confirm' ? 'verified' : 'rejected';
+    const now = new Date().toISOString();
+    let updatedWork: WorkProject | null = null;
+
+    this.performersSignal.update((list) =>
+      list.map((performer) => {
+        if (performer.id !== context.performer.id) {
+          return performer;
+        }
+
+        return {
+          ...performer,
+          works: performer.works.map((item) => {
+            if (item.id !== context.work.id) {
+              return item;
+            }
+
+            updatedWork = {
+              ...item,
+              verificationStatus: nextStatus,
+              verificationToken: undefined,
+              verificationCode: undefined,
+              verifiedAt: action === 'confirm' ? now : item.verifiedAt,
+              rejectedAt: action === 'reject' ? now : item.rejectedAt,
+            };
+            return updatedWork;
+          }),
+        };
+      }),
+    );
+
+    if (!updatedWork) {
+      return null;
+    }
+
+    this.persist();
+    return { status: nextStatus, work: updatedWork };
+  }
+
+  verificationLinkForWork(work: WorkProject): string | null {
+    if (!work.verificationToken || work.verificationStatus !== 'pending') {
+      return null;
+    }
+    return buildVerificationUrl(work.verificationToken, this.appOrigin());
   }
 
   signIn(performerId: string): boolean {
@@ -141,7 +252,12 @@ export class PortfolioStoreService {
       const raw = localStorage.getItem(PERFORMERS_KEY);
       if (raw) {
         const custom = JSON.parse(raw) as PerformerProfile[];
-        const customOnly = custom.filter((p) => !p.isDemo);
+        const customOnly = custom
+          .filter((p) => !p.isDemo)
+          .map((performer) => ({
+            ...performer,
+            works: performer.works.map((item) => this.normalizeWork(item)),
+          }));
         this.performersSignal.set([...SEED_PERFORMERS, ...customOnly]);
       }
 
@@ -162,6 +278,20 @@ export class PortfolioStoreService {
     const customOnly = this.performersSignal().filter((p) => !p.isDemo);
     localStorage.setItem(PERFORMERS_KEY, JSON.stringify(customOnly));
     this.persistSession();
+  }
+
+  private normalizeWork(work: WorkProject): WorkProject {
+    return {
+      ...work,
+      verificationStatus: work.verificationStatus ?? 'not_requested',
+    };
+  }
+
+  private appOrigin(): string {
+    if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return 'https://smartbuild.tech';
   }
 
   private persistSession(): void {

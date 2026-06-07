@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 
@@ -21,6 +22,7 @@ interface ServiceItem {
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly portfolioStore = inject(PortfolioStoreService);
+  protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
 

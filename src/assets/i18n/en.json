@@ -9,6 +9,9 @@
     "nav": {
       "features": "Benefits",
       "services": "Masters",
+      "brigades": "Teams",
+      "masters": "Masters",
+      "furniture": "Furniture",
       "portfolio": "Portfolio",
       "cabinet": "Dashboard",
       "moderation": "Moderation",
@@ -37,10 +40,10 @@
   "home": {
     "hero": {
       "imageAlt": "Interior after renovation",
-      "title": "Transform your space",
-      "subtitle": "Renovation of apartments, houses and individual rooms. Teams and masters for specific tasks.",
-      "primary": "Choose a team",
-      "secondary": "Work catalog",
+      "title": "Renovation marketplace",
+      "subtitle": "Customers, teams and masters connect on SmartBuild.Tech and communicate directly.",
+      "primary": "Find a team",
+      "secondary": "Find a master",
       "tagsAria": "Main services",
       "tags": {
         "0": "Tiling",
@@ -60,9 +63,9 @@
       "slide": "Slide"
     },
     "features": {
-      "eyebrow": "Benefits",
-      "title": "Why choose us",
-      "subtitle": "Teams and masters for any renovation task",
+      "eyebrow": "Platform",
+      "title": "Why choose SmartBuild",
+      "subtitle": "A neutral marketplace — customers and performers connect without a middleman",
       "cards": {
         "0": {
           "title": "Reviews and portfolio",
@@ -87,9 +90,9 @@
       }
     },
     "services": {
-      "eyebrow": "Services",
-      "title": "Our services",
-      "subtitle": "Turnkey team or individual master — for your task",
+      "eyebrow": "Categories",
+      "title": "Work categories",
+      "subtitle": "Popular specializations of performers on the platform",
       "items": {
         "turnkey": {
           "title": "Turnkey renovation master",
@@ -118,16 +121,22 @@
       }
     },
     "portfolio": {
-      "eyebrow": "Portfolio",
-      "title": "Catalog of teams and masters",
-      "subtitle": "See before/after work. Masters and team leads publish projects by subscription.",
+      "eyebrow": "Gallery",
+      "title": "Work by platform performers",
+      "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
+      "sampleTitle": "Sample completed order",
+      "sampleDesc": "A performer publication from the SmartBuild.Tech catalog",
       "actions": {
-        "view": "View portfolio",
-        "place": "Publish your work"
+        "view": "View case",
+        "brigades": "All teams",
+        "masters": "All masters",
+        "furniture": "Furniture companies",
+        "place": "Publish work"
       },
       "stats": {
         "brigades": "teams",
-        "workers": "masters"
+        "workers": "masters",
+        "furniture": "companies"
       }
     },
     "estimate": {
@@ -155,13 +164,70 @@
     }
   },
   "portfolio": {
+    "hub": {
+      "title": "SmartBuild.Tech catalog",
+      "subtitle": "Teams, masters and furniture companies — before/after work and client reviews.",
+      "cta": "Publish your work",
+      "reviewsEyebrow": "Reviews",
+      "reviewsTitle": "What clients say",
+      "reviewsLead": "Verified reviews about teams and masters.",
+      "pricingTitle": "Subscription for performers",
+      "pricingMaster": "master / mo",
+      "pricingBrigade": "team lead / mo",
+      "pricingCta": "Open dashboard"
+    },
     "jump": {
       "brigades": "Teams",
       "workers": "Masters",
+      "furniture": "Furniture companies",
       "smeta": "Estimate",
       "smetaHint": "after choosing a team",
+      "furnitureHint": "kitchens, wardrobes, built-in furniture",
       "inCatalog": "in catalog"
     }
+  },
+  "brigades": {
+    "title": "Teams",
+    "subtitle": "Crews for full renovation of apartments, houses and individual rooms.",
+    "cta": "Publish a team",
+    "pickTitle": "Choose a team",
+    "pickLead": "Click a card to select a team for the estimate.",
+    "inCatalog": "teams in catalog",
+    "badge": "Team",
+    "allWorks": "All work",
+    "empty": "No published teams yet."
+  },
+  "masters": {
+    "title": "Masters",
+    "subtitle": "Specialists for individual tasks: tiling, electrical, plumbing, finishing.",
+    "cta": "Publish profile",
+    "listTitle": "Masters catalog",
+    "listLead": "Pick a master by specialty and view before/after work.",
+    "inCatalog": "masters in catalog",
+    "badge": "Master",
+    "allWorks": "All work",
+    "empty": "No published masters yet."
+  },
+  "furniture": {
+    "title": "Furniture companies",
+    "subtitle": "Kitchens, wardrobes, closets and custom built-in furniture.",
+    "cta": "Publish company",
+    "listTitle": "Company catalog",
+    "listLead": "Furniture workshops with real projects and before/after photos.",
+    "inCatalog": "companies in catalog",
+    "badge": "Furniture",
+    "allWorks": "All projects",
+    "empty": "No published companies yet.",
+    "back": "Back to furniture catalog",
+    "projects": "projects",
+    "worksEyebrow": "Portfolio",
+    "worksTitle": "Company work",
+    "worksLead": "Real custom furniture projects.",
+    "moreProjects": "More projects",
+    "noWorksTitle": "No projects yet",
+    "noWorksLead": "The company has not published work in the catalog yet.",
+    "notFoundTitle": "Company not found",
+    "notFoundLead": "The profile may have been removed or is not published yet."
   },
   "moderation": {
     "title": "Review moderation",

@@ -1,5 +1,8 @@
 export type PerformerType = 'brigade' | 'worker';
 
+/** Client confirmation lifecycle for a portfolio work. */
+export type WorkVerificationStatus = 'not_requested' | 'pending' | 'verified' | 'rejected';
+
 export interface SubscriptionPlan {
   type: PerformerType;
   priceUsd: number;
@@ -15,6 +18,16 @@ export interface WorkProject {
   beforeImage: string;
   afterImage: string;
   createdAt: string;
+  /** Set when the performer requests client confirmation. */
+  verificationStatus: WorkVerificationStatus;
+  /** Phone or email entered by the performer (not shown publicly). */
+  clientContact?: string;
+  /** One-time link token; cleared after client responds. */
+  verificationToken?: string;
+  /** Short code for SMS / messenger fallback. */
+  verificationCode?: string;
+  verifiedAt?: string;
+  rejectedAt?: string;
 }
 
 export interface PerformerProfile {

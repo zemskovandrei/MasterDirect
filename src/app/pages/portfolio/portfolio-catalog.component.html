@@ -1,38 +1,36 @@
 <section class="page-hero">
   <div class="page-hero-inner">
-    <h1>Портфолио</h1>
-    <p>
-      Бригады, мастера и смета — выберите исполнителя, затем откройте расчёт по выбранной бригаде.
-    </p>
-    <a routerLink="/cabinet" class="btn-primary">Разместить свои работы</a>
+    <h1>{{ translation.t('portfolio.hub.title') }}</h1>
+    <p>{{ translation.t('portfolio.hub.subtitle') }}</p>
+    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('portfolio.hub.cta') }}</a>
   </div>
 </section>
 
 <section class="catalog">
   <div class="catalog-inner">
     <nav class="catalog-jump" id="catalog-tabs" aria-label="Разделы портфолио">
-      <a routerLink="/portfolio" fragment="brigade-section" class="catalog-jump-link catalog-jump-link--brigade">
+      <a routerLink="/brigades" class="catalog-jump-link catalog-jump-link--brigade">
         <span class="catalog-jump-icon" aria-hidden="true">👷</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.brigades') }}</strong>
           <small>{{ store.brigades().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
         </span>
       </a>
-      <a routerLink="/portfolio" fragment="workers" class="catalog-jump-link catalog-jump-link--worker">
+      <a routerLink="/masters" class="catalog-jump-link catalog-jump-link--worker">
         <span class="catalog-jump-icon" aria-hidden="true">🔧</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.workers') }}</strong>
           <small>{{ store.workers().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
         </span>
       </a>
-      <a
-        routerLink="/portfolio"
-        fragment="smeta-section"
-        class="catalog-jump-link catalog-jump-link--smeta"
-        [class.catalog-jump-link--smeta-locked]="!isBrigadeSelected()"
-        (mouseenter)="onSmetaHintEnter()"
-        (mouseleave)="onSmetaHintLeave()"
-      >
+      <a routerLink="/furniture" class="catalog-jump-link catalog-jump-link--furniture">
+        <span class="catalog-jump-icon" aria-hidden="true">🪑</span>
+        <span class="catalog-jump-text">
+          <strong>{{ translation.t('portfolio.jump.furniture') }}</strong>
+          <small>{{ furnitureStore.published().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
+        </span>
+      </a>
+      <a routerLink="/brigades" fragment="smeta-section" class="catalog-jump-link catalog-jump-link--smeta">
         <span class="catalog-jump-icon" aria-hidden="true">📋</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.smeta') }}</strong>
@@ -44,9 +42,9 @@
     @if (reviewStore.approvedReviews().length > 0) {
       <section class="catalog-reviews">
         <div class="section-header">
-          <span class="section-eyebrow">Отзывы</span>
-          <h2>Отзывы из портфолио</h2>
-          <p class="section-subtitle">Одобренные отзывы публикуются вместе с работами мастеров и бригад.</p>
+          <span class="section-eyebrow">{{ translation.t('portfolio.hub.reviewsEyebrow') }}</span>
+          <h2>{{ translation.t('portfolio.hub.reviewsTitle') }}</h2>
+          <p class="section-subtitle">{{ translation.t('portfolio.hub.reviewsLead') }}</p>
         </div>
         <div class="review-grid">
           @for (review of reviewStore.approvedReviews(); track review.id) {
@@ -62,127 +60,17 @@
       </section>
     }
 
-    <section
-      class="catalog-group catalog-group--brigade"
-      id="brigade-section"
-      [class.attention-pulse]="highlightBrigades()"
-    >
-      <header class="catalog-group-header">
-        <div class="catalog-group-label">
-          <span class="catalog-group-icon" aria-hidden="true">👷</span>
-          <span class="performer-badge">Бригады</span>
-        </div>
-        <h2>Выберите бригаду</h2>
-        <p class="catalog-group-lead">
-          Комплексный ремонт под ключ: координация работ, сроки и сдача объекта одной командой.
-        </p>
-        <p class="catalog-group-count">{{ store.brigades().length }} бригад в каталоге</p>
-      </header>
-
-      <div class="performer-grid">
-        @for (p of store.brigades(); track p.id) {
-          <article
-            class="performer-card performer-card--brigade performer-card--selectable"
-            [class.performer-card--selected]="selectedBrigadeId() === p.id"
-            role="button"
-            tabindex="0"
-            [attr.aria-pressed]="selectedBrigadeId() === p.id"
-            (click)="selectBrigade(p.id)"
-            (keydown.enter)="selectBrigade(p.id)"
-            (keydown.space)="$event.preventDefault(); selectBrigade(p.id)"
-          >
-            <div class="performer-head">
-              <span class="performer-badge">Бригада</span>
-              @if (selectedBrigadeId() === p.id) {
-                <span class="performer-selected-mark" aria-hidden="true">✓</span>
-              }
-              <h3>{{ p.name }}</h3>
-              <p class="performer-specialty">{{ p.specialty }}</p>
-              <p class="performer-desc">{{ p.description }}</p>
-            </div>
-            @if (p.works[0]) {
-              <app-before-after [work]="p.works[0]" layout="split" />
-            }
-            <a
-              [routerLink]="performerLink('brigade', p.id)"
-              class="performer-more"
-              (click)="$event.stopPropagation()"
-            >
-              Все работы ({{ p.works.length }}) →
-            </a>
-          </article>
-        } @empty {
-          <p class="catalog-empty">Пока нет опубликованных бригад.</p>
-        }
-      </div>
-    </section>
-
-    <section class="catalog-group catalog-group--worker" id="workers">
-      <header class="catalog-group-header">
-        <div class="catalog-group-label">
-          <span class="catalog-group-icon" aria-hidden="true">🔧</span>
-          <span class="performer-badge performer-badge-worker">Мастера</span>
-        </div>
-        <h2>Мастера</h2>
-        <p class="catalog-group-lead">
-          Отдельные специалисты: плитка, электрика, сантехника, отделка и другие узкие задачи.
-        </p>
-        <p class="catalog-group-count">{{ store.workers().length }} мастеров в каталоге</p>
-      </header>
-
-      <div class="performer-grid">
-        @for (p of store.workers(); track p.id) {
-          <article class="performer-card performer-card--worker">
-            <div class="performer-head">
-              <span class="performer-badge performer-badge-worker">Мастер</span>
-              <h3>
-                <a [routerLink]="performerLink('worker', p.id)">{{ p.name }}</a>
-              </h3>
-              <p class="performer-specialty">{{ p.specialty }}</p>
-              <p class="performer-desc">{{ p.description }}</p>
-            </div>
-            @if (p.works[0]) {
-              <app-before-after [work]="p.works[0]" layout="split" />
-            }
-            <a [routerLink]="performerLink('worker', p.id)" class="performer-more">
-              Все работы ({{ p.works.length }}) →
-            </a>
-          </article>
-        } @empty {
-          <p class="catalog-empty">Пока нет опубликованных мастеров.</p>
-        }
-      </div>
-    </section>
-
-    <section class="estimate-panel" id="smeta-section">
-      <span
-        class="smeta-btn-wrap"
-        (mouseenter)="onSmetaHintEnter()"
-        (mouseleave)="onSmetaHintLeave()"
-      >
-        <button
-          type="button"
-          id="smeta-btn"
-          class="estimate-view-btn"
-          [disabled]="!isBrigadeSelected()"
-          (click)="viewEstimate()"
-        >
-          {{ translation.t('app.nav.estimate') }}
-        </button>
-      </span>
-    </section>
-
     <aside class="catalog-pricing">
-      <h3>Публикация работ</h3>
+      <h3>{{ translation.t('portfolio.hub.pricingTitle') }}</h3>
       <div class="pricing-mini">
         <div>
-          <strong>$5</strong> / мес — мастер
+          <strong>$5</strong> / {{ translation.t('portfolio.hub.pricingMaster') }}
         </div>
         <div>
-          <strong>$15</strong> / мес — бригадир
+          <strong>$15</strong> / {{ translation.t('portfolio.hub.pricingBrigade') }}
         </div>
       </div>
-      <a routerLink="/cabinet" class="btn-secondary">Оформить в кабинете</a>
+      <a routerLink="/cabinet" class="btn-secondary">{{ translation.t('portfolio.hub.pricingCta') }}</a>
     </aside>
   </div>
 </section>

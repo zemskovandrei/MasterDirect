@@ -70,7 +70,7 @@ export class ReviewStoreService {
       id: `notification-${Date.now()}`,
       reviewId: review.id,
       message: `Отзыв "${review.category}" от ${review.name} опубликован. `,
-      link: '/portfolio',
+      link: '/brigades',
       createdAt: new Date().toISOString(),
     };
 

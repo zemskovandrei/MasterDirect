@@ -1,0 +1,48 @@
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <h1>{{ translation.t('masters.title') }}</h1>
+    <p>{{ translation.t('masters.subtitle') }}</p>
+    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('masters.cta') }}</a>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="catalog-inner">
+    <section class="catalog-group catalog-group--worker" id="workers">
+      <header class="catalog-group-header">
+        <div class="catalog-group-label">
+          <span class="catalog-group-icon" aria-hidden="true">🔧</span>
+          <span class="performer-badge performer-badge-worker">{{ translation.t('masters.badge') }}</span>
+        </div>
+        <h2>{{ translation.t('masters.listTitle') }}</h2>
+        <p class="catalog-group-lead">{{ translation.t('masters.listLead') }}</p>
+        <p class="catalog-group-count">
+          {{ store.workers().length }} {{ translation.t('masters.inCatalog') }}
+        </p>
+      </header>
+
+      <div class="performer-grid">
+        @for (p of store.workers(); track p.id) {
+          <article class="performer-card performer-card--worker">
+            <div class="performer-head">
+              <span class="performer-badge performer-badge-worker">{{ translation.t('masters.badge') }}</span>
+              <h3>
+                <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
+              </h3>
+              <p class="performer-specialty">{{ p.specialty }}</p>
+              <p class="performer-desc">{{ p.description }}</p>
+            </div>
+            @if (p.works[0]) {
+              <app-before-after [work]="p.works[0]" layout="split" />
+            }
+            <a [routerLink]="performerLink(p.id)" class="performer-more">
+              {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
+            </a>
+          </article>
+        } @empty {
+          <p class="catalog-empty">{{ translation.t('masters.empty') }}</p>
+        }
+      </div>
+    </section>
+  </div>
+</section>

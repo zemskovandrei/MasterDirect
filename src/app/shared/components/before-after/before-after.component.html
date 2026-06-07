@@ -1,16 +1,23 @@
 <figure class="before-after" [class.ba-featured]="featured()" [class.ba-split]="layout() === 'split'">
+  @if (verificationBadge(); as badge) {
+    <div class="work-verify-badge" [class]="badge.className" role="status">
+      <span class="work-verify-badge-icon" aria-hidden="true">{{ badge.icon }}</span>
+      <span>{{ badge.label }}</span>
+    </div>
+  }
+
   @if (layout() === 'compare') {
     <div class="ba-compare-card">
       <div
         class="ba-compare"
         [style.--pos-num]="sliderPos()"
         role="img"
-        [attr.aria-label]="work().title + ': сравнение до и после'"
+        [attr.aria-label]="displayTitle() + ': сравнение до и после'"
       >
         <img
           class="ba-img ba-img-after"
           [src]="work().afterImage"
-          [alt]="work().title + ' — после ремонта'"
+          [alt]="displayTitle() + ' — после ремонта'"
           loading="lazy"
           draggable="false"
         />
@@ -19,7 +26,7 @@
           <img
             class="ba-img ba-img-before"
             [src]="work().beforeImage"
-            [alt]="work().title + ' — до ремонта'"
+            [alt]="displayTitle() + ' — до ремонта'"
             loading="lazy"
             draggable="false"
           />
@@ -44,7 +51,7 @@
           max="92"
           [value]="sliderPos()"
           (input)="onSliderInput($event)"
-          [attr.aria-label]="'Сравнить до и после: ' + work().title"
+          [attr.aria-label]="'Сравнить до и после: ' + displayTitle()"
         />
       </div>
 
@@ -73,11 +80,11 @@
 
   <figcaption class="ba-caption">
     <div class="ba-caption-top">
-      <h4>{{ work().title }}</h4>
+      <h4>{{ displayTitle() }}</h4>
       <span class="ba-tag">До / После</span>
     </div>
-    @if (work().description) {
-      <p>{{ work().description }}</p>
+    @if (displayDescription(); as desc) {
+      <p>{{ desc }}</p>
     }
   </figcaption>
 </figure>

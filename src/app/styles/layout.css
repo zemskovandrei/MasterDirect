@@ -38,11 +38,13 @@ section {
 .eyebrow {
   display: block;
   color: var(--primary);
-  text-transform: uppercase;
+  text-transform: none;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.02em;
   font-size: 0.85rem;
   margin-bottom: 12px;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 h2 {
@@ -59,55 +61,7 @@ h2 {
   line-height: 1.6;
 }
 
-/* Header: Стеклянный эффект */
-.header {
-  position: sticky;
-  top: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  z-index: 1000;
-  padding: 12px 0;
-}
-
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo h1 {
-  font-size: 1.5rem;
-  margin: 0;
-  color: var(--primary);
-  font-weight: 900;
-}
-
-.nav ul {
-  display: flex;
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.nav a {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-  transition: var(--transition);
-}
-
-.nav a:hover {
-  color: var(--primary);
-}
-
-.header-phone {
-  font-weight: 700;
-  color: var(--text);
-  text-decoration: none;
-  margin-right: 20px;
-}
+/* Header/footer — в site-global.css + theme.css + site-layout */
 
 /* Buttons */
 .btn-primary {
@@ -384,31 +338,3 @@ h2 {
   font-weight: bold;
 }
 
-/* Footer */
-.footer {
-  background: #0f172a;
-  color: white;
-  padding: 80px 0 40px;
-}
-
-.footer-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 40px;
-  margin-bottom: 60px;
-}
-
-.footer-column h3 { color: white; margin-bottom: 20px; }
-.footer-column ul { list-style: none; padding: 0; }
-.footer-column li { margin-bottom: 12px; }
-.footer-column a { color: #94a3b8; text-decoration: none; }
-.footer-contact a { display: block; color: #94a3b8; text-decoration: none; margin-bottom: 10px; }
-
-.footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 40px;
-  display: flex;
-  justify-content: space-between;
-  color: #64748b;
-  font-size: 0.9rem;
-}

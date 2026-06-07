@@ -8,8 +8,8 @@
         <h2>{{ translation.t('home.hero.title') }}</h2>
         <p>{{ translation.t('home.hero.subtitle') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/portfolio" fragment="brigade-section">{{ translation.t('home.hero.primary') }}</a>
-          <a class="btn-secondary btn-large" routerLink="/portfolio">{{ translation.t('home.hero.secondary') }}</a>
+          <a class="btn-primary btn-large" routerLink="/brigades">{{ translation.t('home.hero.primary') }}</a>
+          <a class="btn-secondary btn-large" routerLink="/masters">{{ translation.t('home.hero.secondary') }}</a>
         </div>
         <div class="hero-tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
           <span>{{ translation.t('home.hero.tags.0') }}</span>
@@ -59,17 +59,17 @@
       <p class="section-subtitle">{{ translation.t('home.features.subtitle') }}</p>
     </div>
     <div class="features-grid">
-      <a routerLink="/portfolio" class="feature-card feature-card-link">
+      <a routerLink="/furniture" class="feature-card feature-card-link">
         <div class="feature-icon">✓</div>
         <h3>{{ translation.t('home.features.cards.0.title') }}</h3>
         <p>{{ translation.t('home.features.cards.0.desc') }}</p>
       </a>
-      <a routerLink="/portfolio" fragment="brigade-section" class="feature-card feature-card-link">
+      <a routerLink="/brigades" class="feature-card feature-card-link">
         <div class="feature-icon">✓</div>
         <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
         <p>{{ translation.t('home.features.cards.1.desc') }}</p>
       </a>
-      <a routerLink="/portfolio" fragment="workers" class="feature-card feature-card-link">
+      <a routerLink="/masters" class="feature-card feature-card-link">
         <div class="feature-icon">✓</div>
         <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
         <p>{{ translation.t('home.features.cards.2.desc') }}</p>
@@ -107,7 +107,7 @@
   </div>
 </section>
 
-<section class="portfolio-teaser" id="portfolio">
+<section class="portfolio-teaser" id="catalog">
   <div class="portfolio-container">
     <div class="section-header">
       <span class="section-eyebrow">{{ translation.t('home.portfolio.eyebrow') }}</span>
@@ -118,14 +118,30 @@
     @if (portfolioStore.brigades()[0]; as brigade) {
       @if (brigade.works[0]; as sample) {
         <div class="teaser-sample">
-          <app-before-after [work]="sample" layout="compare" [featured]="true" />
+          <app-before-after
+            [work]="sample"
+            layout="compare"
+            [featured]="true"
+            [titleOverride]="translation.t('home.portfolio.sampleTitle')"
+            [descriptionOverride]="translation.t('home.portfolio.sampleDesc')"
+          />
         </div>
       }
     }
 
     <div class="teaser-actions">
-      <a routerLink="/portfolio" class="btn-primary btn-large">{{ translation.t('home.portfolio.actions.view') }}</a>
+      @if (portfolioStore.brigades()[0]; as brigade) {
+        <a [routerLink]="['/brigades', brigade.id]" class="btn-primary btn-large">{{
+          translation.t('home.portfolio.actions.view')
+        }}</a>
+      } @else {
+        <a routerLink="/brigades" class="btn-primary btn-large">{{
+          translation.t('home.portfolio.actions.view')
+        }}</a>
+      }
       <a routerLink="/cabinet" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.place') }}</a>
+      <a routerLink="/brigades" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.brigades') }}</a>
+      <a routerLink="/masters" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.masters') }}</a>
     </div>
 
     <div class="teaser-stats">
@@ -136,6 +152,10 @@
       <div class="stat">
         <strong>{{ portfolioStore.workers().length }}</strong>
         <span>{{ translation.t('home.portfolio.stats.workers') }}</span>
+      </div>
+      <div class="stat">
+        <strong>{{ furnitureStore.published().length }}</strong>
+        <span>{{ translation.t('home.portfolio.stats.furniture') }}</span>
       </div>
     </div>
   </div>

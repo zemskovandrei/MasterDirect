@@ -1,0 +1,49 @@
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <h1>{{ translation.t('furniture.title') }}</h1>
+    <p>{{ translation.t('furniture.subtitle') }}</p>
+    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('furniture.cta') }}</a>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="catalog-inner">
+    <section class="catalog-group catalog-group--furniture" id="furniture">
+      <header class="catalog-group-header">
+        <div class="catalog-group-label">
+          <span class="catalog-group-icon" aria-hidden="true">🪑</span>
+          <span class="performer-badge performer-badge-furniture">{{ translation.t('furniture.badge') }}</span>
+        </div>
+        <h2>{{ translation.t('furniture.listTitle') }}</h2>
+        <p class="catalog-group-lead">{{ translation.t('furniture.listLead') }}</p>
+        <p class="catalog-group-count">
+          {{ furnitureStore.published().length }} {{ translation.t('furniture.inCatalog') }}
+        </p>
+      </header>
+
+      <div class="performer-grid">
+        @for (company of furnitureStore.published(); track company.id) {
+          <article class="performer-card performer-card--furniture">
+            <div class="performer-head">
+              <span class="performer-badge performer-badge-furniture">{{ translation.t('furniture.badge') }}</span>
+              <h3>
+                <a [routerLink]="['/furniture', company.id]">{{ company.name }}</a>
+              </h3>
+              <p class="performer-city">{{ company.city }}</p>
+              <p class="performer-specialty">{{ company.specialty }}</p>
+              <p class="performer-desc">{{ company.description }}</p>
+            </div>
+            @if (company.works[0]) {
+              <app-before-after [work]="company.works[0]" layout="split" />
+            }
+            <a [routerLink]="['/furniture', company.id]" class="performer-more">
+              {{ translation.t('furniture.allWorks') }} ({{ company.works.length }}) →
+            </a>
+          </article>
+        } @empty {
+          <p class="catalog-empty">{{ translation.t('furniture.empty') }}</p>
+        }
+      </div>
+    </section>
+  </div>
+</section>

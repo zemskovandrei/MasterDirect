@@ -3,6 +3,10 @@ import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
+import en from '../../../assets/i18n/en.json';
+import ge from '../../../assets/i18n/ge.json';
+import ru from '../../../assets/i18n/ru.json';
+
 export type Locale = 'ru' | 'en' | 'ge';
 
 const LOCALE_KEY = 'smartbuild-tech-locale';
@@ -16,12 +20,19 @@ export class TranslationService {
 
   constructor() {
     this.translate.setFallbackLang('ru');
+    this.translate.setTranslation('ru', ru);
+    this.translate.setTranslation('en', en);
+    this.translate.setTranslation('ge', ge);
     void this.setLocale(this.getSavedLocale());
   }
 
   t(key: string): string {
     this.locale();
-    return this.translate.instant(key) || key;
+    const value = this.translate.instant(key);
+    if (value && value !== key) {
+      return value;
+    }
+    return key;
   }
 
   async setLocale(next: Locale): Promise<void> {

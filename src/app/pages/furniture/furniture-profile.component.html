@@ -1,0 +1,91 @@
+@if (company(); as c) {
+  <section class="profile-hero furniture-hero">
+    @if (heroImage(); as cover) {
+      <div class="profile-hero-cover" aria-hidden="true">
+        <img [src]="cover" alt="" />
+      </div>
+    }
+    <div class="profile-hero-bg" aria-hidden="true"></div>
+
+    <div class="profile-hero-inner">
+      <a routerLink="/furniture" class="back-link">← {{ translation.t('furniture.back') }}</a>
+
+      <div class="profile-hero-card">
+        <div class="profile-hero-top">
+          <div class="profile-avatar furniture-avatar" aria-hidden="true">
+            @if (heroImage(); as thumb) {
+              <img class="profile-avatar-photo" [src]="thumb" alt="" />
+            } @else {
+              <span class="profile-avatar-icon">🪑</span>
+            }
+          </div>
+
+          <div class="profile-hero-head">
+            <span class="profile-badge furniture-badge">{{ translation.t('furniture.badge') }}</span>
+            <h1>{{ c.name }}</h1>
+            <p class="profile-specialty">{{ c.specialty }}</p>
+            <p class="profile-city">{{ c.city }}</p>
+          </div>
+        </div>
+
+        <p class="profile-desc">{{ c.description }}</p>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <span class="profile-stat-icon" aria-hidden="true">📁</span>
+            <div>
+              <strong>{{ c.works.length }}</strong>
+              <span>{{ translation.t('furniture.projects') }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="showcase-works">
+    <div class="showcase-inner">
+      @if (c.works.length === 0) {
+        <div class="works-empty">
+          <span class="works-empty-icon" aria-hidden="true">🪑</span>
+          <h2>{{ translation.t('furniture.noWorksTitle') }}</h2>
+          <p>{{ translation.t('furniture.noWorksLead') }}</p>
+        </div>
+      } @else {
+        <div class="showcase-intro">
+          <span class="section-eyebrow">{{ translation.t('furniture.worksEyebrow') }}</span>
+          <h2>{{ translation.t('furniture.worksTitle') }}</h2>
+          <p class="section-subtitle">{{ translation.t('furniture.worksLead') }}</p>
+        </div>
+
+        @if (c.works[0]; as heroWork) {
+          <div class="showcase-featured">
+            <app-before-after [work]="heroWork" [featured]="true" layout="compare" />
+          </div>
+        }
+
+        @if (c.works.length > 1) {
+          <div class="showcase-more">
+            <h3 class="showcase-more-title">
+              <span>{{ translation.t('furniture.moreProjects') }}</span>
+              <span class="showcase-count">{{ c.works.length - 1 }}</span>
+            </h3>
+            <div class="showcase-grid">
+              @for (work of c.works.slice(1); track work.id) {
+                <div class="showcase-grid-item">
+                  <app-before-after [work]="work" layout="compare" />
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </section>
+} @else {
+  <section class="profile-not-found">
+    <h1>{{ translation.t('furniture.notFoundTitle') }}</h1>
+    <p>{{ translation.t('furniture.notFoundLead') }}</p>
+    <a routerLink="/furniture" class="btn-primary">{{ translation.t('furniture.back') }}</a>
+  </section>
+}

@@ -120,21 +120,61 @@
                 }
               </label>
 
-              <label class="register-field" [class.register-field--error]="registerFieldInvalid('specialty')">
+              <div
+                class="register-field register-field--specialty"
+                [class.register-field--error]="registerFieldInvalid('specialty')"
+                [class.register-field--specialty-open]="specialtyMenuOpen()"
+              >
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">🛠</span>
                   Специализация
                   <em>обязательно</em>
                 </span>
-                <input
-                  type="text"
-                  formControlName="specialty"
-                  placeholder="Плиточник, электрик, ремонт под ключ..."
-                />
+
+                <input type="hidden" formControlName="specialty" />
+
+                <div class="specialty-dropdown-wrap" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="specialty-trigger"
+                    [class.specialty-trigger--open]="specialtyMenuOpen()"
+                    aria-haspopup="listbox"
+                    [attr.aria-expanded]="specialtyMenuOpen()"
+                    (click)="toggleSpecialtyMenu($event)"
+                  >
+                    <span class="specialty-trigger-text" [class.specialty-trigger-text--empty]="!specialtyDisplay()">
+                      {{ specialtyDisplay() || 'Плиточник, электрик, ремонт под ключ...' }}
+                    </span>
+                    <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
+                  </button>
+
+                  @if (specialtyMenuOpen()) {
+                    <div
+                      class="specialty-dropdown-menu"
+                      role="listbox"
+                      aria-multiselectable="true"
+                      [style.top.px]="specialtyMenuTop()"
+                      [style.left.px]="specialtyMenuLeft()"
+                      [style.width.px]="specialtyMenuWidth()"
+                    >
+                      @for (option of specialtyOptions; track option) {
+                        <label class="specialty-dropdown-item">
+                          <input
+                            type="checkbox"
+                            [checked]="isSpecialtySelected(option)"
+                            (change)="toggleSpecialtyOption(option, $event)"
+                          />
+                          <span>{{ option }}</span>
+                        </label>
+                      }
+                    </div>
+                  }
+                </div>
+
                 @if (registerFieldInvalid('specialty')) {
                   <small class="field-error">Укажите специализацию</small>
                 }
-              </label>
+              </div>
 
               <label
                 class="register-field"
@@ -182,7 +222,10 @@
                 <p>{{ performer.specialty }}</p>
               </div>
               <div class="summary-actions">
-                <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
+                <a
+                  [routerLink]="performer.type === 'brigade' ? ['/brigades', performer.id] : ['/masters', performer.id]"
+                  class="btn-secondary"
+                >
                   Открыть в каталоге
                 </a>
                 <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
@@ -208,35 +251,137 @@
 
             <div class="upload-section">
               <h3>Добавить работу «до / после»</h3>
+              <p class="upload-lead">
+                Заполните описание и загрузите пару фото. Укажите контакт клиента — он получит ссылку
+                для подтверждения, и работа будет отмечена как проверенная.
+              </p>
               @if (uploadSuccess()) {
-                <p class="upload-ok" role="status">Работа добавлена в портфолио!</p>
+                <p class="upload-ok" role="status">
+                  @if (lastUploadResult()?.verificationLink) {
+                    Работа опубликована со статусом «Ожидает подтверждения клиентом».
+                  } @else {
+                    Работа добавлена в каталог!
+                  }
+                </p>
+              }
+              @if (lastUploadResult()?.verificationLink; as link) {
+                <div class="verification-share" role="region" aria-label="Ссылка для клиента">
+                  <p class="verification-share-title">Отправьте клиенту ссылку для подтверждения</p>
+                  <div class="verification-share-row">
+                    <input class="verification-share-input" type="text" readonly [value]="link" />
+                    <button type="button" class="btn-secondary" (click)="copyVerificationLink(link)">
+                      Копировать
+                    </button>
+                  </div>
+                  @if (lastUploadResult()?.verificationCode; as code) {
+                    <p class="verification-share-code">
+                      Или код для SMS / мессенджера: <strong>{{ code }}</strong>
+                    </p>
+                  }
+                  @if (copyFeedback(); as feedback) {
+                    <p class="verification-share-feedback" role="status">{{ feedback }}</p>
+                  }
+                </div>
               }
               <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
-                <label class="form-field-light">
-                  <span>Название работы *</span>
-                  <input type="text" formControlName="title" placeholder="Ванная, кухня..." />
-                </label>
-                <label class="form-field-light">
-                  <span>Описание</span>
-                  <textarea formControlName="description" rows="2"></textarea>
-                </label>
-                <div class="upload-files">
-                  <label class="file-field">
-                    <span>Фото «До» *</span>
-                    <input type="file" accept="image/*" (change)="onFileSelected('before', $event)" />
-                    @if (beforePreview()) {
-                      <img [src]="beforePreview()!" alt="Превью до" class="file-preview" />
-                    }
+                <div class="upload-form-fields">
+                  <label class="work-field">
+                    <span class="work-field-label">Название работы <em>*</em></span>
+                    <input
+                      type="text"
+                      formControlName="title"
+                      placeholder="Например: Ванная комната, кухня под ключ"
+                      autocomplete="off"
+                    />
                   </label>
-                  <label class="file-field">
-                    <span>Фото «После» *</span>
-                    <input type="file" accept="image/*" (change)="onFileSelected('after', $event)" />
-                    @if (afterPreview()) {
-                      <img [src]="afterPreview()!" alt="Превью после" class="file-preview" />
-                    }
+
+                  <label class="work-field work-field--full">
+                    <span class="work-field-label">Описание</span>
+                    <textarea
+                      formControlName="description"
+                      rows="4"
+                      placeholder="Кратко опишите объём работ, материалы и сроки"
+                    ></textarea>
+                  </label>
+
+                  <label class="work-field work-field--full">
+                    <span class="work-field-label">Телефон или Email клиента для подтверждения</span>
+                    <input
+                      type="text"
+                      formControlName="clientContact"
+                      placeholder="+995 5XX XXX XXX или client@email.com"
+                      autocomplete="off"
+                    />
+                    <span class="work-field-hint">
+                      Необязательно. Если указать контакт, клиент сможет подтвердить работу по ссылке —
+                      без участия администратора.
+                    </span>
                   </label>
                 </div>
-                <button type="submit" class="btn-primary">Загрузить в портфолио</button>
+
+                <div class="upload-dropzones">
+                  <div class="dropzone-group">
+                    <span class="dropzone-heading">Фото «До» <em>*</em></span>
+                    <label
+                      class="dropzone"
+                      [class.dropzone--filled]="beforePreview()"
+                      [class.dropzone--dragging]="beforeDragging()"
+                      (dragover)="onDropzoneDragOver('before', $event)"
+                      (dragleave)="onDropzoneDragLeave('before')"
+                      (drop)="onDropzoneDrop('before', $event)"
+                    >
+                      <input
+                        #beforeInput
+                        type="file"
+                        class="dropzone-input"
+                        accept="image/*"
+                        (change)="onFileSelected('before', $event)"
+                      />
+                      @if (beforePreview(); as preview) {
+                        <img [src]="preview" alt="Превью: до ремонта" class="dropzone-preview" />
+                        <span class="dropzone-overlay">Заменить фото</span>
+                      } @else {
+                        <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                        <span class="dropzone-title">Перетащите фото или кликните для загрузки</span>
+                        <span class="dropzone-hint">JPG, PNG, WebP · до 800 КБ</span>
+                      }
+                    </label>
+                  </div>
+
+                  <div class="dropzone-group">
+                    <span class="dropzone-heading">Фото «После» <em>*</em></span>
+                    <label
+                      class="dropzone"
+                      [class.dropzone--filled]="afterPreview()"
+                      [class.dropzone--dragging]="afterDragging()"
+                      (dragover)="onDropzoneDragOver('after', $event)"
+                      (dragleave)="onDropzoneDragLeave('after')"
+                      (drop)="onDropzoneDrop('after', $event)"
+                    >
+                      <input
+                        #afterInput
+                        type="file"
+                        class="dropzone-input"
+                        accept="image/*"
+                        (change)="onFileSelected('after', $event)"
+                      />
+                      @if (afterPreview(); as preview) {
+                        <img [src]="preview" alt="Превью: после ремонта" class="dropzone-preview" />
+                        <span class="dropzone-overlay">Заменить фото</span>
+                      } @else {
+                        <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                        <span class="dropzone-title">Перетащите фото или кликните для загрузки</span>
+                        <span class="dropzone-hint">JPG, PNG, WebP · до 800 КБ</span>
+                      }
+                    </label>
+                  </div>
+                </div>
+
+                <div class="upload-form-actions">
+                  <button type="submit" class="btn-primary btn-large upload-submit">
+                    Загрузить в каталог
+                  </button>
+                </div>
               </form>
             </div>
 
@@ -245,7 +390,17 @@
                 <h3>Мои работы ({{ performer.works.length }})</h3>
                 <div class="my-works-grid">
                   @for (work of performer.works; track work.id) {
-                    <app-before-after [work]="work" layout="compare" />
+                    <div class="my-work-item">
+                      <app-before-after [work]="work" layout="compare" />
+                      @if (verificationLink(work); as link) {
+                        <div class="my-work-verify-link">
+                          <span>Ссылка для клиента:</span>
+                          <button type="button" class="btn-secondary btn-small" (click)="copyVerificationLink(link)">
+                            Копировать ссылку
+                          </button>
+                        </div>
+                      }
+                    </div>
                   }
                 </div>
               </div>

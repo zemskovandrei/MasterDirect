@@ -1,0 +1,99 @@
+<section class="page-hero moderation-hero">
+  <div class="page-hero-inner">
+    <h1>{{ translation.t('moderation.title') }}</h1>
+    <p>{{ translation.t('moderation.subtitle') }}</p>
+  </div>
+</section>
+
+<div class="moderation-page">
+  <div class="moderation-inner">
+    @if (!adminAuth.isAdmin()) {
+      <section class="admin-login">
+        <div class="admin-login-card">
+          <span class="section-eyebrow">{{ translation.t('moderation.login.eyebrow') }}</span>
+          <h2>{{ translation.t('moderation.login.title') }}</h2>
+          <p class="admin-login-lead">{{ translation.t('moderation.login.lead') }}</p>
+
+          <form class="admin-login-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+            <label class="admin-login-field">
+              <span>{{ translation.t('moderation.login.password') }}</span>
+              <input
+                type="password"
+                formControlName="password"
+                autocomplete="current-password"
+                [attr.placeholder]="translation.t('moderation.login.passwordPlaceholder')"
+              />
+            </label>
+
+            @if (loginError()) {
+              <p class="admin-login-error" role="alert">{{ translation.t('moderation.login.error') }}</p>
+            }
+
+            <button type="submit" class="btn-primary btn-large">
+              {{ translation.t('moderation.login.submit') }}
+            </button>
+          </form>
+
+          <p class="admin-login-note">{{ translation.t('moderation.login.demoNote') }}</p>
+        </div>
+      </section>
+    } @else {
+      <div class="moderation-toolbar">
+        <span class="moderation-badge">{{ translation.t('moderation.adminBadge') }}</span>
+        <button type="button" class="btn-text" (click)="logout()">
+          {{ translation.t('moderation.logout') }}
+        </button>
+      </div>
+
+      @if (reviewStore.notifications().length > 0) {
+        <section class="notification-panel">
+          <div class="notification-panel-header">
+            <strong>{{ translation.t('moderation.notifications.title') }}</strong>
+            <span>{{ translation.t('moderation.notifications.subtitle') }}</span>
+          </div>
+          <ul class="notification-list">
+            @for (note of reviewStore.notifications(); track note.id) {
+              <li>
+                <a [routerLink]="note.link" class="notification-link">{{ note.message }}</a>
+                <time>{{ note.createdAt | date: 'short' }}</time>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="review-moderation">
+        <div class="section-header">
+          <span class="section-eyebrow">{{ translation.t('moderation.panel.eyebrow') }}</span>
+          <h2>{{ translation.t('moderation.panel.title') }}</h2>
+          <p class="section-subtitle">{{ translation.t('moderation.panel.subtitle') }}</p>
+        </div>
+
+        @if (reviewStore.pendingReviews().length > 0) {
+          <div class="reviews-table">
+            @for (review of reviewStore.pendingReviews(); track review.id) {
+              <article class="review-card">
+                <div class="review-card-meta">
+                  <strong>{{ review.name }}</strong>
+                  <span>{{ review.performerType }} / {{ review.category }}</span>
+                  <time>{{ review.createdAt | date: 'short' }}</time>
+                </div>
+                <p>{{ review.review }}</p>
+                <div class="review-actions">
+                  <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
+                    {{ translation.t('moderation.actions.reject') }}
+                  </button>
+                  <button type="button" class="btn-primary" (click)="approveReview(review.id)">
+                    {{ translation.t('moderation.actions.approve') }}
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="review-empty">{{ translation.t('moderation.panel.empty') }}</p>
+        }
+      </section>
+    }
+  </div>
+</div>

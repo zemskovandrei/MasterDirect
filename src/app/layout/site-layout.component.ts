@@ -2,6 +2,8 @@ import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/c
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { TranslationService, type Locale } from '../core/services/translation.service';
+import { AdminAuthService } from '../core/services/admin-auth.service';
+
 @Component({
   selector: 'app-site-layout',
   standalone: true,
@@ -12,6 +14,7 @@ import { TranslationService, type Locale } from '../core/services/translation.se
 export class SiteLayoutComponent {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly translation = inject(TranslationService);
+  protected readonly adminAuth = inject(AdminAuthService);
 
   protected readonly title = signal('SmartBuild.Tech');
   protected readonly mobileMenuOpen = signal(false);

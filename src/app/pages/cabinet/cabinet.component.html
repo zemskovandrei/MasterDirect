@@ -174,41 +174,6 @@
       </section>
     } @else {
       @if (store.currentPerformer(); as performer) {
-        <div class="cabinet-tabs">
-          <button
-            type="button"
-            class="tab-button"
-            [class.tab-button--active]="activeSection() === 'profile'"
-            (click)="setSection('profile')"
-          >
-            Профиль
-          </button>
-          <button
-            type="button"
-            class="tab-button"
-            [class.tab-button--active]="activeSection() === 'moderation'"
-            (click)="setSection('moderation')"
-          >
-            Модерация отзывов
-          </button>
-        </div>
-
-        @if (notifications().length > 0) {
-          <section class="notification-panel">
-            <div class="notification-panel-header">
-              <strong>Уведомления</strong>
-              <span>Новые публикации отзывов</span>
-            </div>
-            <ul class="notification-list">
-              <li *ngFor="let note of notifications()">
-                <a [routerLink]="note.link" class="notification-link">{{ note.message }}</a>
-                <time>{{ note.createdAt | date:'short' }}</time>
-              </li>
-            </ul>
-          </section>
-        }
-
-        @if (activeSection() === 'profile') {
           <section class="cabinet-panel profile-summary">
             <div class="summary-head">
               <div>
@@ -287,43 +252,6 @@
             }
           }
         </section>
-      }
-        @if (activeSection() === 'moderation') {
-          <section class="review-moderation review-moderation--private">
-            <div class="section-header">
-              <span class="section-eyebrow">Личный раздел</span>
-              <h2>Новые отзывы на проверку</h2>
-              <p class="section-subtitle">
-                Этот раздел видите только вы. Подтверждайте отзывы, чтобы они начали появляться на сайте.
-              </p>
-            </div>
-
-            @if (reviewStore.pendingReviews().length > 0) {
-              <div class="reviews-table">
-                @for (review of reviewStore.pendingReviews(); track review.id) {
-                  <article class="review-card">
-                    <div class="review-card-meta">
-                      <strong>{{ review.name }}</strong>
-                      <span>{{ review.performerType }} / {{ review.category }}</span>
-                      <time>{{ review.createdAt | date:'short' }}</time>
-                    </div>
-                    <p>{{ review.review }}</p>
-                    <div class="review-actions">
-                      <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
-                        Отклонить
-                      </button>
-                      <button type="button" class="btn-primary" (click)="approveReview(review.id)">
-                        Подтвердить
-                      </button>
-                    </div>
-                  </article>
-                }
-              </div>
-            } @else {
-              <p class="review-empty">Новых отзывов пока нет. Все новые отзывы будут появляться здесь.</p>
-            }
-          </section>
-        }
       }
     }
   </div>

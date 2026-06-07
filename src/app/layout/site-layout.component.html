@@ -85,6 +85,13 @@
               translation.t('app.nav.cabinet')
             }}</a>
           </li>
+          @if (adminAuth.isAdmin()) {
+            <li>
+              <a routerLink="/moderation" routerLinkActive="active" (click)="onNavClick()">{{
+                translation.t('app.nav.moderation')
+              }}</a>
+            </li>
+          }
         </ul>
       </nav>
     </div>
@@ -118,9 +125,6 @@
           </li>
           <li>
             <a routerLink="/cabinet">{{ translation.t('app.nav.cabinet') }}</a>
-          </li>
-          <li>
-            <a routerLink="/moderation">{{ translation.t('app.footer.moderation') }}</a>
           </li>
         </ul>
       </div>

@@ -4,6 +4,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { PortfolioCatalogComponent } from './pages/portfolio/portfolio-catalog.component';
 import { PerformerProfileComponent } from './pages/portfolio/performer-profile.component';
 import { CabinetComponent } from './pages/cabinet/cabinet.component';
+import { ModerationComponent } from './pages/moderation/moderation.component';
 
 export const routes: Routes = [
   {
@@ -14,7 +15,7 @@ export const routes: Routes = [
       { path: 'portfolio', component: PortfolioCatalogComponent },
       { path: 'portfolio/:type/:id', component: PerformerProfileComponent },
       { path: 'cabinet', component: CabinetComponent },
-      { path: 'moderation', component: CabinetComponent },
+      { path: 'moderation', component: ModerationComponent },
     ],
   },
 ];

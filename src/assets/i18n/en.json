@@ -11,6 +11,7 @@
       "services": "Masters",
       "portfolio": "Portfolio",
       "cabinet": "Dashboard",
+      "moderation": "Moderation",
       "estimate": "Estimate"
     },
     "actions": {
@@ -160,6 +161,36 @@
       "smeta": "Estimate",
       "smetaHint": "after choosing a team",
       "inCatalog": "in catalog"
+    }
+  },
+  "moderation": {
+    "title": "Review moderation",
+    "subtitle": "Review and publish client feedback on SmartBuild.Tech",
+    "adminBadge": "Administrator mode",
+    "logout": "Sign out",
+    "login": {
+      "eyebrow": "Access",
+      "title": "Administrator sign-in",
+      "lead": "The moderation section is available to the site administrator only.",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "error": "Incorrect password. Try again.",
+      "submit": "Sign in",
+      "demoNote": "Demo password: smartbuild-admin"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Newly published reviews"
+    },
+    "panel": {
+      "eyebrow": "Queue",
+      "title": "New reviews pending approval",
+      "subtitle": "Approve reviews to publish them in the portfolio.",
+      "empty": "No new reviews yet."
+    },
+    "actions": {
+      "reject": "Reject",
+      "approve": "Approve"
     }
   }
 }

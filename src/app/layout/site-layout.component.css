@@ -21,6 +21,36 @@
   overflow: visible;
 }
 
+.header-end {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .site-layout .header-container {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas:
+      'logo end toggle';
+  }
+
+  .site-layout .logo {
+    grid-area: logo;
+  }
+
+  .header-end {
+    grid-area: end;
+  }
+
+  .site-layout .menu-toggle {
+    grid-area: toggle;
+  }
+
+  .site-layout .nav {
+    /* fixed slide-out — grid area not used */
+  }
+}
+
 .site-layout .nav ul {
   flex-wrap: wrap;
   row-gap: 0.35rem;

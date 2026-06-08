@@ -5,19 +5,6 @@
         <span class="logo-text">{{ title() }}</span>
       </a>
 
-      <button
-        type="button"
-        class="menu-toggle"
-        (click)="toggleMobileMenu()"
-        [attr.aria-expanded]="mobileMenuOpen()"
-        aria-controls="main-nav"
-        [attr.aria-label]="translation.t('app.actions.openMenu')"
-      >
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-      </button>
-
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
         <ul>
           <li>
@@ -48,6 +35,23 @@
           </li>
         </ul>
       </nav>
+
+      <div class="header-end">
+        <app-language-switcher />
+      </div>
+
+      <button
+        type="button"
+        class="menu-toggle"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        aria-controls="main-nav"
+        [attr.aria-label]="translation.t('app.actions.openMenu')"
+      >
+        <span class="menu-toggle-bar"></span>
+        <span class="menu-toggle-bar"></span>
+        <span class="menu-toggle-bar"></span>
+      </button>
     </div>
 
     @if (mobileMenuOpen()) {

@@ -29,8 +29,8 @@
               <h3>
                 <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
               </h3>
-              <p class="performer-specialty">{{ p.specialty }}</p>
-              <p class="performer-desc">{{ p.description }}</p>
+              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
             </div>
             @if (p.works[0]) {
               <app-before-after [work]="p.works[0]" layout="split" />

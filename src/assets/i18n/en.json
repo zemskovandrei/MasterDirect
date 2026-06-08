@@ -40,7 +40,7 @@
   "home": {
     "hero": {
       "imageAlt": "Interior after renovation",
-      "title": "Renovation marketplace",
+      "title": "Renovation and finishing",
       "subtitle": "Customers, teams and masters connect on SmartBuild.Tech and communicate directly.",
       "primary": "Find a team",
       "secondary": "Find a master",
@@ -63,8 +63,8 @@
       "slide": "Slide"
     },
     "features": {
-      "eyebrow": "Platform",
-      "title": "Why choose SmartBuild",
+      "eyebrow": "Benefits",
+      "title": "SmartBuild",
       "subtitle": "A neutral marketplace — customers and performers connect without a middleman",
       "cards": {
         "0": {
@@ -86,13 +86,17 @@
         "4": {
           "title": "Turnkey renovation",
           "desc": "From design to final cleaning — the full cycle"
+        },
+        "5": {
+          "title": "Custom furniture",
+          "desc": "Kitchens, wardrobes and built-in furniture from verified catalog companies"
         }
       }
     },
     "services": {
       "eyebrow": "Categories",
       "title": "Work categories",
-      "subtitle": "Popular specializations of performers on the platform",
+      "subtitle": "Popular specializations of performers",
       "items": {
         "turnkey": {
           "title": "Turnkey renovation master",
@@ -122,7 +126,7 @@
     },
     "portfolio": {
       "eyebrow": "Gallery",
-      "title": "Work by platform performers",
+      "title": "Work by performers",
       "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
       "sampleTitle": "Sample completed order",
       "sampleDesc": "A performer publication from the SmartBuild.Tech catalog",
@@ -183,7 +187,8 @@
       "smeta": "Estimate",
       "smetaHint": "after choosing a team",
       "furnitureHint": "kitchens, wardrobes, built-in furniture",
-      "inCatalog": "in catalog"
+      "inCatalog": "in catalog",
+      "tabsAria": "Portfolio sections"
     }
   },
   "brigades": {
@@ -228,6 +233,40 @@
     "noWorksLead": "The company has not published work in the catalog yet.",
     "notFoundTitle": "Company not found",
     "notFoundLead": "The profile may have been removed or is not published yet."
+  },
+  "reviews": {
+    "performerType": {
+      "brigade": "Team",
+      "master": "Master"
+    },
+    "countOne": "review",
+    "countMany": "reviews",
+    "samples": {
+      "0": {
+        "text": "The team finished the bathroom on time — tiling and plumbing with no issues.",
+        "category": "Bathroom renovation"
+      },
+      "1": {
+        "text": "Clear estimate, weekly photo updates, and the result matched the contract.",
+        "category": "Turnkey apartment"
+      },
+      "2": {
+        "text": "The master quickly fixed the panel and wiring — neat work and up to code.",
+        "category": "Electrical work"
+      },
+      "3": {
+        "text": "Even grout lines, clean joints — the kitchen looks exactly like the design.",
+        "category": "Tiling"
+      }
+    }
+  },
+  "profile": {
+    "reviews": {
+      "eyebrow": "Reviews",
+      "titleBrigade": "What clients say about the team",
+      "titleMaster": "What clients say about the master",
+      "lead": "Approved reviews are published alongside real before/after work."
+    }
   },
   "moderation": {
     "title": "Review moderation",

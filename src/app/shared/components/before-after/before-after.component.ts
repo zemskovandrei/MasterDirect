@@ -1,5 +1,7 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { WorkProject } from '../../../core/models/portfolio.models';
+import { CatalogLocalizationService } from '../../../core/services/catalog-localization.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface VerificationBadge {
   label: string;
@@ -16,6 +18,9 @@ export type BeforeAfterLayout = 'compare' | 'split';
   styleUrls: ['./before-after.component.css'],
 })
 export class BeforeAfterComponent {
+  protected readonly translation = inject(TranslationService);
+  private readonly catalogL10n = inject(CatalogLocalizationService);
+
   readonly work = input.required<WorkProject>();
   readonly layout = input<BeforeAfterLayout>('compare');
   readonly featured = input(false);
@@ -23,31 +28,37 @@ export class BeforeAfterComponent {
   readonly descriptionOverride = input<string | null>(null);
 
   protected displayTitle(): string {
-    return this.titleOverride() ?? this.work().title;
+    return this.titleOverride() ?? this.catalogL10n.workTitle(this.work());
   }
 
   protected displayDescription(): string | undefined {
-    return this.descriptionOverride() ?? this.work().description;
+    const override = this.descriptionOverride();
+    if (override !== null && override !== undefined) {
+      return override;
+    }
+    const desc = this.catalogL10n.workDescription(this.work());
+    return desc || undefined;
   }
 
   protected readonly verificationBadge = computed((): VerificationBadge | null => {
+    this.translation.locale();
     const status = this.work().verificationStatus ?? 'not_requested';
     switch (status) {
       case 'pending':
         return {
-          label: 'Ожидает подтверждения клиентом',
+          label: this.translation.t('beforeAfter.verifyPending'),
           icon: '⏳',
           className: 'work-verify-badge work-verify-badge--pending',
         };
       case 'verified':
         return {
-          label: 'Подтверждено клиентом',
+          label: this.translation.t('beforeAfter.verifyVerified'),
           icon: '🛡',
           className: 'work-verify-badge work-verify-badge--verified',
         };
       case 'rejected':
         return {
-          label: 'Отклонено клиентом',
+          label: this.translation.t('beforeAfter.verifyRejected'),
           icon: '✕',
           className: 'work-verify-badge work-verify-badge--rejected',
         };

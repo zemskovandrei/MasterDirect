@@ -7,6 +7,8 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { TranslationService } from '../../core/services/translation.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 
 @Component({
   selector: 'app-performer-profile',
@@ -18,7 +20,9 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 export class PerformerProfileComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(PortfolioStoreService);
-  private readonly reviewStore = inject(ReviewStoreService);
+  protected readonly reviewStore = inject(ReviewStoreService);
+  protected readonly translation = inject(TranslationService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
 
   protected readonly type = toSignal(
     this.route.data.pipe(map((d) => d['performerType'] as PerformerType)),
@@ -43,9 +47,9 @@ export class PerformerProfileComponent {
     if (!performer) {
       return [];
     }
-    const typeLabel = this.type() === 'brigade' ? 'Бригада' : 'Мастер';
+    const typeKey = this.type() === 'brigade' ? 'brigade' : 'master';
     return this.reviewStore.approvedReviews().filter(
-      (review) => review.performerType === typeLabel,
+      (review) => this.reviewStore.resolvePerformerTypeKey(review) === typeKey,
     );
   });
 
@@ -59,7 +63,9 @@ export class PerformerProfileComponent {
   );
 
   protected typeLabel(): string {
-    return this.type() === 'brigade' ? 'Бригада' : 'Мастер';
+    return this.type() === 'brigade'
+      ? this.translation.t('profile.badgeBrigade')
+      : this.translation.t('profile.badgeMaster');
   }
 
   protected catalogLink(): string {

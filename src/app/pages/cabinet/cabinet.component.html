@@ -1,9 +1,7 @@
 <section class="page-hero cabinet-hero">
   <div class="page-hero-inner">
-    <h1>Кабинет мастера / бригадира</h1>
-    <p>
-      Создайте профиль, оформите подписку и публикуйте работы «до / после» в каталоге SmartBuild.Tech.
-    </p>
+    <h1>{{ translation.t('cabinet.heroTitle') }}</h1>
+    <p>{{ translation.t('cabinet.heroLead') }}</p>
   </div>
 </section>
 
@@ -12,34 +10,30 @@
     <div class="demo-banner" role="note">
       <span aria-hidden="true">ℹ️</span>
       <span>
-        <strong>Демо-режим.</strong> Подписка и загрузки сохраняются в браузере. Для реальных
-        платежей ($5 / $15) подключим сервер и Stripe.
+        {{ translation.t('cabinet.demoBanner') }}
       </span>
     </div>
 
     @if (!store.currentPerformer()) {
       <section class="register-panel">
         <header class="register-header">
-          <span class="section-eyebrow">Регистрация</span>
-          <h2>Создайте профиль в каталоге</h2>
-          <p class="register-lead">
-            Выберите тариф, заполните данные — после этого оформите подписку и загружайте работы
-            «до / после».
-          </p>
+          <span class="section-eyebrow">{{ translation.t('cabinet.registerEyebrow') }}</span>
+          <h2>{{ translation.t('cabinet.registerTitle') }}</h2>
+          <p class="register-lead">{{ translation.t('cabinet.registerLead') }}</p>
         </header>
 
-        <ol class="register-steps" aria-label="Этапы регистрации">
+        <ol class="register-steps" [attr.aria-label]="translation.t('cabinet.stepsAria')">
           <li class="register-step register-step--active">
             <span class="register-step-num">1</span>
-            <span class="register-step-text">Тип и данные</span>
+            <span class="register-step-text">{{ translation.t('cabinet.step1') }}</span>
           </li>
           <li class="register-step">
             <span class="register-step-num">2</span>
-            <span class="register-step-text">Подписка</span>
+            <span class="register-step-text">{{ translation.t('cabinet.step2') }}</span>
           </li>
           <li class="register-step">
             <span class="register-step-num">3</span>
-            <span class="register-step-text">Портфолио</span>
+            <span class="register-step-text">{{ translation.t('cabinet.step3') }}</span>
           </li>
         </ol>
 
@@ -47,7 +41,7 @@
           <div class="register-block register-block--plans">
             <h3 class="register-block-title">
               <span class="register-block-icon" aria-hidden="true">①</span>
-              Тип аккаунта
+              {{ translation.t('cabinet.accountType') }}
             </h3>
 
             <div class="plan-cards">
@@ -63,12 +57,14 @@
                 <span class="plan-icon" aria-hidden="true">{{ planIcon('worker') }}</span>
                 <div class="plan-price-row">
                   <span class="plan-price">$5</span>
-                  <span class="plan-period">/ месяц</span>
+                  <span class="plan-period">{{ translation.t('cabinet.perMonth') }}</span>
                 </div>
-                <h4>{{ plans.worker.title }}</h4>
-                <p class="plan-tagline">{{ plans.worker.description }}</p>
+                <h4>{{ planTitle('worker') }}</h4>
+                <p class="plan-tagline">{{ planDescription('worker') }}</p>
                 <ul class="plan-features">
-                  <li *ngFor="let f of plans.worker.features">{{ f }}</li>
+                  @for (f of planFeatures('worker'); track f) {
+                    <li>{{ f }}</li>
+                  }
                 </ul>
               </button>
 
@@ -81,16 +77,18 @@
                 @if (selectedPlan() === 'brigade') {
                   <span class="plan-check" aria-hidden="true">✓</span>
                 }
-                <span class="plan-badge-popular">Популярный</span>
+                <span class="plan-badge-popular">{{ translation.t('cabinet.popular') }}</span>
                 <span class="plan-icon" aria-hidden="true">{{ planIcon('brigade') }}</span>
                 <div class="plan-price-row">
                   <span class="plan-price">$15</span>
-                  <span class="plan-period">/ месяц</span>
+                  <span class="plan-period">{{ translation.t('cabinet.perMonth') }}</span>
                 </div>
-                <h4>{{ plans.brigade.title }}</h4>
-                <p class="plan-tagline">{{ plans.brigade.description }}</p>
+                <h4>{{ planTitle('brigade') }}</h4>
+                <p class="plan-tagline">{{ planDescription('brigade') }}</p>
                 <ul class="plan-features">
-                  <li *ngFor="let f of plans.brigade.features">{{ f }}</li>
+                  @for (f of planFeatures('brigade'); track f) {
+                    <li>{{ f }}</li>
+                  }
                 </ul>
               </button>
             </div>
@@ -99,24 +97,24 @@
           <div class="register-block register-block--form">
             <h3 class="register-block-title">
               <span class="register-block-icon" aria-hidden="true">②</span>
-              Данные профиля
+              {{ translation.t('cabinet.profileData') }}
             </h3>
 
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
               <label class="register-field" [class.register-field--error]="registerFieldInvalid('name')">
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">👤</span>
-                  Имя или название
-                  <em>обязательно</em>
+                  {{ translation.t('cabinet.nameLabel') }}
+                  <em>{{ translation.t('cabinet.required') }}</em>
                 </span>
                 <input
                   type="text"
                   formControlName="name"
-                  placeholder="Иван К. или «Бригада СтройКомфорт»"
+                  [placeholder]="translation.t('cabinet.namePlaceholder')"
                   autocomplete="name"
                 />
                 @if (registerFieldInvalid('name')) {
-                  <small class="field-error">Минимум 2 символа</small>
+                  <small class="field-error">{{ translation.t('cabinet.nameError') }}</small>
                 }
               </label>
 
@@ -127,8 +125,8 @@
               >
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">🛠</span>
-                  Специализация
-                  <em>обязательно</em>
+                  {{ translation.t('cabinet.specialtyLabel') }}
+                  <em>{{ translation.t('cabinet.required') }}</em>
                 </span>
 
                 <input type="hidden" formControlName="specialty" />
@@ -143,7 +141,7 @@
                     (click)="toggleSpecialtyMenu($event)"
                   >
                     <span class="specialty-trigger-text" [class.specialty-trigger-text--empty]="!specialtyDisplay()">
-                      {{ specialtyDisplay() || 'Плиточник, электрик, ремонт под ключ...' }}
+                      {{ specialtyDisplay() || translation.t('cabinet.specialtyPlaceholder') }}
                     </span>
                     <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
                   </button>
@@ -164,7 +162,7 @@
                             [checked]="isSpecialtySelected(option)"
                             (change)="toggleSpecialtyOption(option, $event)"
                           />
-                          <span>{{ option }}</span>
+                          <span>{{ specialtyOptionLabel(option) }}</span>
                         </label>
                       }
                     </div>
@@ -172,7 +170,7 @@
                 </div>
 
                 @if (registerFieldInvalid('specialty')) {
-                  <small class="field-error">Укажите специализацию</small>
+                  <small class="field-error">{{ translation.t('cabinet.specialtyError') }}</small>
                 }
               </div>
 
@@ -182,32 +180,30 @@
               >
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">📝</span>
-                  О себе / о бригаде
-                  <em>обязательно</em>
+                  {{ translation.t('cabinet.aboutLabel') }}
+                  <em>{{ translation.t('cabinet.required') }}</em>
                 </span>
                 <textarea
                   formControlName="description"
                   rows="4"
-                  placeholder="Опыт, район работы, типы объектов, гарантии..."
+                  [placeholder]="translation.t('cabinet.aboutPlaceholder')"
                 ></textarea>
                 @if (registerFieldInvalid('description')) {
-                  <small class="field-error">Напишите хотя бы 10 символов</small>
+                  <small class="field-error">{{ translation.t('cabinet.aboutError') }}</small>
                 }
               </label>
 
               <div class="register-summary">
-                <span class="register-summary-label">Выбранный тариф</span>
+                <span class="register-summary-label">{{ translation.t('cabinet.selectedPlan') }}</span>
                 <span class="register-summary-value">
-                  {{ plans[selectedPlan()].title }} — ${{ planPrice(selectedPlan()) }}/мес
+                  {{ planTitle(selectedPlan()) }} — ${{ planPrice(selectedPlan()) }}{{ translation.t('cabinet.perMonthShort') }}
                 </span>
               </div>
 
               <button type="submit" class="btn-primary btn-large register-submit">
-                Создать профиль и продолжить
+                {{ translation.t('cabinet.submitRegister') }}
               </button>
-              <p class="register-note">
-                После создания вы оформите подписку и сможете загружать фото «до / после».
-              </p>
+              <p class="register-note">{{ translation.t('cabinet.registerNote') }}</p>
             </form>
           </div>
         </div>
@@ -217,65 +213,69 @@
           <section class="cabinet-panel profile-summary">
             <div class="summary-head">
               <div>
-                <span class="profile-badge">{{ performer.type === 'brigade' ? 'Бригадир' : 'Мастер' }}</span>
+                <span class="profile-badge">{{
+                  performer.type === 'brigade'
+                    ? translation.t('cabinet.badgeBrigadier')
+                    : translation.t('cabinet.badgeMaster')
+                }}</span>
                 <h2>{{ performer.name }}</h2>
-                <p>{{ performer.specialty }}</p>
+                <p>{{ catalogL10n.performerSpecialty(performer) }}</p>
               </div>
               <div class="summary-actions">
                 <a
                   [routerLink]="performer.type === 'brigade' ? ['/brigades', performer.id] : ['/masters', performer.id]"
                   class="btn-secondary"
                 >
-                  Открыть в каталоге
+                  {{ translation.t('cabinet.openCatalog') }}
                 </a>
-                <button type="button" class="btn-text" (click)="signOut()">Выйти</button>
+                <button type="button" class="btn-text" (click)="signOut()">{{ translation.t('cabinet.signOut') }}</button>
               </div>
             </div>
 
             @if (!performer.subscribed) {
             <div class="subscribe-box">
-              <h3>Оформите подписку</h3>
+              <h3>{{ translation.t('cabinet.subscribeTitle') }}</h3>
               <p>
-                Тариф: <strong>${{ planPrice(performer.type) }} / месяц</strong>
-                ({{ plans[performer.type].title }})
+                {{ translation.t('cabinet.subscribeTariff') }}:
+                <strong>${{ planPrice(performer.type) }} {{ translation.t('cabinet.perMonth') }}</strong>
+                ({{ planTitle(performer.type) }})
               </p>
               <ul>
-                <li *ngFor="let feature of plans[performer.type].features">{{ feature }}</li>
+                @for (feature of planFeatures(performer.type); track feature) {
+                  <li>{{ feature }}</li>
+                }
               </ul>
               <button type="button" class="btn-primary btn-large" (click)="subscribe()">
-                Оплатить ${{ planPrice(performer.type) }} (демо)
+                {{ subscribePayLabel(planPrice(performer.type)) }}
               </button>
             </div>
           } @else {
-            <p class="subscribed-badge">✓ Подписка активна — профиль виден в каталоге</p>
+            <p class="subscribed-badge">✓ {{ translation.t('cabinet.subscribed') }}</p>
 
             <div class="upload-section">
-              <h3>Добавить работу «до / после»</h3>
-              <p class="upload-lead">
-                Заполните описание и загрузите пару фото. Укажите контакт клиента — он получит ссылку
-                для подтверждения, и работа будет отмечена как проверенная.
-              </p>
+              <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
+              <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
               @if (uploadSuccess()) {
                 <p class="upload-ok" role="status">
                   @if (lastUploadResult()?.verificationLink) {
-                    Работа опубликована со статусом «Ожидает подтверждения клиентом».
+                    {{ translation.t('cabinet.uploadPending') }}
                   } @else {
-                    Работа добавлена в каталог!
+                    {{ translation.t('cabinet.uploadSuccess') }}
                   }
                 </p>
               }
               @if (lastUploadResult()?.verificationLink; as link) {
-                <div class="verification-share" role="region" aria-label="Ссылка для клиента">
-                  <p class="verification-share-title">Отправьте клиенту ссылку для подтверждения</p>
+                <div class="verification-share" role="region" [attr.aria-label]="translation.t('cabinet.shareAria')">
+                  <p class="verification-share-title">{{ translation.t('cabinet.shareTitle') }}</p>
                   <div class="verification-share-row">
                     <input class="verification-share-input" type="text" readonly [value]="link" />
                     <button type="button" class="btn-secondary" (click)="copyVerificationLink(link)">
-                      Копировать
+                      {{ translation.t('cabinet.copy') }}
                     </button>
                   </div>
                   @if (lastUploadResult()?.verificationCode; as code) {
                     <p class="verification-share-code">
-                      Или код для SMS / мессенджера: <strong>{{ code }}</strong>
+                      {{ translation.t('cabinet.shareCode') }}: <strong>{{ code }}</strong>
                     </p>
                   }
                   @if (copyFeedback(); as feedback) {
@@ -286,42 +286,39 @@
               <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
                 <div class="upload-form-fields">
                   <label class="work-field">
-                    <span class="work-field-label">Название работы <em>*</em></span>
+                    <span class="work-field-label">{{ translation.t('cabinet.workTitle') }} <em>*</em></span>
                     <input
                       type="text"
                       formControlName="title"
-                      placeholder="Например: Ванная комната, кухня под ключ"
+                      [placeholder]="translation.t('cabinet.workTitlePh')"
                       autocomplete="off"
                     />
                   </label>
 
                   <label class="work-field work-field--full">
-                    <span class="work-field-label">Описание</span>
+                    <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
                     <textarea
                       formControlName="description"
                       rows="4"
-                      placeholder="Кратко опишите объём работ, материалы и сроки"
+                      [placeholder]="translation.t('cabinet.workDescPh')"
                     ></textarea>
                   </label>
 
                   <label class="work-field work-field--full">
-                    <span class="work-field-label">Телефон или Email клиента для подтверждения</span>
+                    <span class="work-field-label">{{ translation.t('cabinet.clientContact') }}</span>
                     <input
                       type="text"
                       formControlName="clientContact"
-                      placeholder="+995 5XX XXX XXX или client@email.com"
+                      [placeholder]="translation.t('cabinet.clientContactPh')"
                       autocomplete="off"
                     />
-                    <span class="work-field-hint">
-                      Необязательно. Если указать контакт, клиент сможет подтвердить работу по ссылке —
-                      без участия администратора.
-                    </span>
+                    <span class="work-field-hint">{{ translation.t('cabinet.clientContactHint') }}</span>
                   </label>
                 </div>
 
                 <div class="upload-dropzones">
                   <div class="dropzone-group">
-                    <span class="dropzone-heading">Фото «До» <em>*</em></span>
+                    <span class="dropzone-heading">{{ translation.t('cabinet.photoBefore') }} <em>*</em></span>
                     <label
                       class="dropzone"
                       [class.dropzone--filled]="beforePreview()"
@@ -338,18 +335,18 @@
                         (change)="onFileSelected('before', $event)"
                       />
                       @if (beforePreview(); as preview) {
-                        <img [src]="preview" alt="Превью: до ремонта" class="dropzone-preview" />
-                        <span class="dropzone-overlay">Заменить фото</span>
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" class="dropzone-preview" />
+                        <span class="dropzone-overlay">{{ translation.t('cabinet.replacePhoto') }}</span>
                       } @else {
                         <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                        <span class="dropzone-title">Перетащите фото или кликните для загрузки</span>
-                        <span class="dropzone-hint">JPG, PNG, WebP · до 800 КБ</span>
+                        <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                        <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
                       }
                     </label>
                   </div>
 
                   <div class="dropzone-group">
-                    <span class="dropzone-heading">Фото «После» <em>*</em></span>
+                    <span class="dropzone-heading">{{ translation.t('cabinet.photoAfter') }} <em>*</em></span>
                     <label
                       class="dropzone"
                       [class.dropzone--filled]="afterPreview()"
@@ -366,12 +363,12 @@
                         (change)="onFileSelected('after', $event)"
                       />
                       @if (afterPreview(); as preview) {
-                        <img [src]="preview" alt="Превью: после ремонта" class="dropzone-preview" />
-                        <span class="dropzone-overlay">Заменить фото</span>
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" class="dropzone-preview" />
+                        <span class="dropzone-overlay">{{ translation.t('cabinet.replacePhoto') }}</span>
                       } @else {
                         <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                        <span class="dropzone-title">Перетащите фото или кликните для загрузки</span>
-                        <span class="dropzone-hint">JPG, PNG, WebP · до 800 КБ</span>
+                        <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                        <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
                       }
                     </label>
                   </div>
@@ -379,7 +376,7 @@
 
                 <div class="upload-form-actions">
                   <button type="submit" class="btn-primary btn-large upload-submit">
-                    Загрузить в каталог
+                    {{ translation.t('cabinet.uploadSubmit') }}
                   </button>
                 </div>
               </form>
@@ -387,16 +384,16 @@
 
             @if (performer.works.length > 0) {
               <div class="my-works">
-                <h3>Мои работы ({{ performer.works.length }})</h3>
+                <h3>{{ myWorksLabel(performer.works.length) }}</h3>
                 <div class="my-works-grid">
                   @for (work of performer.works; track work.id) {
                     <div class="my-work-item">
                       <app-before-after [work]="work" layout="compare" />
                       @if (verificationLink(work); as link) {
                         <div class="my-work-verify-link">
-                          <span>Ссылка для клиента:</span>
+                          <span>{{ translation.t('cabinet.clientLink') }}</span>
                           <button type="button" class="btn-secondary btn-small" (click)="copyVerificationLink(link)">
-                            Копировать ссылку
+                            {{ translation.t('cabinet.copyLink') }}
                           </button>
                         </div>
                       }

@@ -8,7 +8,14 @@
     <div class="profile-hero-bg" aria-hidden="true"></div>
 
     <div class="profile-hero-inner">
-      <a [routerLink]="catalogLink()" class="back-link">← {{ type() === 'brigade' ? 'К бригадам' : 'К мастерам' }}</a>
+      <a [routerLink]="catalogLink()" class="back-link"
+        >←
+        {{
+          type() === 'brigade'
+            ? translation.t('profile.backBrigades')
+            : translation.t('profile.backMasters')
+        }}</a
+      >
 
       <div class="profile-hero-card">
         <div class="profile-hero-top">
@@ -23,25 +30,29 @@
           <div class="profile-hero-head">
             <span class="profile-badge">{{ typeLabel() }}</span>
             <h1>{{ p.name }}</h1>
-            <p class="profile-specialty">{{ p.specialty }}</p>
+            <p class="profile-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
           </div>
         </div>
 
-        <p class="profile-desc">{{ p.description }}</p>
+        <p class="profile-desc">{{ catalogL10n.performerDescription(p) }}</p>
 
         <div class="profile-stats">
           <div class="profile-stat">
             <span class="profile-stat-icon" aria-hidden="true">📁</span>
             <div>
               <strong>{{ p.works.length }}</strong>
-              <span>{{ p.works.length === 1 ? 'проект' : 'проектов' }}</span>
+              <span>{{
+                p.works.length === 1
+                  ? translation.t('profile.projectOne')
+                  : translation.t('profile.projectMany')
+              }}</span>
             </div>
           </div>
           <div class="profile-stat">
             <span class="profile-stat-icon" aria-hidden="true">↔</span>
             <div>
-              <strong>До / После</strong>
-              <span>на каждый объект</span>
+              <strong>{{ translation.t('profile.beforeAfterTitle') }}</strong>
+              <span>{{ translation.t('profile.beforeAfterStat') }}</span>
             </div>
           </div>
           @if (relevantReviews().length > 0) {
@@ -49,7 +60,11 @@
               <span class="profile-stat-icon" aria-hidden="true">★</span>
               <div>
                 <strong>{{ relevantReviews().length }}</strong>
-                <span>{{ relevantReviews().length === 1 ? 'отзыв' : 'отзывов' }}</span>
+                <span>{{
+                  relevantReviews().length === 1
+                    ? translation.t('reviews.countOne')
+                    : translation.t('reviews.countMany')
+                }}</span>
               </div>
             </div>
           }
@@ -62,17 +77,23 @@
     <section class="profile-reviews">
       <div class="showcase-inner">
         <div class="showcase-intro">
-          <span class="section-eyebrow">Отзывы</span>
-          <h2>Что клиенты пишут о {{ typeLabel() }}</h2>
-          <p class="section-subtitle">Одобренные отзывы публикуются вместе с реальными примерами работ.</p>
+          <span class="section-eyebrow">{{ translation.t('profile.reviews.eyebrow') }}</span>
+          <h2>
+            {{
+              type() === 'brigade'
+                ? translation.t('profile.reviews.titleBrigade')
+                : translation.t('profile.reviews.titleMaster')
+            }}
+          </h2>
+          <p class="section-subtitle">{{ translation.t('profile.reviews.lead') }}</p>
         </div>
         <div class="review-grid">
           @for (review of relevantReviews(); track review.id) {
             <article class="profile-review-card">
-              <p>{{ review.review }}</p>
+              <p>{{ reviewStore.localizeReview(review) }}</p>
               <div class="profile-review-meta">
                 <strong>{{ review.name }}</strong>
-                <span>{{ review.category }}</span>
+                <span>{{ reviewStore.localizeCategory(review) }}</span>
               </div>
             </article>
           }
@@ -86,16 +107,14 @@
       @if (p.works.length === 0) {
         <div class="works-empty">
           <span class="works-empty-icon" aria-hidden="true">📷</span>
-          <h2>Пока нет опубликованных работ</h2>
-          <p>Исполнитель скоро добавит проекты «до / после».</p>
+          <h2>{{ translation.t('profile.worksEmptyTitle') }}</h2>
+          <p>{{ translation.t('profile.worksEmptyLead') }}</p>
         </div>
       } @else {
         <div class="showcase-intro">
-          <span class="section-eyebrow">Трансформация</span>
-          <h2>До и после ремонта</h2>
-          <p class="section-subtitle">
-            Потяните ползунок на фото — сравните состояние объекта до работ и после сдачи.
-          </p>
+          <span class="section-eyebrow">{{ translation.t('profile.worksEyebrow') }}</span>
+          <h2>{{ translation.t('profile.worksTitle') }}</h2>
+          <p class="section-subtitle">{{ translation.t('profile.worksLead') }}</p>
         </div>
 
         @if (p.works[0]; as heroWork) {
@@ -107,7 +126,7 @@
         @if (p.works.length > 1) {
           <div class="showcase-more">
             <h3 class="showcase-more-title">
-              <span>Ещё проекты</span>
+              <span>{{ translation.t('profile.moreProjects') }}</span>
               <span class="showcase-count">{{ p.works.length - 1 }}</span>
             </h3>
             <div class="showcase-grid">
@@ -121,16 +140,30 @@
         }
 
         <div class="showcase-cta">
-          <p>Понравился результат? Выберите бригаду в каталоге.</p>
-          <a routerLink="/brigades" class="btn-primary btn-large">Выбрать бригаду</a>
+          <p>
+            {{
+              type() === 'brigade'
+                ? translation.t('profile.ctaBrigade')
+                : translation.t('profile.ctaMaster')
+            }}
+          </p>
+          <a [routerLink]="catalogLink()" class="btn-primary btn-large">{{
+            type() === 'brigade'
+              ? translation.t('profile.ctaBrigadeBtn')
+              : translation.t('profile.ctaMasterBtn')
+          }}</a>
         </div>
       }
     </div>
   </section>
 } @else {
   <section class="profile-not-found">
-    <h1>Исполнитель не найден</h1>
-    <p>Возможно, профиль снят с публикации или ссылка устарела.</p>
-    <a [routerLink]="catalogLink()" class="btn-primary">{{ type() === 'brigade' ? 'К бригадам' : 'К мастерам' }}</a>
+    <h1>{{ translation.t('profile.notFoundTitle') }}</h1>
+    <p>{{ translation.t('profile.notFoundLead') }}</p>
+    <a [routerLink]="catalogLink()" class="btn-primary">{{
+      type() === 'brigade'
+        ? translation.t('profile.backBrigades')
+        : translation.t('profile.backMasters')
+    }}</a>
   </section>
 }

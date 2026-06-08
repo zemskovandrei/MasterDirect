@@ -1,0 +1,184 @@
+{
+  "beforeAfter": {
+    "before": "Before",
+    "after": "After",
+    "tag": "Before / After",
+    "hint": "Drag the slider to compare",
+    "compareAria": "Compare before and after",
+    "compareLabel": "before and after comparison",
+    "afterAlt": "after renovation",
+    "beforeAlt": "before renovation",
+    "verifyPending": "Awaiting client confirmation",
+    "verifyVerified": "Verified by client",
+    "verifyRejected": "Rejected by client"
+  },
+  "profile": {
+    "backBrigades": "Back to teams",
+    "backMasters": "Back to masters",
+    "badgeBrigade": "Team",
+    "badgeMaster": "Master",
+    "projectOne": "project",
+    "projectMany": "projects",
+    "beforeAfterTitle": "Before / After",
+    "beforeAfterStat": "for every job",
+    "worksEmptyTitle": "No published work yet",
+    "worksEmptyLead": "The performer will add before/after projects soon.",
+    "worksEyebrow": "Transformation",
+    "worksTitle": "Before and after renovation",
+    "worksLead": "Drag the slider on the photo to compare the site before and after handover.",
+    "moreProjects": "More projects",
+    "ctaBrigade": "Like the result? Pick a team from the catalog.",
+    "ctaMaster": "Like the result? Pick a master from the catalog.",
+    "ctaBrigadeBtn": "Choose a team",
+    "ctaMasterBtn": "Choose a master",
+    "notFoundTitle": "Performer not found",
+    "notFoundLead": "The profile may be unpublished or the link is outdated.",
+    "reviews": {
+      "eyebrow": "Reviews",
+      "titleBrigade": "What clients say about the team",
+      "titleMaster": "What clients say about the master",
+      "lead": "Approved reviews are published alongside real before/after examples."
+    }
+  },
+  "cabinet": {
+    "heroTitle": "Master / team dashboard",
+    "heroLead": "Create a profile, subscribe and publish before/after work in the SmartBuild.Tech catalog.",
+    "demoBanner": "Demo mode. Subscription and uploads are stored in the browser. Real payments ($5 / $15) will use a server and Stripe.",
+    "registerEyebrow": "Registration",
+    "registerTitle": "Create a catalog profile",
+    "registerLead": "Choose a plan, fill in your details, then subscribe and upload before/after work.",
+    "stepsAria": "Registration steps",
+    "step1": "Plan & details",
+    "step2": "Subscription",
+    "step3": "Portfolio",
+    "accountType": "Account type",
+    "profileData": "Profile details",
+    "perMonth": "/ month",
+    "popular": "Popular",
+    "required": "required",
+    "nameLabel": "Name or company",
+    "namePlaceholder": "John D. or «StroyComfort Team»",
+    "nameError": "At least 2 characters",
+    "specialtyLabel": "Specialization",
+    "specialtyPlaceholder": "Select one or more specializations...",
+    "specialtyError": "Select a specialization",
+    "aboutLabel": "About you / the team",
+    "aboutPlaceholder": "Experience, area, project types, guarantees...",
+    "aboutError": "Write at least 10 characters",
+    "selectedPlan": "Selected plan",
+    "perMonthShort": "/mo",
+    "submitRegister": "Create profile and continue",
+    "registerNote": "After creation you will subscribe and can upload before/after photos.",
+    "badgeBrigadier": "Team lead",
+    "badgeMaster": "Master",
+    "openCatalog": "Open in catalog",
+    "signOut": "Sign out",
+    "subscribeTitle": "Subscribe",
+    "subscribeTariff": "Plan",
+    "subscribePay": "Pay ${{price}} (demo)",
+    "subscribed": "Subscription active — profile visible in catalog",
+    "uploadTitle": "Add before / after work",
+    "uploadLead": "Add a description and photo pair. Optional client contact enables verification.",
+    "uploadPending": "Work published with status «Awaiting client confirmation».",
+    "uploadSuccess": "Work added to the catalog!",
+    "shareAria": "Client link",
+    "shareTitle": "Send the client a confirmation link",
+    "copy": "Copy",
+    "shareCode": "Or SMS / messenger code",
+    "copyOk": "Link copied",
+    "copyFail": "Could not copy — select the link manually",
+    "workTitle": "Work title",
+    "workTitlePh": "e.g. Bathroom, turnkey kitchen",
+    "workDesc": "Description",
+    "workDescPh": "Briefly describe scope, materials and timeline",
+    "clientContact": "Client phone or email for verification",
+    "clientContactPh": "+995 5XX XXX XXX or client@email.com",
+    "clientContactHint": "Optional. If provided, the client can confirm via link — no admin involved.",
+    "photoBefore": "Before photo",
+    "photoAfter": "After photo",
+    "replacePhoto": "Replace photo",
+    "dropTitle": "Drag a photo or click to upload",
+    "dropHint": "JPG, PNG, WebP · up to 800 KB",
+    "uploadSubmit": "Upload to catalog",
+    "myWorks": "My work",
+    "myWorksCount": "My work ({{count}})",
+    "clientLink": "Client link:",
+    "copyLink": "Copy link",
+    "previewBefore": "Preview: before renovation",
+    "previewAfter": "Preview: after renovation",
+    "alertImageOnly": "Please select an image file.",
+    "alertFileTooLarge": "File is too large. Choose a photo up to 800 KB (server limit in production).",
+    "alertBothPhotos": "Upload both photos: before and after.",
+    "plans": {
+      "worker": {
+        "title": "Master",
+        "description": "For an individual specialist",
+        "features": ["Profile in masters catalog", "Upload before/after work", "Edit your portfolio"]
+      },
+      "brigade": {
+        "title": "Team lead",
+        "description": "For a team and work supervisor",
+        "features": ["Team profile in catalog", "Upload before/after projects", "Unlimited work in subscription", "Priority in catalog"]
+      }
+    },
+    "specialties": {
+      "tiler": "Tiler",
+      "electrician": "Electrician",
+      "plumber": "Plumber",
+      "painter": "Painter-plasterer",
+      "drywall": "Drywall installer",
+      "turnkey": "Turnkey renovation"
+    }
+  },
+  "verification": {
+    "tagline": "Work confirmation",
+    "loading": "Loading…",
+    "invalidTitle": "Invalid link",
+    "invalidLead": "The link was already used, expired, or the work was removed. Ask the master for a new link.",
+    "thanksTitle": "Thank you for confirming!",
+    "thanksLead": "Work «{{title}}» is marked as client-verified. A green safety badge will appear in the catalog.",
+    "rejectTitle": "Rejected",
+    "rejectLead": "You reported that this is not your work. The master will see «Rejected by client».",
+    "eyebrow": "Request from master",
+    "title": "Confirm completed work",
+    "lead": "Master {{performer}} listed you as the client for «{{work}}».",
+    "question": "Do you confirm this renovation was done well and on time?",
+    "confirm": "Yes, I confirm",
+    "reject": "No, this is not my work",
+    "footnote": "One-time link. You cannot open this page again after responding."
+  },
+  "seeds": {
+    "performers": {
+      "brigada-stroykomfort": {
+        "specialty": "Turnkey renovation",
+        "description": "Full apartment and house renovation. With or without a design project.",
+        "works": {
+          "w1": { "title": "Bathroom", "description": "Full bathroom finishing with plumbing replacement" },
+          "w2": { "title": "Kitchen", "description": "Rough and finish work, built-in appliances" }
+        }
+      },
+      "brigada-remont-pro": {
+        "specialty": "Cosmetic and major renovation",
+        "description": "Team of 6. Estimate and schedule before work starts.",
+        "works": {
+          "w1": { "title": "Living room", "description": "Wall leveling, flooring, lighting" },
+          "w2": { "title": "Bedroom", "description": "Finishing and built-in storage" }
+        }
+      },
+      "master-ivan-plit": {
+        "specialty": "Tiler",
+        "description": "Tile and porcelain installation. 12 years of experience.",
+        "works": {
+          "w1": { "title": "Bathroom tiling", "description": "Porcelain on floor and walls, epoxy grout" }
+        }
+      },
+      "master-aleksey-elektrik": {
+        "specialty": "Electrician",
+        "description": "Wiring, panels, smart home. Licensed and guaranteed.",
+        "works": {
+          "w1": { "title": "Apartment electrical", "description": "New wiring and lighting per design" }
+        }
+      }
+    }
+  }
+}

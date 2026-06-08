@@ -28,6 +28,8 @@ export interface WorkProject {
   verificationCode?: string;
   verifiedAt?: string;
   rejectedAt?: string;
+  /** Demo work translations: seeds.performers.{id}.works.{workId} */
+  i18nKey?: string;
 }
 
 export interface PerformerProfile {
@@ -47,14 +49,20 @@ export interface CabinetSession {
   performerId: string;
 }
 
+export type ReviewPerformerTypeKey = 'brigade' | 'master';
+
 export interface ReviewSubmission {
   id: string;
   name: string;
   performerType: 'Мастер' | 'Бригада';
+  performerTypeKey?: ReviewPerformerTypeKey;
   category: string;
   review: string;
+  /** Key in i18n files, e.g. reviews.samples.0 or seeds.performers.*.works.* */
+  i18nKey?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  isDemo?: boolean;
 }
 
 export interface ReviewNotification {

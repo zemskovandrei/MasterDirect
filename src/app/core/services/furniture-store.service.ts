@@ -1,14 +1,14 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FurnitureCompany } from '../models/furniture.models';
-import { SEED_FURNITURE_COMPANIES } from '../data/furniture.seed';
+import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
 
 const FURNITURE_KEY = 'smartbuild-tech-furniture';
 
 @Injectable({ providedIn: 'root' })
 export class FurnitureStoreService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly companiesSignal = signal<FurnitureCompany[]>([...SEED_FURNITURE_COMPANIES]);
+  private readonly companiesSignal = signal<FurnitureCompany[]>([]);
 
   readonly companies = this.companiesSignal.asReadonly();
 
@@ -29,17 +29,24 @@ export class FurnitureStoreService {
       return;
     }
 
+    if (shouldWipeCatalog()) {
+      wipeCatalogStorage();
+      this.companiesSignal.set([]);
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(FURNITURE_KEY);
       if (!raw) {
+        this.companiesSignal.set([]);
         return;
       }
 
-      const custom = JSON.parse(raw) as FurnitureCompany[];
-      const customOnly = custom.filter((c) => !c.isDemo);
-      this.companiesSignal.set([...SEED_FURNITURE_COMPANIES, ...customOnly]);
+      const companies = (JSON.parse(raw) as FurnitureCompany[]).filter((c) => !c.isDemo);
+      this.companiesSignal.set(companies);
     } catch {
-      /* ignore corrupt storage */
+      localStorage.removeItem(FURNITURE_KEY);
+      this.companiesSignal.set([]);
     }
   }
 }

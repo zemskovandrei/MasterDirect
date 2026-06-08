@@ -43,8 +43,8 @@
                 <span class="performer-selected-mark" aria-hidden="true">✓</span>
               }
               <h3>{{ p.name }}</h3>
-              <p class="performer-specialty">{{ p.specialty }}</p>
-              <p class="performer-desc">{{ p.description }}</p>
+              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
             </div>
             @if (p.works[0]) {
               <app-before-after [work]="p.works[0]" layout="split" />

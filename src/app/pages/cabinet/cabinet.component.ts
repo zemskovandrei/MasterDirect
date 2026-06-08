@@ -8,15 +8,17 @@ import {
 } from '../../core/models/portfolio.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { TranslationService } from '../../core/services/translation.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 
-/** Фиксированный список специализаций для формы регистрации. */
-export const SPECIALTY_OPTIONS = [
-  'Плиточник',
-  'Электрик',
-  'Сантехник',
-  'Маляр-штукатур',
-  'Гипсокартонщик',
-  'Ремонт под ключ',
+/** Ключи специализаций для i18n: cabinet.specialties.* */
+export const SPECIALTY_OPTION_KEYS = [
+  'tiler',
+  'electrician',
+  'plumber',
+  'painter',
+  'drywall',
+  'turnkey',
 ] as const;
 
 @Component({
@@ -29,13 +31,15 @@ export const SPECIALTY_OPTIONS = [
 export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly store = inject(PortfolioStoreService);
+  protected readonly translation = inject(TranslationService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly plans = SUBSCRIPTION_PLANS;
 
   protected readonly uploadSuccess = signal(false);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
   protected readonly copyFeedback = signal<string | null>(null);
   protected readonly selectedPlan = signal<PerformerType>('worker');
-  protected readonly specialtyOptions = SPECIALTY_OPTIONS;
+  protected readonly specialtyOptions = SPECIALTY_OPTION_KEYS;
   protected readonly specialtyMenuOpen = signal(false);
   protected readonly specialtyMenuTop = signal(0);
   protected readonly specialtyMenuLeft = signal(0);
@@ -122,7 +126,7 @@ export class CabinetComponent {
 
   private loadWorkImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
     if (!file.type.startsWith('image/')) {
-      alert('Выберите файл изображения.');
+      alert(this.translation.t('cabinet.alertImageOnly'));
       if (input) {
         input.value = '';
       }
@@ -130,7 +134,7 @@ export class CabinetComponent {
     }
 
     if (file.size > 800_000) {
-      alert('Файл слишком большой. Выберите фото до 800 КБ (в продакшене лимит будет на сервере).');
+      alert(this.translation.t('cabinet.alertFileTooLarge'));
       if (input) {
         input.value = '';
       }
@@ -174,7 +178,7 @@ export class CabinetComponent {
     const before = this.beforePreview();
     const after = this.afterPreview();
     if (!before || !after) {
-      alert('Загрузите оба фото: «до» и «после».');
+      alert(this.translation.t('cabinet.alertBothPhotos'));
       return;
     }
 
@@ -205,9 +209,9 @@ export class CabinetComponent {
   async copyVerificationLink(link: string) {
     try {
       await navigator.clipboard.writeText(link);
-      this.copyFeedback.set('Ссылка скопирована');
+      this.copyFeedback.set(this.translation.t('cabinet.copyOk'));
     } catch {
-      this.copyFeedback.set('Не удалось скопировать — выделите ссылку вручную');
+      this.copyFeedback.set(this.translation.t('cabinet.copyFail'));
     }
     setTimeout(() => this.copyFeedback.set(null), 2500);
   }
@@ -232,7 +236,36 @@ export class CabinetComponent {
   }
 
   specialtyDisplay(): string {
-    return this.registerForm.get('specialty')?.value?.trim() ?? '';
+    return this.catalogL10n.localizeSpecialtyField(
+      this.registerForm.get('specialty')?.value?.trim() ?? '',
+    );
+  }
+
+  planFeatures(type: PerformerType): string[] {
+    const translated = this.translation.tArray(`cabinet.plans.${type}.features`);
+    return translated.length > 0 ? translated : this.plans[type].features;
+  }
+
+  planTitle(type: PerformerType): string {
+    const title = this.translation.t(`cabinet.plans.${type}.title`);
+    return title !== `cabinet.plans.${type}.title` ? title : this.plans[type].title;
+  }
+
+  planDescription(type: PerformerType): string {
+    const desc = this.translation.t(`cabinet.plans.${type}.description`);
+    return desc !== `cabinet.plans.${type}.description` ? desc : this.plans[type].description;
+  }
+
+  specialtyOptionLabel(key: string): string {
+    return this.catalogL10n.specialtyLabel(key);
+  }
+
+  subscribePayLabel(price: number): string {
+    return this.translation.t('cabinet.subscribePay').replace('{{price}}', String(price));
+  }
+
+  myWorksLabel(count: number): string {
+    return this.translation.t('cabinet.myWorksCount').replace('{{count}}', String(count));
   }
 
   toggleSpecialtyMenu(event: Event) {

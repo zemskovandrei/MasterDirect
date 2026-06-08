@@ -51,58 +51,64 @@
   </div>
 </section>
 
-<section class="features" id="features">
-  <div class="features-container">
-    <div class="section-header">
-      <span class="section-eyebrow">{{ translation.t('home.features.eyebrow') }}</span>
-      <h2>{{ translation.t('home.features.title') }}</h2>
-      <p class="section-subtitle">{{ translation.t('home.features.subtitle') }}</p>
-    </div>
-    <div class="features-grid">
-      <a routerLink="/furniture" class="feature-card feature-card-link">
-        <div class="feature-icon">✓</div>
-        <h3>{{ translation.t('home.features.cards.0.title') }}</h3>
-        <p>{{ translation.t('home.features.cards.0.desc') }}</p>
-      </a>
-      <a routerLink="/brigades" class="feature-card feature-card-link">
-        <div class="feature-icon">✓</div>
-        <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
-        <p>{{ translation.t('home.features.cards.1.desc') }}</p>
-      </a>
-      <a routerLink="/masters" class="feature-card feature-card-link">
-        <div class="feature-icon">✓</div>
-        <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
-        <p>{{ translation.t('home.features.cards.2.desc') }}</p>
-      </a>
-      <div class="feature-card">
-        <div class="feature-icon">✓</div>
-        <h3>{{ translation.t('home.features.cards.3.title') }}</h3>
-        <p>{{ translation.t('home.features.cards.3.desc') }}</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">✓</div>
-        <h3>{{ translation.t('home.features.cards.4.title') }}</h3>
-        <p>{{ translation.t('home.features.cards.4.desc') }}</p>
+<section class="features-block" id="features">
+  <div class="features-heading">
+    <h2 class="features-title">{{ translation.t('home.features.title') }}</h2>
+    <p class="features-subtitle">{{ translation.t('home.features.subtitle') }}</p>
+  </div>
+  <div class="features">
+    <div class="features-container">
+      <div class="features-grid">
+        <a routerLink="/furniture" class="feature-card feature-card-link">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.0.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.0.desc') }}</p>
+        </a>
+        <a routerLink="/brigades" class="feature-card feature-card-link">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.1.desc') }}</p>
+        </a>
+        <a routerLink="/masters" class="feature-card feature-card-link">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.2.desc') }}</p>
+        </a>
+        <div class="feature-card">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.3.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.3.desc') }}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.4.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.4.desc') }}</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="services" id="services">
-  <div class="services-container">
-    <div class="section-header">
-      <span class="section-eyebrow">{{ translation.t('home.services.eyebrow') }}</span>
-      <h2>{{ translation.t('home.services.title') }}</h2>
-      <p class="section-subtitle">{{ translation.t('home.services.subtitle') }}</p>
-    </div>
-    <div class="services-grid">
-      @for (service of services; track service.title) {
+<section class="services-block" id="services">
+  <div class="services-heading">
+    <h2 class="services-title">{{ translation.t('home.services.title') }}</h2>
+    <p class="services-subtitle">{{ translation.t('home.services.subtitle') }}</p>
+  </div>
+  <div class="services">
+    <div class="services-container">
+      <div class="services-grid">
+      @for (service of services; track service.image) {
         <article class="service-card">
-          <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
-          <h3>{{ translation.t(service.title) }}</h3>
-          <p>{{ translation.t(service.description) }}</p>
+          <div class="service-card-media">
+            <img [src]="service.image" [alt]="translation.t(service.title)" loading="lazy" />
+          </div>
+          <div class="service-card-body">
+            <h3>{{ translation.t(service.title) }}</h3>
+            <p>{{ translation.t(service.description) }}</p>
+          </div>
         </article>
       }
+      </div>
     </div>
   </div>
 </section>
@@ -110,7 +116,6 @@
 <section class="portfolio-teaser" id="catalog">
   <div class="portfolio-container">
     <div class="section-header">
-      <span class="section-eyebrow">{{ translation.t('home.portfolio.eyebrow') }}</span>
       <h2>{{ translation.t('home.portfolio.title') }}</h2>
       <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
     </div>

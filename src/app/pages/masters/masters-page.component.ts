@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 
 @Component({
   selector: 'app-masters-page',
@@ -15,6 +16,7 @@ import { TranslationService } from '../../core/services/translation.service';
 export class MastersPageComponent {
   protected readonly store = inject(PortfolioStoreService);
   protected readonly translation = inject(TranslationService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
 
   performerLink(id: string): string[] {
     return ['/masters', id];

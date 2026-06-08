@@ -6,6 +6,36 @@ import { firstValueFrom } from 'rxjs';
 import en from '../../../assets/i18n/en.json';
 import ge from '../../../assets/i18n/ge.json';
 import ru from '../../../assets/i18n/ru.json';
+import extendedEn from '../../../assets/i18n/partials/extended-en.json';
+import extendedGe from '../../../assets/i18n/partials/extended-ge.json';
+import extendedRu from '../../../assets/i18n/partials/extended-ru.json';
+
+function mergeTranslations(
+  base: Record<string, unknown>,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...base };
+  for (const key of Object.keys(extra)) {
+    const baseVal = result[key];
+    const extraVal = extra[key];
+    if (
+      baseVal &&
+      extraVal &&
+      typeof baseVal === 'object' &&
+      typeof extraVal === 'object' &&
+      !Array.isArray(baseVal) &&
+      !Array.isArray(extraVal)
+    ) {
+      result[key] = mergeTranslations(
+        baseVal as Record<string, unknown>,
+        extraVal as Record<string, unknown>,
+      );
+    } else {
+      result[key] = extraVal;
+    }
+  }
+  return result;
+}
 
 export type Locale = 'ru' | 'en' | 'ge';
 
@@ -20,19 +50,25 @@ export class TranslationService {
 
   constructor() {
     this.translate.setFallbackLang('ru');
-    this.translate.setTranslation('ru', ru);
-    this.translate.setTranslation('en', en);
-    this.translate.setTranslation('ge', ge);
+    this.translate.setTranslation('ru', mergeTranslations(ru, extendedRu) as typeof ru);
+    this.translate.setTranslation('en', mergeTranslations(en, extendedEn) as typeof en);
+    this.translate.setTranslation('ge', mergeTranslations(ge, extendedGe) as typeof ge);
     void this.setLocale(this.getSavedLocale());
   }
 
   t(key: string): string {
     this.locale();
     const value = this.translate.instant(key);
-    if (value && value !== key) {
+    if (typeof value === 'string' && value && value !== key) {
       return value;
     }
     return key;
+  }
+
+  tArray(key: string): string[] {
+    this.locale();
+    const value = this.translate.instant(key);
+    return Array.isArray(value) ? value.map((item) => String(item)) : [];
   }
 
   async setLocale(next: Locale): Promise<void> {

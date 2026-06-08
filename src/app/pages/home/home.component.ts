@@ -7,7 +7,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 
 interface ServiceItem {
-  icon: string;
+  image: string;
   title: string;
   description: string;
 }
@@ -28,32 +28,32 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   protected readonly services: ServiceItem[] = [
     {
-      icon: '🏠',
+      image: 'assets/1.jpeg',
       title: 'home.services.items.turnkey.title',
       description: 'home.services.items.turnkey.desc',
     },
     {
-      icon: '🧱',
+      image: 'assets/2.jpeg',
       title: 'home.services.items.tiler.title',
       description: 'home.services.items.tiler.desc',
     },
     {
-      icon: '⚡',
+      image: 'assets/3.jpeg',
       title: 'home.services.items.electrician.title',
       description: 'home.services.items.electrician.desc',
     },
     {
-      icon: '🚿',
+      image: 'assets/4.jpeg',
       title: 'home.services.items.plumber.title',
       description: 'home.services.items.plumber.desc',
     },
     {
-      icon: '🎨',
+      image: 'assets/5.jpeg',
       title: 'home.services.items.finisher.title',
       description: 'home.services.items.finisher.desc',
     },
     {
-      icon: '🪑',
+      image: 'assets/6.jpeg',
       title: 'home.services.items.furniture.title',
       description: 'home.services.items.furniture.desc',
     },

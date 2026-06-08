@@ -12,12 +12,12 @@
         class="ba-compare"
         [style.--pos-num]="sliderPos()"
         role="img"
-        [attr.aria-label]="displayTitle() + ': сравнение до и после'"
+        [attr.aria-label]="displayTitle() + ': ' + translation.t('beforeAfter.compareLabel')"
       >
         <img
           class="ba-img ba-img-after"
           [src]="work().afterImage"
-          [alt]="displayTitle() + ' — после ремонта'"
+          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.afterAlt')"
           loading="lazy"
           draggable="false"
         />
@@ -26,15 +26,15 @@
           <img
             class="ba-img ba-img-before"
             [src]="work().beforeImage"
-            [alt]="displayTitle() + ' — до ремонта'"
+            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.beforeAlt')"
             loading="lazy"
             draggable="false"
           />
         </div>
 
         <div class="ba-compare-labels">
-          <span class="ba-pill ba-pill-before">До</span>
-          <span class="ba-pill ba-pill-after">После</span>
+          <span class="ba-pill ba-pill-before">{{ translation.t('beforeAfter.before') }}</span>
+          <span class="ba-pill ba-pill-after">{{ translation.t('beforeAfter.after') }}</span>
         </div>
 
         <div class="ba-handle" aria-hidden="true">
@@ -51,28 +51,36 @@
           max="92"
           [value]="sliderPos()"
           (input)="onSliderInput($event)"
-          [attr.aria-label]="'Сравнить до и после: ' + displayTitle()"
+          [attr.aria-label]="translation.t('beforeAfter.compareAria') + ': ' + displayTitle()"
         />
       </div>
 
       <p class="ba-hint">
         <span aria-hidden="true">↔</span>
-        Потяните ползунок, чтобы сравнить
+        {{ translation.t('beforeAfter.hint') }}
       </p>
     </div>
   } @else {
     <div class="ba-card">
       <div class="ba-images">
         <div class="ba-side ba-side-before">
-          <span class="ba-label">До</span>
-          <img [src]="work().beforeImage" [alt]="work().title + ' — до'" loading="lazy" />
+          <span class="ba-label">{{ translation.t('beforeAfter.before') }}</span>
+          <img
+            [src]="work().beforeImage"
+            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
+            loading="lazy"
+          />
         </div>
         <div class="ba-divider" aria-hidden="true">
           <span class="ba-arrow">→</span>
         </div>
         <div class="ba-side ba-side-after">
-          <span class="ba-label ba-label-after">После</span>
-          <img [src]="work().afterImage" [alt]="work().title + ' — после'" loading="lazy" />
+          <span class="ba-label ba-label-after">{{ translation.t('beforeAfter.after') }}</span>
+          <img
+            [src]="work().afterImage"
+            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
+            loading="lazy"
+          />
         </div>
       </div>
     </div>
@@ -81,7 +89,7 @@
   <figcaption class="ba-caption">
     <div class="ba-caption-top">
       <h4>{{ displayTitle() }}</h4>
-      <span class="ba-tag">До / После</span>
+      <span class="ba-tag">{{ translation.t('beforeAfter.tag') }}</span>
     </div>
     @if (displayDescription(); as desc) {
       <p>{{ desc }}</p>

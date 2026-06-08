@@ -7,13 +7,13 @@ import {
   WorkProject,
   WorkVerificationStatus,
 } from '../models/portfolio.models';
-import { SEED_PERFORMERS } from '../data/portfolio.seed';
 import {
   buildVerificationUrl,
   generateVerificationCode,
   generateVerificationToken,
   normalizeClientContact,
 } from '../utils/work-verification.util';
+import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
 
 export interface WorkVerificationContext {
   work: WorkProject;
@@ -28,12 +28,11 @@ export interface AddWorkResult {
 
 const PERFORMERS_KEY = 'smartbuild-tech-performers';
 const SESSION_KEY = 'smartbuild-tech-cabinet-session';
-
 @Injectable({ providedIn: 'root' })
 export class PortfolioStoreService {
   private readonly platformId = inject(PLATFORM_ID);
 
-  private readonly performersSignal = signal<PerformerProfile[]>([...SEED_PERFORMERS]);
+  private readonly performersSignal = signal<PerformerProfile[]>([]);
   private readonly sessionSignal = signal<CabinetSession | null>(null);
 
   readonly performers = this.performersSignal.asReadonly();
@@ -248,25 +247,43 @@ export class PortfolioStoreService {
       return;
     }
 
+    if (shouldWipeCatalog()) {
+      wipeCatalogStorage();
+      this.performersSignal.set([]);
+      this.sessionSignal.set(null);
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(PERFORMERS_KEY);
-      if (raw) {
-        const custom = JSON.parse(raw) as PerformerProfile[];
-        const customOnly = custom
-          .filter((p) => !p.isDemo)
-          .map((performer) => ({
-            ...performer,
-            works: performer.works.map((item) => this.normalizeWork(item)),
-          }));
-        this.performersSignal.set([...SEED_PERFORMERS, ...customOnly]);
+      if (!raw) {
+        this.performersSignal.set([]);
+        return;
       }
+
+      const performers = (JSON.parse(raw) as PerformerProfile[])
+        .filter((p) => !p.isDemo)
+        .map((performer) => ({
+          ...performer,
+          works: performer.works.map((item) => this.normalizeWork(item)),
+        }));
+
+      this.performersSignal.set(performers);
 
       const sessionRaw = localStorage.getItem(SESSION_KEY);
       if (sessionRaw) {
-        this.sessionSignal.set(JSON.parse(sessionRaw) as CabinetSession);
+        const session = JSON.parse(sessionRaw) as CabinetSession;
+        if (performers.some((p) => p.id === session.performerId)) {
+          this.sessionSignal.set(session);
+        } else {
+          localStorage.removeItem(SESSION_KEY);
+        }
       }
     } catch {
-      /* ignore corrupt storage */
+      localStorage.removeItem(PERFORMERS_KEY);
+      localStorage.removeItem(SESSION_KEY);
+      this.performersSignal.set([]);
+      this.sessionSignal.set(null);
     }
   }
 
@@ -275,8 +292,8 @@ export class PortfolioStoreService {
       return;
     }
 
-    const customOnly = this.performersSignal().filter((p) => !p.isDemo);
-    localStorage.setItem(PERFORMERS_KEY, JSON.stringify(customOnly));
+    const performers = this.performersSignal().filter((p) => !p.isDemo);
+    localStorage.setItem(PERFORMERS_KEY, JSON.stringify(performers));
     this.persistSession();
   }
 

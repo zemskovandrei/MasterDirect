@@ -2,11 +2,12 @@ import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/c
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { TranslationService } from '../core/services/translation.service';
+import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-site-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitcherComponent],
   templateUrl: './site-layout.component.html',
   styleUrls: ['./site-layout.component.css'],
 })

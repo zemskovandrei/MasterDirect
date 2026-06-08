@@ -75,10 +75,13 @@
               <article class="review-card">
                 <div class="review-card-meta">
                   <strong>{{ review.name }}</strong>
-                  <span>{{ review.performerType }} / {{ review.category }}</span>
+                  <span
+                    >{{ reviewStore.performerTypeLabel(review) }} /
+                    {{ reviewStore.localizeCategory(review) }}</span
+                  >
                   <time>{{ review.createdAt | date: 'short' }}</time>
                 </div>
-                <p>{{ review.review }}</p>
+                <p>{{ reviewStore.localizeReview(review) }}</p>
                 <div class="review-actions">
                   <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
                     {{ translation.t('moderation.actions.reject') }}

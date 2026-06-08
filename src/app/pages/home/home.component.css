@@ -332,21 +332,22 @@
   line-height: 1.65;
 }
 
-.features {
+.features-block .features {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: clamp(680px, 78vh, 960px);
   padding: clamp(2rem, 4vw, 3rem) 2rem;
-  background-image: url('/assets/fon.png');
+  background-color: transparent;
+  background-image: url('../../../assets/fon.png');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   overflow: hidden;
 }
 
-.features::before {
+.features-block .features::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -429,7 +430,7 @@
     font-size: 1.05rem;
   }
 
-  .features {
+  .features-block .features {
     min-height: clamp(520px, 68vh, 720px);
     padding: 2rem 1rem;
     background-position: center 40%;
@@ -471,21 +472,22 @@
   line-height: 1.65;
 }
 
-.services {
+.services-block .services {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: clamp(520px, 65vh, 820px);
   padding: clamp(2rem, 4vw, 3rem) 2rem;
-  background-image: url('/assets/fon2.jpeg');
+  background-color: transparent;
+  background-image: url('../../../assets/fon2.jpeg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   overflow: hidden;
 }
 
-.services::before {
+.services-block .services::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -585,7 +587,7 @@
     font-size: 1.05rem;
   }
 
-  .services {
+  .services-block .services {
     min-height: clamp(440px, 58vh, 640px);
     padding: 2rem 1rem;
   }

@@ -162,11 +162,7 @@
   color: #1a1a2e;
 }
 
-/* Services Section */
-.services {
-  padding: 5rem 2rem;
-  background: linear-gradient(180deg, #ffffff 0%, #f0f4f8 100%);
-}
+/* Services Section — фон в home.component.css */
 
 .services-container {
   max-width: 1200px;
@@ -948,11 +944,7 @@
   line-height: 1.6;
 }
 
-/* Features Section */
-.features {
-  padding: 5rem 2rem;
-  background: white;
-}
+/* Features Section — фон в home.component.css */
 
 .features-container {
   max-width: 1200px;

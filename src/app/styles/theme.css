@@ -197,11 +197,7 @@
   width: 32px;
 }
 
-/* ——— Features ——— */
-.features {
-  padding: 5.5rem 2rem;
-  background: var(--color-bg-elevated);
-}
+/* ——— Features — фон и отступы в home.component.css ——— */
 
 .features h2 {
   font-weight: 800;
@@ -239,11 +235,7 @@
   color: var(--color-mint);
 }
 
-/* ——— Services ——— */
-.services {
-  padding: 5.5rem 2rem;
-  background: linear-gradient(180deg, var(--color-bg) 0%, #e8eef5 100%);
-}
+/* ——— Services — фон и отступы в home.component.css ——— */
 
 .service-card {
   border-radius: var(--radius-md);

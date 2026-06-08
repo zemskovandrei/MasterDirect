@@ -2,8 +2,9 @@
   <header class="header">
     <div class="header-container">
       <a class="logo" routerLink="/">
-        <h1>{{ title() }}</h1>
-        <p class="tagline">Профессиональный ремонт и отделка</p>
+        <h1 class="visually-hidden">{{ title() }}</h1>
+        <img src="assets/logo.svg" alt="pro-remont logo" class="logo-img" aria-hidden="true">
+        <p class="tagline">{{ translation.t('app.tagline') }}</p>
       </a>
 
       <button
@@ -12,35 +13,68 @@
         (click)="toggleMobileMenu()"
         [attr.aria-expanded]="mobileMenuOpen()"
         aria-controls="main-nav"
-        aria-label="Открыть меню"
+        [attr.aria-label]="translation.t('app.actions.openMenu')"
       >
         <span class="menu-toggle-bar"></span>
         <span class="menu-toggle-bar"></span>
         <span class="menu-toggle-bar"></span>
       </button>
 
+      <!-- Language hover dropdown -->
+      <aside class="lang-panel" [attr.aria-label]="translation.t('app.header.langSelector')">
+        <button
+          type="button"
+          class="lang-trigger"
+          aria-haspopup="menu"
+          aria-controls="lang-menu"
+          [attr.aria-label]="translation.t('locale.' + currentLocale())"
+        >
+          <span class="lang-panel-flag" aria-hidden="true">{{ getLocaleFlag(currentLocale()) }}</span>
+          <span class="lang-panel-initials">{{ getLocaleInitials(currentLocale()) }}</span>
+        </button>
+
+        <div class="lang-menu" id="lang-menu" role="menu" [attr.aria-label]="translation.t('app.header.langSelector')">
+          @for (l of localeOptions; track l) {
+            <button
+              type="button"
+              class="lang-menu-item"
+              [class.lang-menu-item-active]="currentLocale() === l"
+              (click)="selectLocale(l)"
+              role="menuitemradio"
+              [attr.aria-checked]="currentLocale() === l ? 'true' : 'false'"
+              [attr.aria-label]="translation.t('locale.' + l)">
+
+              <span class="lang-panel-flag" aria-hidden="true">{{ getLocaleFlag(l) }}</span>
+              <span class="lang-menu-item-name">
+                {{ translation.t('locale.' + l) }}
+              </span>
+            </button>
+          }
+        </div>
+      </aside>
+
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
         <ul>
           <li>
-            <a routerLink="/" fragment="features" (click)="onNavClick()">Преимущества</a>
+            <a routerLink="/" fragment="features" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="onNavClick()">{{ translation.t('app.nav.features') }}</a>
           </li>
           <li>
-            <a routerLink="/" fragment="services" (click)="onNavClick()">Мастера</a>
+            <a routerLink="/" fragment="services" (click)="onNavClick()">{{ translation.t('app.nav.services') }}</a>
           </li>
           <li>
-            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">Портфолио</a>
+            <a routerLink="/portfolio" routerLinkActive="active" (click)="onNavClick()">{{ translation.t('app.nav.portfolio') }}</a>
           </li>
           <li>
-            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">Кабинет</a>
+            <a routerLink="/cabinet" routerLinkActive="active" (click)="onNavClick()">{{ translation.t('app.nav.cabinet') }}</a>
           </li>
           <li>
-            <a routerLink="/" fragment="estimate" (click)="onNavClick()">Смета</a>
+            <a routerLink="/" fragment="estimate" (click)="onNavClick()">{{ translation.t('app.nav.estimate') }}</a>
           </li>
         </ul>
       </nav>
 
       <div class="header-actions" [class.header-actions-open]="mobileMenuOpen()">
-        <button type="button" class="btn-primary" (click)="scrollToEstimate()">Получить смету</button>
+        <button type="button" class="btn-primary" (click)="scrollToEstimate()">{{ translation.t('app.actions.getEstimate') }}</button>
       </div>
     </div>
 
@@ -49,7 +83,7 @@
         type="button"
         class="nav-backdrop"
         (click)="closeMobileMenu()"
-        aria-label="Закрыть меню"
+        [attr.aria-label]="translation.t('app.actions.closeMenu')"
       ></button>
     }
   </header>
@@ -62,37 +96,34 @@
     <div class="footer-container">
       <div class="footer-brand">
         <h2>{{ title() }}</h2>
-        <p>
-          Ремонт, отделка и мебель под заказ. Бригады и мастера публикуют работы «до / после» в
-          каталоге.
-        </p>
+        <p>{{ translation.t('app.footer.brand') }}</p>
         <button type="button" class="btn-primary footer-button" (click)="scrollToEstimate()">
-          Получить смету
+          {{ translation.t('app.actions.getEstimate') }}
         </button>
       </div>
 
       <div class="footer-column">
-        <h3>Разделы</h3>
+        <h3>{{ translation.t('app.footer.sections') }}</h3>
         <ul>
-          <li><a routerLink="/portfolio">Портфолио</a></li>
-          <li><a routerLink="/cabinet">Кабинет мастера</a></li>
-          <li><a routerLink="/moderation">Модерация отзывов</a></li>
-          <li><a routerLink="/" fragment="estimate">Заявка на смету</a></li>
+          <li><a routerLink="/portfolio">{{ translation.t('app.nav.portfolio') }}</a></li>
+          <li><a routerLink="/cabinet">{{ translation.t('app.nav.cabinet') }}</a></li>
+          <li><a routerLink="/moderation">{{ translation.t('app.footer.moderation') }}</a></li>
+          <li><a routerLink="/" fragment="estimate">{{ translation.t('app.nav.estimate') }}</a></li>
         </ul>
       </div>
 
       <div class="footer-column">
-        <h3>Подписка</h3>
+        <h3>{{ translation.t('app.footer.subscription') }}</h3>
         <ul>
-          <li>Мастер — $5 / мес</li>
-          <li>Бригадир — $15 / мес</li>
+          <li>{{ translation.t('app.footer.plans.master') }}</li>
+          <li>{{ translation.t('app.footer.plans.brigadier') }}</li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <span>© 2026 pro-remont</span>
-      <span>Каталог бригад и мастеров</span>
+      <span>{{ translation.t('app.footer.copyright') }}</span>
+      <span>{{ translation.t('app.footer.catalog') }}</span>
     </div>
   </footer>
 </div>

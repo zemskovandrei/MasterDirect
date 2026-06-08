@@ -1,6 +1,10 @@
 import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { TranslationService, type Locale } from '../core/services/translation.service';
+
+
+
 
 @Component({
   selector: 'app-site-layout',
@@ -11,16 +15,59 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 })
 export class SiteLayoutComponent {
   private readonly platformId = inject(PLATFORM_ID);
+  protected readonly translation = inject(TranslationService);
 
   protected readonly title = signal('pro-remont');
   protected readonly mobileMenuOpen = signal(false);
+
+  protected readonly localeOptions: Locale[] = ['ru', 'en', 'ge'];
+  protected readonly currentLocale = signal<Locale>('ru');
+
+  protected getLocaleFlag(locale: Locale): string {
+    switch (locale) {
+      case 'ru':
+        return '🇷🇺';
+      case 'en':
+        return '🇬🇧';
+      case 'ge':
+        return '🇬🇪';
+    }
+  }
+
+  protected getLocaleInitials(locale: Locale): string {
+    switch (locale) {
+      case 'ru':
+        return 'RU';
+      case 'en':
+        return 'EN';
+      case 'ge':
+        return 'GE';
+    }
+  }
+
+  protected async selectLocale(locale: Locale) {
+    await this.setLocale(locale);
+  }
+
+
 
   @HostListener('document:keydown.escape')
   onEscape() {
     this.closeMobileMenu();
   }
 
+  async setLocale(next: Locale) {
+    this.currentLocale.set(next);
+    await this.translation.setLocale(next);
+  }
+
+  async onLocaleChange(value: string) {
+    await this.setLocale(value as Locale);
+  }
+
+
   toggleMobileMenu() {
+
     const next = !this.mobileMenuOpen();
     this.mobileMenuOpen.set(next);
     if (next) {
@@ -38,6 +85,19 @@ export class SiteLayoutComponent {
     this.unlockBodyScroll();
   }
 
+  private lockBodyScroll() {
+    if (isPlatformBrowser(this.platformId)) {
+      document.body.classList.add('no-scroll');
+    }
+  }
+
+
+  private unlockBodyScroll() {
+    if (isPlatformBrowser(this.platformId)) {
+      document.body.classList.remove('no-scroll');
+    }
+  }
+
   onNavClick() {
     this.closeMobileMenu();
   }
@@ -52,18 +112,6 @@ export class SiteLayoutComponent {
       document.getElementById('estimate')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       location.href = '/#estimate';
-    }
-  }
-
-  private lockBodyScroll() {
-    if (isPlatformBrowser(this.platformId)) {
-      document.body.classList.add('no-scroll');
-    }
-  }
-
-  private unlockBodyScroll() {
-    if (isPlatformBrowser(this.platformId)) {
-      document.body.classList.remove('no-scroll');
     }
   }
 }

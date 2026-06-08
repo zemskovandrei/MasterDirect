@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface ServiceItem {
   icon: string;
@@ -22,41 +23,41 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
-
+  protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
   protected formSubmitted = signal(false);
+  protected formSuccess = signal(false);
 
   protected readonly services: ServiceItem[] = [
     {
       icon: '🏠',
-      title: 'Мастер по ремонту под ключ',
-      description:
-        'Координирует весь процесс: демонтаж, черновые работы, отделка и сдача объекта.',
+      title: 'home.services.items.turnkey.title',
+      description: 'home.services.items.turnkey.desc',
     },
     {
       icon: '🧱',
-      title: 'Плиточник-мастер',
-      description: 'Опытный мастер по плитке для ванной, кухни, прихожей и других зон.',
+      title: 'home.services.items.tiler.title',
+      description: 'home.services.items.tiler.desc',
     },
     {
       icon: '⚡',
-      title: 'Электрик-мастер',
-      description: 'Специалист по разводке, щитам, освещению и безопасному монтажу.',
+      title: 'home.services.items.electrician.title',
+      description: 'home.services.items.electrician.desc',
     },
     {
       icon: '🚿',
-      title: 'Сантехник-мастер',
-      description: 'Установка сантехники, замена труб и проверка на герметичность.',
+      title: 'home.services.items.plumber.title',
+      description: 'home.services.items.plumber.desc',
     },
     {
       icon: '🎨',
-      title: 'Отделочник-мастер',
-      description: 'Штукатурка, покраска, обои и отделочные решения по вашему проекту.',
+      title: 'home.services.items.finisher.title',
+      description: 'home.services.items.finisher.desc',
     },
     {
       icon: '🪑',
-      title: 'Мастер по мебели',
-      description: 'Индивидуальная мебель: кухни, шкафы, гардеробы и встроенные решения.',
+      title: 'home.services.items.furniture.title',
+      description: 'home.services.items.furniture.desc',
     },
   ];
 
@@ -82,7 +83,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   private slideIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit() {
-    this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
+    if (isPlatformBrowser(this.platformId)) {
+      this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
+    }
   }
 
   ngOnDestroy() {
@@ -114,26 +117,30 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   submitEstimate() {
+    this.formSubmitted.set(true);
     if (this.estimateForm.invalid) {
-      this.estimateForm.markAllAsTouched();
       return;
     }
-    this.formSubmitted.set(true);
+
+    this.formSuccess.set(true);
     this.estimateForm.reset();
     if (isPlatformBrowser(this.platformId)) {
-      document
-        .getElementById('estimate-success')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(() => {
+        document
+          .getElementById('estimate-success')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 0);
     }
   }
 
   resetEstimateForm() {
     this.formSubmitted.set(false);
+    this.formSuccess.set(false);
     this.estimateForm.reset();
   }
 
   isInvalid(controlName: 'name' | 'phone' | 'email'): boolean {
     const control = this.estimateForm.get(controlName);
-    return !!control && control.invalid && control.touched;
+    return !!control && control.invalid && (control.touched || this.formSubmitted());
   }
 }

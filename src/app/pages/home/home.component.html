@@ -1,35 +1,37 @@
+
 <section class="hero-slider">
   <div class="slider-container">
     <div class="slide" [ngStyle]="slideBackgroundStyle()">
-      <img class="slide-image" [src]="currentSlide()" alt="Интерьер после ремонта" />
+      <img class="slide-image" [src]="currentSlide()" [attr.alt]="translation.t('home.hero.imageAlt')" />
       <div class="slide-overlay"></div>
       <div class="slide-content">
-        <h2>Преобразим ваше пространство</h2>
-        <p>Ремонт квартир, домов и отдельных помещений. Бригады и мастера под конкретные задачи.</p>
+        <h2>{{ translation.t('home.hero.title') }}</h2>
+        <p>{{ translation.t('home.hero.subtitle') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">Получить смету</a>
-          <a class="btn-secondary btn-large" routerLink="/portfolio">Каталог работ</a>
+          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">{{ translation.t('home.hero.primary') }}</a>
+          <a class="btn-secondary btn-large" routerLink="/portfolio">{{ translation.t('home.hero.secondary') }}</a>
         </div>
-        <div class="hero-tags" aria-label="Основные услуги">
-          <span>Плитка</span>
-          <span>Сантехника</span>
-          <span>Электрика</span>
-          <span>Отделка</span>
-          <span>Мебель под заказ</span>
-          <span>Под ключ</span>
+        <div class="hero-tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
+          <span>{{ translation.t('home.hero.tags.0') }}</span>
+          <span>{{ translation.t('home.hero.tags.1') }}</span>
+          <span>{{ translation.t('home.hero.tags.2') }}</span>
+          <span>{{ translation.t('home.hero.tags.3') }}</span>
+          <span>{{ translation.t('home.hero.tags.4') }}</span>
+          <span>{{ translation.t('home.hero.tags.5') }}</span>
         </div>
+
         <div class="hero-benefits">
-          <span>Бригада или мастер</span>
-          <span>Смета до начала</span>
-          <span>Работы до и после</span>
+          <span>{{ translation.t('home.hero.benefits.0') }}</span>
+          <span>{{ translation.t('home.hero.benefits.1') }}</span>
+          <span>{{ translation.t('home.hero.benefits.2') }}</span>
         </div>
       </div>
     </div>
 
-    <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" aria-label="Предыдущий слайд">
+    <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" [attr.aria-label]="translation.t('home.hero.prevSlide')">
       &#10094;
     </button>
-    <button type="button" class="slider-btn slider-btn-next" (click)="nextSlide()" aria-label="Следующий слайд">
+    <button type="button" class="slider-btn slider-btn-next" (click)="nextSlide()" [attr.aria-label]="translation.t('home.hero.nextSlide')">
       &#10095;
     </button>
 
@@ -40,7 +42,7 @@
           [class.active]="currentSlideIndex() === i"
           (click)="goToSlide(i)"
           role="button"
-          aria-label="Слайд {{ i + 1 }}"
+          [attr.aria-label]="translation.t('home.hero.slide') + ' ' + (i + 1)"
           tabindex="0"
           (keydown.enter)="goToSlide(i)"
         ></span>
@@ -52,35 +54,35 @@
 <section class="features" id="features">
   <div class="features-container">
     <div class="section-header">
-      <span class="section-eyebrow">Преимущества</span>
-      <h2>Почему выбирают нас</h2>
-      <p class="section-subtitle">Бригады и мастера — под любую задачу по ремонту</p>
+      <span class="section-eyebrow">{{ translation.t('home.features.eyebrow') }}</span>
+      <h2>{{ translation.t('home.features.title') }}</h2>
+      <p class="section-subtitle">{{ translation.t('home.features.subtitle') }}</p>
     </div>
     <div class="features-grid">
       <a routerLink="/portfolio" class="feature-card feature-card-link">
         <div class="feature-icon">✓</div>
-        <h3>Отзывы и портфолио</h3>
-        <p>Перейдите в портфолио, чтобы посмотреть реальные отзывы и результаты работ.</p>
+        <h3>{{ translation.t('home.features.cards.0.title') }}</h3>
+        <p>{{ translation.t('home.features.cards.0.desc') }}</p>
       </a>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Выбор бригады</h3>
-        <p>Подберём команду под комплексный ремонт квартиры, дома или отдельного помещения</p>
+        <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
+        <p>{{ translation.t('home.features.cards.1.desc') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Отдельные мастера</h3>
-        <p>Специалист под задачу: плитка, электрика, сантехника или отделка</p>
+        <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
+        <p>{{ translation.t('home.features.cards.2.desc') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Работы до и после</h3>
-        <p>В каталоге — реальные проекты бригад и мастеров с фото «до» и «после»</p>
+        <h3>{{ translation.t('home.features.cards.3.title') }}</h3>
+        <p>{{ translation.t('home.features.cards.3.desc') }}</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✓</div>
-        <h3>Ремонт под ключ</h3>
-        <p>От проекта до финальной уборки — полный цикл</p>
+        <h3>{{ translation.t('home.features.cards.4.title') }}</h3>
+        <p>{{ translation.t('home.features.cards.4.desc') }}</p>
       </div>
     </div>
   </div>
@@ -89,17 +91,17 @@
 <section class="services" id="services">
   <div class="services-container">
     <div class="section-header">
-      <span class="section-eyebrow">Услуги</span>
-      <h2>Наши услуги</h2>
-      <p class="section-subtitle">Бригада под ключ или отдельный мастер — под вашу задачу</p>
+      <span class="section-eyebrow">{{ translation.t('home.services.eyebrow') }}</span>
+      <h2>{{ translation.t('home.services.title') }}</h2>
+      <p class="section-subtitle">{{ translation.t('home.services.subtitle') }}</p>
     </div>
     <div class="services-grid">
       @for (service of services; track service.title) {
         <article class="service-card">
           <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
-          <a class="service-link" routerLink="/" fragment="estimate">Заказать расчёт</a>
+          <h3>{{ translation.t(service.title) }}</h3>
+          <p>{{ translation.t(service.description) }}</p>
+          <a class="service-link" routerLink="/" fragment="estimate">{{ translation.t('app.actions.getEstimate') }}</a>
         </article>
       }
     </div>
@@ -109,11 +111,9 @@
 <section class="portfolio-teaser" id="portfolio">
   <div class="portfolio-container">
     <div class="section-header">
-      <span class="section-eyebrow">Портфолио</span>
-      <h2>Каталог бригад и мастеров</h2>
-      <p class="section-subtitle">
-        Смотрите работы «до / после». Мастера и бригадиры публикуют проекты по подписке.
-      </p>
+      <span class="section-eyebrow">{{ translation.t('home.portfolio.eyebrow') }}</span>
+      <h2>{{ translation.t('home.portfolio.title') }}</h2>
+      <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
     </div>
 
     @if (portfolioStore.brigades()[0]; as brigade) {
@@ -125,18 +125,18 @@
     }
 
     <div class="teaser-actions">
-      <a routerLink="/portfolio" class="btn-primary btn-large">Смотреть портфолио</a>
-      <a routerLink="/cabinet" class="btn-secondary btn-large">Разместить свои работы</a>
+      <a routerLink="/portfolio" class="btn-primary btn-large">{{ translation.t('home.portfolio.actions.view') }}</a>
+      <a routerLink="/cabinet" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.place') }}</a>
     </div>
 
     <div class="teaser-stats">
       <div class="stat">
         <strong>{{ portfolioStore.brigades().length }}</strong>
-        <span>бригад</span>
+        <span>{{ translation.t('home.portfolio.stats.brigades') }}</span>
       </div>
       <div class="stat">
         <strong>{{ portfolioStore.workers().length }}</strong>
-        <span>мастеров</span>
+        <span>{{ translation.t('home.portfolio.stats.workers') }}</span>
       </div>
     </div>
   </div>
@@ -145,51 +145,51 @@
 <section class="estimate" id="estimate">
   <div class="estimate-container">
     <div class="section-header">
-      <span class="section-eyebrow">Заявка</span>
-      <h2>Получить смету</h2>
-      <p class="section-subtitle">Оставьте заявку — перезвоним и обсудим объём работ</p>
+      <span class="section-eyebrow">{{ translation.t('home.estimate.eyebrow') }}</span>
+      <h2>{{ translation.t('home.estimate.title') }}</h2>
+      <p class="section-subtitle">{{ translation.t('home.estimate.subtitle') }}</p>
     </div>
 
-    @if (formSubmitted()) {
+    @if (formSuccess()) {
       <div class="estimate-success" id="estimate-success" role="status">
         <div class="estimate-success-icon">✓</div>
-        <h3>Заявка отправлена</h3>
-        <p>Мы свяжемся с вами в ближайшее время.</p>
+        <h3>{{ translation.t('home.estimate.form.successTitle') }}</h3>
+        <p>{{ translation.t('home.estimate.form.successText') }}</p>
         <button type="button" class="btn-secondary" (click)="resetEstimateForm()">
-          Отправить ещё одну заявку
+          {{ translation.t('home.estimate.form.reset') }}
         </button>
       </div>
     } @else {
       <form class="estimate-form" [formGroup]="estimateForm" (ngSubmit)="submitEstimate()">
         <div class="form-row">
           <label class="form-field">
-            <span>Имя *</span>
-            <input type="text" formControlName="name" placeholder="Как к вам обращаться" autocomplete="name" />
+            <span>{{ translation.t('home.estimate.form.name') }}</span>
+            <input type="text" formControlName="name" [placeholder]="translation.t('home.estimate.form.namePlaceholder')" autocomplete="name" />
             @if (isInvalid('name')) {
-              <small class="form-error">Укажите имя (минимум 2 символа)</small>
+              <small class="form-error">{{ translation.t('home.estimate.form.invalidName') }}</small>
             }
           </label>
           <label class="form-field">
-            <span>Телефон *</span>
-            <input type="tel" formControlName="phone" placeholder="+7 (900) 123-45-67" autocomplete="tel" />
+            <span>{{ translation.t('home.estimate.form.phone') }}</span>
+            <input type="tel" formControlName="phone" [placeholder]="translation.t('home.estimate.form.phonePlaceholder')" autocomplete="tel" />
             @if (isInvalid('phone')) {
-              <small class="form-error">Укажите корректный номер телефона</small>
+              <small class="form-error">{{ translation.t('home.estimate.form.invalidPhone') }}</small>
             }
           </label>
         </div>
         <label class="form-field">
-          <span>Email</span>
-          <input type="email" formControlName="email" placeholder="email@example.com" autocomplete="email" />
+          <span>{{ translation.t('home.estimate.form.email') }}</span>
+          <input type="email" formControlName="email" [placeholder]="translation.t('home.estimate.form.emailPlaceholder')" autocomplete="email" />
           @if (isInvalid('email')) {
-            <small class="form-error">Некорректный email</small>
+            <small class="form-error">{{ translation.t('home.estimate.form.invalidEmail') }}</small>
           }
         </label>
         <label class="form-field">
-          <span>Комментарий</span>
-          <textarea formControlName="message" rows="4" placeholder="Тип объекта, площадь, сроки..."></textarea>
+          <span>{{ translation.t('home.estimate.form.message') }}</span>
+          <textarea formControlName="message" rows="4" [placeholder]="translation.t('home.estimate.form.messagePlaceholder')"></textarea>
         </label>
-        <button type="submit" class="btn-primary btn-large estimate-submit">Отправить заявку</button>
-        <p class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных</p>
+        <button type="submit" class="btn-primary btn-large estimate-submit">{{ translation.t('home.estimate.form.submit') }}</button>
+        <p class="form-note">{{ translation.t('home.estimate.form.note') }}</p>
       </form>
     }
   </div>

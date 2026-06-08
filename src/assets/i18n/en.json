@@ -12,6 +12,7 @@
       "brigades": "Teams",
       "masters": "Masters",
       "furniture": "Furniture",
+      "reviews": "Reviews",
       "portfolio": "Portfolio",
       "cabinet": "Dashboard",
       "moderation": "Moderation",
@@ -205,13 +206,13 @@
   "masters": {
     "title": "Masters",
     "subtitle": "Specialists for individual tasks: tiling, electrical, plumbing, finishing.",
-    "cta": "Publish profile",
+    "cta": "Add profile",
     "listTitle": "Masters catalog",
-    "listLead": "Pick a master by specialty and view before/after work.",
+    "listLead": "Pick a master by specialty and contact them directly.",
     "inCatalog": "masters in catalog",
     "badge": "Master",
     "allWorks": "All work",
-    "empty": "No published masters yet."
+    "empty": "No masters in the catalog yet."
   },
   "furniture": {
     "title": "Furniture companies",
@@ -237,7 +238,8 @@
   "reviews": {
     "performerType": {
       "brigade": "Team",
-      "master": "Master"
+      "master": "Master",
+      "furniture": "Furniture"
     },
     "countOne": "review",
     "countMany": "reviews",

@@ -49,15 +49,19 @@ export interface CabinetSession {
   performerId: string;
 }
 
-export type ReviewPerformerTypeKey = 'brigade' | 'master';
+export type ReviewPerformerTypeKey = 'brigade' | 'master' | 'furniture';
 
 export interface ReviewSubmission {
   id: string;
   name: string;
-  performerType: 'Мастер' | 'Бригада';
+  performerType: 'Мастер' | 'Бригада' | 'Мебель';
   performerTypeKey?: ReviewPerformerTypeKey;
+  performerId?: string;
   category: string;
   review: string;
+  rating?: number;
+  beforeImage?: string;
+  afterImage?: string;
   /** Key in i18n files, e.g. reviews.samples.0 or seeds.performers.*.works.* */
   i18nKey?: string;
   status: 'pending' | 'approved' | 'rejected';

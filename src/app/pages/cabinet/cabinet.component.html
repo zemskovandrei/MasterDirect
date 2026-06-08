@@ -7,13 +7,6 @@
 
 <div class="cabinet">
   <div class="cabinet-inner">
-    <div class="demo-banner" role="note">
-      <span aria-hidden="true">ℹ️</span>
-      <span>
-        {{ translation.t('cabinet.demoBanner') }}
-      </span>
-    </div>
-
     @if (!store.currentPerformer()) {
       <section class="register-panel">
         <header class="register-header">
@@ -38,6 +31,7 @@
         </ol>
 
         <div class="register-layout">
+          @if (showPlanSelector) {
           <div class="register-block register-block--plans">
             <h3 class="register-block-title">
               <span class="register-block-icon" aria-hidden="true">①</span>
@@ -93,6 +87,7 @@
               </button>
             </div>
           </div>
+          }
 
           <div class="register-block register-block--form">
             <h3 class="register-block-title">
@@ -101,7 +96,10 @@
             </h3>
 
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
-              <label class="register-field" [class.register-field--error]="registerFieldInvalid('name')">
+              <label
+                class="register-field"
+                [class.register-field--error]="registerFieldInvalid('name')"
+              >
                 <span class="register-label">
                   <span class="field-icon" aria-hidden="true">👤</span>
                   {{ translation.t('cabinet.nameLabel') }}
@@ -140,7 +138,10 @@
                     [attr.aria-expanded]="specialtyMenuOpen()"
                     (click)="toggleSpecialtyMenu($event)"
                   >
-                    <span class="specialty-trigger-text" [class.specialty-trigger-text--empty]="!specialtyDisplay()">
+                    <span
+                      class="specialty-trigger-text"
+                      [class.specialty-trigger-text--empty]="!specialtyDisplay()"
+                    >
                       {{ specialtyDisplay() || translation.t('cabinet.specialtyPlaceholder') }}
                     </span>
                     <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
@@ -193,12 +194,17 @@
                 }
               </label>
 
+              @if (showPlanSelector) {
               <div class="register-summary">
-                <span class="register-summary-label">{{ translation.t('cabinet.selectedPlan') }}</span>
+                <span class="register-summary-label">{{
+                  translation.t('cabinet.selectedPlan')
+                }}</span>
                 <span class="register-summary-value">
-                  {{ planTitle(selectedPlan()) }} — ${{ planPrice(selectedPlan()) }}{{ translation.t('cabinet.perMonthShort') }}
+                  {{ planTitle(selectedPlan()) }} — ${{ planPrice(selectedPlan())
+                  }}{{ translation.t('cabinet.perMonthShort') }}
                 </span>
               </div>
+              }
 
               <button type="submit" class="btn-primary btn-large register-submit">
                 {{ translation.t('cabinet.submitRegister') }}
@@ -210,34 +216,37 @@
       </section>
     } @else {
       @if (store.currentPerformer(); as performer) {
-          <section class="cabinet-panel profile-summary">
-            <div class="summary-head">
-              <div>
-                <span class="profile-badge">{{
-                  performer.type === 'brigade'
-                    ? translation.t('cabinet.badgeBrigadier')
-                    : translation.t('cabinet.badgeMaster')
-                }}</span>
-                <h2>{{ performer.name }}</h2>
-                <p>{{ catalogL10n.performerSpecialty(performer) }}</p>
-              </div>
-              <div class="summary-actions">
-                <a
-                  [routerLink]="performer.type === 'brigade' ? ['/brigades', performer.id] : ['/masters', performer.id]"
-                  class="btn-secondary"
-                >
+        <section class="cabinet-panel profile-summary">
+          <div class="summary-head">
+            <div>
+              <span class="profile-badge">{{
+                performer.type === 'brigade'
+                  ? translation.t('cabinet.badgeBrigadier')
+                  : translation.t('cabinet.badgeMaster')
+              }}</span>
+              <h2>{{ performer.name }}</h2>
+              <p>{{ catalogL10n.performerSpecialty(performer) }}</p>
+            </div>
+            <div class="summary-actions">
+              @if (performer.type === 'brigade') {
+                <a [routerLink]="['/brigades', performer.id]" class="btn-secondary">
                   {{ translation.t('cabinet.openCatalog') }}
                 </a>
-                <button type="button" class="btn-text" (click)="signOut()">{{ translation.t('cabinet.signOut') }}</button>
-              </div>
+              }
+              <button type="button" class="btn-text" (click)="signOut()">
+                {{ translation.t('cabinet.signOut') }}
+              </button>
             </div>
+          </div>
 
-            @if (!performer.subscribed) {
+          @if (performer.type === 'brigade' && !performer.subscribed) {
             <div class="subscribe-box">
               <h3>{{ translation.t('cabinet.subscribeTitle') }}</h3>
               <p>
                 {{ translation.t('cabinet.subscribeTariff') }}:
-                <strong>${{ planPrice(performer.type) }} {{ translation.t('cabinet.perMonth') }}</strong>
+                <strong
+                  >${{ planPrice(performer.type) }} {{ translation.t('cabinet.perMonth') }}</strong
+                >
                 ({{ planTitle(performer.type) }})
               </p>
               <ul>
@@ -249,7 +258,7 @@
                 {{ subscribePayLabel(planPrice(performer.type)) }}
               </button>
             </div>
-          } @else {
+          } @else if (performer.type === 'brigade') {
             <p class="subscribed-badge">✓ {{ translation.t('cabinet.subscribed') }}</p>
 
             <div class="upload-section">
@@ -265,11 +274,19 @@
                 </p>
               }
               @if (lastUploadResult()?.verificationLink; as link) {
-                <div class="verification-share" role="region" [attr.aria-label]="translation.t('cabinet.shareAria')">
+                <div
+                  class="verification-share"
+                  role="region"
+                  [attr.aria-label]="translation.t('cabinet.shareAria')"
+                >
                   <p class="verification-share-title">{{ translation.t('cabinet.shareTitle') }}</p>
                   <div class="verification-share-row">
                     <input class="verification-share-input" type="text" readonly [value]="link" />
-                    <button type="button" class="btn-secondary" (click)="copyVerificationLink(link)">
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      (click)="copyVerificationLink(link)"
+                    >
                       {{ translation.t('cabinet.copy') }}
                     </button>
                   </div>
@@ -286,7 +303,9 @@
               <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
                 <div class="upload-form-fields">
                   <label class="work-field">
-                    <span class="work-field-label">{{ translation.t('cabinet.workTitle') }} <em>*</em></span>
+                    <span class="work-field-label"
+                      >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
+                    >
                     <input
                       type="text"
                       formControlName="title"
@@ -305,20 +324,26 @@
                   </label>
 
                   <label class="work-field work-field--full">
-                    <span class="work-field-label">{{ translation.t('cabinet.clientContact') }}</span>
+                    <span class="work-field-label">{{
+                      translation.t('cabinet.clientContact')
+                    }}</span>
                     <input
                       type="text"
                       formControlName="clientContact"
                       [placeholder]="translation.t('cabinet.clientContactPh')"
                       autocomplete="off"
                     />
-                    <span class="work-field-hint">{{ translation.t('cabinet.clientContactHint') }}</span>
+                    <span class="work-field-hint">{{
+                      translation.t('cabinet.clientContactHint')
+                    }}</span>
                   </label>
                 </div>
 
                 <div class="upload-dropzones">
                   <div class="dropzone-group">
-                    <span class="dropzone-heading">{{ translation.t('cabinet.photoBefore') }} <em>*</em></span>
+                    <span class="dropzone-heading"
+                      >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
+                    >
                     <label
                       class="dropzone"
                       [class.dropzone--filled]="beforePreview()"
@@ -335,8 +360,14 @@
                         (change)="onFileSelected('before', $event)"
                       />
                       @if (beforePreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" class="dropzone-preview" />
-                        <span class="dropzone-overlay">{{ translation.t('cabinet.replacePhoto') }}</span>
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewBefore')"
+                          class="dropzone-preview"
+                        />
+                        <span class="dropzone-overlay">{{
+                          translation.t('cabinet.replacePhoto')
+                        }}</span>
                       } @else {
                         <span class="dropzone-icon" aria-hidden="true">🖼</span>
                         <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
@@ -346,7 +377,9 @@
                   </div>
 
                   <div class="dropzone-group">
-                    <span class="dropzone-heading">{{ translation.t('cabinet.photoAfter') }} <em>*</em></span>
+                    <span class="dropzone-heading"
+                      >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
+                    >
                     <label
                       class="dropzone"
                       [class.dropzone--filled]="afterPreview()"
@@ -363,8 +396,14 @@
                         (change)="onFileSelected('after', $event)"
                       />
                       @if (afterPreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" class="dropzone-preview" />
-                        <span class="dropzone-overlay">{{ translation.t('cabinet.replacePhoto') }}</span>
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewAfter')"
+                          class="dropzone-preview"
+                        />
+                        <span class="dropzone-overlay">{{
+                          translation.t('cabinet.replacePhoto')
+                        }}</span>
                       } @else {
                         <span class="dropzone-icon" aria-hidden="true">🖼</span>
                         <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
@@ -392,7 +431,11 @@
                       @if (verificationLink(work); as link) {
                         <div class="my-work-verify-link">
                           <span>{{ translation.t('cabinet.clientLink') }}</span>
-                          <button type="button" class="btn-secondary btn-small" (click)="copyVerificationLink(link)">
+                          <button
+                            type="button"
+                            class="btn-secondary btn-small"
+                            (click)="copyVerificationLink(link)"
+                          >
                             {{ translation.t('cabinet.copyLink') }}
                           </button>
                         </div>

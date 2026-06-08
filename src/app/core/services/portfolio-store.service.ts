@@ -42,9 +42,7 @@ export class PortfolioStoreService {
     this.performersSignal().filter((p) => p.type === 'brigade' && p.subscribed),
   );
 
-  readonly workers = computed(() =>
-    this.performersSignal().filter((p) => p.type === 'worker' && p.subscribed),
-  );
+  readonly workers = computed(() => [] as PerformerProfile[]);
 
   readonly currentPerformer = computed(() => {
     const session = this.sessionSignal();
@@ -110,7 +108,7 @@ export class PortfolioStoreService {
     },
   ): AddWorkResult | null {
     const performer = this.performersSignal().find((p) => p.id === performerId);
-    if (!performer?.subscribed) {
+    if (!performer || performer.type === 'worker' || !performer.subscribed) {
       return null;
     }
 

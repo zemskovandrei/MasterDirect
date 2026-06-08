@@ -9,6 +9,8 @@ import { FurnitureProfileComponent } from './pages/furniture/furniture-profile.c
 import { CabinetComponent } from './pages/cabinet/cabinet.component';
 import { ModerationComponent } from './pages/moderation/moderation.component';
 import { WorkVerificationComponent } from './pages/work-verification/work-verification.component';
+import { PortfolioCatalogComponent } from './pages/portfolio/portfolio-catalog.component';
+import { ReviewsPageComponent } from './pages/reviews/reviews-page.component';
 
 export const routes: Routes = [
   { path: 'verify/:token', component: WorkVerificationComponent },
@@ -24,8 +26,9 @@ export const routes: Routes = [
       { path: 'furniture', component: FurnitureCompaniesPageComponent },
       { path: 'furniture/:id', component: FurnitureProfileComponent },
       { path: 'cabinet', component: CabinetComponent },
+      { path: 'reviews', component: ReviewsPageComponent },
       { path: 'moderation', component: ModerationComponent },
-      { path: 'portfolio', redirectTo: 'brigades', pathMatch: 'full' },
+      { path: 'portfolio', component: PortfolioCatalogComponent },
       { path: 'portfolio/brigade/:id', redirectTo: 'brigades/:id' },
       { path: 'portfolio/worker/:id', redirectTo: 'masters/:id' },
     ],

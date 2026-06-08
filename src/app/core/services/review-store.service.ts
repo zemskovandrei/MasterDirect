@@ -63,17 +63,28 @@ export class ReviewStoreService {
     if (review.performerTypeKey) {
       return review.performerTypeKey;
     }
-    return review.performerType === 'Бригада' ? 'brigade' : 'master';
+    if (review.performerType === 'Бригада') {
+      return 'brigade';
+    }
+    if (review.performerType === 'Мебель') {
+      return 'furniture';
+    }
+    return 'master';
   }
 
   addReview(data: {
     name: string;
     performerType: ReviewSubmission['performerType'];
+    performerTypeKey?: ReviewPerformerTypeKey;
     category: string;
+    performerId?: string;
     review: string;
+    rating?: number;
+    beforeImage?: string;
+    afterImage?: string;
   }): ReviewSubmission {
     const performerTypeKey: ReviewPerformerTypeKey =
-      data.performerType === 'Бригада' ? 'brigade' : 'master';
+      data.performerTypeKey ?? this.resolvePerformerTypeKey({ performerType: data.performerType } as ReviewSubmission);
 
     const submission: ReviewSubmission = {
       id: `review-${Date.now()}`,
@@ -85,6 +96,19 @@ export class ReviewStoreService {
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
+
+    if (data.performerId) {
+      submission.performerId = data.performerId;
+    }
+    if (data.rating) {
+      submission.rating = data.rating;
+    }
+    if (data.beforeImage) {
+      submission.beforeImage = data.beforeImage;
+    }
+    if (data.afterImage) {
+      submission.afterImage = data.afterImage;
+    }
 
     this.reviewsSignal.update((list) => [submission, ...list]);
     this.persist();

@@ -1,15 +1,22 @@
-
 <section class="hero-slider">
   <div class="slider-container">
     <div class="slide">
-      <img class="slide-image" [src]="currentSlide()" [attr.alt]="translation.t('home.hero.imageAlt')" />
+      <img
+        class="slide-image"
+        [src]="currentSlide()"
+        [attr.alt]="translation.t('home.hero.imageAlt')"
+      />
       <div class="slide-overlay"></div>
       <div class="slide-content">
         <h2>{{ translation.t('home.hero.title') }}</h2>
         <p>{{ translation.t('home.hero.subtitle') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/brigades">{{ translation.t('home.hero.primary') }}</a>
-          <a class="btn-secondary btn-large" routerLink="/masters">{{ translation.t('home.hero.secondary') }}</a>
+          <a class="btn-primary btn-large" routerLink="/brigades">{{
+            translation.t('home.hero.primary')
+          }}</a>
+          <a class="btn-secondary btn-large" routerLink="/furniture">{{
+            translation.t('home.hero.secondary')
+          }}</a>
         </div>
         <div class="hero-tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
           <span>{{ translation.t('home.hero.tags.0') }}</span>
@@ -28,10 +35,20 @@
       </div>
     </div>
 
-    <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" [attr.aria-label]="translation.t('home.hero.prevSlide')">
+    <button
+      type="button"
+      class="slider-btn slider-btn-prev"
+      (click)="prevSlide()"
+      [attr.aria-label]="translation.t('home.hero.prevSlide')"
+    >
       &#10094;
     </button>
-    <button type="button" class="slider-btn slider-btn-next" (click)="nextSlide()" [attr.aria-label]="translation.t('home.hero.nextSlide')">
+    <button
+      type="button"
+      class="slider-btn slider-btn-next"
+      (click)="nextSlide()"
+      [attr.aria-label]="translation.t('home.hero.nextSlide')"
+    >
       &#10095;
     </button>
 
@@ -69,11 +86,6 @@
           <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
           <p>{{ translation.t('home.features.cards.1.desc') }}</p>
         </a>
-        <a routerLink="/masters" class="feature-card feature-card-link">
-          <div class="feature-icon">✓</div>
-          <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
-          <p>{{ translation.t('home.features.cards.2.desc') }}</p>
-        </a>
         <div class="feature-card">
           <div class="feature-icon">✓</div>
           <h3>{{ translation.t('home.features.cards.3.title') }}</h3>
@@ -97,17 +109,17 @@
   <div class="services">
     <div class="services-container">
       <div class="services-grid">
-      @for (service of services; track service.image) {
-        <article class="service-card">
-          <div class="service-card-media">
-            <img [src]="service.image" [alt]="translation.t(service.title)" loading="lazy" />
-          </div>
-          <div class="service-card-body">
-            <h3>{{ translation.t(service.title) }}</h3>
-            <p>{{ translation.t(service.description) }}</p>
-          </div>
-        </article>
-      }
+        @for (service of services; track service.image) {
+          <article class="service-card">
+            <div class="service-card-media">
+              <img [src]="service.image" [alt]="translation.t(service.title)" loading="lazy" />
+            </div>
+            <div class="service-card-body">
+              <h3>{{ translation.t(service.title) }}</h3>
+              <p>{{ translation.t(service.description) }}</p>
+            </div>
+          </article>
+        }
       </div>
     </div>
   </div>
@@ -144,9 +156,12 @@
           translation.t('home.portfolio.actions.view')
         }}</a>
       }
-      <a routerLink="/cabinet" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.place') }}</a>
-      <a routerLink="/brigades" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.brigades') }}</a>
-      <a routerLink="/masters" class="btn-secondary btn-large">{{ translation.t('home.portfolio.actions.masters') }}</a>
+      <a routerLink="/cabinet" class="btn-secondary btn-large">{{
+        translation.t('home.portfolio.actions.place')
+      }}</a>
+      <a routerLink="/brigades" class="btn-secondary btn-large">{{
+        translation.t('home.portfolio.actions.brigades')
+      }}</a>
     </div>
 
     <div class="teaser-stats">
@@ -155,14 +170,9 @@
         <span>{{ translation.t('home.portfolio.stats.brigades') }}</span>
       </div>
       <div class="stat">
-        <strong>{{ portfolioStore.workers().length }}</strong>
-        <span>{{ translation.t('home.portfolio.stats.workers') }}</span>
-      </div>
-      <div class="stat">
         <strong>{{ furnitureStore.published().length }}</strong>
         <span>{{ translation.t('home.portfolio.stats.furniture') }}</span>
       </div>
     </div>
   </div>
 </section>
-

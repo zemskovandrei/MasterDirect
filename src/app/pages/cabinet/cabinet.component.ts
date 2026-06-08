@@ -2,10 +2,7 @@ import { Component, ElementRef, HostListener, inject, signal, viewChild } from '
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import {
-  PerformerType,
-  SUBSCRIPTION_PLANS,
-} from '../../core/models/portfolio.models';
+import { PerformerType, SUBSCRIPTION_PLANS } from '../../core/models/portfolio.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -34,6 +31,8 @@ export class CabinetComponent {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly plans = SUBSCRIPTION_PLANS;
+  protected readonly defaultPlan: PerformerType = 'worker';
+  protected readonly showPlanSelector = false;
 
   protected readonly uploadSuccess = signal(false);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
@@ -166,7 +165,7 @@ export class CabinetComponent {
 
   uploadWork() {
     const performer = this.store.currentPerformer();
-    if (!performer?.subscribed) {
+    if (!performer || performer.type === 'worker' || !performer.subscribed) {
       return;
     }
 
@@ -202,8 +201,13 @@ export class CabinetComponent {
     }
   }
 
-  verificationLink(work: { verificationToken?: string; verificationStatus?: string }): string | null {
-    return this.store.verificationLinkForWork(work as import('../../core/models/portfolio.models').WorkProject);
+  verificationLink(work: {
+    verificationToken?: string;
+    verificationStatus?: string;
+  }): string | null {
+    return this.store.verificationLinkForWork(
+      work as import('../../core/models/portfolio.models').WorkProject,
+    );
   }
 
   async copyVerificationLink(link: string) {

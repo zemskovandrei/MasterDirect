@@ -277,7 +277,10 @@
   border-radius: calc(var(--radius-lg) + 2px);
   background: rgba(255, 255, 255, 0.92);
   cursor: pointer;
-  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
   font-family: var(--font);
   width: 100%;
 }

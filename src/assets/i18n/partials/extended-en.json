@@ -180,5 +180,54 @@
         }
       }
     }
+  },
+  "reviewsPage": {
+    "heroTitle": "Reviews & recommendations",
+    "heroLead": "Share your experience with a team, master or furniture company — reviews appear after moderation.",
+    "stars": "{{n}} of 5",
+    "categories": {
+      "brigade": "Teams",
+      "master": "Masters",
+      "furniture": "Furniture"
+    },
+    "form": {
+      "eyebrow": "Leave a review",
+      "title": "Tell us about your experience",
+      "lead": "Pick a category and performer, rate the work and describe the outcome.",
+      "success": "Thank you! Your review was sent for moderation.",
+      "categoryAria": "Performer category",
+      "clientName": "Your name",
+      "clientNamePh": "How to show your name in the review",
+      "performer": "Performer",
+      "performerPh": "Start typing a name…",
+      "performerEmpty": "No published performers in this category yet.",
+      "rating": "Rating",
+      "ratingAria": "Rating from 1 to 5 stars",
+      "text": "Review text",
+      "textPh": "Describe timing, quality, communication and the final result…",
+      "photos": "Work photos (optional)",
+      "photosHint": "You may attach a before/after pair to make the review more convincing.",
+      "photoBefore": "Before",
+      "photoAfter": "After",
+      "dropTitle": "Drag a photo or click to upload",
+      "submit": "Submit review",
+      "note": "Reviews are checked by an administrator before publication."
+    },
+    "errors": {
+      "clientName": "Enter your name (at least 2 characters).",
+      "performer": "Select a performer from the list.",
+      "rating": "Rate from 1 to 5 stars.",
+      "text": "Write a review (at least 20 characters).",
+      "imageOnly": "Please choose an image file.",
+      "fileTooLarge": "File is too large (max 800 KB)."
+    },
+    "feed": {
+      "eyebrow": "Published",
+      "title": "Approved reviews",
+      "lead": "Real client recommendations on SmartBuild.Tech.",
+      "empty": "No published reviews yet. Be the first!",
+      "before": "Before",
+      "after": "After"
+    }
   }
 }

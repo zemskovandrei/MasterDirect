@@ -33,6 +33,11 @@
               {{ translation.t('app.nav.furniture') }}
             </a>
           </li>
+          <li>
+            <a routerLink="/reviews" routerLinkActive="active" (click)="onNavClick()">
+              {{ translation.t('app.nav.reviews') }}
+            </a>
+          </li>
         </ul>
       </nav>
 
@@ -89,6 +94,9 @@
           </li>
           <li>
             <a routerLink="/furniture">{{ translation.t('app.nav.furniture') }}</a>
+          </li>
+          <li>
+            <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
           </li>
         </ul>
       </div>

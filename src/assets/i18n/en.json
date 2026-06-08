@@ -20,7 +20,8 @@
     },
     "actions": {
       "openMenu": "Open menu",
-      "closeMenu": "Close menu"
+      "closeMenu": "Close menu",
+      "getEstimate": "Get estimate"
     },
     "header": {
       "langSelector": "Language selection"

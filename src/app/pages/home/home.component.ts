@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
@@ -15,16 +16,19 @@ interface ServiceItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, BeforeAfterComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
+  protected formSubmitted = signal(false);
+  protected formSuccess = signal(false);
 
   protected readonly services: ServiceItem[] = [
     {
@@ -71,6 +75,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly sliderDots = this.sliderImages.map((_, index) => index);
   protected currentSlide = signal(this.sliderImages[0]);
 
+  protected readonly estimateForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    phone: ['', [Validators.required, Validators.pattern(/^[\d\s()+-]{10,}$/)]],
+    email: ['', Validators.email],
+    message: [''],
+  });
+
   private slideIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit() {
@@ -101,5 +112,33 @@ export class HomeComponent implements OnInit, OnDestroy {
   goToSlide(index: number) {
     this.currentSlideIndex.set(index);
     this.currentSlide.set(this.sliderImages[index]);
+  }
+
+  submitEstimate() {
+    this.formSubmitted.set(true);
+    if (this.estimateForm.invalid) {
+      return;
+    }
+
+    this.formSuccess.set(true);
+    this.estimateForm.reset();
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        document
+          .getElementById('estimate-success')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 0);
+    }
+  }
+
+  resetEstimateForm() {
+    this.formSubmitted.set(false);
+    this.formSuccess.set(false);
+    this.estimateForm.reset();
+  }
+
+  isInvalid(controlName: 'name' | 'phone' | 'email'): boolean {
+    const control = this.estimateForm.get(controlName);
+    return !!control && control.invalid && (control.touched || this.formSubmitted());
   }
 }

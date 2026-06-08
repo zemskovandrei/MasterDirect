@@ -20,7 +20,8 @@
     },
     "actions": {
       "openMenu": "მენიუს გახსნა",
-      "closeMenu": "მენიუს დახურვა"
+      "closeMenu": "მენიუს დახურვა",
+      "getEstimate": "შეფასების მიღება"
     },
     "header": {
       "langSelector": "ენის არჩევა"

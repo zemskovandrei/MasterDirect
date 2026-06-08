@@ -20,7 +20,8 @@
     },
     "actions": {
       "openMenu": "Открыть меню",
-      "closeMenu": "Закрыть меню"
+      "closeMenu": "Закрыть меню",
+      "getEstimate": "Получить смету"
     },
     "header": {
       "langSelector": "Выбор языка"

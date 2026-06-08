@@ -2,7 +2,9 @@
   <header class="header">
     <div class="header-container">
       <a class="logo" routerLink="/" [attr.aria-label]="title()">
-        <span class="logo-text">{{ title() }}</span>
+        <h1 class="visually-hidden">{{ title() }}</h1>
+        <img src="assets/logo.svg" alt="" class="logo-img" aria-hidden="true" />
+        <p class="tagline">{{ translation.t('app.tagline') }}</p>
       </a>
 
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
@@ -42,6 +44,11 @@
       </nav>
 
       <div class="header-end">
+        <div class="header-actions" [class.header-actions-open]="mobileMenuOpen()">
+          <button type="button" class="btn-primary btn-sm" (click)="scrollToEstimate()">
+            {{ translation.t('app.actions.getEstimate') }}
+          </button>
+        </div>
         <app-language-switcher />
       </div>
 
@@ -78,6 +85,9 @@
       <div class="footer-brand">
         <h2>{{ title() }}</h2>
         <p>{{ translation.t('app.footer.brand') }}</p>
+        <button type="button" class="btn-primary footer-button" (click)="scrollToEstimate()">
+          {{ translation.t('app.actions.getEstimate') }}
+        </button>
       </div>
 
       <div class="footer-column">
@@ -98,12 +108,16 @@
           <li>
             <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
           </li>
+          <li>
+            <a routerLink="/" fragment="estimate">{{ translation.t('app.nav.estimate') }}</a>
+          </li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
       <span>{{ translation.t('app.footer.copyright') }}</span>
+      <span>{{ translation.t('app.footer.catalog') }}</span>
     </div>
   </footer>
 </div>

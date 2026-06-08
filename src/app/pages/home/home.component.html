@@ -128,6 +128,7 @@
 <section class="portfolio-teaser" id="catalog">
   <div class="portfolio-container">
     <div class="section-header">
+      <span class="section-eyebrow">{{ translation.t('home.portfolio.eyebrow') }}</span>
       <h2>{{ translation.t('home.portfolio.title') }}</h2>
       <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
     </div>
@@ -174,5 +175,79 @@
         <span>{{ translation.t('home.portfolio.stats.furniture') }}</span>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="estimate" id="estimate">
+  <div class="estimate-container">
+    <div class="section-header">
+      <span class="section-eyebrow">{{ translation.t('home.estimate.eyebrow') }}</span>
+      <h2>{{ translation.t('home.estimate.title') }}</h2>
+      <p class="section-subtitle">{{ translation.t('home.estimate.subtitle') }}</p>
+    </div>
+
+    @if (formSuccess()) {
+      <div class="estimate-success" id="estimate-success" role="status">
+        <div class="estimate-success-icon">✓</div>
+        <h3>{{ translation.t('home.estimate.form.successTitle') }}</h3>
+        <p>{{ translation.t('home.estimate.form.successText') }}</p>
+        <button type="button" class="btn-secondary" (click)="resetEstimateForm()">
+          {{ translation.t('home.estimate.form.reset') }}
+        </button>
+      </div>
+    } @else {
+      <form class="estimate-form" [formGroup]="estimateForm" (ngSubmit)="submitEstimate()">
+        <div class="form-row">
+          <label class="form-field">
+            <span>{{ translation.t('home.estimate.form.name') }}</span>
+            <input
+              type="text"
+              formControlName="name"
+              [placeholder]="translation.t('home.estimate.form.namePlaceholder')"
+              autocomplete="name"
+            />
+            @if (isInvalid('name')) {
+              <small class="form-error">{{ translation.t('home.estimate.form.invalidName') }}</small>
+            }
+          </label>
+          <label class="form-field">
+            <span>{{ translation.t('home.estimate.form.phone') }}</span>
+            <input
+              type="tel"
+              formControlName="phone"
+              [placeholder]="translation.t('home.estimate.form.phonePlaceholder')"
+              autocomplete="tel"
+            />
+            @if (isInvalid('phone')) {
+              <small class="form-error">{{ translation.t('home.estimate.form.invalidPhone') }}</small>
+            }
+          </label>
+        </div>
+        <label class="form-field">
+          <span>{{ translation.t('home.estimate.form.email') }}</span>
+          <input
+            type="email"
+            formControlName="email"
+            [placeholder]="translation.t('home.estimate.form.emailPlaceholder')"
+            autocomplete="email"
+          />
+          @if (isInvalid('email')) {
+            <small class="form-error">{{ translation.t('home.estimate.form.invalidEmail') }}</small>
+          }
+        </label>
+        <label class="form-field">
+          <span>{{ translation.t('home.estimate.form.message') }}</span>
+          <textarea
+            formControlName="message"
+            rows="4"
+            [placeholder]="translation.t('home.estimate.form.messagePlaceholder')"
+          ></textarea>
+        </label>
+        <button type="submit" class="btn-primary btn-large estimate-submit">
+          {{ translation.t('home.estimate.form.submit') }}
+        </button>
+        <p class="form-note">{{ translation.t('home.estimate.form.note') }}</p>
+      </form>
+    }
   </div>
 </section>

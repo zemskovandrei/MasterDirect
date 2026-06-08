@@ -207,13 +207,13 @@
   "masters": {
     "title": "Masters",
     "subtitle": "Specialists for individual tasks: tiling, electrical, plumbing, finishing.",
-    "cta": "Add profile",
+    "cta": "Publish profile",
     "listTitle": "Masters catalog",
-    "listLead": "Pick a master by specialty and contact them directly.",
+    "listLead": "Pick a master by specialty and view before/after work.",
     "inCatalog": "masters in catalog",
     "badge": "Master",
     "allWorks": "All work",
-    "empty": "No masters in the catalog yet."
+    "empty": "No published masters yet."
   },
   "furniture": {
     "title": "Furniture companies",

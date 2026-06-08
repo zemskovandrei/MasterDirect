@@ -14,7 +14,7 @@
           <a class="btn-primary btn-large" routerLink="/brigades">{{
             translation.t('home.hero.primary')
           }}</a>
-          <a class="btn-secondary btn-large" routerLink="/furniture">{{
+          <a class="btn-secondary btn-large" routerLink="/masters">{{
             translation.t('home.hero.secondary')
           }}</a>
         </div>
@@ -85,6 +85,11 @@
           <div class="feature-icon">✓</div>
           <h3>{{ translation.t('home.features.cards.1.title') }}</h3>
           <p>{{ translation.t('home.features.cards.1.desc') }}</p>
+        </a>
+        <a routerLink="/masters" class="feature-card feature-card-link">
+          <div class="feature-icon">✓</div>
+          <h3>{{ translation.t('home.features.cards.2.title') }}</h3>
+          <p>{{ translation.t('home.features.cards.2.desc') }}</p>
         </a>
         <div class="feature-card">
           <div class="feature-icon">✓</div>
@@ -163,12 +168,19 @@
       <a routerLink="/brigades" class="btn-secondary btn-large">{{
         translation.t('home.portfolio.actions.brigades')
       }}</a>
+      <a routerLink="/masters" class="btn-secondary btn-large">{{
+        translation.t('home.portfolio.actions.masters')
+      }}</a>
     </div>
 
     <div class="teaser-stats">
       <div class="stat">
         <strong>{{ portfolioStore.brigades().length }}</strong>
         <span>{{ translation.t('home.portfolio.stats.brigades') }}</span>
+      </div>
+      <div class="stat">
+        <strong>{{ portfolioStore.workers().length }}</strong>
+        <span>{{ translation.t('home.portfolio.stats.workers') }}</span>
       </div>
       <div class="stat">
         <strong>{{ furnitureStore.published().length }}</strong>

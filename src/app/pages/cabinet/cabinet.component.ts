@@ -165,7 +165,7 @@ export class CabinetComponent {
 
   uploadWork() {
     const performer = this.store.currentPerformer();
-    if (!performer || performer.type === 'worker' || !performer.subscribed) {
+    if (!performer?.subscribed) {
       return;
     }
 

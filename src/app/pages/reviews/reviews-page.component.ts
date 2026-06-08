@@ -101,7 +101,7 @@ export class ReviewsPageComponent {
     return this.performerOptions().find((p) => p.id === id)?.name ?? '';
   });
 
-  protected readonly categories: ReviewCategoryKey[] = ['brigade', 'furniture'];
+  protected readonly categories: ReviewCategoryKey[] = ['brigade', 'master', 'furniture'];
 
   selectCategory(next: ReviewCategoryKey) {
     this.category.set(next);

@@ -228,18 +228,23 @@
               <p>{{ catalogL10n.performerSpecialty(performer) }}</p>
             </div>
             <div class="summary-actions">
-              @if (performer.type === 'brigade') {
-                <a [routerLink]="['/brigades', performer.id]" class="btn-secondary">
-                  {{ translation.t('cabinet.openCatalog') }}
-                </a>
-              }
+              <a
+                [routerLink]="
+                  performer.type === 'brigade'
+                    ? ['/brigades', performer.id]
+                    : ['/masters', performer.id]
+                "
+                class="btn-secondary"
+              >
+                {{ translation.t('cabinet.openCatalog') }}
+              </a>
               <button type="button" class="btn-text" (click)="signOut()">
                 {{ translation.t('cabinet.signOut') }}
               </button>
             </div>
           </div>
 
-          @if (performer.type === 'brigade' && !performer.subscribed) {
+          @if (!performer.subscribed) {
             <div class="subscribe-box">
               <h3>{{ translation.t('cabinet.subscribeTitle') }}</h3>
               <p>
@@ -258,7 +263,7 @@
                 {{ subscribePayLabel(planPrice(performer.type)) }}
               </button>
             </div>
-          } @else if (performer.type === 'brigade') {
+          } @else {
             <p class="subscribed-badge">✓ {{ translation.t('cabinet.subscribed') }}</p>
 
             <div class="upload-section">

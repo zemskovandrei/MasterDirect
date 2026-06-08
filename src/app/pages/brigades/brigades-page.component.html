@@ -8,11 +8,7 @@
 
 <section class="catalog">
   <div class="catalog-inner">
-    <section
-      class="catalog-group catalog-group--brigade brigade-picker"
-      id="brigade-section"
-      [class.attention-pulse]="highlightBrigades()"
-    >
+    <section class="catalog-group catalog-group--brigade brigade-picker" id="brigade-section">
       <header class="catalog-group-header">
         <div class="catalog-group-label">
           <span class="catalog-group-icon" aria-hidden="true">👷</span>
@@ -61,24 +57,6 @@
           <p class="catalog-empty">{{ translation.t('brigades.empty') }}</p>
         }
       </div>
-    </section>
-
-    <section class="estimate-panel" id="smeta-section">
-      <span
-        class="smeta-btn-wrap"
-        (mouseenter)="onSmetaHintEnter()"
-        (mouseleave)="onSmetaHintLeave()"
-      >
-        <button
-          type="button"
-          id="smeta-btn"
-          class="estimate-view-btn"
-          [disabled]="!isBrigadeSelected()"
-          (click)="viewEstimate()"
-        >
-          {{ translation.t('app.nav.estimate') }}
-        </button>
-      </span>
     </section>
   </div>
 </section>

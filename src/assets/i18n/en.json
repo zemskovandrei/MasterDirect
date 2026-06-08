@@ -198,11 +198,12 @@
     "subtitle": "Crews for full renovation of apartments, houses and individual rooms.",
     "cta": "Publish a team",
     "pickTitle": "Choose a team",
-    "pickLead": "Click a card to select a team for the estimate.",
+    "pickLead": "Click a card to select a team and view their work.",
     "inCatalog": "teams in catalog",
     "badge": "Team",
     "allWorks": "All work",
-    "empty": "No published teams yet."
+    "empty": "No published teams yet.",
+    "estimateFor": "Estimate request for team «{{name}}»"
   },
   "masters": {
     "title": "Masters",
@@ -240,7 +241,8 @@
     "performerType": {
       "brigade": "Team",
       "master": "Master",
-      "furniture": "Furniture"
+      "furniture": "Furniture",
+      "renovation": "Renovation"
     },
     "countOne": "review",
     "countMany": "reviews",

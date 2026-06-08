@@ -1,235 +1,261 @@
-<section class="page-hero reviews-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translation.t('reviewsPage.heroTitle') }}</h1>
-    <p>{{ translation.t('reviewsPage.heroLead') }}</p>
-  </div>
-</section>
+<section class="reviews-surface">
+  <div class="reviews-page">
+    <div class="reviews-inner">
+      <section class="review-form-panel">
+        <header class="review-form-header">
+          <h2 class="review-form-title">{{ dynamicTitle() }}</h2>
+          <p class="review-form-subtitle">{{ translation.t('reviewsPage.subtitle') }}</p>
+        </header>
 
-<div class="reviews-page">
-  <div class="reviews-inner">
-    <section class="review-form-panel">
-      <header class="review-form-header">
-        <span class="section-eyebrow">{{ translation.t('reviewsPage.form.eyebrow') }}</span>
-        <h2>{{ translation.t('reviewsPage.form.title') }}</h2>
-        <p class="review-form-lead">{{ translation.t('reviewsPage.form.lead') }}</p>
-      </header>
+        @if (submitSuccess()) {
+          <p class="review-form-success" role="status">{{ translation.t('reviewsPage.form.success') }}</p>
+        }
 
-      @if (submitSuccess()) {
-        <p class="review-form-success" role="status">{{ translation.t('reviewsPage.form.success') }}</p>
-      }
-
-      <form class="review-form" [formGroup]="reviewForm" (ngSubmit)="submitReview()">
-        <fieldset class="category-tabs" [attr.aria-label]="translation.t('reviewsPage.form.categoryAria')">
-          <legend class="sr-only">{{ translation.t('reviewsPage.form.categoryAria') }}</legend>
-          @for (cat of categories; track cat) {
-            <button
-              type="button"
-              class="category-tab"
-              [class.category-tab--active]="category() === cat"
-              (click)="selectCategory(cat)"
-            >
-              {{ categoryLabel(cat) }}
-            </button>
-          }
-        </fieldset>
-
-        <label class="review-field" [class.review-field--error]="fieldInvalid('clientName')">
-          <span class="review-label">{{ translation.t('reviewsPage.form.clientName') }} <em>*</em></span>
-          <input
-            type="text"
-            formControlName="clientName"
-            [placeholder]="translation.t('reviewsPage.form.clientNamePh')"
-            autocomplete="name"
-          />
-          @if (fieldInvalid('clientName')) {
-            <small class="field-error">{{ translation.t('reviewsPage.errors.clientName') }}</small>
-          }
-        </label>
-
-        <div
-          class="review-field review-field--search"
-          [class.review-field--error]="fieldInvalid('performerId')"
-          (click)="$event.stopPropagation()"
-        >
-          <span class="review-label">{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span>
-          <div class="performer-search-wrap">
-            <input
-              type="text"
-              class="performer-search-input"
-              [value]="performerQuery() || selectedPerformerName()"
-              (input)="onPerformerInput($any($event.target).value)"
-              (focus)="performerMenuOpen.set(true)"
-              [placeholder]="translation.t('reviewsPage.form.performerPh')"
-              autocomplete="off"
-              role="combobox"
-              aria-autocomplete="list"
-              [attr.aria-expanded]="performerMenuOpen()"
-            />
-            @if (performerMenuOpen() && filteredPerformers().length > 0) {
-              <ul class="performer-suggestions" role="listbox">
-                @for (option of filteredPerformers(); track option.id) {
-                  <li>
-                    <button type="button" role="option" (click)="selectPerformer(option)">
-                      <strong>{{ option.name }}</strong>
-                      <span>{{ option.subtitle }}</span>
-                    </button>
-                  </li>
-                }
-              </ul>
-            } @else if (performerMenuOpen() && performerOptions().length === 0) {
-              <p class="performer-empty">{{ translation.t('reviewsPage.form.performerEmpty') }}</p>
-            }
-          </div>
-          <input type="hidden" formControlName="performerId" />
-          @if (fieldInvalid('performerId')) {
-            <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
-          }
-        </div>
-
-        <div class="review-field" [class.review-field--error]="fieldInvalid('rating')">
-          <span class="review-label">{{ translation.t('reviewsPage.form.rating') }} <em>*</em></span>
-          <div
-            class="star-rating"
-            role="radiogroup"
-            [attr.aria-label]="translation.t('reviewsPage.form.ratingAria')"
-          >
-            @for (star of [1, 2, 3, 4, 5]; track star) {
+        <form class="review-form" [formGroup]="reviewForm" (ngSubmit)="submitReview()">
+          <fieldset class="category-tabs" [attr.aria-label]="translation.t('reviewsPage.form.categoryAria')">
+            <legend class="sr-only">{{ translation.t('reviewsPage.form.categoryAria') }}</legend>
+            @for (cat of categories; track cat) {
               <button
                 type="button"
-                class="star-btn"
-                [class.star-btn--active]="star <= (hoverRating() || reviewForm.get('rating')?.value || 0)"
-                [attr.aria-label]="starLabel(star)"
-                [attr.aria-checked]="reviewForm.get('rating')?.value === star"
-                (mouseenter)="hoverRating.set(star)"
-                (mouseleave)="hoverRating.set(0)"
-                (click)="setRating(star)"
+                class="category-tab"
+                [class.category-tab--active]="category() === cat"
+                (click)="selectCategory(cat)"
               >
-                ★
+                {{ categoryLabel(cat) }}
               </button>
             }
-          </div>
-          @if (fieldInvalid('rating')) {
-            <small class="field-error">{{ translation.t('reviewsPage.errors.rating') }}</small>
-          }
-        </div>
+          </fieldset>
 
-        <label class="review-field" [class.review-field--error]="fieldInvalid('review')">
-          <span class="review-label">{{ translation.t('reviewsPage.form.text') }} <em>*</em></span>
-          <textarea
-            formControlName="review"
-            rows="5"
-            [placeholder]="translation.t('reviewsPage.form.textPh')"
-          ></textarea>
-          @if (fieldInvalid('review')) {
-            <small class="field-error">{{ translation.t('reviewsPage.errors.text') }}</small>
-          }
-        </label>
+          <label class="review-field" [class.review-field--error]="fieldInvalid('clientName')">
+            <span class="review-label"
+              >{{ translation.t('reviewsPage.form.clientName') }} <em>*</em></span
+            >
+            <input
+              type="text"
+              formControlName="clientName"
+              [placeholder]="translation.t('reviewsPage.form.clientNamePh')"
+              autocomplete="name"
+            />
+            @if (fieldInvalid('clientName')) {
+              <small class="field-error">{{ translation.t('reviewsPage.errors.clientName') }}</small>
+            }
+          </label>
 
-        <div class="review-photos">
-          <span class="review-label">{{ translation.t('reviewsPage.form.photos') }}</span>
-          <p class="review-photos-hint">{{ translation.t('reviewsPage.form.photosHint') }}</p>
-          <div class="review-dropzones">
-            <div class="dropzone-group">
-              <span class="dropzone-heading">{{ translation.t('reviewsPage.form.photoBefore') }}</span>
-              <label
-                class="dropzone"
-                [class.dropzone--filled]="beforePreview()"
-                [class.dropzone--dragging]="beforeDragging()"
-                (dragover)="onDropzoneDragOver('before', $event)"
-                (dragleave)="onDropzoneDragLeave('before')"
-                (drop)="onDropzoneDrop('before', $event)"
+          @if (category() === 'renovation') {
+            <label
+              class="review-field"
+              [class.review-field--error]="fieldInvalid('performerFreeText')"
+            >
+              <span class="review-label"
+                >{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span
               >
-                <input
-                  #beforeInput
-                  type="file"
-                  class="dropzone-input"
-                  accept="image/*"
-                  (change)="onFileSelected('before', $event)"
-                />
-                @if (beforePreview(); as preview) {
-                  <img [src]="preview" [alt]="translation.t('reviewsPage.form.photoBefore')" class="dropzone-preview" />
-                } @else {
-                  <span class="dropzone-title">{{ translation.t('reviewsPage.form.dropTitle') }}</span>
-                }
-              </label>
-            </div>
-            <div class="dropzone-group">
-              <span class="dropzone-heading">{{ translation.t('reviewsPage.form.photoAfter') }}</span>
-              <label
-                class="dropzone"
-                [class.dropzone--filled]="afterPreview()"
-                [class.dropzone--dragging]="afterDragging()"
-                (dragover)="onDropzoneDragOver('after', $event)"
-                (dragleave)="onDropzoneDragLeave('after')"
-                (drop)="onDropzoneDrop('after', $event)"
+              <input
+                type="text"
+                formControlName="performerFreeText"
+                [placeholder]="performerPlaceholder()"
+                autocomplete="off"
+              />
+              @if (fieldInvalid('performerFreeText')) {
+                <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
+              }
+            </label>
+          } @else {
+            <div
+              class="review-field review-field--search"
+              [class.review-field--error]="fieldInvalid('performerId')"
+              (click)="$event.stopPropagation()"
+            >
+              <span class="review-label"
+                >{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span
               >
+              <div class="performer-search-wrap">
                 <input
-                  #afterInput
-                  type="file"
-                  class="dropzone-input"
-                  accept="image/*"
-                  (change)="onFileSelected('after', $event)"
+                  type="text"
+                  class="performer-search-input"
+                  [value]="performerQuery() || selectedPerformerName()"
+                  (input)="onPerformerInput($any($event.target).value)"
+                  (focus)="performerMenuOpen.set(true)"
+                  [placeholder]="performerPlaceholder()"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  [attr.aria-expanded]="performerMenuOpen()"
                 />
-                @if (afterPreview(); as preview) {
-                  <img [src]="preview" [alt]="translation.t('reviewsPage.form.photoAfter')" class="dropzone-preview" />
-                } @else {
-                  <span class="dropzone-title">{{ translation.t('reviewsPage.form.dropTitle') }}</span>
-                }
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="btn-primary btn-large review-submit">
-          {{ translation.t('reviewsPage.form.submit') }}
-        </button>
-        <p class="review-form-note">{{ translation.t('reviewsPage.form.note') }}</p>
-      </form>
-    </section>
-
-    <section class="reviews-feed">
-      <header class="section-header">
-        <span class="section-eyebrow">{{ translation.t('reviewsPage.feed.eyebrow') }}</span>
-        <h2>{{ translation.t('reviewsPage.feed.title') }}</h2>
-        <p class="section-subtitle">{{ translation.t('reviewsPage.feed.lead') }}</p>
-      </header>
-
-      @if (reviewStore.approvedReviews().length === 0) {
-        <p class="reviews-empty">{{ translation.t('reviewsPage.feed.empty') }}</p>
-      } @else {
-        <div class="reviews-grid">
-          @for (item of reviewStore.approvedReviews(); track item.id) {
-            <article class="review-card">
-              <div class="review-card-head">
-                <div>
-                  <strong>{{ item.name }}</strong>
-                  <span class="review-card-target">
-                    {{ reviewStore.performerTypeLabel(item) }} · {{ item.category }}
-                  </span>
-                </div>
-                @if (item.rating) {
-                  <span class="review-card-stars" [attr.aria-label]="ratingDisplay(item)">{{
-                    ratingDisplay(item)
-                  }}</span>
+                @if (performerMenuOpen() && filteredPerformers().length > 0) {
+                  <ul class="performer-suggestions" role="listbox">
+                    @for (option of filteredPerformers(); track option.id) {
+                      <li>
+                        <button type="button" role="option" (click)="selectPerformer(option)">
+                          <strong>{{ option.name }}</strong>
+                          <span>{{ option.subtitle }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                } @else if (performerMenuOpen() && performerOptions().length === 0) {
+                  <p class="performer-empty">{{ translation.t('reviewsPage.form.performerEmpty') }}</p>
                 }
               </div>
-              <p class="review-card-text">{{ reviewStore.localizeReview(item) }}</p>
-              @if (item.beforeImage && item.afterImage) {
-                <div class="review-card-photos">
-                  <figure>
-                    <img [src]="item.beforeImage" [alt]="translation.t('reviewsPage.feed.before')" />
-                    <figcaption>{{ translation.t('reviewsPage.feed.before') }}</figcaption>
-                  </figure>
-                  <figure>
-                    <img [src]="item.afterImage" [alt]="translation.t('reviewsPage.feed.after')" />
-                    <figcaption>{{ translation.t('reviewsPage.feed.after') }}</figcaption>
-                  </figure>
-                </div>
+              <input type="hidden" formControlName="performerId" />
+              @if (fieldInvalid('performerId')) {
+                <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
               }
-            </article>
+            </div>
           }
-        </div>
-      }
-    </section>
+
+          <div class="review-field" [class.review-field--error]="fieldInvalid('rating')">
+            <span class="review-label">{{ translation.t('reviewsPage.form.rating') }} <em>*</em></span>
+            <div
+              class="star-rating"
+              role="radiogroup"
+              [attr.aria-label]="translation.t('reviewsPage.form.ratingAria')"
+            >
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button
+                  type="button"
+                  class="star-btn"
+                  [class.star-btn--active]="star <= (hoverRating() || reviewForm.get('rating')?.value || 0)"
+                  [attr.aria-label]="starLabel(star)"
+                  [attr.aria-checked]="reviewForm.get('rating')?.value === star"
+                  (mouseenter)="hoverRating.set(star)"
+                  (mouseleave)="hoverRating.set(0)"
+                  (click)="setRating(star)"
+                >
+                  <span class="star-icon" aria-hidden="true">★</span>
+                </button>
+              }
+            </div>
+            @if (fieldInvalid('rating')) {
+              <small class="field-error">{{ translation.t('reviewsPage.errors.rating') }}</small>
+            }
+          </div>
+
+          <label class="review-field" [class.review-field--error]="fieldInvalid('review')">
+            <span class="review-label">{{ translation.t('reviewsPage.form.text') }} <em>*</em></span>
+            <textarea
+              formControlName="review"
+              rows="5"
+              [placeholder]="translation.t('reviewsPage.form.textPh')"
+            ></textarea>
+            @if (fieldInvalid('review')) {
+              <small class="field-error">{{ translation.t('reviewsPage.errors.text') }}</small>
+            }
+          </label>
+
+          <details class="review-photos-details">
+            <summary>{{ translation.t('reviewsPage.form.photos') }}</summary>
+            <p class="review-photos-hint">{{ translation.t('reviewsPage.form.photosHint') }}</p>
+            <div class="review-dropzones">
+              <div class="dropzone-group">
+                <span class="dropzone-heading">{{ translation.t('reviewsPage.form.photoBefore') }}</span>
+                <label
+                  class="dropzone"
+                  [class.dropzone--filled]="beforePreview()"
+                  [class.dropzone--dragging]="beforeDragging()"
+                  (dragover)="onDropzoneDragOver('before', $event)"
+                  (dragleave)="onDropzoneDragLeave('before')"
+                  (drop)="onDropzoneDrop('before', $event)"
+                >
+                  <input
+                    #beforeInput
+                    type="file"
+                    class="dropzone-input"
+                    accept="image/*"
+                    (change)="onFileSelected('before', $event)"
+                  />
+                  @if (beforePreview(); as preview) {
+                    <img
+                      [src]="preview"
+                      [alt]="translation.t('reviewsPage.form.photoBefore')"
+                      class="dropzone-preview"
+                    />
+                  } @else {
+                    <span class="dropzone-title">{{ translation.t('reviewsPage.form.dropTitle') }}</span>
+                  }
+                </label>
+              </div>
+              <div class="dropzone-group">
+                <span class="dropzone-heading">{{ translation.t('reviewsPage.form.photoAfter') }}</span>
+                <label
+                  class="dropzone"
+                  [class.dropzone--filled]="afterPreview()"
+                  [class.dropzone--dragging]="afterDragging()"
+                  (dragover)="onDropzoneDragOver('after', $event)"
+                  (dragleave)="onDropzoneDragLeave('after')"
+                  (drop)="onDropzoneDrop('after', $event)"
+                >
+                  <input
+                    #afterInput
+                    type="file"
+                    class="dropzone-input"
+                    accept="image/*"
+                    (change)="onFileSelected('after', $event)"
+                  />
+                  @if (afterPreview(); as preview) {
+                    <img
+                      [src]="preview"
+                      [alt]="translation.t('reviewsPage.form.photoAfter')"
+                      class="dropzone-preview"
+                    />
+                  } @else {
+                    <span class="dropzone-title">{{ translation.t('reviewsPage.form.dropTitle') }}</span>
+                  }
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <button type="submit" class="btn-primary btn-large review-submit">
+            {{ translation.t('reviewsPage.form.submit') }}
+          </button>
+          <p class="review-form-note">{{ translation.t('reviewsPage.form.note') }}</p>
+        </form>
+      </section>
+
+      <section class="reviews-feed">
+        <header class="section-header">
+          <span class="section-eyebrow">{{ translation.t('reviewsPage.feed.eyebrow') }}</span>
+          <h2>{{ translation.t('reviewsPage.feed.title') }}</h2>
+          <p class="section-subtitle">{{ translation.t('reviewsPage.feed.lead') }}</p>
+        </header>
+
+        @if (reviewStore.approvedReviews().length === 0) {
+          <p class="reviews-empty">{{ translation.t('reviewsPage.feed.empty') }}</p>
+        } @else {
+          <div class="reviews-grid">
+            @for (item of reviewStore.approvedReviews(); track item.id) {
+              <article class="review-card">
+                <div class="review-card-head">
+                  <div>
+                    <strong>{{ item.name }}</strong>
+                    <span class="review-card-target">
+                      {{ reviewStore.performerTypeLabel(item) }} · {{ item.category }}
+                    </span>
+                  </div>
+                  @if (item.rating) {
+                    <span class="review-card-stars" [attr.aria-label]="ratingDisplay(item)">{{
+                      ratingDisplay(item)
+                    }}</span>
+                  }
+                </div>
+                <p class="review-card-text">{{ reviewStore.localizeReview(item) }}</p>
+                @if (item.beforeImage && item.afterImage) {
+                  <div class="review-card-photos">
+                    <figure>
+                      <img [src]="item.beforeImage" [alt]="translation.t('reviewsPage.feed.before')" />
+                      <figcaption>{{ translation.t('reviewsPage.feed.before') }}</figcaption>
+                    </figure>
+                    <figure>
+                      <img [src]="item.afterImage" [alt]="translation.t('reviewsPage.feed.after')" />
+                      <figcaption>{{ translation.t('reviewsPage.feed.after') }}</figcaption>
+                    </figure>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
   </div>
-</div>
+</section>

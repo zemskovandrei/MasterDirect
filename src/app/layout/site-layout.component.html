@@ -3,8 +3,54 @@
     <div class="header-container">
       <a class="logo" routerLink="/" [attr.aria-label]="title()">
         <h1 class="visually-hidden">{{ title() }}</h1>
-        <img src="assets/logo.svg" alt="" class="logo-img" aria-hidden="true" />
-        <p class="tagline">{{ translation.t('app.tagline') }}</p>
+        <svg
+          class="logo-mark"
+          viewBox="0 0 272 44"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="logo-cream" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FFFDF9" />
+              <stop offset="100%" stop-color="#E7E0D4" />
+            </linearGradient>
+            <linearGradient id="logo-mint" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7BC9A0" />
+              <stop offset="100%" stop-color="#00E5A8" />
+            </linearGradient>
+            <linearGradient id="logo-bridge" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#F2EBE2" />
+              <stop offset="45%" stop-color="#C5E6D4" />
+              <stop offset="100%" stop-color="#00E5A8" />
+            </linearGradient>
+            <filter id="logo-shadow" x="-8%" y="-20%" width="116%" height="140%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#020408" flood-opacity="0.45" />
+            </filter>
+            <filter id="logo-tech-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#00E5A8" flood-opacity="0.4" />
+            </filter>
+          </defs>
+          <g filter="url(#logo-shadow)">
+            <text
+              x="0"
+              y="34"
+              font-family="Onest, system-ui, sans-serif"
+              font-size="30"
+              font-weight="700"
+              letter-spacing="-0.06em"
+            >
+              <tspan fill="url(#logo-cream)">SmartBuild</tspan>
+              <tspan fill="url(#logo-mint)" filter="url(#logo-tech-glow)">tech</tspan>
+            </text>
+            <path
+              d="M 154 19.5 Q 166 19.5 174 19.5 L 182 19.5"
+              fill="none"
+              stroke="url(#logo-bridge)"
+              stroke-width="2.25"
+              stroke-linecap="round"
+            />
+          </g>
+        </svg>
       </a>
 
       <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
@@ -44,11 +90,6 @@
       </nav>
 
       <div class="header-end">
-        <div class="header-actions" [class.header-actions-open]="mobileMenuOpen()">
-          <button type="button" class="btn-primary btn-sm" (click)="scrollToEstimate()">
-            {{ translation.t('app.actions.getEstimate') }}
-          </button>
-        </div>
         <app-language-switcher />
       </div>
 
@@ -85,9 +126,6 @@
       <div class="footer-brand">
         <h2>{{ title() }}</h2>
         <p>{{ translation.t('app.footer.brand') }}</p>
-        <button type="button" class="btn-primary footer-button" (click)="scrollToEstimate()">
-          {{ translation.t('app.actions.getEstimate') }}
-        </button>
       </div>
 
       <div class="footer-column">
@@ -107,9 +145,6 @@
           </li>
           <li>
             <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
-          </li>
-          <li>
-            <a routerLink="/" fragment="estimate">{{ translation.t('app.nav.estimate') }}</a>
           </li>
         </ul>
       </div>

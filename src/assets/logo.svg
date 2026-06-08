@@ -1,8 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60" role="img" aria-label="SmartBuild.Tech">
-  <style>
-    .text { font-family: Arial, sans-serif; font-weight: bold; font-size: 22px; fill: #ffffff; }
-    .highlight { fill: #00e5a8; }
-  </style>
-  <text x="10" y="35" class="text">SmartBuild.</text>
-  <text x="155" y="35" class="text highlight">Tech</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 44" role="img" aria-label="SmartBuildtech">
+  <defs>
+    <linearGradient id="logo-cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFDF9"/>
+      <stop offset="100%" stop-color="#E7E0D4"/>
+    </linearGradient>
+    <linearGradient id="logo-mint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7BC9A0"/>
+      <stop offset="100%" stop-color="#00E5A8"/>
+    </linearGradient>
+    <linearGradient id="logo-bridge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F2EBE2"/>
+      <stop offset="45%" stop-color="#C5E6D4"/>
+      <stop offset="100%" stop-color="#00E5A8"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="34" font-family="system-ui, sans-serif" font-size="30" font-weight="700" letter-spacing="-0.06em">
+    <tspan fill="url(#logo-cream)">SmartBuild</tspan>
+    <tspan fill="url(#logo-mint)">tech</tspan>
+  </text>
+  <path d="M 154 19.5 Q 166 19.5 174 19.5 L 182 19.5" fill="none" stroke="url(#logo-bridge)" stroke-width="2.25" stroke-linecap="round"/>
 </svg>

@@ -14,7 +14,8 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
-export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture';
+
+export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
 
 interface PerformerOption {
   id: string;
@@ -52,7 +53,8 @@ export class ReviewsPageComponent {
 
   protected readonly reviewForm = this.fb.nonNullable.group({
     clientName: ['', [Validators.required, Validators.minLength(2)]],
-    performerId: ['', Validators.required],
+    performerId: [''],
+    performerFreeText: [''],
     rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
     review: ['', [Validators.required, Validators.minLength(20)]],
   });
@@ -77,6 +79,8 @@ export class ReviewsPageComponent {
           name: c.name,
           subtitle: c.city,
         }));
+      case 'renovation':
+        return [];
     }
   });
 
@@ -101,14 +105,20 @@ export class ReviewsPageComponent {
     return this.performerOptions().find((p) => p.id === id)?.name ?? '';
   });
 
-  protected readonly categories: ReviewCategoryKey[] = ['brigade', 'master', 'furniture'];
+  protected readonly categories: ReviewCategoryKey[] = [
+    'brigade',
+    'master',
+    'furniture',
+    'renovation',
+  ];
 
   selectCategory(next: ReviewCategoryKey) {
     this.category.set(next);
     this.performerQuery.set('');
     this.performerMenuOpen.set(false);
-    this.reviewForm.patchValue({ performerId: '' });
+    this.reviewForm.patchValue({ performerId: '', performerFreeText: '' });
     this.reviewForm.get('performerId')?.markAsUntouched();
+    this.reviewForm.get('performerFreeText')?.markAsUntouched();
   }
 
   setRating(value: number) {
@@ -133,37 +143,64 @@ export class ReviewsPageComponent {
   }
 
   submitReview() {
-    if (this.reviewForm.invalid) {
-      this.reviewForm.markAllAsTouched();
-      return;
+    if (this.category() === 'renovation') {
+      const freeText = this.reviewForm.get('performerFreeText')?.value.trim() ?? '';
+      if (!freeText) {
+        this.reviewForm.get('performerFreeText')?.setErrors({ required: true });
+      }
+    } else if (!this.reviewForm.get('performerId')?.value) {
+      this.reviewForm.get('performerId')?.setErrors({ required: true });
     }
 
-    const performer = this.performerOptions().find(
-      (p) => p.id === this.reviewForm.getRawValue().performerId,
-    );
-    if (!performer) {
-      this.reviewForm.get('performerId')?.setErrors({ required: true });
-      this.reviewForm.get('performerId')?.markAsTouched();
+    if (this.reviewForm.invalid) {
+      this.reviewForm.markAllAsTouched();
       return;
     }
 
     const v = this.reviewForm.getRawValue();
     const { performerType, performerTypeKey } = this.mapCategory(this.category());
 
-    this.reviewStore.addReview({
-      name: v.clientName,
-      performerType,
-      performerTypeKey,
-      category: performer.name,
-      performerId: performer.id,
-      review: v.review,
-      rating: v.rating,
-      beforeImage: this.beforePreview() ?? undefined,
-      afterImage: this.afterPreview() ?? undefined,
-    });
+    if (this.category() === 'renovation') {
+      const performerName = v.performerFreeText.trim();
+      this.reviewStore.addReview({
+        name: v.clientName,
+        performerType,
+        performerTypeKey,
+        category: performerName,
+        review: v.review,
+        rating: v.rating,
+        beforeImage: this.beforePreview() ?? undefined,
+        afterImage: this.afterPreview() ?? undefined,
+      });
+    } else {
+      const performer = this.performerOptions().find((p) => p.id === v.performerId);
+      if (!performer) {
+        this.reviewForm.get('performerId')?.setErrors({ required: true });
+        this.reviewForm.get('performerId')?.markAsTouched();
+        return;
+      }
+
+      this.reviewStore.addReview({
+        name: v.clientName,
+        performerType,
+        performerTypeKey,
+        category: performer.name,
+        performerId: performer.id,
+        review: v.review,
+        rating: v.rating,
+        beforeImage: this.beforePreview() ?? undefined,
+        afterImage: this.afterPreview() ?? undefined,
+      });
+    }
 
     this.submitSuccess.set(true);
-    this.reviewForm.reset({ clientName: '', performerId: '', rating: 0, review: '' });
+    this.reviewForm.reset({
+      clientName: '',
+      performerId: '',
+      performerFreeText: '',
+      rating: 0,
+      review: '',
+    });
     this.performerQuery.set('');
     this.beforePreview.set(null);
     this.afterPreview.set(null);
@@ -171,7 +208,7 @@ export class ReviewsPageComponent {
     setTimeout(() => this.submitSuccess.set(false), 6000);
   }
 
-  fieldInvalid(field: 'clientName' | 'performerId' | 'rating' | 'review'): boolean {
+  fieldInvalid(field: 'clientName' | 'performerId' | 'performerFreeText' | 'rating' | 'review'): boolean {
     const control = this.reviewForm.get(field);
     return !!control && control.invalid && control.touched;
   }
@@ -184,13 +221,21 @@ export class ReviewsPageComponent {
     return this.translation.t(`reviewsPage.categories.${key}`);
   }
 
+  dynamicTitle(): string {
+    return this.translation.t(`reviewsPage.titles.${this.category()}`);
+  }
+
+  performerPlaceholder(): string {
+    return this.translation.t(`reviewsPage.form.performerPh.${this.category()}`);
+  }
+
   ratingDisplay(review: { rating?: number }): string {
     const value = review.rating ?? 0;
     return '★'.repeat(value) + '☆'.repeat(Math.max(0, 5 - value));
   }
 
   private mapCategory(category: ReviewCategoryKey): {
-    performerType: 'Мастер' | 'Бригада' | 'Мебель';
+    performerType: 'Мастер' | 'Бригада' | 'Мебель' | 'Ремонт';
     performerTypeKey: ReviewPerformerTypeKey;
   } {
     switch (category) {
@@ -198,6 +243,8 @@ export class ReviewsPageComponent {
         return { performerType: 'Бригада', performerTypeKey: 'brigade' };
       case 'furniture':
         return { performerType: 'Мебель', performerTypeKey: 'furniture' };
+      case 'renovation':
+        return { performerType: 'Ремонт', performerTypeKey: 'renovation' };
       default:
         return { performerType: 'Мастер', performerTypeKey: 'master' };
     }

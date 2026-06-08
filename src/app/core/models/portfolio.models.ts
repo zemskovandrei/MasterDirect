@@ -49,12 +49,12 @@ export interface CabinetSession {
   performerId: string;
 }
 
-export type ReviewPerformerTypeKey = 'brigade' | 'master' | 'furniture';
+export type ReviewPerformerTypeKey = 'brigade' | 'master' | 'furniture' | 'renovation';
 
 export interface ReviewSubmission {
   id: string;
   name: string;
-  performerType: 'Мастер' | 'Бригада' | 'Мебель';
+  performerType: 'Мастер' | 'Бригада' | 'Мебель' | 'Ремонт';
   performerTypeKey?: ReviewPerformerTypeKey;
   performerId?: string;
   category: string;

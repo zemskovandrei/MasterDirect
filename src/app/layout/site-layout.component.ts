@@ -56,17 +56,4 @@ export class SiteLayoutComponent {
   onNavClick() {
     this.closeMobileMenu();
   }
-
-  scrollToEstimate() {
-    this.closeMobileMenu();
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-    const onHome = location.pathname === '/' || location.pathname === '';
-    if (onHome) {
-      document.getElementById('estimate')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      location.href = '/#estimate';
-    }
-  }
 }

@@ -256,6 +256,16 @@
   justify-content: center;
 }
 
+.brigades-estimate {
+  display: block;
+  padding: 2rem;
+}
+
+.brigades-estimate .estimate-container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
 .estimate-view-btn {
   display: inline-flex;
   align-items: center;

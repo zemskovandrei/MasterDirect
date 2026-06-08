@@ -185,10 +185,18 @@
     "heroTitle": "Reviews & recommendations",
     "heroLead": "Share your experience with a team, master or furniture company — reviews appear after moderation.",
     "stars": "{{n}} of 5",
+    "titles": {
+      "brigade": "How was the work with the team?",
+      "master": "How was the work with the master?",
+      "furniture": "How was the work with the company?",
+      "renovation": "How did the renovation go?"
+    },
+    "subtitle": "Your review will help other users find reliable specialists.",
     "categories": {
       "brigade": "Teams",
       "master": "Masters",
-      "furniture": "Furniture"
+      "furniture": "Furniture",
+      "renovation": "Renovation"
     },
     "form": {
       "eyebrow": "Leave a review",
@@ -197,9 +205,14 @@
       "success": "Thank you! Your review was sent for moderation.",
       "categoryAria": "Performer category",
       "clientName": "Your name",
-      "clientNamePh": "How to show your name in the review",
+      "clientNamePh": "How to present you in the review",
       "performer": "Performer",
-      "performerPh": "Start typing a name…",
+      "performerPh": {
+        "brigade": "Team name or foreman's name…",
+        "master": "Master's name or specialty…",
+        "furniture": "Furniture company name…",
+        "renovation": "Team, company or contractor name…"
+      },
       "performerEmpty": "No published performers in this category yet.",
       "rating": "Rating",
       "ratingAria": "Rating from 1 to 5 stars",

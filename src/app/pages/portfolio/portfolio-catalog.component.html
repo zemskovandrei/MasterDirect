@@ -30,13 +30,6 @@
           <small>{{ furnitureStore.published().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
         </span>
       </a>
-      <a routerLink="/brigades" fragment="smeta-section" class="catalog-jump-link catalog-jump-link--smeta">
-        <span class="catalog-jump-icon" aria-hidden="true">📋</span>
-        <span class="catalog-jump-text">
-          <strong>{{ translation.t('portfolio.jump.smeta') }}</strong>
-          <small>{{ translation.t('portfolio.jump.smetaHint') }}</small>
-        </span>
-      </a>
     </nav>
 
     @if (reviewStore.approvedReviews().length > 0) {

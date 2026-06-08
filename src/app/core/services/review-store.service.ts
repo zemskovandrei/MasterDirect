@@ -69,6 +69,9 @@ export class ReviewStoreService {
     if (review.performerType === 'Мебель') {
       return 'furniture';
     }
+    if (review.performerType === 'Ремонт') {
+      return 'renovation';
+    }
     return 'master';
   }
 

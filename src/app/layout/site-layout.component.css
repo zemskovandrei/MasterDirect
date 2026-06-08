@@ -69,7 +69,12 @@
 }
 
 .logo:hover {
-  opacity: 0.92;
+  opacity: 1;
+}
+
+.logo:hover .logo-mark {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 14px rgba(0, 229, 168, 0.18));
 }
 
 .logo-text {
@@ -96,11 +101,22 @@
   border: 0;
 }
 
-.logo-img {
+.logo-mark {
   display: block;
-  height: 2rem;
+  height: 4.25rem;
   width: auto;
-  max-width: 100%;
+  max-width: min(100%, 440px);
+  overflow: visible;
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+@media (max-width: 600px) {
+  .logo-mark {
+    height: 3.35rem;
+    max-width: min(100%, 300px);
+  }
 }
 
 .site-layout .logo .tagline {

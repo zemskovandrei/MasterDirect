@@ -71,6 +71,7 @@
     "specialtyLabel": "Specialization",
     "specialtyPlaceholder": "Select one or more specializations...",
     "specialtyError": "Select a specialization",
+    "specialtyAutoHint": "Set automatically for team accounts",
     "aboutLabel": "About you / the team",
     "aboutPlaceholder": "Experience, area, project types, guarantees...",
     "aboutError": "Write at least 10 characters",
@@ -87,6 +88,8 @@
     "registerNote": "Your profile appears in the catalog immediately — you can upload before/after photos.",
     "badgeBrigadier": "Team lead",
     "badgeMaster": "Master",
+    "badgeFurniture": "Furniture maker",
+    "accountFurniture": "Furniture",
     "openCatalog": "Open in catalog",
     "signOut": "Sign out",
     "uploadTitle": "Add before / after work",
@@ -127,7 +130,12 @@
       "plumber": "Plumber",
       "painter": "Painter-plasterer",
       "drywall": "Drywall installer",
-      "turnkey": "Turnkey renovation"
+      "turnkey": "Turnkey renovation",
+      "renovation_turnkey": "Turnkey renovation",
+      "furnitureAssembly": "Furniture assembly and installation",
+      "kitchenInstall": "Kitchen and built-in appliance installation",
+      "cabinetMaking": "Custom cabinet furniture (wardrobes, closets)",
+      "commercialInstall": "Retail and commercial equipment installation"
     }
   },
   "verification": {

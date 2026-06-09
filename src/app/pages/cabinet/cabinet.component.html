@@ -7,7 +7,7 @@
 
 <div class="cabinet">
   <div class="cabinet-inner">
-    @if (!store.currentPerformer()) {
+    @if (!isLoggedIn()) {
       <section class="register-panel">
         <header class="register-header">
           <span class="section-eyebrow">{{ translation.t('cabinet.registerEyebrow') }}</span>
@@ -36,22 +36,16 @@
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
               <fieldset class="account-type-tabs" [attr.aria-label]="translation.t('cabinet.accountType')">
                 <legend class="register-label">{{ translation.t('cabinet.accountType') }}</legend>
-                <button
-                  type="button"
-                  class="account-type-tab"
-                  [class.account-type-tab--active]="selectedAccountType() === 'worker'"
-                  (click)="selectAccountType('worker')"
-                >
-                  {{ accountTypeLabel('worker') }}
-                </button>
-                <button
-                  type="button"
-                  class="account-type-tab"
-                  [class.account-type-tab--active]="selectedAccountType() === 'brigade'"
-                  (click)="selectAccountType('brigade')"
-                >
-                  {{ accountTypeLabel('brigade') }}
-                </button>
+                @for (type of accountTypes; track type) {
+                  <button
+                    type="button"
+                    class="account-type-tab"
+                    [class.account-type-tab--active]="selectedAccountType() === type"
+                    (click)="selectAccountType(type)"
+                  >
+                    {{ accountTypeLabel(type) }}
+                  </button>
+                }
               </fieldset>
 
               <label
@@ -87,46 +81,57 @@
 
                 <input type="hidden" formControlName="specialty" />
 
-                <div class="specialty-dropdown-wrap" (click)="$event.stopPropagation()">
-                  <button
-                    type="button"
-                    class="specialty-trigger"
-                    [class.specialty-trigger--open]="specialtyMenuOpen()"
-                    aria-haspopup="listbox"
-                    [attr.aria-expanded]="specialtyMenuOpen()"
-                    (click)="toggleSpecialtyMenu($event)"
-                  >
-                    <span
-                      class="specialty-trigger-text"
-                      [class.specialty-trigger-text--empty]="!specialtyDisplay()"
+                @if (isSpecialtyLocked()) {
+                  <div class="specialty-locked" role="status">
+                    <span class="specialty-locked-value">{{
+                      specialtyOptionLabel(brigadeSpecialtyKey)
+                    }}</span>
+                    <span class="specialty-locked-hint">{{
+                      translation.t('cabinet.specialtyAutoHint')
+                    }}</span>
+                  </div>
+                } @else {
+                  <div class="specialty-dropdown-wrap" (click)="$event.stopPropagation()">
+                    <button
+                      type="button"
+                      class="specialty-trigger"
+                      [class.specialty-trigger--open]="specialtyMenuOpen()"
+                      aria-haspopup="listbox"
+                      [attr.aria-expanded]="specialtyMenuOpen()"
+                      (click)="toggleSpecialtyMenu($event)"
                     >
-                      {{ specialtyDisplay() || translation.t('cabinet.specialtyPlaceholder') }}
-                    </span>
-                    <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
-                  </button>
+                      <span
+                        class="specialty-trigger-text"
+                        [class.specialty-trigger-text--empty]="!specialtyDisplay()"
+                      >
+                        {{ specialtyDisplay() || translation.t('cabinet.specialtyPlaceholder') }}
+                      </span>
+                      <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
+                    </button>
 
-                  @if (specialtyMenuOpen()) {
-                    <div
-                      class="specialty-dropdown-menu"
-                      role="listbox"
-                      aria-multiselectable="true"
-                      [style.top.px]="specialtyMenuTop()"
-                      [style.left.px]="specialtyMenuLeft()"
-                      [style.width.px]="specialtyMenuWidth()"
-                    >
-                      @for (option of specialtyOptions; track option) {
-                        <label class="specialty-dropdown-item">
-                          <input
-                            type="checkbox"
-                            [checked]="isSpecialtySelected(option)"
-                            (change)="toggleSpecialtyOption(option, $event)"
-                          />
-                          <span>{{ specialtyOptionLabel(option) }}</span>
-                        </label>
-                      }
-                    </div>
-                  }
-                </div>
+                    @if (specialtyMenuOpen()) {
+                      <div
+                        class="specialty-dropdown-menu"
+                        role="listbox"
+                        aria-multiselectable="true"
+                        [style.top.px]="specialtyMenuTop()"
+                        [style.left.px]="specialtyMenuLeft()"
+                        [style.width.px]="specialtyMenuWidth()"
+                      >
+                        @for (option of specialtyOptions; track option) {
+                          <label class="specialty-dropdown-item">
+                            <input
+                              type="checkbox"
+                              [checked]="isSpecialtySelected(option)"
+                              (change)="toggleSpecialtyOption(option, $event)"
+                            />
+                            <span>{{ specialtyOptionLabel(option) }}</span>
+                          </label>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
 
                 @if (registerFieldInvalid('specialty')) {
                   <small class="field-error">{{ translation.t('cabinet.specialtyError') }}</small>
@@ -530,6 +535,236 @@
                         </button>
                       </div>
                     }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      } @else if (furnitureStore.currentCompany(); as company) {
+        <section class="cabinet-panel profile-summary">
+          <div class="summary-head">
+            <div>
+              <span class="profile-badge profile-badge--furniture">{{
+                translation.t('cabinet.badgeFurniture')
+              }}</span>
+              <h2>{{ company.name }}</h2>
+              <p>{{ furnitureSpecialtyDisplay(company.specialty) }}</p>
+            </div>
+            <div class="summary-actions">
+              <a [routerLink]="['/furniture', company.id]" class="btn-secondary">
+                {{ translation.t('cabinet.openCatalog') }}
+              </a>
+              <button type="button" class="btn-text" (click)="signOut()">
+                {{ translation.t('cabinet.signOut') }}
+              </button>
+            </div>
+          </div>
+
+          <section class="social-edit-section">
+            <div class="social-edit-head">
+              <div>
+                <h3>{{ translation.t('cabinet.socialTitle') }}</h3>
+                <p class="social-edit-lead">{{ translation.t('cabinet.socialHint') }}</p>
+              </div>
+              @if (hasSocialLinks(company.socialLinks)) {
+                <app-social-links [links]="company.socialLinks" variant="light" [compact]="true" />
+              }
+            </div>
+
+            @if (socialSaveSuccess()) {
+              <p class="upload-ok" role="status">{{ translation.t('cabinet.socialSaved') }}</p>
+            }
+
+            <form class="social-edit-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
+              <div class="register-social-grid">
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.phone') }}</span>
+                  <input
+                    type="text"
+                    formControlName="phone"
+                    [placeholder]="translation.t('cabinet.socialPhonePh')"
+                    autocomplete="tel"
+                    inputmode="tel"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
+                  <input
+                    type="text"
+                    formControlName="whatsapp"
+                    [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                    autocomplete="off"
+                    inputmode="tel"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.telegram') }}</span>
+                  <input
+                    type="text"
+                    formControlName="telegram"
+                    [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.instagram') }}</span>
+                  <input
+                    type="text"
+                    formControlName="instagram"
+                    [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="register-field register-field--full">
+                  <span class="register-label">{{ translation.t('social.facebook') }}</span>
+                  <input
+                    type="text"
+                    formControlName="facebook"
+                    [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+
+              <button type="submit" class="btn-secondary">{{ translation.t('cabinet.socialSave') }}</button>
+            </form>
+          </section>
+
+          <div class="upload-section">
+            <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
+            <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
+            @if (uploadSuccess()) {
+              <p class="upload-ok" role="status">{{ translation.t('cabinet.uploadSuccess') }}</p>
+            }
+            <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
+              <div class="upload-form-fields">
+                <label class="work-field">
+                  <span class="work-field-label"
+                    >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
+                  >
+                  <input
+                    type="text"
+                    formControlName="title"
+                    [placeholder]="translation.t('cabinet.workTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="work-field work-field--full">
+                  <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
+                  <textarea
+                    formControlName="description"
+                    rows="4"
+                    [placeholder]="translation.t('cabinet.workDescPh')"
+                  ></textarea>
+                  <span
+                    class="word-counter"
+                    [class.word-counter--over]="
+                      countWords(workForm.get('description')?.value ?? '') > maxTextWords
+                    "
+                  >
+                    {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
+                  </span>
+                  @if (workFieldInvalid('description')) {
+                    <small class="field-error">{{ maxWordsError('work') }}</small>
+                  }
+                </label>
+              </div>
+
+              <div class="upload-dropzones">
+                <div class="dropzone-group">
+                  <span class="dropzone-heading"
+                    >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
+                  >
+                  <label
+                    class="dropzone"
+                    [class.dropzone--filled]="beforePreview()"
+                    [class.dropzone--dragging]="beforeDragging()"
+                    (dragover)="onDropzoneDragOver('before', $event)"
+                    (dragleave)="onDropzoneDragLeave('before')"
+                    (drop)="onDropzoneDrop('before', $event)"
+                  >
+                    <input
+                      #beforeInput
+                      type="file"
+                      class="dropzone-input"
+                      accept="image/*"
+                      (change)="onFileSelected('before', $event)"
+                    />
+                    @if (beforePreview(); as preview) {
+                      <img
+                        [src]="preview"
+                        [alt]="translation.t('cabinet.previewBefore')"
+                        class="dropzone-preview"
+                      />
+                      <span class="dropzone-overlay">{{
+                        translation.t('cabinet.replacePhoto')
+                      }}</span>
+                    } @else {
+                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
+                    }
+                  </label>
+                </div>
+
+                <div class="dropzone-group">
+                  <span class="dropzone-heading"
+                    >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
+                  >
+                  <label
+                    class="dropzone"
+                    [class.dropzone--filled]="afterPreview()"
+                    [class.dropzone--dragging]="afterDragging()"
+                    (dragover)="onDropzoneDragOver('after', $event)"
+                    (dragleave)="onDropzoneDragLeave('after')"
+                    (drop)="onDropzoneDrop('after', $event)"
+                  >
+                    <input
+                      #afterInput
+                      type="file"
+                      class="dropzone-input"
+                      accept="image/*"
+                      (change)="onFileSelected('after', $event)"
+                    />
+                    @if (afterPreview(); as preview) {
+                      <img
+                        [src]="preview"
+                        [alt]="translation.t('cabinet.previewAfter')"
+                        class="dropzone-preview"
+                      />
+                      <span class="dropzone-overlay">{{
+                        translation.t('cabinet.replacePhoto')
+                      }}</span>
+                    } @else {
+                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
+                    }
+                  </label>
+                </div>
+              </div>
+
+              <div class="upload-form-actions">
+                <button type="submit" class="btn-primary btn-large upload-submit">
+                  {{ translation.t('cabinet.uploadSubmit') }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          @if (company.works.length > 0) {
+            <div class="my-works">
+              <h3>{{ myWorksLabel(company.works.length) }}</h3>
+              <div class="my-works-grid">
+                @for (work of company.works; track work.id) {
+                  <div class="my-work-item">
+                    <app-before-after [work]="work" layout="compare" />
                   </div>
                 }
               </div>

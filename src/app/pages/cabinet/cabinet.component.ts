@@ -10,8 +10,9 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { PerformerType } from '../../core/models/portfolio.models';
+import { AccountType } from '../../core/models/portfolio.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -27,7 +28,17 @@ export const SPECIALTY_OPTION_KEYS = [
   'painter',
   'drywall',
   'turnkey',
+  'renovation_turnkey',
+  'furnitureAssembly',
+  'kitchenInstall',
+  'cabinetMaking',
+  'commercialInstall',
 ] as const;
+
+export const ACCOUNT_TYPES: AccountType[] = ['worker', 'brigade', 'furniture'];
+
+/** Фиксированная специализация для типа «Бригадир». */
+export const BRIGADE_SPECIALTY_KEY = 'renovation_turnkey';
 
 @Component({
   selector: 'app-cabinet',
@@ -39,6 +50,7 @@ export const SPECIALTY_OPTION_KEYS = [
 export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly store = inject(PortfolioStoreService);
+  protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
@@ -49,8 +61,10 @@ export class CabinetComponent {
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly maxTextWords = MAX_TEXT_WORDS;
   protected readonly countWords = countWords;
-  protected readonly selectedAccountType = signal<PerformerType>('worker');
+  protected readonly accountTypes = ACCOUNT_TYPES;
+  protected readonly selectedAccountType = signal<AccountType>('worker');
   protected readonly specialtyOptions = SPECIALTY_OPTION_KEYS;
+  protected readonly brigadeSpecialtyKey = BRIGADE_SPECIALTY_KEY;
   protected readonly specialtyMenuOpen = signal(false);
   protected readonly specialtyMenuTop = signal(0);
   protected readonly specialtyMenuLeft = signal(0);
@@ -92,22 +106,52 @@ export class CabinetComponent {
   constructor() {
     effect(() => {
       const performer = this.store.currentPerformer();
-      if (!performer) {
+      const company = this.furnitureStore.currentCompany();
+      const socialLinks = performer?.socialLinks ?? company?.socialLinks;
+      if (!socialLinks && !performer && !company) {
         return;
       }
 
       this.socialForm.patchValue({
-        phone: performer.socialLinks?.phone ?? '',
-        whatsapp: performer.socialLinks?.whatsapp ?? '',
-        telegram: performer.socialLinks?.telegram ?? '',
-        instagram: performer.socialLinks?.instagram ?? '',
-        facebook: performer.socialLinks?.facebook ?? '',
+        phone: socialLinks?.phone ?? '',
+        whatsapp: socialLinks?.whatsapp ?? '',
+        telegram: socialLinks?.telegram ?? '',
+        instagram: socialLinks?.instagram ?? '',
+        facebook: socialLinks?.facebook ?? '',
       });
     });
   }
 
-  selectAccountType(type: PerformerType) {
+  isLoggedIn(): boolean {
+    return !!this.store.currentPerformer() || !!this.furnitureStore.currentCompany();
+  }
+
+  selectAccountType(type: AccountType) {
     this.selectedAccountType.set(type);
+    this.applySpecialtyForAccountType(type);
+  }
+
+  isSpecialtyLocked(): boolean {
+    return this.selectedAccountType() === 'brigade';
+  }
+
+  private applySpecialtyForAccountType(type: AccountType) {
+    this.closeSpecialtyMenu();
+    const control = this.registerForm.get('specialty');
+    if (!control) {
+      return;
+    }
+
+    if (type === 'brigade') {
+      control.setValue(BRIGADE_SPECIALTY_KEY);
+      control.markAsDirty();
+      return;
+    }
+
+    if (control.value === BRIGADE_SPECIALTY_KEY) {
+      control.setValue('');
+      control.markAsUntouched();
+    }
   }
 
   register() {
@@ -116,29 +160,46 @@ export class CabinetComponent {
       return;
     }
     const v = this.registerForm.getRawValue();
+    const socialLinks = {
+      phone: v.phone,
+      whatsapp: v.whatsapp,
+      telegram: v.telegram,
+      instagram: v.instagram,
+      facebook: v.facebook,
+    };
+
+    if (this.selectedAccountType() === 'furniture') {
+      this.furnitureStore.registerCompany({
+        name: v.name,
+        specialty: v.specialty,
+        description: v.description,
+        socialLinks,
+      });
+      return;
+    }
+
+    const accountType = this.selectedAccountType();
     this.store.registerPerformer({
-      type: this.selectedAccountType(),
+      type: accountType === 'brigade' ? 'brigade' : 'worker',
       name: v.name,
       specialty: v.specialty,
       description: v.description,
-      socialLinks: {
-        phone: v.phone,
-        whatsapp: v.whatsapp,
-        telegram: v.telegram,
-        instagram: v.instagram,
-        facebook: v.facebook,
-      },
+      socialLinks,
     });
   }
 
   saveSocialLinks() {
-    const performer = this.store.currentPerformer();
-    if (!performer) {
-      return;
-    }
-
     const v = this.socialForm.getRawValue();
-    this.store.updateSocialLinks(performer.id, v);
+    const performer = this.store.currentPerformer();
+    if (performer) {
+      this.store.updateSocialLinks(performer.id, v);
+    } else {
+      const company = this.furnitureStore.currentCompany();
+      if (!company) {
+        return;
+      }
+      this.furnitureStore.updateSocialLinks(company.id, v);
+    }
     this.socialSaveSuccess.set(true);
     setTimeout(() => this.socialSaveSuccess.set(false), 4000);
   }
@@ -223,7 +284,8 @@ export class CabinetComponent {
 
   uploadWork() {
     const performer = this.store.currentPerformer();
-    if (!performer) {
+    const company = this.furnitureStore.currentCompany();
+    if (!performer && !company) {
       return;
     }
 
@@ -240,7 +302,27 @@ export class CabinetComponent {
     }
 
     const v = this.workForm.getRawValue();
-    const result = this.store.addWork(performer.id, {
+
+    if (company) {
+      const work = this.furnitureStore.addWork(company.id, {
+        title: v.title,
+        description: v.description,
+        beforeImage: before,
+        afterImage: after,
+      });
+      if (work) {
+        this.uploadSuccess.set(true);
+        this.lastUploadResult.set(null);
+        this.workForm.reset();
+        this.beforePreview.set(null);
+        this.afterPreview.set(null);
+        this.resetFileInputs();
+        setTimeout(() => this.uploadSuccess.set(false), 6000);
+      }
+      return;
+    }
+
+    const result = this.store.addWork(performer!.id, {
       title: v.title,
       description: v.description,
       beforeImage: before,
@@ -280,6 +362,7 @@ export class CabinetComponent {
 
   signOut() {
     this.store.signOut();
+    this.furnitureStore.signOut();
     this.selectedAccountType.set('worker');
     this.specialtyMenuOpen.set(false);
     this.registerForm.reset();
@@ -334,10 +417,19 @@ export class CabinetComponent {
     );
   }
 
-  accountTypeLabel(type: PerformerType): string {
-    return type === 'brigade'
-      ? this.translation.t('cabinet.badgeBrigadier')
-      : this.translation.t('cabinet.badgeMaster');
+  accountTypeLabel(type: AccountType): string {
+    switch (type) {
+      case 'brigade':
+        return this.translation.t('cabinet.badgeBrigadier');
+      case 'furniture':
+        return this.translation.t('cabinet.accountFurniture');
+      default:
+        return this.translation.t('cabinet.badgeMaster');
+    }
+  }
+
+  furnitureSpecialtyDisplay(specialty: string): string {
+    return this.catalogL10n.localizeSpecialtyField(specialty);
   }
 
   specialtyOptionLabel(key: string): string {
@@ -350,6 +442,9 @@ export class CabinetComponent {
 
   toggleSpecialtyMenu(event: Event) {
     event.stopPropagation();
+    if (this.isSpecialtyLocked()) {
+      return;
+    }
     if (this.specialtyMenuOpen()) {
       this.closeSpecialtyMenu();
       return;
@@ -382,6 +477,9 @@ export class CabinetComponent {
 
   toggleSpecialtyOption(option: string, event: Event) {
     event.stopPropagation();
+    if (this.isSpecialtyLocked()) {
+      return;
+    }
     const control = this.registerForm.get('specialty');
     if (!control) {
       return;

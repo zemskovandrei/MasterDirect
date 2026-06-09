@@ -67,7 +67,11 @@ export class CatalogLocalizationService {
       Сантехник: 'plumber',
       'Маляр-штукатур': 'painter',
       Гипсокартонщик: 'drywall',
-      'Ремонт под ключ': 'turnkey',
+      'Ремонт под ключ': 'renovation_turnkey',
+      'Сборка и монтаж мебели': 'furnitureAssembly',
+      'Установка кухонь и встроенной техники': 'kitchenInstall',
+      'Изготовление корпусной мебели (шкафы, гардеробные)': 'cabinetMaking',
+      'Монтаж торгового и коммерческого оборудования': 'commercialInstall',
     };
     return map[label] ?? null;
   }

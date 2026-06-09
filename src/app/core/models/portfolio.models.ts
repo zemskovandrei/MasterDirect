@@ -1,5 +1,8 @@
 export type PerformerType = 'brigade' | 'worker';
 
+/** Тип аккаунта при регистрации в кабинете. */
+export type AccountType = 'worker' | 'brigade' | 'furniture';
+
 /** Client confirmation lifecycle for a portfolio work. */
 export type WorkVerificationStatus = 'not_requested' | 'pending' | 'verified' | 'rejected';
 

@@ -499,6 +499,28 @@
   position: relative;
 }
 
+.specialty-locked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1.05rem;
+  border: 2px solid rgba(90, 154, 110, 0.35);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, rgba(90, 154, 110, 0.1), rgba(90, 154, 110, 0.04));
+}
+
+.specialty-locked-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0b1f3f;
+}
+
+.specialty-locked-hint {
+  font-size: 0.82rem;
+  color: #5a9a6e;
+  font-weight: 600;
+}
+
 .specialty-dropdown-wrap {
   position: relative;
 }
@@ -724,7 +746,7 @@
 .account-type-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.5rem;
   margin: 0 0 0.25rem;
   padding: 0;
   border: none;
@@ -736,14 +758,21 @@
 }
 
 .account-type-tab {
-  padding: 0.6rem 1.35rem;
+  flex: 1 1 calc(33.333% - 0.5rem);
+  min-width: 6.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.85rem;
   border-radius: 999px;
   border: 1px solid #d5dbe3;
   background: #f3f5f8;
   color: #6b7a90;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
   cursor: pointer;
   transition:
     background 0.2s ease,
@@ -760,6 +789,18 @@
   background: #5a9a6e;
   border-color: #5a9a6e;
   color: #ffffff;
+  box-shadow: 0 4px 14px rgba(90, 154, 110, 0.22);
+}
+
+.profile-badge--furniture {
+  background: rgba(139, 92, 246, 0.12);
+  color: #6d28d9;
+}
+
+@media (max-width: 520px) {
+  .account-type-tab {
+    flex: 1 1 100%;
+  }
 }
 
 .upload-ok {

@@ -8,6 +8,7 @@ const KEYS_TO_REMOVE = [
   'smartbuild-tech-performers',
   'smartbuild-tech-cabinet-session',
   'smartbuild-tech-furniture',
+  'smartbuild-tech-furniture-session',
   'smartbuild-tech-reviews',
   'smartbuild-catalog-cleared-v1',
   'smartbuild-catalog-cleared-v2',

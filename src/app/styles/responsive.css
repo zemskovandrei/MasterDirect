@@ -1,0 +1,317 @@
+/* Mobile / tablet — единые брейкпоинты: 480 / 640 / 768 / 900 */
+
+html {
+  overflow-x: clip;
+}
+
+.site-layout {
+  overflow-x: clip;
+}
+
+/* ——— Hero (единая высота, без горизонтального скролла) ——— */
+.hero-slider {
+  height: clamp(420px, 72svh, 760px);
+  min-height: 0;
+}
+
+.hero-benefits {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.hero-tags {
+  justify-content: center;
+}
+
+.slide-content {
+  padding: 0 1rem;
+}
+
+.slider-dots .dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+
+.slider-dots .dot::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+}
+
+/* ——— Секции и типографика ——— */
+section:not(.hero-slider) {
+  padding: clamp(3rem, 8vw, 6.25rem) 0;
+}
+
+h2 {
+  font-size: clamp(1.65rem, 5vw, 2.75rem);
+}
+
+.eyebrow,
+.section-eyebrow {
+  white-space: normal;
+  text-wrap: balance;
+  max-width: 100%;
+}
+
+.page-hero {
+  padding: clamp(2.25rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem);
+}
+
+/* ——— Шапка ——— */
+@media (max-width: 900px) {
+  .header-container {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas: 'logo end toggle';
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .logo {
+    min-width: 0;
+  }
+
+  .nav {
+    min-width: 0;
+  }
+
+  .header-end {
+    grid-area: end;
+  }
+
+  .menu-toggle {
+    grid-area: toggle;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 0.55rem 0.75rem;
+    gap: 0.4rem 0.5rem;
+  }
+
+  .lang-switcher-trigger {
+    padding: 0.45rem 0.5rem 0.45rem 0.4rem;
+  }
+
+  .lang-code {
+    display: none;
+  }
+}
+
+/* ——— Каталог ——— */
+.performer-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+
+.catalog {
+  padding: 2rem clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+.catalog-group {
+  padding: clamp(1.15rem, 4vw, 2rem);
+}
+
+.review-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+
+/* ——— Галерея / сетки из layout.css ——— */
+.gallery-container {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.services-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+/* ——— Футер ——— */
+.footer-container {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+@media (max-width: 768px) {
+  .hero-slider {
+    height: clamp(380px, 68svh, 520px);
+  }
+
+  .slide-content h2 {
+    font-size: clamp(1.65rem, 7vw, 2.25rem);
+    margin-bottom: 0.85rem;
+  }
+
+  .slide-content p {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-actions {
+    gap: 0.6rem;
+  }
+
+  .hero-actions .btn-large,
+  .hero-actions a.btn-primary,
+  .hero-actions a.btn-secondary {
+    min-width: 0;
+    flex: 1 1 calc(50% - 0.35rem);
+    padding: 0.8rem 1rem;
+    font-size: 0.88rem;
+  }
+
+  .hero-tags span,
+  .hero-benefits span {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.65rem;
+  }
+
+  .slider-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.25rem;
+  }
+
+  .slider-btn-prev {
+    left: 0.5rem;
+  }
+
+  .slider-btn-next {
+    right: 0.5rem;
+  }
+
+  .footer {
+    padding: 2.5rem 1rem 1.25rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .performer-grid,
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-jump {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-pricing {
+    padding: 1.5rem 1rem;
+  }
+
+  .pricing-mini {
+    gap: 1rem;
+  }
+
+  .pricing-mini > div {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-slider {
+    height: clamp(360px, 62svh, 480px);
+  }
+
+  .hero-actions .btn-large,
+  .hero-actions a.btn-primary,
+  .hero-actions a.btn-secondary {
+    flex: 1 1 100%;
+  }
+
+  .hero-tags {
+    margin: 1rem 0;
+  }
+
+  .hero-benefits {
+    display: none;
+  }
+}
+
+/* ——— Кабинет ——— */
+@media (max-width: 768px) {
+  .cabinet {
+    padding: 0 1rem 3.5rem;
+  }
+
+  .cabinet-panel {
+    padding: 1.35rem 1.15rem;
+  }
+
+  .cabinet-tabs {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .tab-button {
+    min-width: 0;
+    flex: 1 1 calc(50% - 0.35rem);
+    padding: 0.75rem 0.85rem;
+    font-size: 0.88rem;
+  }
+
+  .profile-summary .summary-head {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .summary-actions {
+    justify-content: stretch;
+  }
+
+  .summary-actions .btn-secondary,
+  .summary-actions .btn-primary {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-button {
+    flex: 1 1 100%;
+  }
+
+  .demo-banner {
+    flex-direction: column;
+    padding: 1rem;
+    font-size: 0.88rem;
+  }
+}
+
+/* ——— Регистрация: тип аккаунта ——— */
+.register-panel {
+  overflow-x: clip;
+}
+
+@media (max-width: 640px) {
+  .register-block {
+    padding: 1.25rem 1rem;
+  }
+
+  .register-label em {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+}
+
+@media (max-width: 400px) {
+  .account-type-tabs {
+    flex-wrap: wrap;
+  }
+
+  .account-type-tab,
+  .account-type-tab--active {
+    flex: 1 1 100%;
+  }
+}

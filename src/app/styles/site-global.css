@@ -514,18 +514,20 @@
 @media (max-width: 900px) {
   .header-container {
     display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      'logo toggle'
-      'actions actions';
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas: 'logo end toggle';
     align-items: center;
-    gap: 0.75rem 1rem;
-    padding: 0.75rem 1rem;
+    gap: 0.5rem 0.75rem;
+    padding: 0.65rem 1rem;
   }
 
   .logo {
     grid-area: logo;
     min-width: 0;
+  }
+
+  .header-end {
+    grid-area: end;
   }
 
   .menu-toggle {
@@ -580,20 +582,6 @@
     cursor: pointer;
   }
 
-  .header-actions {
-    grid-area: actions;
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: stretch;
-  }
-
-  .header-actions .btn-primary,
-  .header-actions .header-phone {
-    flex: 1 1 auto;
-    min-width: 140px;
-    text-align: center;
-  }
-
   .header-actions-open {
     z-index: 210;
   }
@@ -613,7 +601,8 @@
 /* Hero Slider Styles */
 .hero-slider {
   width: 100%;
-  height: 680px;
+  height: clamp(420px, 72svh, 760px);
+  min-height: 0;
   overflow: hidden;
   position: relative;
   background-color: transparent;

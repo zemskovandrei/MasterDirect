@@ -382,7 +382,7 @@
 
 .review-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
 }
@@ -454,5 +454,13 @@
 
   .profile-stats {
     justify-content: center;
+  }
+
+  .showcase-works {
+    padding: 2.5rem 1rem 3.5rem;
+  }
+
+  .review-grid {
+    grid-template-columns: 1fr;
   }
 }

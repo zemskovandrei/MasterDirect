@@ -141,7 +141,7 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-lg);
-  overflow: visible;
+  min-width: 0;
 }
 
 .register-header {
@@ -225,14 +225,22 @@
 
 .register-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(320px, 1.1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
   margin-top: 2rem;
   border-top: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .register-layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
 }
 
 .register-block {
   padding: 2.25rem;
+  min-width: 0;
 }
 
 .register-block--plans {
@@ -411,6 +419,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .register-field {
@@ -418,12 +427,16 @@
   flex-direction: column;
   gap: 0.45rem;
   margin-bottom: 1.1rem;
+  min-width: 0;
 }
 
 .register-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  min-width: 0;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-navy);
@@ -456,6 +469,7 @@
 .register-field input,
 .register-field textarea {
   width: 100%;
+  min-width: 0;
   padding: 0.9rem 1rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -523,6 +537,7 @@
 
 .specialty-dropdown-wrap {
   position: relative;
+  min-width: 0;
 }
 
 .specialty-trigger {
@@ -673,11 +688,7 @@
   line-height: 1.5;
 }
 
-@media (max-width: 860px) {
-  .register-layout {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 1023px) {
   .register-block--plans {
     border-right: none;
     border-bottom: 1px solid var(--color-border);
@@ -745,8 +756,11 @@
 
 .account-type-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin: 0 0 0.25rem;
   padding: 0;
   border: none;
@@ -758,21 +772,25 @@
 }
 
 .account-type-tab {
-  flex: 1 1 calc(33.333% - 0.5rem);
-  min-width: 6.5rem;
-  display: inline-flex;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.6rem 0.85rem;
+  padding: 0.6rem 0.5rem;
   border-radius: 999px;
   border: 1px solid #d5dbe3;
   background: #f3f5f8;
   color: #6b7a90;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     background 0.2s ease,
@@ -789,18 +807,12 @@
   background: #5a9a6e;
   border-color: #5a9a6e;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(90, 154, 110, 0.22);
+  box-shadow: 0 2px 8px rgba(90, 154, 110, 0.28);
 }
 
 .profile-badge--furniture {
   background: rgba(139, 92, 246, 0.12);
   color: #6d28d9;
-}
-
-@media (max-width: 520px) {
-  .account-type-tab {
-    flex: 1 1 100%;
-  }
 }
 
 .upload-ok {
@@ -1301,3 +1313,4 @@
     align-items: flex-start;
   }
 }
+

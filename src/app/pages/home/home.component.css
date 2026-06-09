@@ -614,4 +614,53 @@
   color: var(--color-accent-dark);
 }
 
-/* дубли padding убран — задаёт layout.css */
+@media (max-width: 768px) {
+  .portfolio-teaser {
+    padding: 3rem 1rem;
+  }
+
+  .teaser-actions a {
+    min-width: 0;
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  .teaser-stats {
+    gap: 0.75rem;
+  }
+
+  .stat {
+    min-width: 0;
+    flex: 1 1 calc(50% - 0.5rem);
+    padding: 1rem 0.85rem;
+  }
+
+  .stat strong {
+    font-size: 1.75rem;
+  }
+
+  .hero-actions a.btn-primary,
+  .hero-actions a.btn-secondary {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .teaser-actions a {
+    flex: 1 1 100%;
+  }
+
+  .stat {
+    flex: 1 1 100%;
+  }
+
+  .features-heading,
+  .services-heading {
+    padding: 2.5rem 1rem 0;
+  }
+
+  .features-block .features,
+  .services-block .services {
+    min-height: auto;
+    padding: 1.75rem 1rem;
+  }
+}

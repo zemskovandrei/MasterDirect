@@ -237,8 +237,10 @@
 }
 
 .star-btn {
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 44px;
+  min-height: 44px;
   border: 2px solid #c5ced8;
   border-radius: 10px;
   background: #ffffff;
@@ -483,5 +485,23 @@
 
   .review-card-head {
     flex-direction: column;
+  }
+
+  .review-category-tabs {
+    gap: 0.45rem;
+  }
+
+  .review-category-tab {
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 0;
+    text-align: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .review-category-tab {
+    flex: 1 1 100%;
   }
 }

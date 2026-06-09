@@ -99,9 +99,9 @@ img:not(.slide-image) {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
-  white-space: nowrap;
-  overflow: visible;
-  max-width: none;
+  white-space: normal;
+  text-wrap: balance;
+  max-width: 100%;
 }
 
 .section-header h2 {
@@ -126,7 +126,7 @@ img:not(.slide-image) {
   overflow: hidden;
   background: var(--gradient-hero);
   color: #fff;
-  padding: 4rem 2rem;
+  padding: clamp(2.25rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem);
 }
 
 .page-hero::before {

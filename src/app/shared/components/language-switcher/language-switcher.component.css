@@ -7,7 +7,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+  min-height: 44px;
+  padding: 0.45rem 0.65rem 0.45rem 0.45rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.06);
@@ -138,4 +139,16 @@
   font-weight: 800;
   letter-spacing: 0.05em;
   opacity: 0.65;
+}
+
+.lang-dropdown-item {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .lang-dropdown {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 1.5rem);
+  }
 }

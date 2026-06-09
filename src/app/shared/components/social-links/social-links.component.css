@@ -82,3 +82,23 @@
 .social-links--light .social-link-icon {
   background: rgba(90, 154, 110, 0.12);
 }
+
+@media (max-width: 480px) {
+  .social-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .social-link {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: 44px;
+  }
+
+  .social-link-value {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+}

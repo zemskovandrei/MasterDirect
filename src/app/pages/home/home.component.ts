@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
-import { APP_BASE_HREF, CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
@@ -22,7 +22,6 @@ interface ServiceItem {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly baseHref = inject(APP_BASE_HREF, { optional: true }) ?? '/';
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
@@ -74,12 +73,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   private readonly sliderImages = this.sliderImageFiles.map((file) =>
-    resolveAssetUrl(`assets/${file}`, this.baseHref),
+    resolveAssetUrl(`assets/${file}`),
   );
 
   protected readonly services: ServiceItem[] = this.serviceContent.map((item, index) => ({
     ...item,
-    image: resolveAssetUrl(`assets/${this.serviceImageFiles[index]}`, this.baseHref),
+    image: resolveAssetUrl(`assets/${this.serviceImageFiles[index]}`),
   }));
 
   protected readonly sliderDots = this.sliderImageFiles.map((_, index) => index);

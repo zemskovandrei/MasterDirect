@@ -1,4 +1,6 @@
-# ProRemont
+# SmartBuild.Tech
+
+Сайт: **https://zemskovandrei.github.io/smartbuild-tech/**
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
 
@@ -32,6 +34,12 @@ To build the project run:
 
 ```bash
 ng build
+```
+
+For GitHub Pages deployment:
+
+```bash
+npm run build:pages
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.

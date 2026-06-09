@@ -344,7 +344,6 @@
   min-height: clamp(680px, 78vh, 960px);
   padding: clamp(2rem, 4vw, 3rem) 2rem;
   background-color: transparent;
-  background-image: url('../../../assets/fon.png');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -484,7 +483,6 @@
   min-height: clamp(520px, 65vh, 820px);
   padding: clamp(2rem, 4vw, 3rem) 2rem;
   background-color: transparent;
-  background-image: url('../../../assets/fon2.jpeg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;

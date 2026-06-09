@@ -1,14 +1,14 @@
-no# Зависимости (самая тяжелая папка, из-за которой всё висло)
+# Зависимости
 node_modules/
 
-# Кэш и папки сборки Angular
+# Кэш и сборка Angular
 .angular/
 dist/
-.editorconfig
 
-# Настройки редакторов кода (Cursor, VS Code)
+# Редакторы
 .cursor/
 .vscode/
+.editorconfig
 
-# Логи ошибок
-*.logde_modules
+# Логи
+*.log

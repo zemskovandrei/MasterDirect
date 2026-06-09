@@ -288,6 +288,15 @@ h2 {
   }
 }
 
+/* ——— Фоны главной (глобальный CSS → assets/, работает на GitHub Pages) ——— */
+.features-block .features {
+  background-image: url('../../assets/fon.png');
+}
+
+.services-block .services {
+  background-image: url('../../assets/fon2.jpeg');
+}
+
 /* ——— Регистрация: тип аккаунта ——— */
 .register-panel {
   overflow-x: clip;

@@ -44,7 +44,9 @@ jobs:
         run: npm run build:pages
 
       - name: SPA fallback for client routes
-        run: cp dist/pro-remont/browser/index.csr.html dist/pro-remont/browser/404.html 2>/dev/null || cp dist/pro-remont/browser/index.html dist/pro-remont/browser/404.html
+        run: |
+          cp dist/pro-remont/browser/index.csr.html dist/pro-remont/browser/404.html 2>/dev/null || cp dist/pro-remont/browser/index.html dist/pro-remont/browser/404.html
+          cp public/.nojekyll dist/pro-remont/browser/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

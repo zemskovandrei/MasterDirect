@@ -30,11 +30,6 @@
       "brand": "Renovation, finishing and custom furniture. Teams and masters publish before/after work in the catalog.",
       "sections": "Sections",
       "moderation": "Review moderation",
-      "subscription": "Subscription",
-      "plans": {
-        "master": "Master — $5 / mo",
-        "brigadier": "Team lead — $15 / mo"
-      },
       "copyright": "© 2026 SmartBuild.Tech",
       "catalog": "Catalog of teams and masters"
     }
@@ -176,11 +171,7 @@
       "cta": "Publish your work",
       "reviewsEyebrow": "Reviews",
       "reviewsTitle": "What clients say",
-      "reviewsLead": "Verified reviews about teams and masters.",
-      "pricingTitle": "Subscription for performers",
-      "pricingMaster": "master / mo",
-      "pricingBrigade": "team lead / mo",
-      "pricingCta": "Open dashboard"
+      "reviewsLead": "Verified reviews about teams and masters."
     },
     "jump": {
       "brigades": "Teams",

@@ -3,17 +3,24 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   CabinetSession,
   PerformerProfile,
+  PerformerSocialLinks,
   PerformerType,
   WorkProject,
   WorkVerificationStatus,
 } from '../models/portfolio.models';
+import { normalizeSocialLinks } from '../utils/social-links.util';
 import {
   buildVerificationUrl,
   generateVerificationCode,
   generateVerificationToken,
   normalizeClientContact,
 } from '../utils/work-verification.util';
-import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
+import {
+  markMastersWiped,
+  shouldWipeCatalog,
+  shouldWipeMasters,
+  wipeCatalogStorage,
+} from '../utils/catalog-wipe.util';
 
 export interface WorkVerificationContext {
   work: WorkProject;
@@ -39,11 +46,11 @@ export class PortfolioStoreService {
   readonly session = this.sessionSignal.asReadonly();
 
   readonly brigades = computed(() =>
-    this.performersSignal().filter((p) => p.type === 'brigade' && p.subscribed),
+    this.performersSignal().filter((p) => p.type === 'brigade'),
   );
 
   readonly workers = computed(() =>
-    this.performersSignal().filter((p) => p.type === 'worker' && p.subscribed),
+    this.performersSignal().filter((p) => p.type === 'worker'),
   );
 
   readonly currentPerformer = computed(() => {
@@ -67,16 +74,18 @@ export class PortfolioStoreService {
     name: string;
     specialty: string;
     description: string;
+    socialLinks?: PerformerSocialLinks;
   }): PerformerProfile {
     const id = this.generateId(data.type, data.name);
+    const socialLinks = normalizeSocialLinks(data.socialLinks);
     const performer: PerformerProfile = {
       id,
       type: data.type,
       name: data.name.trim(),
       specialty: data.specialty.trim(),
       description: data.description.trim(),
+      socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
       works: [],
-      subscribed: false,
     };
 
     this.performersSignal.update((list) => [...list, performer]);
@@ -85,15 +94,17 @@ export class PortfolioStoreService {
     return performer;
   }
 
-  activateSubscription(performerId: string): void {
-    const endsAt = new Date();
-    endsAt.setMonth(endsAt.getMonth() + 1);
+  updateSocialLinks(performerId: string, socialLinks: PerformerSocialLinks): void {
+    const normalized = normalizeSocialLinks(socialLinks);
 
     this.performersSignal.update((list) =>
-      list.map((p) =>
-        p.id === performerId
-          ? { ...p, subscribed: true, subscriptionEndsAt: endsAt.toISOString() }
-          : p,
+      list.map((performer) =>
+        performer.id === performerId
+          ? {
+              ...performer,
+              socialLinks: Object.keys(normalized).length > 0 ? normalized : undefined,
+            }
+          : performer,
       ),
     );
     this.persist();
@@ -110,7 +121,7 @@ export class PortfolioStoreService {
     },
   ): AddWorkResult | null {
     const performer = this.performersSignal().find((p) => p.id === performerId);
-    if (!performer?.subscribed) {
+    if (!performer) {
       return null;
     }
 
@@ -257,23 +268,34 @@ export class PortfolioStoreService {
     try {
       const raw = localStorage.getItem(PERFORMERS_KEY);
       if (!raw) {
+        if (shouldWipeMasters()) {
+          markMastersWiped();
+        }
         this.performersSignal.set([]);
         return;
       }
 
-      const performers = (JSON.parse(raw) as PerformerProfile[])
+      let performers = (JSON.parse(raw) as PerformerProfile[])
         .filter((p) => !p.isDemo)
         .map((performer) => ({
           ...performer,
+          socialLinks: normalizeSocialLinks(performer.socialLinks),
           works: performer.works.map((item) => this.normalizeWork(item)),
         }));
+
+      if (shouldWipeMasters()) {
+        performers = performers.filter((p) => p.type !== 'worker');
+        markMastersWiped();
+        localStorage.setItem(PERFORMERS_KEY, JSON.stringify(performers));
+      }
 
       this.performersSignal.set(performers);
 
       const sessionRaw = localStorage.getItem(SESSION_KEY);
       if (sessionRaw) {
         const session = JSON.parse(sessionRaw) as CabinetSession;
-        if (performers.some((p) => p.id === session.performerId)) {
+        const current = performers.find((p) => p.id === session.performerId);
+        if (current) {
           this.sessionSignal.set(session);
         } else {
           localStorage.removeItem(SESSION_KEY);

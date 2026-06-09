@@ -1,6 +1,9 @@
 /** Одноразовая полная очистка каталога (бригады, мастера, мебель, отзывы, сессия). */
 export const CATALOG_WIPE_VERSION = 'smartbuild-catalog-wipe-v3';
 
+/** Одноразовая очистка только каталога мастеров. */
+export const MASTERS_WIPE_VERSION = 'smartbuild-masters-wipe-v1';
+
 const KEYS_TO_REMOVE = [
   'smartbuild-tech-performers',
   'smartbuild-tech-cabinet-session',
@@ -30,4 +33,15 @@ export function wipeCatalogStorage(): void {
     localStorage.removeItem(key);
   }
   localStorage.setItem(CATALOG_WIPE_VERSION, '1');
+}
+
+export function shouldWipeMasters(): boolean {
+  if (typeof localStorage === 'undefined') {
+    return false;
+  }
+  return !localStorage.getItem(MASTERS_WIPE_VERSION);
+}
+
+export function markMastersWiped(): void {
+  localStorage.setItem(MASTERS_WIPE_VERSION, '1');
 }

@@ -137,8 +137,20 @@
               rows="5"
               [placeholder]="translation.t('reviewsPage.form.textPh')"
             ></textarea>
+            <span
+              class="word-counter"
+              [class.word-counter--over]="
+                countWords(reviewForm.get('review')?.value ?? '') > maxTextWords
+              "
+            >
+              {{ wordCountLabel(reviewForm.get('review')?.value ?? '') }}
+            </span>
             @if (fieldInvalid('review')) {
-              <small class="field-error">{{ translation.t('reviewsPage.errors.text') }}</small>
+              @if (hasMaxWordsError('review')) {
+                <small class="field-error">{{ maxWordsError('review') }}</small>
+              } @else {
+                <small class="field-error">{{ translation.t('reviewsPage.errors.text') }}</small>
+              }
             }
           </label>
 

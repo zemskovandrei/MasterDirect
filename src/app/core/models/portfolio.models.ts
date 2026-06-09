@@ -3,12 +3,14 @@ export type PerformerType = 'brigade' | 'worker';
 /** Client confirmation lifecycle for a portfolio work. */
 export type WorkVerificationStatus = 'not_requested' | 'pending' | 'verified' | 'rejected';
 
-export interface SubscriptionPlan {
-  type: PerformerType;
-  priceUsd: number;
-  title: string;
-  description: string;
-  features: string[];
+export type SocialLinkKey = 'phone' | 'whatsapp' | 'telegram' | 'instagram' | 'facebook';
+
+export interface PerformerSocialLinks {
+  phone?: string;
+  whatsapp?: string;
+  telegram?: string;
+  instagram?: string;
+  facebook?: string;
 }
 
 export interface WorkProject {
@@ -39,9 +41,8 @@ export interface PerformerProfile {
   specialty: string;
   description: string;
   avatarUrl?: string;
+  socialLinks?: PerformerSocialLinks;
   works: WorkProject[];
-  subscribed: boolean;
-  subscriptionEndsAt?: string;
   isDemo?: boolean;
 }
 
@@ -76,29 +77,3 @@ export interface ReviewNotification {
   link: string;
   createdAt: string;
 }
-
-export const SUBSCRIPTION_PLANS: Record<PerformerType, SubscriptionPlan> = {
-  worker: {
-    type: 'worker',
-    priceUsd: 5,
-    title: 'Мастер',
-    description: 'Для отдельного специалиста',
-    features: [
-      'Профиль в каталоге мастеров',
-      'Загрузка работ «до / после»',
-      'Редактирование своего портфолио',
-    ],
-  },
-  brigade: {
-    type: 'brigade',
-    priceUsd: 15,
-    title: 'Бригадир',
-    description: 'Для бригады и руководителя работ',
-    features: [
-      'Профиль бригады в каталоге',
-      'Загрузка проектов «до / после»',
-      'Неограниченное число работ в подписке',
-      'Приоритет в выдаче каталога',
-    ],
-  },
-};

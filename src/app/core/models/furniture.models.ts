@@ -7,6 +7,5 @@ export interface FurnitureCompany {
   description: string;
   city: string;
   works: WorkProject[];
-  subscribed: boolean;
   isDemo?: boolean;
 }

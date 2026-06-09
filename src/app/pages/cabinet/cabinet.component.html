@@ -24,78 +24,36 @@
             <span class="register-step-num">2</span>
             <span class="register-step-text">{{ translation.t('cabinet.step2') }}</span>
           </li>
-          <li class="register-step">
-            <span class="register-step-num">3</span>
-            <span class="register-step-text">{{ translation.t('cabinet.step3') }}</span>
-          </li>
         </ol>
 
         <div class="register-layout">
-          @if (showPlanSelector) {
-          <div class="register-block register-block--plans">
-            <h3 class="register-block-title">
-              <span class="register-block-icon" aria-hidden="true">①</span>
-              {{ translation.t('cabinet.accountType') }}
-            </h3>
-
-            <div class="plan-cards">
-              <button
-                type="button"
-                class="plan-card"
-                [class.selected]="selectedPlan() === 'worker'"
-                (click)="selectPlan('worker')"
-              >
-                @if (selectedPlan() === 'worker') {
-                  <span class="plan-check" aria-hidden="true">✓</span>
-                }
-                <span class="plan-icon" aria-hidden="true">{{ planIcon('worker') }}</span>
-                <div class="plan-price-row">
-                  <span class="plan-price">$5</span>
-                  <span class="plan-period">{{ translation.t('cabinet.perMonth') }}</span>
-                </div>
-                <h4>{{ planTitle('worker') }}</h4>
-                <p class="plan-tagline">{{ planDescription('worker') }}</p>
-                <ul class="plan-features">
-                  @for (f of planFeatures('worker'); track f) {
-                    <li>{{ f }}</li>
-                  }
-                </ul>
-              </button>
-
-              <button
-                type="button"
-                class="plan-card plan-card--brigade"
-                [class.selected]="selectedPlan() === 'brigade'"
-                (click)="selectPlan('brigade')"
-              >
-                @if (selectedPlan() === 'brigade') {
-                  <span class="plan-check" aria-hidden="true">✓</span>
-                }
-                <span class="plan-badge-popular">{{ translation.t('cabinet.popular') }}</span>
-                <span class="plan-icon" aria-hidden="true">{{ planIcon('brigade') }}</span>
-                <div class="plan-price-row">
-                  <span class="plan-price">$15</span>
-                  <span class="plan-period">{{ translation.t('cabinet.perMonth') }}</span>
-                </div>
-                <h4>{{ planTitle('brigade') }}</h4>
-                <p class="plan-tagline">{{ planDescription('brigade') }}</p>
-                <ul class="plan-features">
-                  @for (f of planFeatures('brigade'); track f) {
-                    <li>{{ f }}</li>
-                  }
-                </ul>
-              </button>
-            </div>
-          </div>
-          }
-
           <div class="register-block register-block--form">
             <h3 class="register-block-title">
-              <span class="register-block-icon" aria-hidden="true">②</span>
+              <span class="register-block-icon" aria-hidden="true">①</span>
               {{ translation.t('cabinet.profileData') }}
             </h3>
 
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
+              <fieldset class="account-type-tabs" [attr.aria-label]="translation.t('cabinet.accountType')">
+                <legend class="register-label">{{ translation.t('cabinet.accountType') }}</legend>
+                <button
+                  type="button"
+                  class="account-type-tab"
+                  [class.account-type-tab--active]="selectedAccountType() === 'worker'"
+                  (click)="selectAccountType('worker')"
+                >
+                  {{ accountTypeLabel('worker') }}
+                </button>
+                <button
+                  type="button"
+                  class="account-type-tab"
+                  [class.account-type-tab--active]="selectedAccountType() === 'brigade'"
+                  (click)="selectAccountType('brigade')"
+                >
+                  {{ accountTypeLabel('brigade') }}
+                </button>
+              </fieldset>
+
               <label
                 class="register-field"
                 [class.register-field--error]="registerFieldInvalid('name')"
@@ -189,22 +147,86 @@
                   rows="4"
                   [placeholder]="translation.t('cabinet.aboutPlaceholder')"
                 ></textarea>
+                <span
+                  class="word-counter"
+                  [class.word-counter--over]="
+                    countWords(registerForm.get('description')?.value ?? '') > maxTextWords
+                  "
+                >
+                  {{ wordCountLabel(registerForm.get('description')?.value ?? '') }}
+                </span>
                 @if (registerFieldInvalid('description')) {
-                  <small class="field-error">{{ translation.t('cabinet.aboutError') }}</small>
+                  @if (hasMaxWordsError('register')) {
+                    <small class="field-error">{{ maxWordsError('register') }}</small>
+                  } @else {
+                    <small class="field-error">{{ translation.t('cabinet.aboutError') }}</small>
+                  }
                 }
               </label>
 
-              @if (showPlanSelector) {
-              <div class="register-summary">
-                <span class="register-summary-label">{{
-                  translation.t('cabinet.selectedPlan')
-                }}</span>
-                <span class="register-summary-value">
-                  {{ planTitle(selectedPlan()) }} — ${{ planPrice(selectedPlan())
-                  }}{{ translation.t('cabinet.perMonthShort') }}
-                </span>
+              <div class="register-social-block">
+                <div class="register-social-head">
+                  <span class="register-label">
+                    <span class="field-icon" aria-hidden="true">💬</span>
+                    {{ translation.t('cabinet.socialTitle') }}
+                  </span>
+                  <p class="register-social-hint">{{ translation.t('cabinet.socialHint') }}</p>
+                </div>
+
+                <div class="register-social-grid">
+                  <label class="register-field">
+                    <span class="register-label">{{ translation.t('social.phone') }}</span>
+                    <input
+                      type="text"
+                      formControlName="phone"
+                      [placeholder]="translation.t('cabinet.socialPhonePh')"
+                      autocomplete="tel"
+                      inputmode="tel"
+                    />
+                  </label>
+
+                  <label class="register-field">
+                    <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
+                    <input
+                      type="text"
+                      formControlName="whatsapp"
+                      [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                      autocomplete="off"
+                      inputmode="tel"
+                    />
+                  </label>
+
+                  <label class="register-field">
+                    <span class="register-label">{{ translation.t('social.telegram') }}</span>
+                    <input
+                      type="text"
+                      formControlName="telegram"
+                      [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="register-field">
+                    <span class="register-label">{{ translation.t('social.instagram') }}</span>
+                    <input
+                      type="text"
+                      formControlName="instagram"
+                      [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="register-field register-field--full">
+                    <span class="register-label">{{ translation.t('social.facebook') }}</span>
+                    <input
+                      type="text"
+                      formControlName="facebook"
+                      [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                </div>
               </div>
-              }
 
               <button type="submit" class="btn-primary btn-large register-submit">
                 {{ translation.t('cabinet.submitRegister') }}
@@ -244,29 +266,81 @@
             </div>
           </div>
 
-          @if (!performer.subscribed) {
-            <div class="subscribe-box">
-              <h3>{{ translation.t('cabinet.subscribeTitle') }}</h3>
-              <p>
-                {{ translation.t('cabinet.subscribeTariff') }}:
-                <strong
-                  >${{ planPrice(performer.type) }} {{ translation.t('cabinet.perMonth') }}</strong
-                >
-                ({{ planTitle(performer.type) }})
-              </p>
-              <ul>
-                @for (feature of planFeatures(performer.type); track feature) {
-                  <li>{{ feature }}</li>
-                }
-              </ul>
-              <button type="button" class="btn-primary btn-large" (click)="subscribe()">
-                {{ subscribePayLabel(planPrice(performer.type)) }}
-              </button>
+          <section class="social-edit-section">
+            <div class="social-edit-head">
+              <div>
+                <h3>{{ translation.t('cabinet.socialTitle') }}</h3>
+                <p class="social-edit-lead">{{ translation.t('cabinet.socialHint') }}</p>
+              </div>
+              @if (hasSocialLinks(performer.socialLinks)) {
+                <app-social-links [links]="performer.socialLinks" variant="light" [compact]="true" />
+              }
             </div>
-          } @else {
-            <p class="subscribed-badge">✓ {{ translation.t('cabinet.subscribed') }}</p>
 
-            <div class="upload-section">
+            @if (socialSaveSuccess()) {
+              <p class="upload-ok" role="status">{{ translation.t('cabinet.socialSaved') }}</p>
+            }
+
+            <form class="social-edit-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
+              <div class="register-social-grid">
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.phone') }}</span>
+                  <input
+                    type="text"
+                    formControlName="phone"
+                    [placeholder]="translation.t('cabinet.socialPhonePh')"
+                    autocomplete="tel"
+                    inputmode="tel"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
+                  <input
+                    type="text"
+                    formControlName="whatsapp"
+                    [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                    autocomplete="off"
+                    inputmode="tel"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.telegram') }}</span>
+                  <input
+                    type="text"
+                    formControlName="telegram"
+                    [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="register-field">
+                  <span class="register-label">{{ translation.t('social.instagram') }}</span>
+                  <input
+                    type="text"
+                    formControlName="instagram"
+                    [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="register-field register-field--full">
+                  <span class="register-label">{{ translation.t('social.facebook') }}</span>
+                  <input
+                    type="text"
+                    formControlName="facebook"
+                    [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+
+              <button type="submit" class="btn-secondary">{{ translation.t('cabinet.socialSave') }}</button>
+            </form>
+          </section>
+
+          <div class="upload-section">
               <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
               <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
               @if (uploadSuccess()) {
@@ -326,6 +400,17 @@
                       rows="4"
                       [placeholder]="translation.t('cabinet.workDescPh')"
                     ></textarea>
+                    <span
+                      class="word-counter"
+                      [class.word-counter--over]="
+                        countWords(workForm.get('description')?.value ?? '') > maxTextWords
+                      "
+                    >
+                      {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
+                    </span>
+                    @if (workFieldInvalid('description')) {
+                      <small class="field-error">{{ maxWordsError('work') }}</small>
+                    }
                   </label>
 
                   <label class="work-field work-field--full">
@@ -426,30 +511,29 @@
               </form>
             </div>
 
-            @if (performer.works.length > 0) {
-              <div class="my-works">
-                <h3>{{ myWorksLabel(performer.works.length) }}</h3>
-                <div class="my-works-grid">
-                  @for (work of performer.works; track work.id) {
-                    <div class="my-work-item">
-                      <app-before-after [work]="work" layout="compare" />
-                      @if (verificationLink(work); as link) {
-                        <div class="my-work-verify-link">
-                          <span>{{ translation.t('cabinet.clientLink') }}</span>
-                          <button
-                            type="button"
-                            class="btn-secondary btn-small"
-                            (click)="copyVerificationLink(link)"
-                          >
-                            {{ translation.t('cabinet.copyLink') }}
-                          </button>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
+          @if (performer.works.length > 0) {
+            <div class="my-works">
+              <h3>{{ myWorksLabel(performer.works.length) }}</h3>
+              <div class="my-works-grid">
+                @for (work of performer.works; track work.id) {
+                  <div class="my-work-item">
+                    <app-before-after [work]="work" layout="compare" />
+                    @if (verificationLink(work); as link) {
+                      <div class="my-work-verify-link">
+                        <span>{{ translation.t('cabinet.clientLink') }}</span>
+                        <button
+                          type="button"
+                          class="btn-secondary btn-small"
+                          (click)="copyVerificationLink(link)"
+                        >
+                          {{ translation.t('cabinet.copyLink') }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
-            }
+            </div>
           }
         </section>
       }

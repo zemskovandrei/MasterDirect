@@ -152,11 +152,24 @@
 }
 
 .profile-desc {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
   max-width: 640px;
   color: rgba(255, 255, 255, 0.82);
   font-size: 1.02rem;
   line-height: 1.65;
+}
+
+.profile-contacts {
+  margin: 0 0 1.5rem;
+}
+
+.profile-contacts-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .profile-stats {

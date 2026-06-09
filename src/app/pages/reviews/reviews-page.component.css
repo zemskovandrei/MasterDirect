@@ -165,6 +165,17 @@
   font-size: 0.82rem;
 }
 
+.word-counter {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  color: #9aa8b8;
+}
+
+.word-counter--over {
+  color: #c62828;
+  font-weight: 600;
+}
+
 .performer-search-wrap {
   position: relative;
 }

@@ -1,0 +1,25 @@
+@if (items().length > 0) {
+  <div
+    class="social-links"
+    [class.social-links--compact]="compact()"
+    [class.social-links--light]="variant() === 'light'"
+  >
+    @for (item of items(); track item.key) {
+      <a
+        class="social-link social-link--{{ item.key }}"
+        [href]="item.href"
+        target="_blank"
+        rel="noopener noreferrer"
+        [attr.aria-label]="label(item.key)"
+      >
+        <span class="social-link-icon" aria-hidden="true">{{ icon(item.key) }}</span>
+        <span class="social-link-text">
+          <span class="social-link-label">{{ label(item.key) }}</span>
+          @if (!compact()) {
+            <span class="social-link-value">{{ item.display }}</span>
+          }
+        </span>
+      </a>
+    }
+  </div>
+}

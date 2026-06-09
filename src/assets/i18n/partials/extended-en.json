@@ -33,6 +33,7 @@
     "ctaMasterBtn": "Choose a master",
     "notFoundTitle": "Performer not found",
     "notFoundLead": "The profile may be unpublished or the link is outdated.",
+    "contactTitle": "Contact directly",
     "reviews": {
       "eyebrow": "Reviews",
       "titleBrigade": "What clients say about the team",
@@ -40,21 +41,29 @@
       "lead": "Approved reviews are published alongside real before/after examples."
     }
   },
+  "textLimits": {
+    "wordCount": "{{count}} / {{max}} words",
+    "maxWordsError": "No more than {{max}} words (currently {{count}})."
+  },
+  "social": {
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "instagram": "Instagram",
+    "facebook": "Facebook"
+  },
   "cabinet": {
     "heroTitle": "Master / team dashboard",
-    "heroLead": "Create a profile, subscribe and publish before/after work in the SmartBuild.Tech catalog.",
-    "demoBanner": "Demo mode. Subscription and uploads are stored in the browser. Real payments ($5 / $15) will use a server and Stripe.",
+    "heroLead": "Create a profile and publish before/after work in the SmartBuild.Tech catalog.",
+    "demoBanner": "Demo mode. Profile and uploads are stored in the browser.",
     "registerEyebrow": "Registration",
     "registerTitle": "Create a catalog profile",
-    "registerLead": "Choose a plan, fill in your details, then subscribe and upload before/after work.",
+    "registerLead": "Choose an account type, fill in your details, then upload before/after work right away.",
     "stepsAria": "Registration steps",
-    "step1": "Plan & details",
-    "step2": "Subscription",
-    "step3": "Portfolio",
+    "step1": "Profile",
+    "step2": "Portfolio",
     "accountType": "Account type",
     "profileData": "Profile details",
-    "perMonth": "/ month",
-    "popular": "Popular",
     "required": "required",
     "nameLabel": "Name or company",
     "namePlaceholder": "John D. or «StroyComfort Team»",
@@ -65,18 +74,21 @@
     "aboutLabel": "About you / the team",
     "aboutPlaceholder": "Experience, area, project types, guarantees...",
     "aboutError": "Write at least 10 characters",
-    "selectedPlan": "Selected plan",
-    "perMonthShort": "/mo",
-    "submitRegister": "Create profile and continue",
-    "registerNote": "After creation you will subscribe and can upload before/after photos.",
+    "socialTitle": "Client contact details",
+    "socialHint": "Add a phone number or messengers so clients can reach you directly from your catalog profile.",
+    "socialPhonePh": "Any number: +1, +7, +995, local format…",
+    "socialWhatsappPh": "Any WhatsApp number with country code",
+    "socialTelegramPh": "@username",
+    "socialInstagramPh": "@username",
+    "socialFacebookPh": "facebook.com/your.page",
+    "socialSave": "Save contacts",
+    "socialSaved": "Contacts updated.",
+    "submitRegister": "Create profile",
+    "registerNote": "Your profile appears in the catalog immediately — you can upload before/after photos.",
     "badgeBrigadier": "Team lead",
     "badgeMaster": "Master",
     "openCatalog": "Open in catalog",
     "signOut": "Sign out",
-    "subscribeTitle": "Subscribe",
-    "subscribeTariff": "Plan",
-    "subscribePay": "Pay ${{price}} (demo)",
-    "subscribed": "Subscription active — profile visible in catalog",
     "uploadTitle": "Add before / after work",
     "uploadLead": "Add a description and photo pair. Optional client contact enables verification.",
     "uploadPending": "Work published with status «Awaiting client confirmation».",
@@ -109,18 +121,6 @@
     "alertImageOnly": "Please select an image file.",
     "alertFileTooLarge": "File is too large. Choose a photo up to 800 KB (server limit in production).",
     "alertBothPhotos": "Upload both photos: before and after.",
-    "plans": {
-      "worker": {
-        "title": "Master",
-        "description": "For an individual specialist",
-        "features": ["Profile in masters catalog", "Upload before/after work", "Edit your portfolio"]
-      },
-      "brigade": {
-        "title": "Team lead",
-        "description": "For a team and work supervisor",
-        "features": ["Team profile in catalog", "Upload before/after projects", "Unlimited work in subscription", "Priority in catalog"]
-      }
-    },
     "specialties": {
       "tiler": "Tiler",
       "electrician": "Electrician",

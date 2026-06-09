@@ -7,13 +7,15 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
+import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 
 @Component({
   selector: 'app-performer-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
   templateUrl: './performer-profile.component.html',
   styleUrls: ['./performer-profile.component.css'],
 })
@@ -23,6 +25,7 @@ export class PerformerProfileComponent {
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
+  protected readonly hasSocialLinks = hasSocialLinks;
 
   protected readonly type = toSignal(
     this.route.data.pipe(map((d) => d['performerType'] as PerformerType)),

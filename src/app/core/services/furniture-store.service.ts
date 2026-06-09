@@ -12,9 +12,7 @@ export class FurnitureStoreService {
 
   readonly companies = this.companiesSignal.asReadonly();
 
-  readonly published = computed(() =>
-    this.companiesSignal().filter((company) => company.subscribed),
-  );
+  readonly published = computed(() => this.companiesSignal());
 
   constructor() {
     this.loadFromStorage();

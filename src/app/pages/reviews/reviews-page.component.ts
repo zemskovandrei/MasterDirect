@@ -14,6 +14,7 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
 
@@ -51,12 +52,15 @@ export class ReviewsPageComponent {
   private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
+  protected readonly maxTextWords = MAX_TEXT_WORDS;
+  protected readonly countWords = countWords;
+
   protected readonly reviewForm = this.fb.nonNullable.group({
     clientName: ['', [Validators.required, Validators.minLength(2)]],
     performerId: [''],
     performerFreeText: [''],
     rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
-    review: ['', [Validators.required, Validators.minLength(20)]],
+    review: ['', [Validators.required, Validators.minLength(20), maxWordsValidator()]],
   });
 
   protected readonly performerOptions = computed<PerformerOption[]>(() => {
@@ -211,6 +215,30 @@ export class ReviewsPageComponent {
   fieldInvalid(field: 'clientName' | 'performerId' | 'performerFreeText' | 'rating' | 'review'): boolean {
     const control = this.reviewForm.get(field);
     return !!control && control.invalid && control.touched;
+  }
+
+  hasMaxWordsError(field: 'review'): boolean {
+    return !!this.reviewForm.get(field)?.errors?.['maxWords'];
+  }
+
+  wordCountLabel(value: string): string {
+    return this.translation
+      .t('textLimits.wordCount')
+      .replace('{{count}}', String(countWords(value)))
+      .replace('{{max}}', String(MAX_TEXT_WORDS));
+  }
+
+  maxWordsError(field: 'review'): string {
+    const error = this.reviewForm.get(field)?.errors?.['maxWords'] as
+      | { max: number; actual: number }
+      | undefined;
+    if (!error) {
+      return '';
+    }
+    return this.translation
+      .t('textLimits.maxWordsError')
+      .replace('{{max}}', String(error.max))
+      .replace('{{count}}', String(error.actual));
   }
 
   starLabel(index: number): string {

@@ -442,6 +442,17 @@
   line-height: 1;
 }
 
+.word-counter {
+  align-self: flex-end;
+  font-size: 0.78rem;
+  color: var(--color-text-soft);
+}
+
+.word-counter--over {
+  color: #c62828;
+  font-weight: 600;
+}
+
 .register-field input,
 .register-field textarea {
   width: 100%;
@@ -710,25 +721,45 @@
   white-space: nowrap;
 }
 
-.subscribe-box {
-  background: linear-gradient(145deg, #f4f7fb, #e8eef5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+.account-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0 0 0.25rem;
+  padding: 0;
+  border: none;
 }
 
-.subscribe-box ul li {
-  color: var(--color-text-muted);
+.account-type-tabs legend {
+  width: 100%;
+  margin-bottom: 0.35rem;
 }
 
-.subscribed-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-radius: var(--radius-pill);
-  background: rgba(0, 229, 168, 0.12);
-  color: #0a7a5c;
+.account-type-tab {
+  padding: 0.6rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid #d5dbe3;
+  background: #f3f5f8;
+  color: #6b7a90;
+  font: inherit;
+  font-size: 0.92rem;
   font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.account-type-tab:hover {
+  border-color: #b8c4d4;
+  color: #0b1f3f;
+}
+
+.account-type-tab--active {
+  background: #5a9a6e;
+  border-color: #5a9a6e;
+  color: #ffffff;
 }
 
 .upload-ok {
@@ -1144,6 +1175,77 @@
 
 .review-actions button {
   min-width: 120px;
+}
+
+.register-social-block {
+  margin: 0.5rem 0 0.25rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  background: rgba(244, 247, 251, 0.65);
+}
+
+.register-social-head {
+  margin-bottom: 0.85rem;
+}
+
+.register-social-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.register-social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+}
+
+.register-field--full {
+  grid-column: 1 / -1;
+}
+
+.social-edit-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.social-edit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.social-edit-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  color: var(--color-navy);
+}
+
+.social-edit-lead {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  max-width: 36rem;
+}
+
+.social-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 700px) {
+  .register-social-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .review-empty {

@@ -1,12 +1,23 @@
-import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { PerformerType, SUBSCRIPTION_PLANS } from '../../core/models/portfolio.models';
+import { PerformerType } from '../../core/models/portfolio.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { hasSocialLinks } from '../../core/utils/social-links.util';
+import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 
 /** Ключи специализаций для i18n: cabinet.specialties.* */
 export const SPECIALTY_OPTION_KEYS = [
@@ -21,7 +32,7 @@ export const SPECIALTY_OPTION_KEYS = [
 @Component({
   selector: 'app-cabinet',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
   templateUrl: './cabinet.component.html',
   styleUrls: ['./cabinet.component.css'],
 })
@@ -30,14 +41,15 @@ export class CabinetComponent {
   protected readonly store = inject(PortfolioStoreService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
-  protected readonly plans = SUBSCRIPTION_PLANS;
-  protected readonly defaultPlan: PerformerType = 'worker';
-  protected readonly showPlanSelector = false;
 
   protected readonly uploadSuccess = signal(false);
+  protected readonly socialSaveSuccess = signal(false);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
   protected readonly copyFeedback = signal<string | null>(null);
-  protected readonly selectedPlan = signal<PerformerType>('worker');
+  protected readonly hasSocialLinks = hasSocialLinks;
+  protected readonly maxTextWords = MAX_TEXT_WORDS;
+  protected readonly countWords = countWords;
+  protected readonly selectedAccountType = signal<PerformerType>('worker');
   protected readonly specialtyOptions = SPECIALTY_OPTION_KEYS;
   protected readonly specialtyMenuOpen = signal(false);
   protected readonly specialtyMenuTop = signal(0);
@@ -47,12 +59,25 @@ export class CabinetComponent {
   protected readonly registerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     specialty: ['', Validators.required],
-    description: ['', [Validators.required, Validators.minLength(10)]],
+    description: ['', [Validators.required, Validators.minLength(10), maxWordsValidator()]],
+    phone: [''],
+    whatsapp: [''],
+    telegram: [''],
+    instagram: [''],
+    facebook: [''],
+  });
+
+  protected readonly socialForm = this.fb.nonNullable.group({
+    phone: [''],
+    whatsapp: [''],
+    telegram: [''],
+    instagram: [''],
+    facebook: [''],
   });
 
   protected readonly workForm = this.fb.nonNullable.group({
     title: ['', Validators.required],
-    description: [''],
+    description: ['', [maxWordsValidator()]],
     clientContact: [''],
   });
 
@@ -64,8 +89,25 @@ export class CabinetComponent {
   private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
-  selectPlan(type: PerformerType) {
-    this.selectedPlan.set(type);
+  constructor() {
+    effect(() => {
+      const performer = this.store.currentPerformer();
+      if (!performer) {
+        return;
+      }
+
+      this.socialForm.patchValue({
+        phone: performer.socialLinks?.phone ?? '',
+        whatsapp: performer.socialLinks?.whatsapp ?? '',
+        telegram: performer.socialLinks?.telegram ?? '',
+        instagram: performer.socialLinks?.instagram ?? '',
+        facebook: performer.socialLinks?.facebook ?? '',
+      });
+    });
+  }
+
+  selectAccountType(type: PerformerType) {
+    this.selectedAccountType.set(type);
   }
 
   register() {
@@ -74,15 +116,31 @@ export class CabinetComponent {
       return;
     }
     const v = this.registerForm.getRawValue();
-    this.store.registerPerformer({ ...v, type: this.selectedPlan() });
+    this.store.registerPerformer({
+      type: this.selectedAccountType(),
+      name: v.name,
+      specialty: v.specialty,
+      description: v.description,
+      socialLinks: {
+        phone: v.phone,
+        whatsapp: v.whatsapp,
+        telegram: v.telegram,
+        instagram: v.instagram,
+        facebook: v.facebook,
+      },
+    });
   }
 
-  subscribe() {
+  saveSocialLinks() {
     const performer = this.store.currentPerformer();
     if (!performer) {
       return;
     }
-    this.store.activateSubscription(performer.id);
+
+    const v = this.socialForm.getRawValue();
+    this.store.updateSocialLinks(performer.id, v);
+    this.socialSaveSuccess.set(true);
+    setTimeout(() => this.socialSaveSuccess.set(false), 4000);
   }
 
   onFileSelected(side: 'before' | 'after', event: Event) {
@@ -165,7 +223,7 @@ export class CabinetComponent {
 
   uploadWork() {
     const performer = this.store.currentPerformer();
-    if (!performer?.subscribed) {
+    if (!performer) {
       return;
     }
 
@@ -222,7 +280,7 @@ export class CabinetComponent {
 
   signOut() {
     this.store.signOut();
-    this.selectedPlan.set('worker');
+    this.selectedAccountType.set('worker');
     this.specialtyMenuOpen.set(false);
     this.registerForm.reset();
     this.beforePreview.set(null);
@@ -230,13 +288,44 @@ export class CabinetComponent {
     this.resetFileInputs();
   }
 
-  planPrice(type: PerformerType): number {
-    return this.plans[type].priceUsd;
-  }
-
   registerFieldInvalid(field: 'name' | 'specialty' | 'description'): boolean {
     const control = this.registerForm.get(field);
     return !!control && control.invalid && control.touched;
+  }
+
+  workFieldInvalid(field: 'description'): boolean {
+    const control = this.workForm.get(field);
+    return !!control && control.invalid && control.touched;
+  }
+
+  hasMaxWordsError(form: 'register' | 'work'): boolean {
+    const control =
+      form === 'register'
+        ? this.registerForm.get('description')
+        : this.workForm.get('description');
+    return !!control?.errors?.['maxWords'];
+  }
+
+  wordCountLabel(value: string): string {
+    return this.translation
+      .t('textLimits.wordCount')
+      .replace('{{count}}', String(countWords(value)))
+      .replace('{{max}}', String(MAX_TEXT_WORDS));
+  }
+
+  maxWordsError(form: 'register' | 'work'): string {
+    const control =
+      form === 'register'
+        ? this.registerForm.get('description')
+        : this.workForm.get('description');
+    const error = control?.errors?.['maxWords'] as { max: number; actual: number } | undefined;
+    if (!error) {
+      return '';
+    }
+    return this.translation
+      .t('textLimits.maxWordsError')
+      .replace('{{max}}', String(error.max))
+      .replace('{{count}}', String(error.actual));
   }
 
   specialtyDisplay(): string {
@@ -245,27 +334,14 @@ export class CabinetComponent {
     );
   }
 
-  planFeatures(type: PerformerType): string[] {
-    const translated = this.translation.tArray(`cabinet.plans.${type}.features`);
-    return translated.length > 0 ? translated : this.plans[type].features;
-  }
-
-  planTitle(type: PerformerType): string {
-    const title = this.translation.t(`cabinet.plans.${type}.title`);
-    return title !== `cabinet.plans.${type}.title` ? title : this.plans[type].title;
-  }
-
-  planDescription(type: PerformerType): string {
-    const desc = this.translation.t(`cabinet.plans.${type}.description`);
-    return desc !== `cabinet.plans.${type}.description` ? desc : this.plans[type].description;
+  accountTypeLabel(type: PerformerType): string {
+    return type === 'brigade'
+      ? this.translation.t('cabinet.badgeBrigadier')
+      : this.translation.t('cabinet.badgeMaster');
   }
 
   specialtyOptionLabel(key: string): string {
     return this.catalogL10n.specialtyLabel(key);
-  }
-
-  subscribePayLabel(price: number): string {
-    return this.translation.t('cabinet.subscribePay').replace('{{price}}', String(price));
   }
 
   myWorksLabel(count: number): string {
@@ -340,9 +416,5 @@ export class CabinetComponent {
     if (event.key === 'Escape' && this.specialtyMenuOpen()) {
       this.closeSpecialtyMenu();
     }
-  }
-
-  planIcon(type: PerformerType): string {
-    return type === 'brigade' ? '👷' : '🔧';
   }
 }

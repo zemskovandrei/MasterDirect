@@ -36,6 +36,13 @@
 
         <p class="profile-desc">{{ catalogL10n.performerDescription(p) }}</p>
 
+        @if (hasSocialLinks(p.socialLinks)) {
+          <div class="profile-contacts">
+            <p class="profile-contacts-title">{{ translation.t('profile.contactTitle') }}</p>
+            <app-social-links [links]="p.socialLinks" />
+          </div>
+        }
+
         <div class="profile-stats">
           <div class="profile-stat">
             <span class="profile-stat-icon" aria-hidden="true">📁</span>

@@ -34,7 +34,10 @@
             </h3>
 
             <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
-              <fieldset class="account-type-tabs" [attr.aria-label]="translation.t('cabinet.accountType')">
+              <fieldset
+                class="account-type-tabs"
+                [attr.aria-label]="translation.t('cabinet.accountType')"
+              >
                 <legend class="register-label">{{ translation.t('cabinet.accountType') }}</legend>
                 @for (type of accountTypes; track type) {
                   <button
@@ -278,7 +281,11 @@
                 <p class="social-edit-lead">{{ translation.t('cabinet.socialHint') }}</p>
               </div>
               @if (hasSocialLinks(performer.socialLinks)) {
-                <app-social-links [links]="performer.socialLinks" variant="light" [compact]="true" />
+                <app-social-links
+                  [links]="performer.socialLinks"
+                  variant="light"
+                  [compact]="true"
+                />
               }
             </div>
 
@@ -341,180 +348,176 @@
                 </label>
               </div>
 
-              <button type="submit" class="btn-secondary">{{ translation.t('cabinet.socialSave') }}</button>
+              <button type="submit" class="btn-secondary">
+                {{ translation.t('cabinet.socialSave') }}
+              </button>
             </form>
           </section>
 
           <div class="upload-section">
-              <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
-              <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
-              @if (uploadSuccess()) {
-                <p class="upload-ok" role="status">
-                  @if (lastUploadResult()?.verificationLink) {
-                    {{ translation.t('cabinet.uploadPending') }}
-                  } @else {
-                    {{ translation.t('cabinet.uploadSuccess') }}
-                  }
-                </p>
-              }
-              @if (lastUploadResult()?.verificationLink; as link) {
-                <div
-                  class="verification-share"
-                  role="region"
-                  [attr.aria-label]="translation.t('cabinet.shareAria')"
-                >
-                  <p class="verification-share-title">{{ translation.t('cabinet.shareTitle') }}</p>
-                  <div class="verification-share-row">
-                    <input class="verification-share-input" type="text" readonly [value]="link" />
-                    <button
-                      type="button"
-                      class="btn-secondary"
-                      (click)="copyVerificationLink(link)"
-                    >
-                      {{ translation.t('cabinet.copy') }}
-                    </button>
-                  </div>
-                  @if (lastUploadResult()?.verificationCode; as code) {
-                    <p class="verification-share-code">
-                      {{ translation.t('cabinet.shareCode') }}: <strong>{{ code }}</strong>
-                    </p>
-                  }
-                  @if (copyFeedback(); as feedback) {
-                    <p class="verification-share-feedback" role="status">{{ feedback }}</p>
-                  }
-                </div>
-              }
-              <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
-                <div class="upload-form-fields">
-                  <label class="work-field">
-                    <span class="work-field-label"
-                      >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
-                    >
-                    <input
-                      type="text"
-                      formControlName="title"
-                      [placeholder]="translation.t('cabinet.workTitlePh')"
-                      autocomplete="off"
-                    />
-                  </label>
-
-                  <label class="work-field work-field--full">
-                    <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
-                    <textarea
-                      formControlName="description"
-                      rows="4"
-                      [placeholder]="translation.t('cabinet.workDescPh')"
-                    ></textarea>
-                    <span
-                      class="word-counter"
-                      [class.word-counter--over]="
-                        countWords(workForm.get('description')?.value ?? '') > maxTextWords
-                      "
-                    >
-                      {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
-                    </span>
-                    @if (workFieldInvalid('description')) {
-                      <small class="field-error">{{ maxWordsError('work') }}</small>
-                    }
-                  </label>
-
-                  <label class="work-field work-field--full">
-                    <span class="work-field-label">{{
-                      translation.t('cabinet.clientContact')
-                    }}</span>
-                    <input
-                      type="text"
-                      formControlName="clientContact"
-                      [placeholder]="translation.t('cabinet.clientContactPh')"
-                      autocomplete="off"
-                    />
-                    <span class="work-field-hint">{{
-                      translation.t('cabinet.clientContactHint')
-                    }}</span>
-                  </label>
-                </div>
-
-                <div class="upload-dropzones">
-                  <div class="dropzone-group">
-                    <span class="dropzone-heading"
-                      >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
-                    >
-                    <label
-                      class="dropzone"
-                      [class.dropzone--filled]="beforePreview()"
-                      [class.dropzone--dragging]="beforeDragging()"
-                      (dragover)="onDropzoneDragOver('before', $event)"
-                      (dragleave)="onDropzoneDragLeave('before')"
-                      (drop)="onDropzoneDrop('before', $event)"
-                    >
-                      <input
-                        #beforeInput
-                        type="file"
-                        class="dropzone-input"
-                        accept="image/*"
-                        (change)="onFileSelected('before', $event)"
-                      />
-                      @if (beforePreview(); as preview) {
-                        <img
-                          [src]="preview"
-                          [alt]="translation.t('cabinet.previewBefore')"
-                          class="dropzone-preview"
-                        />
-                        <span class="dropzone-overlay">{{
-                          translation.t('cabinet.replacePhoto')
-                        }}</span>
-                      } @else {
-                        <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                        <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                        <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                      }
-                    </label>
-                  </div>
-
-                  <div class="dropzone-group">
-                    <span class="dropzone-heading"
-                      >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
-                    >
-                    <label
-                      class="dropzone"
-                      [class.dropzone--filled]="afterPreview()"
-                      [class.dropzone--dragging]="afterDragging()"
-                      (dragover)="onDropzoneDragOver('after', $event)"
-                      (dragleave)="onDropzoneDragLeave('after')"
-                      (drop)="onDropzoneDrop('after', $event)"
-                    >
-                      <input
-                        #afterInput
-                        type="file"
-                        class="dropzone-input"
-                        accept="image/*"
-                        (change)="onFileSelected('after', $event)"
-                      />
-                      @if (afterPreview(); as preview) {
-                        <img
-                          [src]="preview"
-                          [alt]="translation.t('cabinet.previewAfter')"
-                          class="dropzone-preview"
-                        />
-                        <span class="dropzone-overlay">{{
-                          translation.t('cabinet.replacePhoto')
-                        }}</span>
-                      } @else {
-                        <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                        <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                        <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                      }
-                    </label>
-                  </div>
-                </div>
-
-                <div class="upload-form-actions">
-                  <button type="submit" class="btn-primary btn-large upload-submit">
-                    {{ translation.t('cabinet.uploadSubmit') }}
+            <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
+            <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
+            @if (uploadSuccess()) {
+              <p class="upload-ok" role="status">
+                @if (lastUploadResult()?.verificationLink) {
+                  {{ translation.t('cabinet.uploadPending') }}
+                } @else {
+                  {{ translation.t('cabinet.uploadSuccess') }}
+                }
+              </p>
+            }
+            @if (lastUploadResult()?.verificationLink; as link) {
+              <div
+                class="verification-share"
+                role="region"
+                [attr.aria-label]="translation.t('cabinet.shareAria')"
+              >
+                <p class="verification-share-title">{{ translation.t('cabinet.shareTitle') }}</p>
+                <div class="verification-share-row">
+                  <input class="verification-share-input" type="text" readonly [value]="link" />
+                  <button type="button" class="btn-secondary" (click)="copyVerificationLink(link)">
+                    {{ translation.t('cabinet.copy') }}
                   </button>
                 </div>
-              </form>
-            </div>
+                @if (lastUploadResult()?.verificationCode; as code) {
+                  <p class="verification-share-code">
+                    {{ translation.t('cabinet.shareCode') }}: <strong>{{ code }}</strong>
+                  </p>
+                }
+                @if (copyFeedback(); as feedback) {
+                  <p class="verification-share-feedback" role="status">{{ feedback }}</p>
+                }
+              </div>
+            }
+            <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
+              <div class="upload-form-fields">
+                <label class="work-field">
+                  <span class="work-field-label"
+                    >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
+                  >
+                  <input
+                    type="text"
+                    formControlName="title"
+                    [placeholder]="translation.t('cabinet.workTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="work-field work-field--full">
+                  <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
+                  <textarea
+                    formControlName="description"
+                    rows="4"
+                    [placeholder]="translation.t('cabinet.workDescPh')"
+                  ></textarea>
+                  <span
+                    class="word-counter"
+                    [class.word-counter--over]="
+                      countWords(workForm.get('description')?.value ?? '') > maxTextWords
+                    "
+                  >
+                    {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
+                  </span>
+                  @if (workFieldInvalid('description')) {
+                    <small class="field-error">{{ maxWordsError('work') }}</small>
+                  }
+                </label>
+
+                <label class="work-field work-field--full">
+                  <span class="work-field-label">{{ translation.t('cabinet.clientContact') }}</span>
+                  <input
+                    type="text"
+                    formControlName="clientContact"
+                    [placeholder]="translation.t('cabinet.clientContactPh')"
+                    autocomplete="off"
+                  />
+                  <span class="work-field-hint">{{
+                    translation.t('cabinet.clientContactHint')
+                  }}</span>
+                </label>
+              </div>
+
+              <div class="upload-dropzones">
+                <div class="dropzone-group">
+                  <span class="dropzone-heading"
+                    >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
+                  >
+                  <label
+                    class="dropzone"
+                    [class.dropzone--filled]="beforePreview()"
+                    [class.dropzone--dragging]="beforeDragging()"
+                    (dragover)="onDropzoneDragOver('before', $event)"
+                    (dragleave)="onDropzoneDragLeave('before')"
+                    (drop)="onDropzoneDrop('before', $event)"
+                  >
+                    <input
+                      #beforeInput
+                      type="file"
+                      class="dropzone-input"
+                      accept="image/*"
+                      (change)="onFileSelected('before', $event)"
+                    />
+                    @if (beforePreview(); as preview) {
+                      <img
+                        [src]="preview"
+                        [alt]="translation.t('cabinet.previewBefore')"
+                        class="dropzone-preview"
+                      />
+                      <span class="dropzone-overlay">{{
+                        translation.t('cabinet.replacePhoto')
+                      }}</span>
+                    } @else {
+                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
+                    }
+                  </label>
+                </div>
+
+                <div class="dropzone-group">
+                  <span class="dropzone-heading"
+                    >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
+                  >
+                  <label
+                    class="dropzone"
+                    [class.dropzone--filled]="afterPreview()"
+                    [class.dropzone--dragging]="afterDragging()"
+                    (dragover)="onDropzoneDragOver('after', $event)"
+                    (dragleave)="onDropzoneDragLeave('after')"
+                    (drop)="onDropzoneDrop('after', $event)"
+                  >
+                    <input
+                      #afterInput
+                      type="file"
+                      class="dropzone-input"
+                      accept="image/*"
+                      (change)="onFileSelected('after', $event)"
+                    />
+                    @if (afterPreview(); as preview) {
+                      <img
+                        [src]="preview"
+                        [alt]="translation.t('cabinet.previewAfter')"
+                        class="dropzone-preview"
+                      />
+                      <span class="dropzone-overlay">{{
+                        translation.t('cabinet.replacePhoto')
+                      }}</span>
+                    } @else {
+                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
+                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
+                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
+                    }
+                  </label>
+                </div>
+              </div>
+
+              <div class="upload-form-actions">
+                <button type="submit" class="btn-primary btn-large upload-submit">
+                  {{ translation.t('cabinet.uploadSubmit') }}
+                </button>
+              </div>
+            </form>
+          </div>
 
           @if (performer.works.length > 0) {
             <div class="my-works">
@@ -631,7 +634,9 @@
                 </label>
               </div>
 
-              <button type="submit" class="btn-secondary">{{ translation.t('cabinet.socialSave') }}</button>
+              <button type="submit" class="btn-secondary">
+                {{ translation.t('cabinet.socialSave') }}
+              </button>
             </form>
           </section>
 

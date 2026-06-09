@@ -94,6 +94,74 @@ export class PortfolioStoreService {
     return performer;
   }
 
+  updatePerformerProfile(
+    performerId: string,
+    data: { name: string; specialty: string; description: string },
+  ): boolean {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return false;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) =>
+        item.id === performerId
+          ? {
+              ...item,
+              name: data.name.trim(),
+              specialty: data.specialty.trim(),
+              description: data.description.trim(),
+            }
+          : item,
+      ),
+    );
+    this.persist();
+    return true;
+  }
+
+  deletePerformer(performerId: string): boolean {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return false;
+    }
+
+    this.performersSignal.update((list) => list.filter((item) => item.id !== performerId));
+
+    const session = this.sessionSignal();
+    if (session?.performerId === performerId) {
+      this.sessionSignal.set(null);
+    }
+
+    this.persist();
+    return true;
+  }
+
+  removePerformerIfExists(performerId: string): void {
+    if (!this.performersSignal().some((item) => item.id === performerId)) {
+      return;
+    }
+    this.deletePerformer(performerId);
+  }
+
+  setSession(performerId: string): void {
+    if (!this.performersSignal().some((item) => item.id === performerId)) {
+      return;
+    }
+    this.sessionSignal.set({ performerId });
+    this.persistSession();
+  }
+
+  replacePerformersFromRemote(remote: PerformerProfile[]): void {
+    const existing = this.performersSignal();
+    const merged = remote.map((performer) => {
+      const local = existing.find((item) => item.id === performer.id);
+      return local ? { ...performer, works: local.works } : performer;
+    });
+
+    this.performersSignal.set(merged);
+    this.persist();
+  }
+
   updateSocialLinks(performerId: string, socialLinks: PerformerSocialLinks): void {
     const normalized = normalizeSocialLinks(socialLinks);
 

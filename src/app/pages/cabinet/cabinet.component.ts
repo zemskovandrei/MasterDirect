@@ -10,9 +10,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AccountType } from '../../core/models/portfolio.models';
+import { ProfileType } from '../../core/models/profile.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -51,6 +54,7 @@ export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly store = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
+  protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
@@ -69,6 +73,9 @@ export class CabinetComponent {
   protected readonly specialtyMenuTop = signal(0);
   protected readonly specialtyMenuLeft = signal(0);
   protected readonly specialtyMenuWidth = signal(0);
+  protected readonly registerSubmitting = signal(false);
+  protected readonly registerStatus = signal<'idle' | 'success' | 'error'>('idle');
+  protected readonly registerErrorMessage = signal<string | null>(null);
 
   protected readonly registerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -154,38 +161,56 @@ export class CabinetComponent {
     }
   }
 
-  register() {
+  async register() {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
+
     const v = this.registerForm.getRawValue();
-    const socialLinks = {
-      phone: v.phone,
-      whatsapp: v.whatsapp,
-      telegram: v.telegram,
-      instagram: v.instagram,
-      facebook: v.facebook,
-    };
-
-    if (this.selectedAccountType() === 'furniture') {
-      this.furnitureStore.registerCompany({
-        name: v.name,
-        specialty: v.specialty,
-        description: v.description,
-        socialLinks,
-      });
-      return;
-    }
-
     const accountType = this.selectedAccountType();
-    this.store.registerPerformer({
-      type: accountType === 'brigade' ? 'brigade' : 'worker',
-      name: v.name,
-      specialty: v.specialty,
-      description: v.description,
-      socialLinks,
-    });
+    const profileType: ProfileType =
+      accountType === 'furniture' ? 'furniture' : accountType === 'brigade' ? 'brigade' : 'worker';
+
+    this.registerSubmitting.set(true);
+    this.registerStatus.set('idle');
+    this.registerErrorMessage.set(null);
+
+    try {
+      const result = await firstValueFrom(
+        this.supabase.insertProfile({
+          type: profileType,
+          name: v.name,
+          specialty: v.specialty,
+          description: v.description,
+          phone: v.phone,
+          whatsapp: v.whatsapp,
+          telegram: v.telegram,
+          instagram: v.instagram,
+          facebook: v.facebook,
+        }),
+      );
+
+      if (result.error || !result.data) {
+        this.registerStatus.set('error');
+        this.registerErrorMessage.set(result.error ?? this.translation.t('cabinet.registerError'));
+        alert(this.registerErrorMessage() ?? this.translation.t('cabinet.registerError'));
+        return;
+      }
+
+      this.registerStatus.set('success');
+      alert(this.translation.t('cabinet.registerSuccess'));
+      this.registerForm.reset();
+      this.applySpecialtyForAccountType(this.selectedAccountType());
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : this.translation.t('cabinet.registerError');
+      this.registerStatus.set('error');
+      this.registerErrorMessage.set(message);
+      alert(message);
+    } finally {
+      this.registerSubmitting.set(false);
+    }
   }
 
   saveSocialLinks() {

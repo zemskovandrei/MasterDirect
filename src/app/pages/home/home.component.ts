@@ -1,11 +1,23 @@
-import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
+import { SupabaseService } from '../../core/services/supabase.service';
+import { CalculatorLeadStoreService } from '../../core/services/calculator-lead-store.service';
+import { CalculatorTelegramService } from '../../core/services/calculator-telegram.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import {
+  CalculatorPerformerCard,
+  CalculatorPerformerPool,
+  CalculatorRenovationType,
+  CalculatorRoomType,
+} from '../../core/models/calculator.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
+import { firstValueFrom } from 'rxjs';
 
 interface ServiceItem {
   image: string;
@@ -16,16 +28,124 @@ interface ServiceItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, BeforeAfterComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
+  protected readonly supabase = inject(SupabaseService);
+  protected readonly calculatorLeadStore = inject(CalculatorLeadStoreService);
+  protected readonly calculatorTelegram = inject(CalculatorTelegramService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
+
+  protected readonly calculatorStep = signal(1);
+  protected readonly calculatorSubmitted = signal(false);
+  protected readonly calculatorSubmitting = signal(false);
+  protected readonly calculatorRoomType = signal<CalculatorRoomType | null>(null);
+  protected readonly calculatorRenovationType = signal<CalculatorRenovationType | null>(null);
+  protected readonly calculatorArea = signal('');
+  protected readonly calculatorAreaTouched = signal(false);
+  protected readonly calculatorSelectedPerformerIds = signal<string[]>([]);
+
+  protected readonly calculatorRoomOptions: { id: CalculatorRoomType; labelKey: string }[] = [
+    { id: 'new_build', labelKey: 'home.calculator.roomTypes.newBuild' },
+    { id: 'secondary', labelKey: 'home.calculator.roomTypes.secondary' },
+    { id: 'house', labelKey: 'home.calculator.roomTypes.house' },
+    { id: 'commercial', labelKey: 'home.calculator.roomTypes.commercial' },
+  ];
+
+  protected readonly calculatorRenovationOptions: {
+    id: CalculatorRenovationType;
+    labelKey: string;
+  }[] = [
+    { id: 'cosmetic', labelKey: 'home.calculator.renovationTypes.cosmetic' },
+    { id: 'capital', labelKey: 'home.calculator.renovationTypes.capital' },
+    { id: 'design', labelKey: 'home.calculator.renovationTypes.design' },
+    { id: 'furniture', labelKey: 'home.calculator.renovationTypes.furniture' },
+  ];
+
+  protected readonly calculatorPerformerPool = computed((): CalculatorPerformerPool | null => {
+    const renovationType = this.calculatorRenovationType();
+    if (!renovationType) {
+      return null;
+    }
+    if (renovationType === 'furniture') {
+      return 'furniture';
+    }
+    if (renovationType === 'cosmetic') {
+      return 'worker';
+    }
+    return 'brigade';
+  });
+
+  protected readonly calculatorPerformerCards = computed((): CalculatorPerformerCard[] => {
+    this.translation.locale();
+    const pool = this.calculatorPerformerPool();
+    const defaultCity = this.translation.t('home.calculator.defaultCity');
+
+    if (pool === 'brigade') {
+      return this.supabase.brigades().map((performer) => ({
+        id: performer.id,
+        pool: 'brigade',
+        name: performer.name,
+        avatarUrl: performer.avatarUrl,
+        city: defaultCity,
+        experience: this.formatCalculatorExperience(performer.works.length),
+      }));
+    }
+
+    if (pool === 'worker') {
+      return this.supabase.workers().map((performer) => ({
+        id: performer.id,
+        pool: 'worker',
+        name: performer.name,
+        avatarUrl: performer.avatarUrl,
+        city: defaultCity,
+        experience: this.formatCalculatorExperience(performer.works.length),
+      }));
+    }
+
+    if (pool === 'furniture') {
+      return this.supabase.furnitureCompanies().map((company) => ({
+        id: company.id,
+        pool: 'furniture',
+        name: company.name,
+        city: company.city || defaultCity,
+        experience: this.catalogL10n.localizeSpecialtyField(company.specialty),
+      }));
+    }
+
+    return [];
+  });
+
+  protected readonly calculatorSelectedPerformerNames = computed(() => {
+    const selectedIds = new Set(this.calculatorSelectedPerformerIds());
+    return this.calculatorPerformerCards()
+      .filter((card) => selectedIds.has(card.id))
+      .map((card) => card.name);
+  });
+
+  protected readonly calculatorHasSelectedPerformers = computed(
+    () => this.calculatorSelectedPerformerNames().length > 0,
+  );
+
+  protected readonly calculatorContactForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    contact: ['', [Validators.required, Validators.minLength(5)]],
+  });
+
+  protected readonly hasGalleryPerformers = computed(
+    () =>
+      this.supabase.brigades().length > 0 ||
+      this.supabase.workers().length > 0 ||
+      this.supabase.furnitureCompanies().length > 0,
+  );
 
   private readonly serviceImageFiles = [
     '1.jpeg',
@@ -90,6 +210,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      this.supabase.loadProfiles().subscribe();
       this.resolveSlideTone(0);
       this.sliderImages.forEach((_, index) => {
         if (index !== 0) {
@@ -119,6 +240,141 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   goToSlide(index: number) {
     this.setSlideIndex(index);
+  }
+
+  selectCalculatorRoom(type: CalculatorRoomType) {
+    this.calculatorRoomType.set(type);
+    this.goToCalculatorStep(2);
+  }
+
+  selectCalculatorRenovation(type: CalculatorRenovationType) {
+    this.calculatorRenovationType.set(type);
+    this.calculatorSelectedPerformerIds.set([]);
+    this.goToCalculatorStep(3);
+  }
+
+  continueCalculatorArea() {
+    this.calculatorAreaTouched.set(true);
+    if (!this.isCalculatorAreaValid()) {
+      return;
+    }
+    this.goToCalculatorStep(4);
+  }
+
+  continueCalculatorPerformers() {
+    this.goToCalculatorStep(5);
+  }
+
+  toggleCalculatorPerformer(id: string) {
+    this.calculatorSelectedPerformerIds.update((ids) =>
+      ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id],
+    );
+  }
+
+  isCalculatorPerformerSelected(id: string): boolean {
+    return this.calculatorSelectedPerformerIds().includes(id);
+  }
+
+  calculatorPerformerInitials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  }
+
+  goToCalculatorStep(step: number) {
+    this.calculatorStep.set(step);
+  }
+
+  calculatorBack() {
+    const step = this.calculatorStep();
+    if (step > 1) {
+      this.calculatorStep.set(step - 1);
+    }
+  }
+
+  isCalculatorAreaValid(): boolean {
+    const value = Number(this.calculatorArea().replace(',', '.'));
+    return Number.isFinite(value) && value >= 5 && value <= 5000;
+  }
+
+  calculatorFieldInvalid(field: 'name' | 'contact'): boolean {
+    const control = this.calculatorContactForm.get(field);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  async submitCalculatorLead() {
+    if (this.calculatorSubmitted() || this.calculatorSubmitting()) {
+      return;
+    }
+
+    this.calculatorContactForm.markAllAsTouched();
+    if (this.calculatorContactForm.invalid) {
+      return;
+    }
+
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+    if (!roomType || !renovationType || !this.isCalculatorAreaValid()) {
+      return;
+    }
+
+    const { name, contact } = this.calculatorContactForm.getRawValue();
+    const areaSqm = Number(this.calculatorArea().replace(',', '.'));
+    const selectedIds = new Set(this.calculatorSelectedPerformerIds());
+    const selectedPerformers = this.calculatorPerformerCards()
+      .filter((card) => selectedIds.has(card.id))
+      .map((card) => ({
+        id: card.id,
+        pool: card.pool,
+        name: card.name,
+      }));
+    const directedTo = selectedPerformers.map((item) => item.name).join(', ');
+
+    this.calculatorSubmitting.set(true);
+
+    this.calculatorLeadStore.addLead({
+      roomType,
+      renovationType,
+      areaSqm,
+      name,
+      contact,
+      selectedPerformers,
+    });
+
+    await firstValueFrom(
+      this.calculatorTelegram.sendLead({
+        directedTo,
+        name,
+        contact,
+        roomType,
+        renovationType,
+        areaSqm,
+      }),
+    );
+
+    this.calculatorSubmitting.set(false);
+    this.calculatorSubmitted.set(true);
+  }
+
+  resetCalculator() {
+    this.calculatorSubmitted.set(false);
+    this.calculatorSubmitting.set(false);
+    this.calculatorStep.set(1);
+    this.calculatorRoomType.set(null);
+    this.calculatorRenovationType.set(null);
+    this.calculatorArea.set('');
+    this.calculatorAreaTouched.set(false);
+    this.calculatorSelectedPerformerIds.set([]);
+    this.calculatorContactForm.reset();
+  }
+
+  private formatCalculatorExperience(worksCount: number): string {
+    return this.translation
+      .t('home.calculator.experienceProjects')
+      .replace('{{count}}', String(worksCount));
   }
 
   private setSlideIndex(index: number) {

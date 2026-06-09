@@ -16,13 +16,15 @@
         </div>
         <h2>{{ translation.t('furniture.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('furniture.listLead') }}</p>
-        <p class="catalog-group-count">
-          {{ furnitureStore.published().length }} {{ translation.t('furniture.inCatalog') }}
-        </p>
+        @if (supabase.furnitureCompanies().length > 0) {
+          <p class="catalog-group-count">
+            {{ supabase.furnitureCompanies().length }} {{ translation.t('furniture.inCatalog') }}
+          </p>
+        }
       </header>
 
       <div class="performer-grid">
-        @for (company of furnitureStore.published(); track company.id) {
+        @for (company of supabase.furnitureCompanies(); track company.id) {
           <article class="performer-card performer-card--furniture">
             <div class="performer-head">
               <span class="performer-badge performer-badge-furniture">{{ translation.t('furniture.badge') }}</span>
@@ -41,7 +43,14 @@
             </a>
           </article>
         } @empty {
-          <p class="catalog-empty">{{ translation.t('furniture.empty') }}</p>
+          @if (supabase.loaded()) {
+            <div class="catalog-empty-cta">
+              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
+              <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
+                {{ translation.t('catalog.autoMatchCta') }}
+              </a>
+            </div>
+          }
         }
       </div>
     </section>

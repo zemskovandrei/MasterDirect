@@ -16,14 +16,46 @@
         </div>
         <h2>{{ translation.t('masters.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('masters.listLead') }}</p>
-        <p class="catalog-group-count">
-          {{ store.workers().length }} {{ translation.t('masters.inCatalog') }}
-        </p>
+        @if (supabase.workers().length > 0) {
+          <p class="catalog-group-count">
+            {{ supabase.workers().length }} {{ translation.t('masters.inCatalog') }}
+          </p>
+        }
+        @if (adminAuth.isAdmin()) {
+          <div class="catalog-admin-toolbar">
+            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
+            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
+              {{ translation.t('admin.logout') }}
+            </button>
+          </div>
+        }
       </header>
 
       <div class="performer-grid">
-        @for (p of store.workers(); track p.id) {
-          <article class="performer-card performer-card--worker">
+        @for (p of supabase.workers(); track p.id) {
+          <article
+            class="performer-card performer-card--worker"
+            [class.performer-card--admin]="adminAuth.isAdmin()"
+          >
+            @if (adminAuth.isAdmin()) {
+              <div class="performer-admin-actions">
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--edit"
+                  (click)="openEditPerformer(p)"
+                >
+                  ✏️ {{ translation.t('admin.masters.edit') }}
+                </button>
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--delete"
+                  (click)="deletePerformer(p)"
+                >
+                  ❌ {{ translation.t('admin.masters.delete') }}
+                </button>
+              </div>
+            }
+
             <div class="performer-head">
               <span class="performer-badge performer-badge-worker">{{ translation.t('masters.badge') }}</span>
               <h3>
@@ -40,9 +72,78 @@
             </a>
           </article>
         } @empty {
-          <p class="catalog-empty">{{ translation.t('masters.empty') }}</p>
+          @if (supabase.loaded()) {
+            <div class="catalog-empty-cta">
+              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
+              <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
+                {{ translation.t('catalog.autoMatchCta') }}
+              </a>
+            </div>
+          }
         }
       </div>
     </section>
   </div>
 </section>
+
+@if (editingPerformer(); as performer) {
+  <div class="performer-edit-overlay" (click)="closeEditPerformer()">
+    <div
+      class="performer-edit-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translation.t('admin.masters.editTitle')"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        class="performer-edit-dialog__close"
+        (click)="closeEditPerformer()"
+        aria-label="×"
+      >
+        ×
+      </button>
+      <h2>{{ translation.t('admin.masters.editTitle') }}</h2>
+      <p class="performer-edit-dialog__subtitle">{{ performer.name }}</p>
+
+      <form class="performer-edit-form" [formGroup]="editForm" (ngSubmit)="saveEditedPerformer()">
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.nameLabel') }}</span>
+          <input type="text" formControlName="name" autocomplete="name" />
+        </label>
+        @if (editFieldInvalid('name')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.nameError') }}</p>
+        }
+
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.specialtyLabel') }}</span>
+          <input type="text" formControlName="specialty" autocomplete="off" />
+        </label>
+        @if (editFieldInvalid('specialty')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.specialtyError') }}</p>
+        }
+
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.descriptionLabel') }}</span>
+          <textarea formControlName="description" rows="4"></textarea>
+        </label>
+        @if (editFieldInvalid('description')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.descriptionError') }}</p>
+        }
+
+        <div class="performer-edit-actions">
+          <button type="button" class="performer-edit-cancel" (click)="closeEditPerformer()">
+            {{ translation.t('admin.masters.cancel') }}
+          </button>
+          <button type="submit" class="btn-primary performer-edit-save" [disabled]="adminSaving()">
+            {{
+              adminSaving()
+                ? translation.t('admin.masters.saving')
+                : translation.t('admin.masters.save')
+            }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

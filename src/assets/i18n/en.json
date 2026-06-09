@@ -59,6 +59,54 @@
       "nextSlide": "Next slide",
       "slide": "Slide"
     },
+    "calculator": {
+      "eyebrow": "Calculator",
+      "title": "Smart renovation calculator",
+      "subtitle": "Answer 4 quick questions and get offers from available teams in Batumi and Tbilisi",
+      "progressAria": "Calculator progress",
+      "back": "← Back",
+      "continue": "Continue",
+      "steps": {
+        "roomType": "Choose property type",
+        "renovationType": "What kind of renovation is planned?",
+        "area": "Enter approximate area",
+        "performers": "Choose performers to receive your estimate",
+        "contacts": "Where should we send offers from masters?"
+      },
+      "roomTypes": {
+        "newBuild": "New build",
+        "secondary": "Resale apartment",
+        "house": "House / Cottage",
+        "commercial": "Commercial"
+      },
+      "renovationTypes": {
+        "cosmetic": "Cosmetic",
+        "capital": "Major (turnkey)",
+        "design": "Designer",
+        "furniture": "Custom furniture"
+      },
+      "defaultCity": "Batumi / Tbilisi",
+      "experienceProjects": "{{count}} projects in catalog",
+      "performersHint": "You can pick one or several performers — your request goes to them directly",
+      "performersEmpty": "No performers in this category yet. Continue — your request will go to all available specialists.",
+      "selectPerformer": "Select",
+      "contactsDirected": "Your request and estimate will be sent directly to: {{names}}",
+      "areaLabel": "Area (sq.m)",
+      "areaPlaceholder": "e.g. 65",
+      "areaError": "Enter an area between 5 and 5000 sq.m",
+      "contactsLead": "We've calculated a preliminary cost! Leave your contacts to receive accurate estimates from available teams in Batumi and Tbilisi.",
+      "nameLabel": "Your name",
+      "namePlaceholder": "How should we address you",
+      "nameError": "Enter your name (at least 2 characters)",
+      "contactLabel": "Phone or Telegram",
+      "contactPlaceholder": "+995 555 00 00 00 or @username",
+      "contactError": "Enter a phone number or Telegram",
+      "submit": "Get offers from masters",
+      "submitting": "Sending request…",
+      "successTitle": "Request sent!",
+      "successText": "Available teams will receive your request and contact you with accurate estimates.",
+      "reset": "Calculate again"
+    },
     "features": {
       "eyebrow": "Benefits",
       "title": "SmartBuild",
@@ -138,7 +186,8 @@
         "brigades": "teams",
         "workers": "masters",
         "furniture": "companies"
-      }
+      },
+      "emptyGalleryCta": "Be the first in our project gallery! Publish your best before/after cases and get hot leads."
     },
     "estimate": {
       "eyebrow": "Request",
@@ -184,6 +233,10 @@
       "tabsAria": "Portfolio sections"
     }
   },
+  "catalog": {
+    "autoMatchEmpty": "All specialists are busy — leave a request for auto-matching",
+    "autoMatchCta": "Submit a request in the calculator"
+  },
   "brigades": {
     "title": "Teams",
     "subtitle": "Crews for full renovation of apartments, houses and individual rooms.",
@@ -194,6 +247,11 @@
     "badge": "Team",
     "allWorks": "All work",
     "empty": "No published teams yet.",
+    "emptyCta": {
+      "title": "Is your team ready for new projects?",
+      "desc": "SmartBuild.Tech is launching in Georgia! Register your construction crew or company now. The first 20 construction teams get lifetime PRO status and search priority — completely free.",
+      "btn": "List your team"
+    },
     "estimateFor": "Estimate request for team «{{name}}»"
   },
   "masters": {
@@ -205,7 +263,12 @@
     "inCatalog": "masters in catalog",
     "badge": "Master",
     "allWorks": "All work",
-    "empty": "No published masters yet."
+    "empty": "No published masters yet.",
+    "emptyCta": {
+      "title": "Looking for finishing, electrical, or plumbing jobs?",
+      "desc": "Create your master profile on SmartBuild.Tech. Get direct client contacts with no middlemen or hidden fees. The first 30 masters get lifetime PRO status and search priority — completely free.",
+      "btn": "List your profile"
+    }
   },
   "furniture": {
     "title": "Furniture companies",
@@ -217,6 +280,11 @@
     "badge": "Furniture",
     "allWorks": "All projects",
     "empty": "No published companies yet.",
+    "emptyCta": {
+      "title": "Do you make custom furniture?",
+      "desc": "Show your kitchens, wardrobes, and design projects to hundreds of potential clients. Register your factory or workshop on the platform for free. The first 10 furniture companies get lifetime PRO status and search priority — completely free.",
+      "btn": "List your company"
+    },
     "back": "Back to furniture catalog",
     "projects": "projects",
     "worksEyebrow": "Portfolio",
@@ -264,6 +332,38 @@
       "lead": "Approved reviews are published alongside real before/after work."
     }
   },
+  "admin": {
+    "badge": "Administrator mode",
+    "logout": "Log out",
+    "footerLogin": "Sign in as admin",
+    "gate": {
+      "lead": "Enter the administrator password to manage the catalog."
+    },
+    "login": {
+      "eyebrow": "Admin",
+      "title": "Administrator sign-in",
+      "lead": "Enter the password to edit and remove performer profiles.",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "error": "Incorrect password.",
+      "submit": "Sign in"
+    },
+    "masters": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this master?",
+      "editTitle": "Edit master profile",
+      "nameLabel": "Name",
+      "nameError": "Enter a name (at least 2 characters)",
+      "specialtyLabel": "Specialty",
+      "specialtyError": "Enter a specialty",
+      "descriptionLabel": "Description",
+      "descriptionError": "Enter a description (at least 4 characters)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…"
+    }
+  },
   "moderation": {
     "title": "Review moderation",
     "subtitle": "Review and publish client feedback on SmartBuild.Tech",
@@ -277,7 +377,7 @@
       "passwordPlaceholder": "Enter password",
       "error": "Incorrect password. Try again.",
       "submit": "Sign in",
-      "demoNote": "Demo password: smartbuild-admin"
+      "demoNote": "Password: admin123"
     },
     "notifications": {
       "title": "Notifications",

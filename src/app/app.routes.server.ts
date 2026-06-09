@@ -9,6 +9,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'cabinet', renderMode: RenderMode.Prerender },
   { path: 'reviews', renderMode: RenderMode.Prerender },
   { path: 'moderation', renderMode: RenderMode.Prerender },
+  { path: 'admin', renderMode: RenderMode.Prerender },
   { path: 'verify/**', renderMode: RenderMode.Server },
   { path: 'brigades/**', renderMode: RenderMode.Server },
   { path: 'furniture/**', renderMode: RenderMode.Server },

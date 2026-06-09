@@ -1,0 +1,92 @@
+.admin-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.admin-login-dialog {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 2rem 1.75rem 1.75rem;
+  border-radius: 18px;
+  border: 1px solid rgba(77, 238, 234, 0.25);
+  background: rgba(30, 41, 59, 0.92);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+}
+
+.admin-login-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-login-dialog h2 {
+  margin: 0.35rem 0 0.75rem;
+  color: #ffffff;
+  font-size: 1.45rem;
+}
+
+.admin-login-dialog__lead {
+  margin: 0 0 1.25rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+}
+
+.admin-login-dialog__form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-login-dialog__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-login-dialog__field span {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-login-dialog__field input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #ffffff;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.admin-login-dialog__field input:focus {
+  outline: none;
+  border-color: #4deeea;
+}
+
+.admin-login-dialog__error {
+  margin: 0;
+  color: #ff8a8a;
+  font-size: 0.85rem;
+}
+
+.admin-login-dialog__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}

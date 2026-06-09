@@ -12,17 +12,66 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.use(express.json());
+
+app.post('/api/calculator/telegram', async (req, res) => {
+  const botToken = process.env['TELEGRAM_BOT_TOKEN'];
+  const chatId = process.env['TELEGRAM_CHAT_ID'];
+
+  if (!botToken || !chatId) {
+    res.status(503).json({ ok: false, error: 'telegram_not_configured' });
+    return;
+  }
+
+  const {
+    directedTo,
+    name,
+    contact,
+    roomType,
+    renovationType,
+    areaSqm,
+  } = req.body as {
+    directedTo?: string;
+    name?: string;
+    contact?: string;
+    roomType?: string;
+    renovationType?: string;
+    areaSqm?: number;
+  };
+
+  if (!name?.trim() || !contact?.trim()) {
+    res.status(400).json({ ok: false, error: 'invalid_payload' });
+    return;
+  }
+
+  const text = [
+    `🎯 НАПРАВЛЕНО МАСТЕРУ: ${directedTo?.trim() || '—'}`,
+    `👤 Заказчик: ${name.trim()}`,
+    `📞 Контакт: ${contact.trim()}`,
+    `🏠 Помещение: ${roomType ?? '—'}`,
+    `🔧 Ремонт: ${renovationType ?? '—'}`,
+    `📐 Площадь: ${areaSqm ?? '—'} кв.м`,
+  ].join('\n');
+
+  try {
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+        }),
+      },
+    );
+
+    const payload = (await telegramResponse.json()) as { ok?: boolean };
+    res.status(telegramResponse.ok ? 200 : 502).json({ ok: payload.ok === true });
+  } catch {
+    res.status(502).json({ ok: false, error: 'telegram_request_failed' });
+  }
+});
 
 /**
  * Serve static files from /browser

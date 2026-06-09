@@ -1,7 +1,7 @@
 import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
@@ -17,13 +17,17 @@ export class BrigadesPageComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly store = inject(PortfolioStoreService);
+  protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
   protected readonly selectedBrigadeId = signal<string | null>(null);
 
   ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.supabase.loadProfiles().subscribe();
+    }
+
     this.route.fragment.subscribe((fragment) => {
       this.scrollToFragment(fragment);
     });

@@ -1,26 +1,46 @@
 import { Component, HostListener, PLATFORM_ID, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { AdminAuthService } from '../core/services/admin-auth.service';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
+import { AdminLoginModalComponent } from '../shared/components/admin-login-modal/admin-login-modal.component';
 
 @Component({
   selector: 'app-site-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitcherComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    LanguageSwitcherComponent,
+    AdminLoginModalComponent,
+  ],
   templateUrl: './site-layout.component.html',
   styleUrls: ['./site-layout.component.css'],
 })
 export class SiteLayoutComponent {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly translation = inject(TranslationService);
+  protected readonly adminAuth = inject(AdminAuthService);
 
   protected readonly title = signal('SmartBuild.Tech');
   protected readonly mobileMenuOpen = signal(false);
+  protected readonly adminLoginOpen = signal(false);
 
   @HostListener('document:keydown.escape')
   onEscape() {
     this.closeMobileMenu();
+    this.closeAdminLogin();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent) {
+    if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      this.openAdminLogin();
+    }
   }
 
   toggleMobileMenu() {
@@ -55,5 +75,13 @@ export class SiteLayoutComponent {
 
   onNavClick() {
     this.closeMobileMenu();
+  }
+
+  openAdminLogin() {
+    this.adminLoginOpen.set(true);
+  }
+
+  closeAdminLogin() {
+    this.adminLoginOpen.set(false);
   }
 }

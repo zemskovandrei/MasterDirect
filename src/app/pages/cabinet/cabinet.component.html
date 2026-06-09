@@ -236,8 +236,27 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn-primary btn-large register-submit">
-                {{ translation.t('cabinet.submitRegister') }}
+              @if (registerStatus() === 'success') {
+                <p class="register-status register-status--success" role="status">
+                  {{ translation.t('cabinet.registerSuccess') }}
+                </p>
+              }
+              @if (registerStatus() === 'error' && registerErrorMessage()) {
+                <p class="register-status register-status--error" role="alert">
+                  {{ registerErrorMessage() }}
+                </p>
+              }
+
+              <button
+                type="submit"
+                class="btn-primary btn-large register-submit"
+                [disabled]="registerSubmitting()"
+              >
+                {{
+                  registerSubmitting()
+                    ? translation.t('cabinet.registerSubmitting')
+                    : translation.t('cabinet.submitRegister')
+                }}
               </button>
               <p class="register-note">{{ translation.t('cabinet.registerNote') }}</p>
             </form>

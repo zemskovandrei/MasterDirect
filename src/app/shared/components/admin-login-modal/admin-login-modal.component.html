@@ -1,0 +1,38 @@
+@if (open()) {
+  <div class="admin-login-overlay" (click)="close()">
+    <div
+      class="admin-login-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translation.t('admin.login.title')"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" class="admin-login-dialog__close" (click)="close()" aria-label="×">
+        ×
+      </button>
+      <span class="section-eyebrow">{{ translation.t('admin.login.eyebrow') }}</span>
+      <h2>{{ translation.t('admin.login.title') }}</h2>
+      <p class="admin-login-dialog__lead">{{ translation.t('admin.login.lead') }}</p>
+
+      <form class="admin-login-dialog__form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <label class="admin-login-dialog__field">
+          <span>{{ translation.t('admin.login.password') }}</span>
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            [attr.placeholder]="translation.t('admin.login.passwordPlaceholder')"
+          />
+        </label>
+
+        @if (loginError()) {
+          <p class="admin-login-dialog__error" role="alert">{{ translation.t('admin.login.error') }}</p>
+        }
+
+        <button type="submit" class="btn-primary admin-login-dialog__submit">
+          {{ translation.t('admin.login.submit') }}
+        </button>
+      </form>
+    </div>
+  </div>
+}

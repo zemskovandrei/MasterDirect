@@ -266,4 +266,27 @@
   opacity: 0.95;
 }
 
+.footer-admin-login {
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.footer-admin-login:hover {
+  color: #4deeea;
+}
+
+.footer-admin-badge {
+  color: #4deeea;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 

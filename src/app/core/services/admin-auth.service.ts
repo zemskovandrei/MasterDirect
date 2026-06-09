@@ -3,8 +3,8 @@ import { isPlatformBrowser } from '@angular/common';
 
 const ADMIN_SESSION_KEY = 'smartbuild-tech-admin-session';
 
-/** Демо-пароль администратора (в продакшене — серверная авторизация) */
-const DEMO_ADMIN_PASSWORD = 'smartbuild-admin';
+/** Локальные пароли администратора (в продакшене — серверная авторизация) */
+const ADMIN_PASSWORDS = new Set(['admin123', 'smartbuild-admin']);
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
@@ -18,7 +18,7 @@ export class AdminAuthService {
   }
 
   login(password: string): boolean {
-    if (password.trim() !== DEMO_ADMIN_PASSWORD) {
+    if (!ADMIN_PASSWORDS.has(password.trim())) {
       return false;
     }
     this.isAdminSignal.set(true);

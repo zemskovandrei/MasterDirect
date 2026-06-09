@@ -6,7 +6,7 @@ import {
 import { APP_BASE_HREF } from '@angular/common';
 import { provideRouter } from '@angular/router';
 import { APP_BASE_HREF_VALUE } from './core/config/base-href';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 import { routes } from './app.routes';
@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
     { provide: APP_BASE_HREF, useValue: APP_BASE_HREF_VALUE },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withFetch()),
     importProvidersFrom(
       TranslateModule.forRoot({
         fallbackLang: 'ru',

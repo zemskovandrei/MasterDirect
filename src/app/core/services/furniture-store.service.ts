@@ -60,6 +60,36 @@ export class FurnitureStoreService {
     return company;
   }
 
+  setSession(companyId: string): void {
+    if (!this.companiesSignal().some((company) => company.id === companyId)) {
+      return;
+    }
+    this.sessionSignal.set({ companyId });
+    this.persistSession();
+  }
+
+  removeCompanyIfExists(companyId: string): void {
+    if (!this.companiesSignal().some((company) => company.id === companyId)) {
+      return;
+    }
+    this.companiesSignal.update((list) => list.filter((company) => company.id !== companyId));
+    const session = this.sessionSignal();
+    if (session?.companyId === companyId) {
+      this.sessionSignal.set(null);
+    }
+    this.persist();
+  }
+
+  replaceCompaniesFromRemote(remote: FurnitureCompany[]): void {
+    const existing = this.companiesSignal();
+    const merged = remote.map((company) => {
+      const local = existing.find((item) => item.id === company.id);
+      return local ? { ...company, works: local.works } : company;
+    });
+    this.companiesSignal.set(merged);
+    this.persist();
+  }
+
   updateSocialLinks(companyId: string, socialLinks: PerformerSocialLinks): void {
     const normalized = normalizeSocialLinks(socialLinks);
 

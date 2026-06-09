@@ -153,6 +153,19 @@
     <div class="footer-bottom">
       <span>{{ translation.t('app.footer.copyright') }}</span>
       <span>{{ translation.t('app.footer.catalog') }}</span>
+      @if (adminAuth.isAdmin()) {
+        <span class="footer-admin-badge">{{ translation.t('admin.badge') }}</span>
+      } @else {
+        <button type="button" class="footer-admin-login" (click)="openAdminLogin()">
+          {{ translation.t('admin.footerLogin') }}
+        </button>
+      }
     </div>
   </footer>
+
+  <app-admin-login-modal
+    [open]="adminLoginOpen()"
+    (closed)="closeAdminLogin()"
+    (loggedIn)="closeAdminLogin()"
+  />
 </div>

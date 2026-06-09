@@ -11,6 +11,7 @@ import { ModerationComponent } from './pages/moderation/moderation.component';
 import { WorkVerificationComponent } from './pages/work-verification/work-verification.component';
 import { PortfolioCatalogComponent } from './pages/portfolio/portfolio-catalog.component';
 import { ReviewsPageComponent } from './pages/reviews/reviews-page.component';
+import { AdminGateComponent } from './pages/admin/admin-gate.component';
 
 export const routes: Routes = [
   { path: 'verify/:token', component: WorkVerificationComponent },
@@ -28,6 +29,7 @@ export const routes: Routes = [
       { path: 'cabinet', component: CabinetComponent },
       { path: 'reviews', component: ReviewsPageComponent },
       { path: 'moderation', component: ModerationComponent },
+      { path: 'admin', component: AdminGateComponent },
       { path: 'portfolio', component: PortfolioCatalogComponent },
       { path: 'portfolio/brigade/:id', redirectTo: 'brigades/:id' },
       { path: 'portfolio/worker/:id', redirectTo: 'masters/:id' },

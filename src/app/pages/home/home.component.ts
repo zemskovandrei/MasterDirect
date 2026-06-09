@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { APP_BASE_HREF, CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 
 interface ServiceItem {
   image: string;
@@ -21,59 +22,78 @@ interface ServiceItem {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly baseHref = inject(APP_BASE_HREF, { optional: true }) ?? '/';
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
 
-  protected readonly services: ServiceItem[] = [
+  private readonly serviceImageFiles = [
+    '1.jpeg',
+    '2.jpeg',
+    '3.jpeg',
+    '4.jpeg',
+    '5.jpeg',
+    '6.jpeg',
+  ];
+
+  private readonly serviceContent: Omit<ServiceItem, 'image'>[] = [
     {
-      image: 'assets/1.jpeg',
       title: 'home.services.items.turnkey.title',
       description: 'home.services.items.turnkey.desc',
     },
     {
-      image: 'assets/2.jpeg',
       title: 'home.services.items.tiler.title',
       description: 'home.services.items.tiler.desc',
     },
     {
-      image: 'assets/3.jpeg',
       title: 'home.services.items.electrician.title',
       description: 'home.services.items.electrician.desc',
     },
     {
-      image: 'assets/4.jpeg',
       title: 'home.services.items.plumber.title',
       description: 'home.services.items.plumber.desc',
     },
     {
-      image: 'assets/5.jpeg',
       title: 'home.services.items.finisher.title',
       description: 'home.services.items.finisher.desc',
     },
     {
-      image: 'assets/6.jpeg',
       title: 'home.services.items.furniture.title',
       description: 'home.services.items.furniture.desc',
     },
   ];
 
-  private readonly sliderImages = [
-    'assets/portfolio-01.webp',
-    'assets/portfolio-02.jpg',
-    'assets/portfolio-03.jpg',
-    'assets/portfolio-04.jpg',
-    'assets/portfolio-05.jpg',
-    'assets/portfolio-06.webp',
+  protected services: ServiceItem[] = [];
+
+  private readonly sliderImageFiles = [
+    'portfolio-01.webp',
+    'portfolio-02.jpg',
+    'portfolio-03.jpg',
+    'portfolio-04.jpg',
+    'portfolio-05.jpg',
+    'portfolio-06.webp',
   ];
 
-  protected readonly sliderDots = this.sliderImages.map((_, index) => index);
-  protected currentSlide = signal(this.sliderImages[0]);
+  private sliderImages: string[] = [];
+  protected readonly sliderDots = this.sliderImageFiles.map((_, index) => index);
+  protected currentSlide = signal('');
 
   private slideIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit() {
+    this.sliderImages = this.sliderImageFiles.map((file) =>
+      resolveAssetUrl(`assets/${file}`, this.baseHref),
+    );
+    this.services = this.serviceContent.map((item, index) => ({
+      ...item,
+      image: resolveAssetUrl(`assets/${this.serviceImageFiles[index]}`, this.baseHref),
+    }));
+
+    if (this.sliderImages.length > 0) {
+      this.currentSlide.set(this.sliderImages[0]);
+    }
+
     if (isPlatformBrowser(this.platformId)) {
       this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
     }

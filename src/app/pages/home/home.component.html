@@ -1,10 +1,15 @@
 <section class="hero-slider">
   <div class="slider-container">
-    <div class="slide">
+    <div
+      class="slide"
+      [style.backgroundImage]="currentSlide() ? 'url(' + currentSlide() + ')' : null"
+    >
       <img
         class="slide-image"
         [src]="currentSlide()"
         [attr.alt]="translation.t('home.hero.imageAlt')"
+        decoding="async"
+        fetchpriority="high"
       />
       <div class="slide-overlay"></div>
       <div class="slide-content">

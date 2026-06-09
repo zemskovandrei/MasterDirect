@@ -71,9 +71,14 @@ body.no-scroll {
   overflow: hidden;
 }
 
-img {
+img:not(.slide-image) {
   max-width: 100%;
   height: auto;
+}
+
+.slide-image {
+  max-width: none;
+  height: 100%;
 }
 
 /* Section typography */

@@ -68,6 +68,12 @@
             },
             "github-pages": {
               "baseHref": "/pro-remont/",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/config/base-href.ts",
+                  "with": "src/app/core/config/base-href.github-pages.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

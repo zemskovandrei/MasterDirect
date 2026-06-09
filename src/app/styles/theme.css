@@ -103,7 +103,7 @@
 /* ——— Hero slider ——— */
 .hero-slider {
   height: min(88vh, 760px);
-  background: var(--color-navy);
+  background-color: transparent;
 }
 
 .slide-overlay {

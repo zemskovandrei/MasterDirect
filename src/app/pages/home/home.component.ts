@@ -64,12 +64,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   private readonly sliderImageFiles = [
-    'portfolio-01.webp',
+    'portfolio-01.jpg',
     'portfolio-02.jpg',
     'portfolio-03.jpg',
     'portfolio-04.jpg',
     'portfolio-05.jpg',
-    'portfolio-06.webp',
+    'portfolio-06.jpg',
   ];
 
   private readonly sliderImages = this.sliderImageFiles.map((file) =>

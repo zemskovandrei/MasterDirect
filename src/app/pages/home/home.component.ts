@@ -64,8 +64,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     },
   ];
 
-  protected services: ServiceItem[] = [];
-
   private readonly sliderImageFiles = [
     'portfolio-01.webp',
     'portfolio-02.jpg',
@@ -75,25 +73,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     'portfolio-06.webp',
   ];
 
-  private sliderImages: string[] = [];
+  private readonly sliderImages = this.sliderImageFiles.map((file) =>
+    resolveAssetUrl(`assets/${file}`, this.baseHref),
+  );
+
+  protected readonly services: ServiceItem[] = this.serviceContent.map((item, index) => ({
+    ...item,
+    image: resolveAssetUrl(`assets/${this.serviceImageFiles[index]}`, this.baseHref),
+  }));
+
   protected readonly sliderDots = this.sliderImageFiles.map((_, index) => index);
-  protected currentSlide = signal('');
+  protected readonly currentSlide = signal(this.sliderImages[0] ?? '');
 
   private slideIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit() {
-    this.sliderImages = this.sliderImageFiles.map((file) =>
-      resolveAssetUrl(`assets/${file}`, this.baseHref),
-    );
-    this.services = this.serviceContent.map((item, index) => ({
-      ...item,
-      image: resolveAssetUrl(`assets/${this.serviceImageFiles[index]}`, this.baseHref),
-    }));
-
-    if (this.sliderImages.length > 0) {
-      this.currentSlide.set(this.sliderImages[0]);
-    }
-
     if (isPlatformBrowser(this.platformId)) {
       this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
     }

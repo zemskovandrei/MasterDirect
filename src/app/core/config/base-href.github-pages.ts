@@ -1,5 +1,5 @@
 /**
  * GitHub Pages: имя подпапки = имя репозитория.
- * https://zemskovandrei.github.io/pro-remont/
+ * https://zemskovandrei.github.io/smartbuild-tech/
  */
-export const APP_BASE_HREF_VALUE = '/pro-remont/';
+export const APP_BASE_HREF_VALUE = '/smartbuild-tech/';

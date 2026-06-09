@@ -67,7 +67,7 @@
               "sourceMap": true
             },
             "github-pages": {
-              "baseHref": "/pro-remont/",
+              "baseHref": "/smartbuild-tech/",
               "fileReplacements": [
                 {
                   "replace": "src/app/core/config/base-href.ts",

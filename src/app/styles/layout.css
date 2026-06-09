@@ -84,99 +84,255 @@ h2 {
 /* Hero Section */
 .hero-slider {
   padding: 0;
-  height: clamp(420px, 72svh, 760px);
-  min-height: 0;
   position: relative;
   overflow: hidden;
 }
 
 .slider-container {
-  height: 100%;
   position: relative;
-}
-
-.slide {
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
   overflow: hidden;
-  background-color: var(--color-navy-soft);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
-.slide-image {
+/* ——— Слайд: три абсолютных слоя ——— */
+.slide-item {
+  position: relative;
+  width: 100%;
+  height: 1000px;
+  overflow: hidden;
+  display: block;
+  background-color: var(--color-navy-soft);
+}
+
+/* Слой 1 — размытый фон + оверлей */
+.slide-bg {
   position: absolute;
   inset: 0;
-  display: block;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.slide-bg-img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   max-width: none;
-  min-width: 100%;
-  min-height: 100%;
   object-fit: cover;
   object-position: center;
-  z-index: 0;
+  filter: blur(20px);
+  transform: scale(1.1);
+  transform-origin: center;
 }
 
-.slide-overlay {
+.slide-bg-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(12, 18, 34, 0.25) 0%,
-    rgba(12, 18, 34, 0.45) 55%,
-    rgba(12, 18, 34, 0.65) 100%
-  );
-  z-index: 1;
-}
-
-.slide-content {
-  position: relative;
   z-index: 2;
-  color: #fff;
+  pointer-events: none;
+  transition:
+    background 0.35s ease,
+    backdrop-filter 0.35s ease;
+}
+
+.slide-item.slide-light .slide-bg-overlay {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.slide-item.slide-dark .slide-bg-overlay {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: none;
+}
+
+/* Слой 2 — чёткое фото по центру */
+.slide-center {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.slide-center-img {
+  display: block;
+  max-height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Слой 3 — текст, кнопки, теги */
+.slide-item .slide-content {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  padding: 0 5%;
+  padding: 20px;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.slide-item .slide-content h2,
+.slide-item .slide-content p,
+.slide-item .slide-content .hero-actions,
+.slide-item .slide-content .hero-tags,
+.slide-item .slide-content .hero-benefits {
   max-width: 900px;
+  width: 100%;
 }
 
-.slide-content h2 {
-  color: #fff;
-}
-
-.slide-content h2 {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+.slide-item .slide-content h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
   line-height: 1.1;
-  margin-bottom: 24px;
 }
 
-.hero-tags {
+.slide-item .slide-content p {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.55;
+}
+
+.slide-item .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 32px 0;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
-.hero-tags span {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(4px);
-  color: white;
-  padding: 8px 18px;
+.slide-item .hero-actions .btn-primary {
+  background-color: #4deeea;
+  border: none;
+  color: #0f172a;
+  font-weight: 700;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.slide-item .hero-actions .btn-primary:hover {
+  background-color: #4deeea;
+  color: #0f172a;
+  box-shadow: 0 0 15px rgba(77, 238, 234, 0.4);
+}
+
+.slide-item .hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+
+.slide-item .hero-tags span {
+  padding: 0.5rem 1rem;
   border-radius: 50px;
-  font-size: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.88rem;
+  font-weight: 500;
 }
 
-.hero-benefits {
+.slide-item .hero-benefits {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.65rem 1.25rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
+}
+
+.slide-item .hero-benefits span::before {
+  content: '✓';
+  margin-right: 0.35rem;
+  font-weight: 700;
+}
+
+/* Тёмный слайд */
+.slide-item.slide-dark .slide-content h2 {
+  color: #f5f5f7;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.slide-item.slide-dark .slide-content p {
+  color: #f5f5f7;
+}
+
+.slide-item.slide-dark .hero-actions .btn-secondary {
+  background: rgba(15, 23, 42, 0.4);
+  border: 2px solid #4deeea;
+  color: #4deeea;
+  font-weight: 600;
+}
+
+.slide-item.slide-dark .hero-actions .btn-secondary:hover {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: #4deeea;
+  color: #4deeea;
+  box-shadow: 0 0 12px rgba(77, 238, 234, 0.35);
+}
+
+.slide-item.slide-dark .hero-tags span {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.slide-item.slide-dark .hero-benefits,
+.slide-item.slide-dark .hero-benefits span {
+  color: #f5f5f7;
+}
+
+.slide-item.slide-dark .hero-benefits span::before {
+  color: #4deeea;
+}
+
+/* Светлый слайд */
+.slide-item.slide-light .slide-content h2 {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+.slide-item.slide-light .slide-content p {
+  color: #475569;
+}
+
+.slide-item.slide-light .hero-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid #0f172a;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.slide-item.slide-light .hero-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: #0f172a;
+  color: #0f172a;
+}
+
+.slide-item.slide-light .hero-tags span {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #334155;
+}
+
+.slide-item.slide-light .hero-benefits,
+.slide-item.slide-light .hero-benefits span {
+  color: #0f172a;
+}
+
+.slide-item.slide-light .hero-benefits span::before {
+  color: #0d9488;
 }
 
 .benefit-item {

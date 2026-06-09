@@ -103,7 +103,7 @@
 
 .logo-mark {
   display: block;
-  height: 4.25rem;
+  height: 3.6rem;
   width: auto;
   max-width: min(100%, 440px);
   overflow: visible;
@@ -114,7 +114,7 @@
 
 @media (max-width: 600px) {
   .logo-mark {
-    height: 3.35rem;
+    height: 2.9rem;
     max-width: min(100%, 300px);
   }
 }
@@ -132,8 +132,8 @@
 }
 
 .header-end .header-actions .btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
   white-space: nowrap;
 }
 

@@ -83,11 +83,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   protected readonly sliderDots = this.sliderImageFiles.map((_, index) => index);
   protected readonly currentSlide = signal(this.sliderImages[0] ?? '');
+  protected readonly slideTone = signal<'light' | 'dark'>('dark');
 
   private slideIntervalId?: ReturnType<typeof setInterval>;
+  private readonly slideToneCache = new Map<number, 'light' | 'dark'>();
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      this.resolveSlideTone(0);
+      this.sliderImages.forEach((_, index) => {
+        if (index !== 0) {
+          this.analyzeSlideTone(index);
+        }
+      });
       this.slideIntervalId = setInterval(() => this.nextSlide(), 5000);
     }
   }
@@ -100,19 +108,88 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   nextSlide() {
     const nextIndex = (this.currentSlideIndex() + 1) % this.sliderImages.length;
-    this.currentSlideIndex.set(nextIndex);
-    this.currentSlide.set(this.sliderImages[nextIndex]);
+    this.setSlideIndex(nextIndex);
   }
 
   prevSlide() {
     const prevIndex =
       (this.currentSlideIndex() - 1 + this.sliderImages.length) % this.sliderImages.length;
-    this.currentSlideIndex.set(prevIndex);
-    this.currentSlide.set(this.sliderImages[prevIndex]);
+    this.setSlideIndex(prevIndex);
   }
 
   goToSlide(index: number) {
+    this.setSlideIndex(index);
+  }
+
+  private setSlideIndex(index: number) {
     this.currentSlideIndex.set(index);
     this.currentSlide.set(this.sliderImages[index]);
+    this.resolveSlideTone(index);
+  }
+
+  private resolveSlideTone(index: number) {
+    const cached = this.slideToneCache.get(index);
+    if (cached) {
+      this.slideTone.set(cached);
+      return;
+    }
+
+    if (!isPlatformBrowser(this.platformId)) {
+      this.slideTone.set('dark');
+      return;
+    }
+
+    this.analyzeSlideTone(index);
+  }
+
+  private analyzeSlideTone(index: number) {
+    const url = this.sliderImages[index];
+    if (!url) {
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      const tone = this.measureImageTone(img);
+      this.slideToneCache.set(index, tone);
+      if (this.currentSlideIndex() === index) {
+        this.slideTone.set(tone);
+      }
+    };
+    img.onerror = () => {
+      this.slideToneCache.set(index, 'dark');
+      if (this.currentSlideIndex() === index) {
+        this.slideTone.set('dark');
+      }
+    };
+    img.src = url;
+  }
+
+  private measureImageTone(img: HTMLImageElement): 'light' | 'dark' {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx || img.naturalWidth === 0) {
+      return 'dark';
+    }
+
+    const sampleSize = 48;
+    canvas.width = sampleSize;
+    canvas.height = sampleSize;
+
+    const sx = img.naturalWidth * 0.2;
+    const sy = img.naturalHeight * 0.2;
+    const sw = img.naturalWidth * 0.6;
+    const sh = img.naturalHeight * 0.6;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sampleSize, sampleSize);
+
+    const { data } = ctx.getImageData(0, 0, sampleSize, sampleSize);
+    let sum = 0;
+    const pixels = data.length / 4;
+
+    for (let i = 0; i < data.length; i += 4) {
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    }
+
+    return sum / pixels >= 128 ? 'light' : 'dark';
   }
 }

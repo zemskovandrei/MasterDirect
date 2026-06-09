@@ -1,17 +1,30 @@
 <section class="hero-slider">
   <div class="slider-container">
     <div
-      class="slide"
-      [style.backgroundImage]="currentSlide() ? 'url(' + currentSlide() + ')' : null"
+      class="slide-item"
+      [class.slide-dark]="slideTone() === 'dark'"
+      [class.slide-light]="slideTone() === 'light'"
     >
-      <img
-        class="slide-image"
-        [src]="currentSlide()"
-        [attr.alt]="translation.t('home.hero.imageAlt')"
-        decoding="async"
-        fetchpriority="high"
-      />
-      <div class="slide-overlay"></div>
+      <div class="slide-bg" aria-hidden="true">
+        <img
+          class="slide-bg-img"
+          [src]="currentSlide()"
+          alt=""
+          decoding="async"
+        />
+        <div class="slide-bg-overlay"></div>
+      </div>
+
+      <div class="slide-center">
+        <img
+          class="slide-center-img"
+          [src]="currentSlide()"
+          [attr.alt]="translation.t('home.hero.imageAlt')"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </div>
+
       <div class="slide-content">
         <h2>{{ translation.t('home.hero.title') }}</h2>
         <p>{{ translation.t('home.hero.subtitle') }}</p>

@@ -6,7 +6,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 0.65rem 0;
+  padding: 0.5rem 0;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -28,7 +28,7 @@
 }
 
 .nav a {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
 }
@@ -102,71 +102,21 @@
 
 /* ——— Hero slider ——— */
 .hero-slider {
-  height: clamp(420px, 72svh, 760px);
-  min-height: 0;
   background-color: transparent;
 }
 
-.slide-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(12, 18, 34, 0.35) 0%,
-    rgba(12, 18, 34, 0.55) 50%,
-    rgba(12, 18, 34, 0.75) 100%
-  );
-}
-
-.slide-content h2 {
-  font-weight: 800;
+.slide-item .slide-content h2 {
   letter-spacing: -0.03em;
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  line-height: 1.1;
 }
 
-.slide-content p {
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  color: rgba(255, 255, 255, 0.88);
+.slide-item .slide-content p {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.hero-actions .btn-primary {
-  background: var(--gradient-brand);
-  border: none;
-  color: var(--color-navy);
-  text-shadow: none;
-  box-shadow: var(--shadow-glow);
-}
-
-.hero-actions .btn-primary:hover {
-  background: linear-gradient(135deg, #00d4ee 0%, #00f0b8 100%);
-  color: var(--color-navy);
-}
-
-.hero-actions .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #fff;
-  backdrop-filter: blur(8px);
-}
-
-.hero-actions .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: var(--color-accent);
-  color: #fff;
-}
-
-.hero-tags span {
+.slide-item .hero-tags span {
   border-radius: var(--radius-pill);
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(6px);
-  font-size: 0.85rem;
-}
-
-.hero-benefits span::before {
-  color: var(--color-mint);
 }
 
 .slider-btn {

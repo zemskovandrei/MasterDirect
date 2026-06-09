@@ -10,8 +10,11 @@ html {
 
 /* ——— Hero (единая высота, без горизонтального скролла) ——— */
 .hero-slider {
-  height: clamp(420px, 72svh, 760px);
   min-height: 0;
+}
+
+.slide-item {
+  height: clamp(720px, 90svh, 1000px);
 }
 
 .hero-benefits {
@@ -25,8 +28,8 @@ html {
   justify-content: center;
 }
 
-.slide-content {
-  padding: 0 1rem;
+.slide-item .slide-content {
+  padding: 20px 1rem;
 }
 
 .slider-dots .dot {
@@ -136,16 +139,16 @@ h2 {
 }
 
 @media (max-width: 768px) {
-  .hero-slider {
-    height: clamp(380px, 68svh, 520px);
+  .slide-item {
+    height: clamp(660px, 80svh, 880px);
   }
 
-  .slide-content h2 {
+  .slide-item .slide-content h2 {
     font-size: clamp(1.65rem, 7vw, 2.25rem);
     margin-bottom: 0.85rem;
   }
 
-  .slide-content p {
+  .slide-item .slide-content p {
     font-size: 0.95rem;
     margin-bottom: 1rem;
   }
@@ -218,8 +221,8 @@ h2 {
 }
 
 @media (max-width: 480px) {
-  .hero-slider {
-    height: clamp(360px, 62svh, 480px);
+  .slide-item {
+    height: clamp(600px, 74svh, 700px);
   }
 
   .hero-actions .btn-large,

@@ -44,7 +44,7 @@
   --radius-pill: 999px;
 
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --header-h: 72px;
+  --header-h: 64px;
 }
 
 *,
@@ -71,14 +71,14 @@ body.no-scroll {
   overflow: hidden;
 }
 
-img:not(.slide-image) {
+img:not(.slide-bg-img):not(.slide-center-img) {
   max-width: 100%;
   height: auto;
 }
 
-.slide-image {
+.slide-bg-img,
+.slide-center-img {
   max-width: none;
-  height: 100%;
 }
 
 /* Section typography */

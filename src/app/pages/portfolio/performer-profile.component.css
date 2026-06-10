@@ -159,6 +159,25 @@
   line-height: 1.65;
 }
 
+.profile-call-out-fee {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.25rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  background: rgba(255, 209, 102, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.95rem;
+}
+
+.profile-call-out-fee__label {
+  font-weight: 700;
+  color: #ffd166;
+}
+
 .profile-contacts {
   margin: 0 0 1.5rem;
 }

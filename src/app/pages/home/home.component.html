@@ -201,6 +201,12 @@
                           <strong>{{ performer.name }}</strong>
                           <span>{{ performer.city }}</span>
                           <span>{{ performer.experience }}</span>
+                          @if (performer.callOutFee) {
+                            <span class="quiz-performer-card__fee">
+                              {{ translation.t('home.calculator.callOutFeeLabel') }}:
+                              {{ formatCallOutFeeDisplay(performer.callOutFee) }}
+                            </span>
+                          }
                         </div>
                         <button
                           type="button"
@@ -247,6 +253,9 @@
                 } @else {
                   <p class="quiz-step__lead">{{ translation.t('home.calculator.contactsLead') }}</p>
                 }
+
+                <p class="quiz-step__notice">{{ translation.t('home.calculator.measurementNotice') }}</p>
+
                 <form
                   class="quiz-contact-form"
                   [formGroup]="calculatorContactForm"
@@ -282,7 +291,27 @@
                     </p>
                   }
 
-                  <button type="submit" class="quiz-submit-btn" [disabled]="calculatorSubmitting()">
+                  <label class="quiz-field">
+                    <span>{{ translation.t('home.calculator.photoLabel') }}</span>
+                    <input
+                      type="url"
+                      formControlName="photoLink"
+                      [placeholder]="translation.t('home.calculator.photoPlaceholder')"
+                    />
+                  </label>
+
+                  @if (calculatorRequiresPaidCallOutConsent()) {
+                    <label class="quiz-checkbox">
+                      <input type="checkbox" formControlName="paidCallOutAccepted" />
+                      <span>{{ translation.t('home.calculator.paidCallOutConsent') }}</span>
+                    </label>
+                  }
+
+                  <button
+                    type="submit"
+                    class="quiz-submit-btn"
+                    [disabled]="calculatorSubmitting() || !isCalculatorSubmitAllowed()"
+                  >
                     {{
                       calculatorSubmitting()
                         ? translation.t('home.calculator.submitting')

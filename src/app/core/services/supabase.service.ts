@@ -1,6 +1,6 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Observable, from, tap } from 'rxjs';
 import { FurnitureCompany } from '../models/furniture.models';
 import {
@@ -21,6 +21,9 @@ import { PortfolioStoreService } from './portfolio-store.service';
 const supabaseUrl = 'ВСТАВЬ_СЮДА_PROJECT_URL';
 const supabaseAnonKey = 'ВСТАВЬ_СЮДА_ANON_PUBLIC_KEY';
 
+const SUPABASE_NOT_CONFIGURED =
+  'Supabase не настроен. Укажите PROJECT_URL и ANON_PUBLIC_KEY в supabase.service.ts';
+
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
   error: string | null;
@@ -33,6 +36,7 @@ export class SupabaseService {
   private readonly furnitureStore = inject(FurnitureStoreService);
 
   private client: SupabaseClient | null = null;
+  private clientPromise: Promise<SupabaseClient | null> | null = null;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly loadedSignal = signal(false);
@@ -69,16 +73,22 @@ export class SupabaseService {
     this.loadingSignal.set(true);
 
     return from(
-      this.getClient()!
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .then(({ data, error }) => {
-          if (error) {
-            throw new Error(error.message);
-          }
-          return (data ?? []) as Profile[];
-        }),
+      this.resolveClient().then(async (client) => {
+        if (!client) {
+          return [] as Profile[];
+        }
+
+        const { data, error } = await client
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        return (data ?? []) as Profile[];
+      }),
     ).pipe(
       tap({
         next: (profiles) => {
@@ -102,17 +112,23 @@ export class SupabaseService {
     }
 
     return from(
-      this.getClient()!
-        .from('profiles')
-        .select('*')
-        .eq('type', type)
-        .order('created_at', { ascending: false })
-        .then(({ data, error }) => {
-          if (error) {
-            throw new Error(error.message);
-          }
-          return (data ?? []) as Profile[];
-        }),
+      this.resolveClient().then(async (client) => {
+        if (!client) {
+          return [] as Profile[];
+        }
+
+        const { data, error } = await client
+          .from('profiles')
+          .select('*')
+          .eq('type', type)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        return (data ?? []) as Profile[];
+      }),
     );
   }
 
@@ -122,19 +138,29 @@ export class SupabaseService {
     }
 
     return from(
-      this.getClient()!
-        .from('profiles')
-        .insert([profileInsertToRow(input)])
-        .select('*')
-        .single()
-        .then(({ data, error }) => ({
+      this.resolveClient().then(async (client) => {
+        if (!client) {
+          return { data: null, error: SUPABASE_NOT_CONFIGURED };
+        }
+
+        const { data, error } = await client
+          .from('profiles')
+          .insert([profileInsertToRow(input)])
+          .select('*')
+          .single();
+
+        return {
           data: (data as Profile | null) ?? null,
           error: error?.message ?? null,
-        })),
+        };
+      }),
     ).pipe(
       tap((result) => {
         if (result.data) {
-          this.profilesSignal.update((list) => [result.data!, ...list.filter((p) => p.id !== result.data!.id)]);
+          this.profilesSignal.update((list) => [
+            result.data!,
+            ...list.filter((profile) => profile.id !== result.data!.id),
+          ]);
           this.syncLocalStores(this.profilesSignal());
           this.setSessionForProfile(result.data);
         }
@@ -152,18 +178,26 @@ export class SupabaseService {
     if (patch.specialty !== undefined) row['specialty'] = patch.specialty.trim();
     if (patch.description !== undefined) row['description'] = patch.description.trim();
     if (patch.city !== undefined) row['city'] = patch.city.trim() || null;
+    if (patch.callOutFee !== undefined) row['city'] = patch.callOutFee.trim() || null;
 
     return from(
-      this.getClient()!
-        .from('profiles')
-        .update(row)
-        .eq('id', id)
-        .select('*')
-        .single()
-        .then(({ data, error }) => ({
+      this.resolveClient().then(async (client) => {
+        if (!client) {
+          return { data: null, error: SUPABASE_NOT_CONFIGURED };
+        }
+
+        const { data, error } = await client
+          .from('profiles')
+          .update(row)
+          .eq('id', id)
+          .select('*')
+          .single();
+
+        return {
           data: (data as Profile | null) ?? null,
           error: error?.message ?? null,
-        })),
+        };
+      }),
     ).pipe(
       tap((result) => {
         if (result.data) {
@@ -182,14 +216,18 @@ export class SupabaseService {
     }
 
     return from(
-      this.getClient()!
-        .from('profiles')
-        .delete()
-        .eq('id', id)
-        .then(({ error }) => ({
+      this.resolveClient().then(async (client) => {
+        if (!client) {
+          return { data: null, error: SUPABASE_NOT_CONFIGURED };
+        }
+
+        const { error } = await client.from('profiles').delete().eq('id', id);
+
+        return {
           data: null,
           error: error?.message ?? null,
-        })),
+        };
+      }),
     ).pipe(
       tap((result) => {
         if (!result.error) {
@@ -203,19 +241,44 @@ export class SupabaseService {
   }
 
   get clientInstance(): SupabaseClient | null {
-    return this.getClient();
+    return this.client;
   }
 
-  private getClient(): SupabaseClient | null {
+  isConfigured(): boolean {
+    return (
+      supabaseUrl.startsWith('https://') &&
+      !supabaseUrl.includes('ВСТАВЬ') &&
+      supabaseAnonKey.length > 20 &&
+      !supabaseAnonKey.includes('ВСТАВЬ')
+    );
+  }
+
+  private resolveClient(): Promise<SupabaseClient | null> {
     if (!isPlatformBrowser(this.platformId)) {
-      return null;
+      return Promise.resolve(null);
     }
 
-    if (!this.client) {
-      this.client = createClient(supabaseUrl, supabaseAnonKey);
+    if (!this.isConfigured()) {
+      return Promise.resolve(null);
     }
 
-    return this.client;
+    if (this.client) {
+      return Promise.resolve(this.client);
+    }
+
+    if (!this.clientPromise) {
+      this.clientPromise = import('@supabase/supabase-js')
+        .then(({ createClient }) => {
+          this.client = createClient(supabaseUrl, supabaseAnonKey);
+          return this.client;
+        })
+        .catch(() => {
+          this.clientPromise = null;
+          return null;
+        });
+    }
+
+    return this.clientPromise;
   }
 
   private toPerformer(profile: Profile): PerformerProfile {

@@ -2,6 +2,8 @@ import { FurnitureCompany } from '../models/furniture.models';
 import { Profile } from '../models/profile.models';
 import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.models';
 
+import { isPaidCallOutFee, normalizeCallOutFee } from './call-out-fee.util';
+
 function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
   const links: PerformerSocialLinks = {
     phone: profile.phone ?? undefined,
@@ -15,6 +17,9 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
 }
 
 export function profileToPerformer(profile: Profile, works: PerformerProfile['works'] = []): PerformerProfile {
+  const callOutFee =
+    profile.type === 'furniture' ? null : normalizeCallOutFee(profile.city ?? '') || null;
+
   return {
     id: profile.id,
     type: profile.type === 'brigade' ? 'brigade' : 'worker',
@@ -24,6 +29,7 @@ export function profileToPerformer(profile: Profile, works: PerformerProfile['wo
     avatarUrl: profile.avatar_url ?? undefined,
     socialLinks: buildSocialLinks(profile),
     works,
+    callOutFee,
   };
 }
 
@@ -48,18 +54,25 @@ export function profileInsertToRow(input: {
   specialty: string;
   description: string;
   city?: string;
+  callOutFee?: string;
   phone?: string;
   whatsapp?: string;
   telegram?: string;
   instagram?: string;
   facebook?: string;
 }) {
+  const callOutFee = normalizeCallOutFee(input.callOutFee ?? '');
+  const cityValue =
+    input.type === 'furniture'
+      ? input.city?.trim() || null
+      : callOutFee || input.city?.trim() || null;
+
   return {
     type: input.type,
     name: input.name.trim(),
     specialty: input.specialty.trim(),
     description: input.description.trim(),
-    city: input.city?.trim() || null,
+    city: cityValue,
     phone: input.phone?.trim() || null,
     whatsapp: input.whatsapp?.trim() || null,
     telegram: input.telegram?.trim() || null,

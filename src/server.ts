@@ -29,14 +29,24 @@ app.post('/api/calculator/telegram', async (req, res) => {
     contact,
     roomType,
     renovationType,
+    roomTypeLabel,
+    renovationTypeLabel,
     areaSqm,
+    photoLink,
+    paidCallOutAccepted,
+    selectedCallOutFees,
   } = req.body as {
     directedTo?: string;
     name?: string;
     contact?: string;
     roomType?: string;
     renovationType?: string;
+    roomTypeLabel?: string;
+    renovationTypeLabel?: string;
     areaSqm?: number;
+    photoLink?: string;
+    paidCallOutAccepted?: boolean;
+    selectedCallOutFees?: string;
   };
 
   if (!name?.trim() || !contact?.trim()) {
@@ -48,9 +58,12 @@ app.post('/api/calculator/telegram', async (req, res) => {
     `🎯 НАПРАВЛЕНО МАСТЕРУ: ${directedTo?.trim() || '—'}`,
     `👤 Заказчик: ${name.trim()}`,
     `📞 Контакт: ${contact.trim()}`,
-    `🏠 Помещение: ${roomType ?? '—'}`,
-    `🔧 Ремонт: ${renovationType ?? '—'}`,
+    `🏠 Помещение: ${roomTypeLabel?.trim() || roomType || '—'}`,
+    `🔧 Ремонт: ${renovationTypeLabel?.trim() || renovationType || '—'}`,
     `📐 Площадь: ${areaSqm ?? '—'} кв.м`,
+    `📷 Фото объекта: ${photoLink?.trim() || '—'}`,
+    `💰 Выезд на замер: ${selectedCallOutFees?.trim() || '—'}`,
+    `✅ Согласие на платный выезд: ${paidCallOutAccepted ? 'да' : 'нет'}`,
   ].join('\n');
 
   try {

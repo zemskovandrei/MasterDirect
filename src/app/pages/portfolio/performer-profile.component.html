@@ -36,6 +36,13 @@
 
         <p class="profile-desc">{{ catalogL10n.performerDescription(p) }}</p>
 
+        @if (p.callOutFee) {
+          <p class="profile-call-out-fee">
+            <span class="profile-call-out-fee__label">{{ translation.t('profile.callOutFeeLabel') }}</span>
+            {{ p.callOutFee }}
+          </p>
+        }
+
         @if (hasSocialLinks(p.socialLinks)) {
           <div class="profile-contacts">
             <p class="profile-contacts-title">{{ translation.t('profile.contactTitle') }}</p>

@@ -172,6 +172,22 @@
                 }
               </label>
 
+              @if (selectedAccountType() !== 'furniture') {
+                <label class="register-field">
+                  <span class="register-label">
+                    <span class="field-icon" aria-hidden="true">🚗</span>
+                    {{ translation.t('cabinet.callOutFeeLabel') }}
+                  </span>
+                  <input
+                    type="text"
+                    formControlName="callOutFee"
+                    [placeholder]="translation.t('cabinet.callOutFeePlaceholder')"
+                    autocomplete="off"
+                  />
+                  <small class="register-field-hint">{{ translation.t('cabinet.callOutFeeHint') }}</small>
+                </label>
+              }
+
               <div class="register-social-block">
                 <div class="register-social-head">
                   <span class="register-label">

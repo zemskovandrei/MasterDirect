@@ -14,9 +14,11 @@ import {
   CalculatorRenovationType,
   CalculatorRoomType,
 } from '../../core/models/calculator.models';
+import { PerformerProfile } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
+import { isPaidCallOutFee } from '../../core/utils/call-out-fee.util';
 import { firstValueFrom } from 'rxjs';
 
 interface ServiceItem {
@@ -90,25 +92,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     const defaultCity = this.translation.t('home.calculator.defaultCity');
 
     if (pool === 'brigade') {
-      return this.supabase.brigades().map((performer) => ({
-        id: performer.id,
-        pool: 'brigade',
-        name: performer.name,
-        avatarUrl: performer.avatarUrl,
-        city: defaultCity,
-        experience: this.formatCalculatorExperience(performer.works.length),
-      }));
+      return this.supabase.brigades().map((performer) => this.mapPerformerCard(performer, 'brigade'));
     }
 
     if (pool === 'worker') {
-      return this.supabase.workers().map((performer) => ({
-        id: performer.id,
-        pool: 'worker',
-        name: performer.name,
-        avatarUrl: performer.avatarUrl,
-        city: defaultCity,
-        experience: this.formatCalculatorExperience(performer.works.length),
-      }));
+      return this.supabase.workers().map((performer) => this.mapPerformerCard(performer, 'worker'));
     }
 
     if (pool === 'furniture') {
@@ -118,6 +106,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         name: company.name,
         city: company.city || defaultCity,
         experience: this.catalogL10n.localizeSpecialtyField(company.specialty),
+        callOutFee: null,
+        callOutPaid: false,
       }));
     }
 
@@ -135,9 +125,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     () => this.calculatorSelectedPerformerNames().length > 0,
   );
 
+  protected readonly calculatorRequiresPaidCallOutConsent = computed(() => {
+    const selectedIds = new Set(this.calculatorSelectedPerformerIds());
+    return this.calculatorPerformerCards()
+      .filter((card) => selectedIds.has(card.id))
+      .some((card) => card.callOutPaid);
+  });
+
   protected readonly calculatorContactForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     contact: ['', [Validators.required, Validators.minLength(5)]],
+    photoLink: [''],
+    paidCallOutAccepted: [false],
   });
 
   protected readonly hasGalleryPerformers = computed(
@@ -269,6 +268,36 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.calculatorSelectedPerformerIds.update((ids) =>
       ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id],
     );
+    this.calculatorContactForm.patchValue({ paidCallOutAccepted: false });
+  }
+
+  isCalculatorSubmitAllowed(): boolean {
+    if (this.calculatorRequiresPaidCallOutConsent()) {
+      return this.calculatorContactForm.get('paidCallOutAccepted')?.value === true;
+    }
+    return true;
+  }
+
+  formatCallOutFeeDisplay(fee: string | null | undefined): string {
+    if (!fee?.trim()) {
+      return this.translation.t('home.calculator.callOutNotSpecified');
+    }
+    return fee.trim();
+  }
+
+  calculatorRoomTypeLabel(type: CalculatorRoomType | null): string {
+    if (!type) {
+      return '—';
+    }
+    const key = `home.calculator.roomTypes.${type === 'new_build' ? 'newBuild' : type === 'secondary' ? 'secondary' : type === 'house' ? 'house' : 'commercial'}`;
+    return this.translation.t(key);
+  }
+
+  calculatorRenovationTypeLabel(type: CalculatorRenovationType | null): string {
+    if (!type) {
+      return '—';
+    }
+    return this.translation.t(`home.calculator.renovationTypes.${type}`);
   }
 
   isCalculatorPerformerSelected(id: string): boolean {
@@ -311,7 +340,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     this.calculatorContactForm.markAllAsTouched();
-    if (this.calculatorContactForm.invalid) {
+    if (this.calculatorContactForm.invalid || !this.isCalculatorSubmitAllowed()) {
       return;
     }
 
@@ -321,17 +350,21 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { name, contact } = this.calculatorContactForm.getRawValue();
+    const { name, contact, photoLink, paidCallOutAccepted } = this.calculatorContactForm.getRawValue();
     const areaSqm = Number(this.calculatorArea().replace(',', '.'));
     const selectedIds = new Set(this.calculatorSelectedPerformerIds());
-    const selectedPerformers = this.calculatorPerformerCards()
-      .filter((card) => selectedIds.has(card.id))
-      .map((card) => ({
-        id: card.id,
-        pool: card.pool,
-        name: card.name,
-      }));
+    const selectedCards = this.calculatorPerformerCards().filter((card) => selectedIds.has(card.id));
+    const selectedPerformers = selectedCards.map((card) => ({
+      id: card.id,
+      pool: card.pool,
+      name: card.name,
+      callOutFee: card.callOutFee,
+    }));
     const directedTo = selectedPerformers.map((item) => item.name).join(', ');
+    const selectedCallOutFees = selectedCards
+      .filter((card) => card.callOutFee)
+      .map((card) => `${card.name}: ${card.callOutFee}`)
+      .join('; ');
 
     this.calculatorSubmitting.set(true);
 
@@ -341,6 +374,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       areaSqm,
       name,
       contact,
+      photoLink,
+      paidCallOutAccepted,
       selectedPerformers,
     });
 
@@ -351,7 +386,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         contact,
         roomType,
         renovationType,
+        roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
+        renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
         areaSqm,
+        photoLink,
+        paidCallOutAccepted,
+        selectedCallOutFees,
       }),
     );
 
@@ -369,6 +409,24 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.calculatorAreaTouched.set(false);
     this.calculatorSelectedPerformerIds.set([]);
     this.calculatorContactForm.reset();
+  }
+
+  private mapPerformerCard(
+    performer: PerformerProfile,
+    pool: Extract<CalculatorPerformerPool, 'brigade' | 'worker'>,
+  ): CalculatorPerformerCard {
+    const callOutFee = performer.callOutFee ?? null;
+
+    return {
+      id: performer.id,
+      pool,
+      name: performer.name,
+      avatarUrl: performer.avatarUrl,
+      city: this.translation.t('home.calculator.defaultCity'),
+      experience: this.formatCalculatorExperience(performer.works.length),
+      callOutFee,
+      callOutPaid: isPaidCallOutFee(callOutFee),
+    };
   }
 
   private formatCalculatorExperience(worksCount: number): string {

@@ -24,6 +24,7 @@ export interface ProfileInsert {
   specialty: string;
   description: string;
   city?: string;
+  callOutFee?: string;
   phone?: string;
   whatsapp?: string;
   telegram?: string;
@@ -36,6 +37,7 @@ export interface ProfileUpdate {
   specialty?: string;
   description?: string;
   city?: string;
+  callOutFee?: string;
   phone?: string;
   whatsapp?: string;
   telegram?: string;

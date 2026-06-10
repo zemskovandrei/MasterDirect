@@ -34,6 +34,7 @@
     "notFoundTitle": "Performer not found",
     "notFoundLead": "The profile may be unpublished or the link is outdated.",
     "contactTitle": "Contact directly",
+    "callOutFeeLabel": "Site visit for measurement",
     "reviews": {
       "eyebrow": "Reviews",
       "titleBrigade": "What clients say about the team",
@@ -75,6 +76,9 @@
     "aboutLabel": "About you / the team",
     "aboutPlaceholder": "Experience, area, project types, guarantees...",
     "aboutError": "Write at least 10 characters",
+    "callOutFeeLabel": "Site visit fee for measurement",
+    "callOutFeePlaceholder": "50 GEL or \"Free\"",
+    "callOutFeeHint": "Clients will see this amount when selecting you in the calculator. Enter \"Free\" if the visit is at no charge.",
     "socialTitle": "Client contact details",
     "socialHint": "Add a phone number or messengers so clients can reach you directly from your catalog profile.",
     "socialPhonePh": "Any number: +1, +7, +995, local format…",

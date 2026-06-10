@@ -47,6 +47,8 @@ export interface PerformerProfile {
   socialLinks?: PerformerSocialLinks;
   works: WorkProject[];
   isDemo?: boolean;
+  /** Стоимость выезда на замер (хранится в Supabase `city` для worker/brigade). */
+  callOutFee?: string | null;
 }
 
 export interface CabinetSession {

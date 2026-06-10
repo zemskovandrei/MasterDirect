@@ -26,6 +26,8 @@ export class CalculatorLeadStoreService {
     areaSqm: number;
     name: string;
     contact: string;
+    photoLink?: string;
+    paidCallOutAccepted?: boolean;
     selectedPerformers?: CalculatorSelectedPerformer[];
   }): CalculatorLeadSubmission {
     const submission: CalculatorLeadSubmission = {
@@ -35,6 +37,8 @@ export class CalculatorLeadStoreService {
       areaSqm: data.areaSqm,
       name: data.name.trim(),
       contact: data.contact.trim(),
+      photoLink: data.photoLink?.trim() || undefined,
+      paidCallOutAccepted: data.paidCallOutAccepted ?? false,
       selectedPerformers: data.selectedPerformers ?? [],
       createdAt: new Date().toISOString(),
     };

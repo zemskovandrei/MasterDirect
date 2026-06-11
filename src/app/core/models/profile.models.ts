@@ -9,6 +9,7 @@ export interface Profile {
   specialty: string;
   description: string;
   city?: string | null;
+  call_out_fee?: string | null;
   avatar_url?: string | null;
   phone?: string | null;
   whatsapp?: string | null;

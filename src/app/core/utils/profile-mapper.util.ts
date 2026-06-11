@@ -16,9 +16,46 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
   return Object.values(links).some(Boolean) ? links : undefined;
 }
 
-export function profileToPerformer(profile: Profile, works: PerformerProfile['works'] = []): PerformerProfile {
+export function furnitureCompanyToProfile(company: FurnitureCompany): Profile {
+  return {
+    id: company.id,
+    type: 'furniture',
+    name: company.name,
+    specialty: company.specialty,
+    description: company.description,
+    city: company.city || null,
+    phone: company.socialLinks?.phone ?? null,
+    whatsapp: company.socialLinks?.whatsapp ?? null,
+    telegram: company.socialLinks?.telegram ?? null,
+    instagram: company.socialLinks?.instagram ?? null,
+    facebook: company.socialLinks?.facebook ?? null,
+  };
+}
+
+export function performerToProfile(performer: PerformerProfile): Profile {
+  return {
+    id: performer.id,
+    type: performer.type,
+    name: performer.name,
+    specialty: performer.specialty,
+    description: performer.description,
+    call_out_fee: performer.callOutFee ?? null,
+    phone: performer.socialLinks?.phone ?? null,
+    whatsapp: performer.socialLinks?.whatsapp ?? null,
+    telegram: performer.socialLinks?.telegram ?? null,
+    instagram: performer.socialLinks?.instagram ?? null,
+    facebook: performer.socialLinks?.facebook ?? null,
+  };
+}
+
+export function profileToPerformer(
+  profile: Profile,
+  works: PerformerProfile['works'] = [],
+): PerformerProfile {
   const callOutFee =
-    profile.type === 'furniture' ? null : normalizeCallOutFee(profile.city ?? '') || null;
+    profile.type === 'furniture'
+      ? null
+      : normalizeCallOutFee(profile.call_out_fee ?? profile.city ?? '') || null;
 
   return {
     id: profile.id,

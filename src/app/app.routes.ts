@@ -12,6 +12,7 @@ import { WorkVerificationComponent } from './pages/work-verification/work-verifi
 import { PortfolioCatalogComponent } from './pages/portfolio/portfolio-catalog.component';
 import { ReviewsPageComponent } from './pages/reviews/reviews-page.component';
 import { AdminGateComponent } from './pages/admin/admin-gate.component';
+import { JobsListComponent } from './pages/jobs-list/jobs-list.component';
 
 export const routes: Routes = [
   { path: 'verify/:token', component: WorkVerificationComponent },
@@ -31,6 +32,7 @@ export const routes: Routes = [
       { path: 'moderation', component: ModerationComponent },
       { path: 'admin', component: AdminGateComponent },
       { path: 'portfolio', component: PortfolioCatalogComponent },
+      { path: 'jobs', component: JobsListComponent },
       { path: 'portfolio/brigade/:id', redirectTo: 'brigades/:id' },
       { path: 'portfolio/worker/:id', redirectTo: 'masters/:id' },
     ],

@@ -9,6 +9,7 @@ import {
   WorkVerificationStatus,
 } from '../models/portfolio.models';
 import { normalizeSocialLinks } from '../utils/social-links.util';
+import { normalizeCallOutFee } from '../utils/call-out-fee.util';
 import {
   buildVerificationUrl,
   generateVerificationCode,
@@ -45,13 +46,9 @@ export class PortfolioStoreService {
   readonly performers = this.performersSignal.asReadonly();
   readonly session = this.sessionSignal.asReadonly();
 
-  readonly brigades = computed(() =>
-    this.performersSignal().filter((p) => p.type === 'brigade'),
-  );
+  readonly brigades = computed(() => this.performersSignal().filter((p) => p.type === 'brigade'));
 
-  readonly workers = computed(() =>
-    this.performersSignal().filter((p) => p.type === 'worker'),
-  );
+  readonly workers = computed(() => this.performersSignal().filter((p) => p.type === 'worker'));
 
   readonly currentPerformer = computed(() => {
     const session = this.sessionSignal();
@@ -74,10 +71,12 @@ export class PortfolioStoreService {
     name: string;
     specialty: string;
     description: string;
+    callOutFee?: string;
     socialLinks?: PerformerSocialLinks;
   }): PerformerProfile {
     const id = this.generateId(data.type, data.name);
     const socialLinks = normalizeSocialLinks(data.socialLinks);
+    const callOutFee = normalizeCallOutFee(data.callOutFee ?? '') || null;
     const performer: PerformerProfile = {
       id,
       type: data.type,
@@ -85,6 +84,7 @@ export class PortfolioStoreService {
       specialty: data.specialty.trim(),
       description: data.description.trim(),
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
+      callOutFee,
       works: [],
     };
 

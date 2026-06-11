@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { Observable, from, tap } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { FurnitureCompany } from '../models/furniture.models';
 import {
   Profile,
@@ -11,21 +11,35 @@ import {
 } from '../models/profile.models';
 import { PerformerProfile } from '../models/portfolio.models';
 import {
-  profileInsertToRow,
+  furnitureCompanyToProfile,
+  performerToProfile,
   profileToFurnitureCompany,
   profileToPerformer,
 } from '../utils/profile-mapper.util';
 import { FurnitureStoreService } from './furniture-store.service';
 import { PortfolioStoreService } from './portfolio-store.service';
-
-const supabaseUrl = 'ВСТАВЬ_СЮДА_PROJECT_URL';
-const supabaseAnonKey = 'ВСТАВЬ_СЮДА_ANON_PUBLIC_KEY';
+import { environment } from '../../../environments/environment';
+import {
+  Job,
+  JobklientJobInsert,
+  mapJobklientRowsToJobs,
+} from '../../models/job.model';
 
 const SUPABASE_NOT_CONFIGURED =
-  'Supabase не настроен. Укажите PROJECT_URL и ANON_PUBLIC_KEY в supabase.service.ts';
+  'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
+
+const JOBS_CACHE_KEY = 'smartbuild.jobs.v3';
+const JOBS_CACHE_TTL_MS = 2 * 60 * 1000;
+const JOBS_LIST_COLUMNS =
+  'id,title,city,category,budget,description,status,created_at';
 
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
+  error: string | null;
+}
+
+export interface JobklientInsertResult {
+  data: Record<string, unknown> | null;
   error: string | null;
 }
 
@@ -35,16 +49,24 @@ export class SupabaseService {
   private readonly portfolioStore = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
 
-  private client: SupabaseClient | null = null;
+  private supabaseClient: SupabaseClient | null = null;
   private clientPromise: Promise<SupabaseClient | null> | null = null;
+  private jobsFetchPromise: Promise<Job[]> | null = null;
+  private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly loadedSignal = signal(false);
   private readonly loadingSignal = signal(false);
+  private readonly activeJobsSignal = signal<Job[]>([]);
+  private readonly jobsLoadingSignal = signal(false);
+  private readonly jobsErrorSignal = signal<string | null>(null);
 
   readonly profiles = this.profilesSignal.asReadonly();
   readonly loaded = this.loadedSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
+  readonly activeJobs = this.activeJobsSignal.asReadonly();
+  readonly jobsLoading = this.jobsLoadingSignal.asReadonly();
+  readonly jobsError = this.jobsErrorSignal.asReadonly();
 
   readonly brigades = computed(() =>
     this.profilesSignal()
@@ -64,193 +86,375 @@ export class SupabaseService {
       .map((profile) => this.toFurnitureCompany(profile)),
   );
 
-  /** Загрузка всех профилей из Supabase. */
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const cached = this.readJobsCache();
+      if (cached) {
+        this.activeJobsSignal.set(cached.jobs);
+      }
+    }
+  }
+
+  prefetchActiveJobs(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.isConfigured()) {
+      return;
+    }
+
+    void this.loadActiveJobs();
+  }
+
+  async loadActiveJobs(force = false): Promise<Job[]> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return [];
+    }
+
+    if (!this.isConfigured()) {
+      throw new Error(SUPABASE_NOT_CONFIGURED);
+    }
+
+    const cached = force ? null : this.readJobsCache();
+    if (cached && cached.jobs.length > 0) {
+      this.activeJobsSignal.set(cached.jobs);
+      this.jobsErrorSignal.set(null);
+
+      if (Date.now() - cached.at < JOBS_CACHE_TTL_MS) {
+        return cached.jobs;
+      }
+
+      void this.refreshActiveJobs(false);
+      return cached.jobs;
+    }
+
+    this.jobsLoadingSignal.set(true);
+    this.jobsErrorSignal.set(null);
+    return this.refreshActiveJobs(true);
+  }
+
+  /** @deprecated Use loadActiveJobs() */
+  async getActiveJobs(): Promise<Job[]> {
+    return this.loadActiveJobs();
+  }
+
+  /** @deprecated Use loadActiveJobs() */
+  async fetchActiveJobs(): Promise<Job[]> {
+    return this.loadActiveJobs();
+  }
+
+  insertJobklientJob(input: JobklientJobInsert): Observable<JobklientInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.insertJobklientJobRow(input));
+  }
+
   loadProfiles(): Observable<Profile[]> {
     if (!isPlatformBrowser(this.platformId)) {
-      return from(Promise.resolve([]));
+      return of([]);
     }
 
     this.loadingSignal.set(true);
-
-    return from(
-      this.resolveClient().then(async (client) => {
-        if (!client) {
-          return [] as Profile[];
-        }
-
-        const { data, error } = await client
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        return (data ?? []) as Profile[];
-      }),
-    ).pipe(
-      tap({
-        next: (profiles) => {
-          this.profilesSignal.set(profiles);
-          this.loadedSignal.set(true);
-          this.loadingSignal.set(false);
-          this.syncLocalStores(profiles);
-        },
-        error: () => {
-          this.loadingSignal.set(false);
-          this.loadedSignal.set(true);
-        },
-      }),
-    );
+    const profiles = this.buildProfilesFromLocalStores();
+    this.profilesSignal.set(profiles);
+    this.loadedSignal.set(true);
+    this.loadingSignal.set(false);
+    return of(profiles);
   }
 
-  /** Профили по типу: worker | brigade | furniture. */
   getProfilesByType(type: ProfileType): Observable<Profile[]> {
     if (!isPlatformBrowser(this.platformId)) {
-      return from(Promise.resolve([]));
+      return of([]);
     }
 
-    return from(
-      this.resolveClient().then(async (client) => {
-        if (!client) {
-          return [] as Profile[];
-        }
-
-        const { data, error } = await client
-          .from('profiles')
-          .select('*')
-          .eq('type', type)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        return (data ?? []) as Profile[];
-      }),
-    );
+    return of(this.buildProfilesFromLocalStores().filter((profile) => profile.type === type));
   }
 
   insertProfile(input: ProfileInsert): Observable<SupabaseMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
-      return from(Promise.resolve({ data: null, error: 'Browser only' }));
+      return of({ data: null, error: 'Browser only' });
     }
 
-    return from(
-      this.resolveClient().then(async (client) => {
-        if (!client) {
-          return { data: null, error: SUPABASE_NOT_CONFIGURED };
-        }
+    const socialLinks = {
+      phone: input.phone,
+      whatsapp: input.whatsapp,
+      telegram: input.telegram,
+      instagram: input.instagram,
+      facebook: input.facebook,
+    };
 
-        const { data, error } = await client
-          .from('profiles')
-          .insert([profileInsertToRow(input)])
-          .select('*')
-          .single();
+    let profile: Profile;
 
-        return {
-          data: (data as Profile | null) ?? null,
-          error: error?.message ?? null,
-        };
-      }),
-    ).pipe(
-      tap((result) => {
-        if (result.data) {
-          this.profilesSignal.update((list) => [
-            result.data!,
-            ...list.filter((profile) => profile.id !== result.data!.id),
-          ]);
-          this.syncLocalStores(this.profilesSignal());
-          this.setSessionForProfile(result.data);
-        }
-      }),
-    );
+    if (input.type === 'furniture') {
+      const company = this.furnitureStore.registerCompany({
+        name: input.name,
+        specialty: input.specialty,
+        description: input.description,
+        city: input.city,
+        socialLinks,
+      });
+      profile = furnitureCompanyToProfile(company);
+    } else {
+      const performer = this.portfolioStore.registerPerformer({
+        type: input.type,
+        name: input.name,
+        specialty: input.specialty,
+        description: input.description,
+        callOutFee: input.callOutFee,
+        socialLinks,
+      });
+      profile = performerToProfile(performer);
+    }
+
+    this.refreshProfilesFromLocalStores();
+    return of({ data: profile, error: null });
   }
 
   updateProfile(id: string, patch: ProfileUpdate): Observable<SupabaseMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
-      return from(Promise.resolve({ data: null, error: 'Browser only' }));
+      return of({ data: null, error: 'Browser only' });
     }
 
-    const row: Record<string, string | null> = {};
-    if (patch.name !== undefined) row['name'] = patch.name.trim();
-    if (patch.specialty !== undefined) row['specialty'] = patch.specialty.trim();
-    if (patch.description !== undefined) row['description'] = patch.description.trim();
-    if (patch.city !== undefined) row['city'] = patch.city.trim() || null;
-    if (patch.callOutFee !== undefined) row['city'] = patch.callOutFee.trim() || null;
+    const name = patch.name?.trim();
+    const specialty = patch.specialty?.trim();
+    const description = patch.description?.trim();
 
-    return from(
-      this.resolveClient().then(async (client) => {
-        if (!client) {
-          return { data: null, error: SUPABASE_NOT_CONFIGURED };
-        }
+    if (name && specialty && description) {
+      const updated = this.portfolioStore.updatePerformerProfile(id, {
+        name,
+        specialty,
+        description,
+      });
 
-        const { data, error } = await client
-          .from('profiles')
-          .update(row)
-          .eq('id', id)
-          .select('*')
-          .single();
+      if (updated) {
+        const profile = this.buildProfilesFromLocalStores().find((item) => item.id === id) ?? null;
+        this.refreshProfilesFromLocalStores();
+        return of({ data: profile, error: null });
+      }
+    }
 
-        return {
-          data: (data as Profile | null) ?? null,
-          error: error?.message ?? null,
-        };
-      }),
-    ).pipe(
-      tap((result) => {
-        if (result.data) {
-          this.profilesSignal.update((list) =>
-            list.map((profile) => (profile.id === id ? result.data! : profile)),
-          );
-          this.syncLocalStores(this.profilesSignal());
-        }
-      }),
-    );
+    return of({ data: null, error: 'Profile not found' });
   }
 
   deleteProfile(id: string): Observable<SupabaseMutationResult<null>> {
     if (!isPlatformBrowser(this.platformId)) {
-      return from(Promise.resolve({ data: null, error: 'Browser only' }));
+      return of({ data: null, error: 'Browser only' });
     }
 
-    return from(
-      this.resolveClient().then(async (client) => {
-        if (!client) {
-          return { data: null, error: SUPABASE_NOT_CONFIGURED };
-        }
+    const performerDeleted = this.portfolioStore.deletePerformer(id);
+    if (performerDeleted) {
+      this.refreshProfilesFromLocalStores();
+      return of({ data: null, error: null });
+    }
 
-        const { error } = await client.from('profiles').delete().eq('id', id);
+    const companyExists = this.furnitureStore.companies().some((company) => company.id === id);
+    if (companyExists) {
+      this.furnitureStore.removeCompanyIfExists(id);
+      this.refreshProfilesFromLocalStores();
+      return of({ data: null, error: null });
+    }
 
-        return {
-          data: null,
-          error: error?.message ?? null,
-        };
-      }),
-    ).pipe(
-      tap((result) => {
-        if (!result.error) {
-          this.profilesSignal.update((list) => list.filter((profile) => profile.id !== id));
-          this.syncLocalStores(this.profilesSignal());
-          this.portfolioStore.removePerformerIfExists(id);
-          this.furnitureStore.removeCompanyIfExists(id);
-        }
-      }),
-    );
+    return of({ data: null, error: 'Profile not found' });
   }
 
   get clientInstance(): SupabaseClient | null {
-    return this.client;
+    return this.supabaseClient;
+  }
+
+  private get supabase(): SupabaseClient {
+    if (!this.supabaseClient) {
+      throw new Error(SUPABASE_NOT_CONFIGURED);
+    }
+
+    return this.supabaseClient;
   }
 
   isConfigured(): boolean {
+    const { url, anonKey } = environment.supabase;
     return (
-      supabaseUrl.startsWith('https://') &&
-      !supabaseUrl.includes('ВСТАВЬ') &&
-      supabaseAnonKey.length > 20 &&
-      !supabaseAnonKey.includes('ВСТАВЬ')
+      url.startsWith('https://') &&
+      !url.includes('YOUR_SUPABASE') &&
+      !url.includes('mqnrevts') &&
+      anonKey.length > 20 &&
+      !anonKey.includes('YOUR_SUPABASE')
     );
+  }
+
+  private async insertJobklientJobRow(input: JobklientJobInsert): Promise<JobklientInsertResult> {
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const row = {
+        title: input.title,
+        city: input.city,
+        category: input.category,
+        budget: input.budget ?? null,
+        description: input.description ?? null,
+        status: input.status ?? 'New',
+      };
+
+      const { data, error } = await this.supabase
+        .from(environment.supabase.jobsTable)
+        .insert([row])
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('[SupabaseService] insertJobklientJob:', error.message);
+        return { data: null, error: error.message };
+      }
+
+      this.invalidateJobsCache();
+      return { data: (data as Record<string, unknown> | null) ?? null, error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Insert failed';
+      console.error('[SupabaseService] insertJobklientJob:', err);
+      return { data: null, error: message };
+    }
+  }
+
+  private async refreshActiveJobs(showLoading: boolean): Promise<Job[]> {
+    if (this.jobsFetchPromise) {
+      return this.jobsFetchPromise;
+    }
+
+    if (showLoading) {
+      this.jobsLoadingSignal.set(true);
+    }
+
+    this.jobsFetchPromise = (async () => {
+      try {
+        const data = await this.fetchJobklientRows();
+        const jobs = mapJobklientRowsToJobs(data);
+        this.activeJobsSignal.set(jobs);
+        this.jobsErrorSignal.set(null);
+        if (jobs.length > 0) {
+          this.writeJobsCache(jobs);
+        } else {
+          this.invalidateJobsCache();
+        }
+        return jobs;
+      } catch (err) {
+        console.error('[SupabaseService] loadActiveJobs:', err);
+        if (showLoading || this.activeJobsSignal().length === 0) {
+          this.activeJobsSignal.set([]);
+          this.jobsErrorSignal.set(
+            err instanceof Error ? err.message : 'Failed to load jobs',
+          );
+        }
+        throw err;
+      } finally {
+        this.jobsLoadingSignal.set(false);
+        this.jobsFetchPromise = null;
+      }
+    })();
+
+    return this.jobsFetchPromise;
+  }
+
+  private readJobsCache(): { at: number; jobs: Job[] } | null {
+    if (this.memoryJobsCache) {
+      return this.memoryJobsCache;
+    }
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    try {
+      const raw = sessionStorage.getItem(JOBS_CACHE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw) as {
+        at: number;
+        jobs: Array<Omit<Job, 'createdAt'> & { createdAt: string | null }>;
+      };
+
+      if (!Array.isArray(parsed.jobs)) {
+        return null;
+      }
+
+      const jobs = parsed.jobs.map((job) => ({
+        ...job,
+        createdAt: job.createdAt ? new Date(job.createdAt) : null,
+      }));
+
+      this.memoryJobsCache = { at: parsed.at, jobs };
+      return this.memoryJobsCache;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeJobsCache(jobs: Job[]): void {
+    const entry = {
+      at: Date.now(),
+      jobs,
+    };
+
+    this.memoryJobsCache = entry;
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(
+        JOBS_CACHE_KEY,
+        JSON.stringify({
+          at: entry.at,
+          jobs: jobs.map((job) => ({
+            ...job,
+            createdAt: job.createdAt?.toISOString() ?? null,
+          })),
+        }),
+      );
+    } catch {
+      // Ignore quota or private mode errors.
+    }
+  }
+
+  private invalidateJobsCache(): void {
+    this.memoryJobsCache = null;
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(JOBS_CACHE_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
+  private async fetchJobklientRows(): Promise<unknown[]> {
+    const { url, anonKey, jobsTable } = environment.supabase;
+    const query = new URLSearchParams({
+      select: JOBS_LIST_COLUMNS,
+      order: 'created_at.desc',
+      limit: '100',
+    });
+    const endpoint = `${url}/rest/v1/${jobsTable}?${query.toString()}`;
+    const response = await fetch(endpoint, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        Prefer: 'count=none',
+      },
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   }
 
   private resolveClient(): Promise<SupabaseClient | null> {
@@ -262,15 +466,16 @@ export class SupabaseService {
       return Promise.resolve(null);
     }
 
-    if (this.client) {
-      return Promise.resolve(this.client);
+    if (this.supabaseClient) {
+      return Promise.resolve(this.supabaseClient);
     }
 
     if (!this.clientPromise) {
+      const { url, anonKey } = environment.supabase;
       this.clientPromise = import('@supabase/supabase-js')
         .then(({ createClient }) => {
-          this.client = createClient(supabaseUrl, supabaseAnonKey);
-          return this.client;
+          this.supabaseClient = createClient(url, anonKey);
+          return this.supabaseClient;
         })
         .catch(() => {
           this.clientPromise = null;
@@ -279,6 +484,21 @@ export class SupabaseService {
     }
 
     return this.clientPromise;
+  }
+
+  private buildProfilesFromLocalStores(): Profile[] {
+    const performers = this.portfolioStore
+      .performers()
+      .map((performer) => performerToProfile(performer));
+    const companies = this.furnitureStore
+      .companies()
+      .map((company) => furnitureCompanyToProfile(company));
+
+    return [...performers, ...companies];
+  }
+
+  private refreshProfilesFromLocalStores(): void {
+    this.profilesSignal.set(this.buildProfilesFromLocalStores());
   }
 
   private toPerformer(profile: Profile): PerformerProfile {
@@ -294,26 +514,5 @@ export class SupabaseService {
   private toFurnitureCompany(profile: Profile): FurnitureCompany {
     const local = this.furnitureStore.companies().find((item) => item.id === profile.id);
     return profileToFurnitureCompany(profile, local?.works ?? []);
-  }
-
-  private syncLocalStores(profiles: Profile[]): void {
-    const performers = profiles
-      .filter((profile) => profile.type === 'worker' || profile.type === 'brigade')
-      .map((profile) => this.toPerformer(profile));
-    const companies = profiles
-      .filter((profile) => profile.type === 'furniture')
-      .map((profile) => this.toFurnitureCompany(profile));
-
-    this.portfolioStore.replacePerformersFromRemote(performers);
-    this.furnitureStore.replaceCompaniesFromRemote(companies);
-  }
-
-  private setSessionForProfile(profile: Profile) {
-    if (profile.type === 'furniture') {
-      this.furnitureStore.setSession(profile.id);
-      return;
-    }
-
-    this.portfolioStore.setSession(profile.id);
   }
 }

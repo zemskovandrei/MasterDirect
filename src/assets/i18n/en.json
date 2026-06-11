@@ -16,7 +16,8 @@
       "portfolio": "Portfolio",
       "cabinet": "Dashboard",
       "moderation": "Moderation",
-      "estimate": "Estimate"
+      "estimate": "Estimate",
+      "jobs": "Jobs"
     },
     "actions": {
       "openMenu": "Open menu",
@@ -41,6 +42,8 @@
       "subtitle": "Customers, teams and masters connect on SmartBuild.Tech and communicate directly.",
       "primary": "Find a team",
       "secondary": "Find a master",
+      "estimate": "Get an estimate",
+      "jobs": "Browse jobs",
       "tagsAria": "Main services",
       "tags": {
         "0": "Tiling",
@@ -62,7 +65,7 @@
     "calculator": {
       "eyebrow": "Calculator",
       "title": "Smart renovation calculator",
-      "subtitle": "Answer 4 quick questions and get offers from available teams in Batumi and Tbilisi",
+      "subtitle": "Answer 5 quick questions and get offers from available teams in Batumi and Tbilisi",
       "progressAria": "Calculator progress",
       "back": "← Back",
       "continue": "Continue",
@@ -77,7 +80,7 @@
         "newBuild": "New build",
         "secondary": "Resale apartment",
         "house": "House / Cottage",
-        "commercial": "Commercial"
+        "commercial": "Commercial property"
       },
       "renovationTypes": {
         "cosmetic": "Cosmetic",
@@ -86,6 +89,12 @@
         "furniture": "Custom furniture"
       },
       "defaultCity": "Batumi / Tbilisi",
+      "cities": {
+        "batumi": "Batumi",
+        "tbilisi": "Tbilisi",
+        "both": "Batumi or Tbilisi"
+      },
+      "cityLabel": "Property city",
       "experienceProjects": "{{count}} projects in catalog",
       "performersHint": "You can pick one or several performers — your request goes to them directly",
       "performersEmpty": "No performers in this category yet. Continue — your request will go to all available specialists.",
@@ -109,13 +118,15 @@
       "callOutNotSpecified": "not specified",
       "submit": "Get offers from masters",
       "submitting": "Sending request…",
-      "successTitle": "Request sent!",
-      "successText": "Available teams will receive your request and contact you with accurate estimates.",
-      "reset": "Calculate again"
+      "successTitle": "Your job is published!",
+      "successText": "Your request is now on the Jobs board. Available teams and masters can contact you directly.",
+      "successViewJobs": "View my job",
+      "errorText": "Could not publish your job. Check your connection and try again.",
+      "reset": "Post another job"
     },
     "features": {
       "eyebrow": "Benefits",
-      "title": "SmartBuild",
+      "title": "SmartBuild.Tech",
       "subtitle": "A neutral marketplace — customers and performers connect without a middleman",
       "cards": {
         "0": {
@@ -135,8 +146,8 @@
           "desc": "The catalog features real projects with before and after photos"
         },
         "4": {
-          "title": "Turnkey renovation",
-          "desc": "From design to final cleaning — the full cycle"
+          "title": "Jobs board",
+          "desc": "Post a request via the calculator — it appears instantly for performers"
         },
         "5": {
           "title": "Custom furniture",
@@ -368,6 +379,44 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…"
+    }
+  },
+  "jobs": {
+    "eyebrow": "SmartBuild.Tech",
+    "title": "Active jobs",
+    "lead": "Fresh renovation and finishing requests. Pick a suitable project and contact the customer directly.",
+    "loading": "Loading jobs…",
+    "errorTitle": "Could not load jobs",
+    "errorDefault": "Check your internet connection and try again.",
+    "retry": "Try again",
+    "emptyTitle": "No active jobs yet",
+    "emptyText": "Be the first — post a request via the calculator on the home page.",
+    "emptyAction": "Post a job",
+    "publishBadge": "For customers",
+    "publishTitle": "Need renovation? Post your job for free",
+    "publishText": "Answer 5 questions in the calculator — your request appears here for teams and masters.",
+    "publishAction": "Post a job",
+    "noDescription": "No description provided",
+    "noTitle": "Untitled",
+    "activeBadge": "Active job",
+    "statusNew": "New",
+    "statusActive": "Active",
+    "budgetUnknown": "Budget not specified",
+    "areaValue": "{{value}} sq.m",
+    "directedTo": "Sent to performers",
+    "viewPhoto": "View photo",
+    "callCustomer": "Call",
+    "messageCustomer": "Message on Telegram",
+    "posted": "Posted",
+    "contactInDescription": "Contact details are in the description",
+    "fields": {
+      "customer": "Customer",
+      "contact": "Contact",
+      "area": "Area",
+      "photo": "Photo",
+      "directedTo": "Directed to",
+      "callOut": "Site visit",
+      "paidCallOutYes": "Paid site visit agreed: yes"
     }
   },
   "moderation": {

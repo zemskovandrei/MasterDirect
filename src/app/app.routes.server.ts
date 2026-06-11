@@ -15,4 +15,5 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'furniture/**', renderMode: RenderMode.Server },
   { path: 'portfolio', renderMode: RenderMode.Prerender },
   { path: 'portfolio/**', renderMode: RenderMode.Server },
+  { path: 'jobs', renderMode: RenderMode.Client },
 ];

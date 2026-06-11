@@ -29,11 +29,11 @@
         <h2>{{ translation.t('home.hero.title') }}</h2>
         <p>{{ translation.t('home.hero.subtitle') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/brigades">{{
-            translation.t('home.hero.primary')
+          <a class="btn-primary btn-large" routerLink="/" fragment="calculator">{{
+            translation.t('home.hero.estimate')
           }}</a>
-          <a class="btn-secondary btn-large" routerLink="/masters">{{
-            translation.t('home.hero.secondary')
+          <a class="btn-secondary btn-large" routerLink="/jobs">{{
+            translation.t('home.hero.jobs')
           }}</a>
         </div>
         <div class="hero-tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
@@ -262,6 +262,15 @@
                   (ngSubmit)="submitCalculatorLead()"
                 >
                   <label class="quiz-field">
+                    <span>{{ translation.t('home.calculator.cityLabel') }}</span>
+                    <select formControlName="city">
+                      @for (option of calculatorCityOptions; track option.id) {
+                        <option [value]="option.id">{{ translation.t(option.labelKey) }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <label class="quiz-field">
                     <span>{{ translation.t('home.calculator.nameLabel') }}</span>
                     <input
                       type="text"
@@ -307,6 +316,12 @@
                     </label>
                   }
 
+                  @if (calculatorSubmitError()) {
+                    <p class="quiz-field-error" role="alert">
+                      {{ calculatorSubmitError() }}
+                    </p>
+                  }
+
                   <button
                     type="submit"
                     class="quiz-submit-btn"
@@ -328,9 +343,14 @@
           <div class="quiz-success__icon" aria-hidden="true">✓</div>
           <h3>{{ translation.t('home.calculator.successTitle') }}</h3>
           <p>{{ translation.t('home.calculator.successText') }}</p>
-          <button type="button" class="quiz-submit-btn quiz-submit-btn--ghost" (click)="resetCalculator()">
-            {{ translation.t('home.calculator.reset') }}
-          </button>
+          <div class="quiz-success__actions">
+            <a routerLink="/jobs" class="quiz-submit-btn">{{
+              translation.t('home.calculator.successViewJobs')
+            }}</a>
+            <button type="button" class="quiz-submit-btn quiz-submit-btn--ghost" (click)="resetCalculator()">
+              {{ translation.t('home.calculator.reset') }}
+            </button>
+          </div>
         </div>
       }
     </div>
@@ -365,11 +385,11 @@
           <h3>{{ translation.t('home.features.cards.3.title') }}</h3>
           <p>{{ translation.t('home.features.cards.3.desc') }}</p>
         </div>
-        <div class="feature-card">
+        <a routerLink="/jobs" class="feature-card feature-card-link">
           <div class="feature-icon">✓</div>
           <h3>{{ translation.t('home.features.cards.4.title') }}</h3>
           <p>{{ translation.t('home.features.cards.4.desc') }}</p>
-        </div>
+        </a>
       </div>
     </div>
   </div>

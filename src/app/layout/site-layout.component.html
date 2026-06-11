@@ -24,10 +24,22 @@
               <stop offset="100%" stop-color="#00E5A8" />
             </linearGradient>
             <filter id="logo-shadow" x="-8%" y="-20%" width="116%" height="140%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#020408" flood-opacity="0.45" />
+              <feDropShadow
+                dx="0"
+                dy="1.5"
+                stdDeviation="1.2"
+                flood-color="#020408"
+                flood-opacity="0.45"
+              />
             </filter>
             <filter id="logo-tech-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#00E5A8" flood-opacity="0.4" />
+              <feDropShadow
+                dx="0"
+                dy="0"
+                stdDeviation="2.5"
+                flood-color="#00E5A8"
+                flood-opacity="0.4"
+              />
             </filter>
           </defs>
           <g filter="url(#logo-shadow)">
@@ -79,6 +91,28 @@
           <li>
             <a routerLink="/furniture" routerLinkActive="active" (click)="onNavClick()">
               {{ translation.t('app.nav.furniture') }}
+            </a>
+          </li>
+          <li>
+            <a
+              routerLink="/"
+              fragment="calculator"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              (click)="onNavClick()"
+            >
+              {{ translation.t('app.nav.estimate') }}
+            </a>
+          </li>
+          <li>
+            <a
+              routerLink="/jobs"
+              routerLinkActive="active"
+              (click)="onNavClick()"
+              (mouseenter)="prefetchJobs()"
+              (focus)="prefetchJobs()"
+            >
+              {{ translation.t('app.nav.jobs') }}
             </a>
           </li>
           <li>
@@ -142,6 +176,11 @@
           </li>
           <li>
             <a routerLink="/furniture">{{ translation.t('app.nav.furniture') }}</a>
+          </li>
+          <li>
+            <a routerLink="/jobs" (mouseenter)="prefetchJobs()" (focus)="prefetchJobs()">{{
+              translation.t('app.nav.jobs')
+            }}</a>
           </li>
           <li>
             <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>

@@ -46,7 +46,13 @@ export const BRIGADE_SPECIALTY_KEY = 'renovation_turnkey';
 @Component({
   selector: 'app-cabinet',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    BeforeAfterComponent,
+    SocialLinksComponent,
+  ],
   templateUrl: './cabinet.component.html',
   styleUrls: ['./cabinet.component.css'],
 })
@@ -410,9 +416,7 @@ export class CabinetComponent {
 
   hasMaxWordsError(form: 'register' | 'work'): boolean {
     const control =
-      form === 'register'
-        ? this.registerForm.get('description')
-        : this.workForm.get('description');
+      form === 'register' ? this.registerForm.get('description') : this.workForm.get('description');
     return !!control?.errors?.['maxWords'];
   }
 
@@ -425,9 +429,7 @@ export class CabinetComponent {
 
   maxWordsError(form: 'register' | 'work'): string {
     const control =
-      form === 'register'
-        ? this.registerForm.get('description')
-        : this.workForm.get('description');
+      form === 'register' ? this.registerForm.get('description') : this.workForm.get('description');
     const error = control?.errors?.['maxWords'] as { max: number; actual: number } | undefined;
     if (!error) {
       return '';

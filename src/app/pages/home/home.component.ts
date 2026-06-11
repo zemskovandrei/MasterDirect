@@ -15,6 +15,7 @@ import {
   CalculatorRoomType,
 } from '../../core/models/calculator.models';
 import { PerformerProfile } from '../../core/models/portfolio.models';
+import { buildJobklientJobInsert, JobDescriptionLabels } from '../../models/job.model';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
@@ -49,6 +50,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly calculatorStep = signal(1);
   protected readonly calculatorSubmitted = signal(false);
   protected readonly calculatorSubmitting = signal(false);
+  protected readonly calculatorSubmitError = signal<string | null>(null);
   protected readonly calculatorRoomType = signal<CalculatorRoomType | null>(null);
   protected readonly calculatorRenovationType = signal<CalculatorRenovationType | null>(null);
   protected readonly calculatorArea = signal('');
@@ -92,7 +94,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     const defaultCity = this.translation.t('home.calculator.defaultCity');
 
     if (pool === 'brigade') {
-      return this.supabase.brigades().map((performer) => this.mapPerformerCard(performer, 'brigade'));
+      return this.supabase
+        .brigades()
+        .map((performer) => this.mapPerformerCard(performer, 'brigade'));
     }
 
     if (pool === 'worker') {
@@ -132,7 +136,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       .some((card) => card.callOutPaid);
   });
 
+  protected readonly calculatorCityOptions = [
+    { id: 'batumi', labelKey: 'home.calculator.cities.batumi' },
+    { id: 'tbilisi', labelKey: 'home.calculator.cities.tbilisi' },
+    { id: 'both', labelKey: 'home.calculator.cities.both' },
+  ] as const;
+
   protected readonly calculatorContactForm = this.fb.nonNullable.group({
+    city: ['batumi', [Validators.required]],
     name: ['', [Validators.required, Validators.minLength(2)]],
     contact: ['', [Validators.required, Validators.minLength(5)]],
     photoLink: [''],
@@ -146,14 +157,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.supabase.furnitureCompanies().length > 0,
   );
 
-  private readonly serviceImageFiles = [
-    '1.jpeg',
-    '2.jpeg',
-    '3.jpeg',
-    '4.jpeg',
-    '5.jpeg',
-    '6.jpeg',
-  ];
+  private readonly serviceImageFiles = ['1.jpeg', '2.jpeg', '3.jpeg', '4.jpeg', '5.jpeg', '6.jpeg'];
 
   private readonly serviceContent: Omit<ServiceItem, 'image'>[] = [
     {
@@ -350,10 +354,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { name, contact, photoLink, paidCallOutAccepted } = this.calculatorContactForm.getRawValue();
+    const { city, name, contact, photoLink, paidCallOutAccepted } =
+      this.calculatorContactForm.getRawValue();
     const areaSqm = Number(this.calculatorArea().replace(',', '.'));
     const selectedIds = new Set(this.calculatorSelectedPerformerIds());
-    const selectedCards = this.calculatorPerformerCards().filter((card) => selectedIds.has(card.id));
+    const selectedCards = this.calculatorPerformerCards().filter((card) =>
+      selectedIds.has(card.id),
+    );
     const selectedPerformers = selectedCards.map((card) => ({
       id: card.id,
       pool: card.pool,
@@ -367,6 +374,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       .join('; ');
 
     this.calculatorSubmitting.set(true);
+    this.calculatorSubmitError.set(null);
 
     this.calculatorLeadStore.addLead({
       roomType,
@@ -379,29 +387,85 @@ export class HomeComponent implements OnInit, OnDestroy {
       selectedPerformers,
     });
 
-    await firstValueFrom(
-      this.calculatorTelegram.sendLead({
-        directedTo,
-        name,
+    const jobklientPayload = buildJobklientJobInsert(
+      {
+        customerName: name,
         contact,
-        roomType,
-        renovationType,
+        city: this.calculatorCityLabel(city),
         roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
         renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
         areaSqm,
         photoLink,
-        paidCallOutAccepted,
+        directedTo,
         selectedCallOutFees,
-      }),
+        paidCallOutAccepted,
+      },
+      this.jobDescriptionLabels(),
     );
 
+    try {
+      const insertResult = await firstValueFrom(
+        this.supabase.insertJobklientJob(jobklientPayload),
+      );
+      if (insertResult.error) {
+        console.error('[HomeComponent] jobklient insert:', insertResult.error);
+        this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
+        this.calculatorSubmitting.set(false);
+        return;
+      }
+    } catch (insertError) {
+      console.error('[HomeComponent] jobklient insert:', insertError);
+      this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
+      this.calculatorSubmitting.set(false);
+      return;
+    }
+
+    try {
+      await firstValueFrom(
+        this.calculatorTelegram.sendLead({
+          directedTo,
+          name,
+          contact,
+          roomType,
+          renovationType,
+          roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
+          renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
+          areaSqm,
+          photoLink,
+          paidCallOutAccepted,
+          selectedCallOutFees,
+        }),
+      );
+    } catch (telegramError) {
+      console.warn('[HomeComponent] telegram notify:', telegramError);
+    }
+
+    void this.supabase.loadActiveJobs(true);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitted.set(true);
+  }
+
+  private jobDescriptionLabels(): JobDescriptionLabels {
+    return {
+      customer: this.translation.t('jobs.fields.customer'),
+      contact: this.translation.t('jobs.fields.contact'),
+      area: this.translation.t('jobs.fields.area'),
+      photo: this.translation.t('jobs.fields.photo'),
+      directedTo: this.translation.t('jobs.fields.directedTo'),
+      callOut: this.translation.t('jobs.fields.callOut'),
+      paidCallOutYes: this.translation.t('jobs.fields.paidCallOutYes'),
+    };
+  }
+
+  private calculatorCityLabel(city: string): string {
+    const option = this.calculatorCityOptions.find((item) => item.id === city);
+    return option ? this.translation.t(option.labelKey) : this.translation.t('home.calculator.cities.both');
   }
 
   resetCalculator() {
     this.calculatorSubmitted.set(false);
     this.calculatorSubmitting.set(false);
+    this.calculatorSubmitError.set(null);
     this.calculatorStep.set(1);
     this.calculatorRoomType.set(null);
     this.calculatorRenovationType.set(null);

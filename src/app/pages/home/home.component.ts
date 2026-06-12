@@ -20,6 +20,16 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 import { isPaidCallOutFee } from '../../core/utils/call-out-fee.util';
+import {
+  buildChecklistPhaseGroups,
+  buildChecklistScopeSummary,
+  buildDefaultChecklistSelection,
+  countChecklistItemsInGroups,
+  filterChecklistPhaseGroups,
+  matchesChecklistSearch,
+  splitChecklistPhaseGroups,
+  getAllVisibleChecklistItemIds,
+} from '../../core/utils/renovation-checklist.util';
 import { firstValueFrom } from 'rxjs';
 
 interface ServiceItem {
@@ -56,6 +66,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly calculatorArea = signal('');
   protected readonly calculatorAreaTouched = signal(false);
   protected readonly calculatorSelectedPerformerIds = signal<string[]>([]);
+  protected readonly calculatorChecklistSelection = signal<string[]>([]);
+  protected readonly calculatorChecklistTouched = signal(false);
+  protected readonly calculatorChecklistSearchQuery = signal('');
+  protected readonly calculatorChecklistCustomDraft = signal('');
+  protected readonly calculatorChecklistCustomItems = signal<string[]>([]);
+  protected readonly calculatorChecklistCustomError = signal<string | null>(null);
 
   protected readonly calculatorRoomOptions: { id: CalculatorRoomType; labelKey: string }[] = [
     { id: 'new_build', labelKey: 'home.calculator.roomTypes.newBuild' },
@@ -148,6 +164,77 @@ export class HomeComponent implements OnInit, OnDestroy {
     contact: ['', [Validators.required, Validators.minLength(5)]],
     photoLink: [''],
     paidCallOutAccepted: [false],
+  });
+
+  protected readonly calculatorChecklistReady = computed(() => {
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+    const areaSqm = Number(this.calculatorArea().replace(',', '.'));
+
+    return !!(
+      roomType &&
+      renovationType &&
+      Number.isFinite(areaSqm) &&
+      areaSqm >= 5
+    );
+  });
+
+  protected readonly calculatorChecklistGroups = computed(() => {
+    this.translation.locale();
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+
+    if (!roomType || !renovationType) {
+      return [];
+    }
+
+    return buildChecklistPhaseGroups(
+      renovationType,
+      roomType,
+      new Set(this.calculatorChecklistSelection()),
+    );
+  });
+
+  protected readonly calculatorChecklistFilteredGroups = computed(() => {
+    this.translation.locale();
+    return filterChecklistPhaseGroups(
+      this.calculatorChecklistGroups(),
+      this.calculatorChecklistSearchQuery(),
+      (key) => this.translation.t(key),
+    );
+  });
+
+  protected readonly calculatorChecklistMainFilteredGroups = computed(() =>
+    splitChecklistPhaseGroups(this.calculatorChecklistFilteredGroups()).main,
+  );
+
+  protected readonly calculatorChecklistExtraGroup = computed(
+    () => splitChecklistPhaseGroups(this.calculatorChecklistFilteredGroups()).extra,
+  );
+
+  protected readonly calculatorChecklistSearchResultsCount = computed(() =>
+    countChecklistItemsInGroups(this.calculatorChecklistFilteredGroups()) +
+    this.calculatorChecklistFilteredCustomItems().length,
+  );
+
+  protected readonly calculatorChecklistFilteredCustomItems = computed(() => {
+    const query = this.calculatorChecklistSearchQuery().trim();
+    const items = this.calculatorChecklistCustomItems();
+    if (!query) {
+      return items;
+    }
+    return items.filter((item) => matchesChecklistSearch(item, query));
+  });
+
+  protected readonly calculatorChecklistSearchHasResults = computed(() => {
+    if (!this.calculatorChecklistSearchQuery().trim()) {
+      return true;
+    }
+    return (
+      countChecklistItemsInGroups(this.calculatorChecklistMainFilteredGroups()) > 0 ||
+      (this.calculatorChecklistExtraGroup()?.items.length ?? 0) > 0 ||
+      this.calculatorChecklistFilteredCustomItems().length > 0
+    );
   });
 
   protected readonly hasGalleryPerformers = computed(
@@ -247,12 +334,14 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   selectCalculatorRoom(type: CalculatorRoomType) {
     this.calculatorRoomType.set(type);
+    this.resetChecklistSelection();
     this.goToCalculatorStep(2);
   }
 
   selectCalculatorRenovation(type: CalculatorRenovationType) {
     this.calculatorRenovationType.set(type);
     this.calculatorSelectedPerformerIds.set([]);
+    this.resetChecklistSelection();
     this.goToCalculatorStep(3);
   }
 
@@ -261,11 +350,116 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!this.isCalculatorAreaValid()) {
       return;
     }
+    this.ensureChecklistSelection();
     this.goToCalculatorStep(4);
   }
 
-  continueCalculatorPerformers() {
+  continueCalculatorChecklist() {
+    this.calculatorChecklistTouched.set(true);
+    if (!this.calculatorChecklistReady() || this.totalSelectedWorkCount() === 0) {
+      return;
+    }
     this.goToCalculatorStep(5);
+  }
+
+  continueCalculatorPerformers() {
+    this.goToCalculatorStep(6);
+  }
+
+  toggleChecklistItem(id: string) {
+    this.calculatorChecklistSelection.update((ids) =>
+      ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id],
+    );
+  }
+
+  isChecklistItemSelected(id: string): boolean {
+    return this.calculatorChecklistSelection().includes(id);
+  }
+
+  selectedChecklistCount(): number {
+    return this.calculatorChecklistSelection().length;
+  }
+
+  totalSelectedWorkCount(): number {
+    return this.selectedChecklistCount() + this.calculatorChecklistCustomItems().length;
+  }
+
+  addCustomChecklistItem() {
+    const text = this.calculatorChecklistCustomDraft().trim();
+    if (text.length < 3) {
+      this.calculatorChecklistCustomError.set(
+        this.translation.t('home.calculator.checklistCustomTooShort'),
+      );
+      return;
+    }
+
+    const duplicate = this.calculatorChecklistCustomItems().some(
+      (item) => item.toLowerCase() === text.toLowerCase(),
+    );
+    if (duplicate) {
+      this.calculatorChecklistCustomError.set(
+        this.translation.t('home.calculator.checklistCustomDuplicate'),
+      );
+      return;
+    }
+
+    this.calculatorChecklistCustomItems.update((items) => [...items, text]);
+    this.calculatorChecklistCustomDraft.set('');
+    this.calculatorChecklistCustomError.set(null);
+  }
+
+  removeCustomChecklistItem(text: string) {
+    this.calculatorChecklistCustomItems.update((items) => items.filter((item) => item !== text));
+  }
+
+  onCustomChecklistDraftInput(value: string) {
+    this.calculatorChecklistCustomDraft.set(value);
+    if (this.calculatorChecklistCustomError()) {
+      this.calculatorChecklistCustomError.set(null);
+    }
+  }
+
+  selectAllChecklistItems() {
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+    if (!roomType || !renovationType) {
+      return;
+    }
+    this.calculatorChecklistSelection.set(
+      getAllVisibleChecklistItemIds(renovationType, roomType),
+    );
+  }
+
+  selectRecommendedChecklistItems() {
+    this.ensureChecklistSelection();
+  }
+
+  clearChecklistSelection() {
+    this.calculatorChecklistSelection.set([]);
+  }
+
+  clearChecklistSearch() {
+    this.calculatorChecklistSearchQuery.set('');
+  }
+
+  private ensureChecklistSelection() {
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+    if (!roomType || !renovationType) {
+      return;
+    }
+    this.calculatorChecklistSelection.set([
+      ...buildDefaultChecklistSelection(renovationType, roomType),
+    ]);
+  }
+
+  private resetChecklistSelection() {
+    this.calculatorChecklistSelection.set([]);
+    this.calculatorChecklistTouched.set(false);
+    this.calculatorChecklistSearchQuery.set('');
+    this.calculatorChecklistCustomDraft.set('');
+    this.calculatorChecklistCustomItems.set([]);
+    this.calculatorChecklistCustomError.set(null);
   }
 
   toggleCalculatorPerformer(id: string) {
@@ -372,6 +566,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       .filter((card) => card.callOutFee)
       .map((card) => `${card.name}: ${card.callOutFee}`)
       .join('; ');
+    const estimateSummary = buildChecklistScopeSummary(
+      renovationType,
+      roomType,
+      new Set(this.calculatorChecklistSelection()),
+      (key) => this.translation.t(key),
+      this.calculatorChecklistCustomItems(),
+    );
 
     this.calculatorSubmitting.set(true);
     this.calculatorSubmitError.set(null);
@@ -391,7 +592,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       {
         customerName: name,
         contact,
-        city: this.calculatorCityLabel(city),
+        city: city,
         roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
         renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
         areaSqm,
@@ -399,6 +600,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         directedTo,
         selectedCallOutFees,
         paidCallOutAccepted,
+        estimateSummary,
       },
       this.jobDescriptionLabels(),
     );
@@ -454,6 +656,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       directedTo: this.translation.t('jobs.fields.directedTo'),
       callOut: this.translation.t('jobs.fields.callOut'),
       paidCallOutYes: this.translation.t('jobs.fields.paidCallOutYes'),
+      estimate: this.translation.t('jobs.fields.estimate'),
+      estimateTotal: this.translation.t('jobs.fields.estimateTotal'),
     };
   }
 
@@ -472,7 +676,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.calculatorArea.set('');
     this.calculatorAreaTouched.set(false);
     this.calculatorSelectedPerformerIds.set([]);
-    this.calculatorContactForm.reset();
+    this.resetChecklistSelection();
+    this.calculatorContactForm.reset({ city: 'batumi' });
   }
 
   private mapPerformerCard(

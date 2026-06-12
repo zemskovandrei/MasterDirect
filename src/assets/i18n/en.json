@@ -1,8 +1,7 @@
 {
   "locale": {
     "ru": "Russian",
-    "en": "English",
-    "ge": "Georgian"
+    "en": "English"
   },
   "app": {
     "tagline": "Professional renovation and finishing",
@@ -65,7 +64,7 @@
     "calculator": {
       "eyebrow": "Calculator",
       "title": "Smart renovation calculator",
-      "subtitle": "Answer 5 quick questions and get offers from available teams in Batumi and Tbilisi",
+      "subtitle": "A short survey shows which works your project needs. The team prepares an exact quote only after a site visit.",
       "progressAria": "Calculator progress",
       "back": "← Back",
       "continue": "Continue",
@@ -73,6 +72,7 @@
         "roomType": "Choose property type",
         "renovationType": "What kind of renovation is planned?",
         "area": "Enter approximate area",
+        "estimate": "Select work from the checklist",
         "performers": "Choose performers to receive your estimate",
         "contacts": "Where should we send offers from masters?"
       },
@@ -103,7 +103,80 @@
       "areaLabel": "Area (sq.m)",
       "areaPlaceholder": "e.g. 65",
       "areaError": "Enter an area between 5 and 5000 sq.m",
-      "contactsLead": "We've calculated a preliminary cost! Leave your contacts to receive accurate estimates from available teams in Batumi and Tbilisi.",
+      "estimateHint": "Check what you need — it helps the team prepare for the site visit. We don't show prices here: a fair quote is only possible after inspection.",
+      "checklistHint": "Mark the main renovation stages first. Additional services (mounting, small installs) are in a separate block at the top — optional.",
+      "checklistScopeCount": "{{count}} items selected",
+      "checklistNote": "This is not a final price but a detailed work plan. The total depends on site condition, materials, and on-site decisions.",
+      "checklistEmptyError": "Select at least one item, add your own work below, or tap Recommended.",
+      "checklistActions": {
+        "selectRecommended": "Recommended",
+        "selectAll": "Select all",
+        "clear": "Clear all"
+      },
+      "checklistSearchLabel": "Search work items",
+      "checklistSearchPlaceholder": "Search main work: tile, wiring, screed…",
+      "checklistExtraTitle": "Additional services",
+      "checklistExtraHint": "Optional — mounting, small installs, household details. Select only what you need.",
+      "checklistExtraEmpty": "No additional services match your search.",
+      "checklistMainTitle": "Main renovation stages",
+      "checklistSearchClear": "Clear",
+      "checklistSearchResults": "{{count}} items found",
+      "checklistSearchEmpty": "Nothing found. Try another word — e.g. \"tile\" or \"sockets\".",
+      "checklistCustomTitle": "Custom task",
+      "checklistCustomHint": "If you don't see the service you need, describe it here.",
+      "checklistCustomPlaceholder": "e.g. install a balcony curtain rod",
+      "checklistCustomAdd": "Add",
+      "checklistCustomRemove": "Remove item",
+      "checklistCustomTooShort": "Please describe the work in more detail — at least 3 characters.",
+      "checklistCustomDuplicate": "This item is already on your list.",
+      "checklistCustomSectionTitle": "Additional work requested by client",
+      "estimateAfterMeasure": "Quote after site visit",
+      "estimateLead": "You see a work list — no numbers, no pressure. The team visits the site, clarifies details, then sends an exact quote.",
+      "estimateFlowAria": "How the quote is prepared",
+      "estimateFlow": {
+        "request": "Request",
+        "measure": "Site visit",
+        "quote": "Exact quote"
+      },
+      "estimateScopeCount": "{{count}} work items included in your project",
+      "continueToPerformers": "Choose a team for site visit",
+      "contactsEstimateNote": "Your work list is saved. After the site visit, the team sends an exact quote — no surprises or hidden extras.",
+      "estimateNote": "This is not a final price, but a work plan. The total depends on the property condition, materials, and on-site decisions.",
+      "estimate": {
+        "categories": {
+          "preparation": "Site preparation",
+          "rough": "Rough work",
+          "engineering": "Engineering systems",
+          "finishing": "Finishing",
+          "installations": "Installation",
+          "materials": "Materials & logistics",
+          "services": "Service & supervision"
+        },
+        "items": {
+          "measurement": "Site visit & planning",
+          "demolition": "Demolition of old finishes",
+          "wasteRemoval": "Construction waste removal",
+          "wallPlaster": "Wall plaster & leveling",
+          "floorScreed": "Floor screed",
+          "electrical": "Electrical: wiring, panel, outlets",
+          "plumbingRough": "Plumbing: piping, risers",
+          "waterproofing": "Wet area waterproofing",
+          "ventilation": "Ventilation / AC preparation",
+          "tileWork": "Tile installation",
+          "flooring": "Flooring (laminate / parquet)",
+          "painting": "Wall & ceiling painting",
+          "ceiling": "Ceiling (paint / stretch)",
+          "doorsTrim": "Doors, skirting, architraves",
+          "plumbingFixtures": "Plumbing fixtures install",
+          "kitchenHookup": "Kitchen hook-up",
+          "customFurniture": "Custom furniture",
+          "materialsDelivery": "Materials & delivery",
+          "designProject": "Design project",
+          "authorSupervision": "Author supervision",
+          "cleaning": "Post-renovation cleaning"
+        }
+      },
+      "contactsLead": "Leave your contacts — the team will reach out, visit the site, and send an exact quote for your property.",
       "nameLabel": "Your name",
       "namePlaceholder": "How should we address you",
       "nameError": "Enter your name (at least 2 characters)",
@@ -359,11 +432,14 @@
     "login": {
       "eyebrow": "Admin",
       "title": "Administrator sign-in",
-      "lead": "Enter the password to edit and remove performer profiles.",
+      "lead": "Sign in with your Supabase admin email to manage the catalog and jobs.",
+      "email": "Email",
+      "emailPlaceholder": "admin@smartbuild.tech",
       "password": "Password",
       "passwordPlaceholder": "Enter password",
-      "error": "Incorrect password.",
-      "submit": "Sign in"
+      "error": "Incorrect email or password, or this account is not an administrator.",
+      "submit": "Sign in",
+      "submitting": "Signing in…"
     },
     "masters": {
       "edit": "Edit",
@@ -379,6 +455,14 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…"
+    },
+    "jobs": {
+      "toolbarLead": "You can close completed jobs or remove them from the public list.",
+      "complete": "Completed",
+      "delete": "Delete",
+      "completeConfirm": "Mark job \"{{title}}\" as completed? It will disappear from the public list.",
+      "deleteConfirm": "Delete job \"{{title}}\" permanently? This cannot be undone.",
+      "actionError": "Could not update the job. Check your connection and try again."
     }
   },
   "jobs": {
@@ -409,6 +493,16 @@
     "messageCustomer": "Message on Telegram",
     "posted": "Posted",
     "contactInDescription": "Contact details are in the description",
+    "accessDeniedTitle": "Access denied",
+    "accessDeniedText": "Jobs are available only to registered masters and teams. Sign in with the email and password from your cabinet.",
+    "loginTitle": "Master sign-in",
+    "loginLead": "Use the email and password you chose during cabinet registration.",
+    "loginEmail": "Email",
+    "loginPassword": "Password",
+    "loginSubmit": "Sign in",
+    "loginSubmitting": "Signing in…",
+    "loginError": "Incorrect email or password.",
+    "loginHint": "No account yet? Register in",
     "fields": {
       "customer": "Customer",
       "contact": "Contact",
@@ -416,7 +510,9 @@
       "photo": "Photo",
       "directedTo": "Directed to",
       "callOut": "Site visit",
-      "paidCallOutYes": "Paid site visit agreed: yes"
+      "paidCallOutYes": "Paid site visit agreed: yes",
+      "estimate": "Work scope",
+      "estimateTotal": "Preliminary total"
     }
   },
   "moderation": {
@@ -427,12 +523,14 @@
     "login": {
       "eyebrow": "Access",
       "title": "Administrator sign-in",
-      "lead": "The moderation section is available to the site administrator only.",
+      "lead": "The moderation section is available to the site administrator only. Sign in via Supabase Auth.",
+      "email": "Email",
+      "emailPlaceholder": "admin@smartbuild.tech",
       "password": "Password",
       "passwordPlaceholder": "Enter password",
-      "error": "Incorrect password. Try again.",
+      "error": "Incorrect email or password, or this account is not an administrator.",
       "submit": "Sign in",
-      "demoNote": "Password: admin123"
+      "submitting": "Signing in…"
     },
     "notifications": {
       "title": "Notifications",

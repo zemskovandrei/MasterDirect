@@ -6,6 +6,56 @@
       <p class="jobs-page__lead">{{ translation.t('jobs.lead') }}</p>
     </header>
 
+    @if (accessDenied() && !adminAuth.isAdmin()) {
+      <div class="jobs-state jobs-state--error" role="alert">
+        <span class="jobs-state__icon" aria-hidden="true">🔒</span>
+        <h2 class="jobs-state__title">{{ translation.t('jobs.accessDeniedTitle') }}</h2>
+        <p class="jobs-state__text">{{ translation.t('jobs.accessDeniedText') }}</p>
+      </div>
+
+      <section class="jobs-login-panel">
+        <h2 class="jobs-login-panel__title">{{ translation.t('jobs.loginTitle') }}</h2>
+        <p class="jobs-login-panel__lead">{{ translation.t('jobs.loginLead') }}</p>
+        <form class="jobs-login-panel__form" [formGroup]="loginForm" (ngSubmit)="submitMasterLogin()">
+          <label class="jobs-login-panel__field">
+            <span>{{ translation.t('jobs.loginEmail') }}</span>
+            <input type="email" formControlName="email" autocomplete="email" />
+          </label>
+          <label class="jobs-login-panel__field">
+            <span>{{ translation.t('jobs.loginPassword') }}</span>
+            <input type="password" formControlName="password" autocomplete="current-password" />
+          </label>
+          @if (loginError()) {
+            <p class="jobs-login-panel__error" role="alert">{{ translation.t('jobs.loginError') }}</p>
+          }
+          <button type="submit" class="jobs-state__btn jobs-state__btn--primary" [disabled]="loginSubmitting()">
+            {{
+              loginSubmitting()
+                ? translation.t('jobs.loginSubmitting')
+                : translation.t('jobs.loginSubmit')
+            }}
+          </button>
+        </form>
+        <p class="jobs-login-panel__hint">
+          {{ translation.t('jobs.loginHint') }}
+          <a routerLink="/cabinet">{{ translation.t('app.nav.cabinet') }}</a>
+        </p>
+      </section>
+    } @else {
+    @if (adminAuth.isAdmin()) {
+      <div class="jobs-admin-toolbar">
+        <span class="jobs-admin-badge">{{ translation.t('admin.badge') }}</span>
+        <p class="jobs-admin-lead">{{ translation.t('admin.jobs.toolbarLead') }}</p>
+        <button type="button" class="jobs-admin-logout" (click)="adminLogout()">
+          {{ translation.t('admin.logout') }}
+        </button>
+      </div>
+
+      @if (adminActionError()) {
+        <p class="jobs-admin-error" role="alert">{{ adminActionError() }}</p>
+      }
+    }
+
     <aside class="jobs-publish-cta">
       <div class="jobs-publish-cta__content">
         <span class="jobs-publish-cta__badge">{{ translation.t('jobs.publishBadge') }}</span>
@@ -99,6 +149,27 @@
           </a>
         </div>
 
+        @if (adminAuth.isAdmin()) {
+          <div class="job-card__admin">
+            <button
+              type="button"
+              class="job-card__admin-btn job-card__admin-btn--complete"
+              [disabled]="isJobAdminBusy(job.id)"
+              (click)="completeJob(job)"
+            >
+              {{ translation.t('admin.jobs.complete') }}
+            </button>
+            <button
+              type="button"
+              class="job-card__admin-btn job-card__admin-btn--delete"
+              [disabled]="isJobAdminBusy(job.id)"
+              (click)="deleteJob(job)"
+            >
+              {{ translation.t('admin.jobs.delete') }}
+            </button>
+          </div>
+        }
+
         <footer class="job-card__footer">
           <time
             *ngIf="job.createdAt"
@@ -113,5 +184,6 @@
         </footer>
       </article>
     </div>
+    }
   </div>
 </section>

@@ -266,7 +266,12 @@
   opacity: 0.95;
 }
 
-.footer-admin-login {
+.footer-secret-trigger {
+  cursor: default;
+  user-select: none;
+}
+
+.footer-admin-logout {
   border: none;
   background: none;
   color: rgba(255, 255, 255, 0.55);
@@ -278,7 +283,7 @@
   padding: 0;
 }
 
-.footer-admin-login:hover {
+.footer-admin-logout:hover {
   color: #4deeea;
 }
 

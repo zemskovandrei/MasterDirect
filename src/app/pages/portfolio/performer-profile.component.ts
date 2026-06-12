@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
@@ -22,6 +23,7 @@ import { CatalogLocalizationService } from '../../core/services/catalog-localiza
 export class PerformerProfileComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(PortfolioStoreService);
+  private readonly supabase = inject(SupabaseService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -42,7 +44,14 @@ export class PerformerProfileComponent {
     if (!type || !id) {
       return undefined;
     }
-    return this.store.getPerformer(type, id);
+
+    const local = this.store.getPerformer(type, id);
+    if (local) {
+      return local;
+    }
+
+    const catalog = type === 'brigade' ? this.supabase.brigades() : this.supabase.workers();
+    return catalog.find((item) => item.id === id);
   });
 
   protected readonly relevantReviews = computed(() => {
@@ -50,9 +59,9 @@ export class PerformerProfileComponent {
     if (!performer) {
       return [];
     }
-    const typeKey = this.type() === 'brigade' ? 'brigade' : 'master';
+
     return this.reviewStore.approvedReviews().filter(
-      (review) => this.reviewStore.resolvePerformerTypeKey(review) === typeKey,
+      (review) => review.performerId === performer.id,
     );
   });
 

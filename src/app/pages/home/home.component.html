@@ -29,11 +29,11 @@
         <h2>{{ translation.t('home.hero.title') }}</h2>
         <p>{{ translation.t('home.hero.subtitle') }}</p>
         <div class="hero-actions">
-          <a class="btn-primary btn-large" routerLink="/" fragment="calculator">{{
-            translation.t('home.hero.estimate')
+          <a class="btn-primary btn-large" routerLink="/brigades">{{
+            translation.t('home.hero.primary')
           }}</a>
-          <a class="btn-secondary btn-large" routerLink="/jobs">{{
-            translation.t('home.hero.jobs')
+          <a class="btn-secondary btn-large" routerLink="/masters">{{
+            translation.t('home.hero.secondary')
           }}</a>
         </div>
         <div class="hero-tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
@@ -97,7 +97,7 @@
     <div class="quiz-card">
       @if (!calculatorSubmitted()) {
         <div class="quiz-progress" [attr.aria-label]="translation.t('home.calculator.progressAria')">
-          @for (step of [1, 2, 3, 4, 5]; track step) {
+          @for (step of [1, 2, 3, 4, 5, 6]; track step) {
             <span
               class="quiz-progress__dot"
               [class.quiz-progress__dot--active]="calculatorStep() >= step"
@@ -175,7 +175,230 @@
               </div>
             }
             @case (4) {
-              <div class="quiz-step" [attr.data-step]="4">
+              <div class="quiz-step quiz-step--checklist" [attr.data-step]="4">
+                <button type="button" class="quiz-back" (click)="calculatorBack()">
+                  {{ translation.t('home.calculator.back') }}
+                </button>
+                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.estimate') }}</h3>
+                <p class="quiz-step__hint">{{ translation.t('home.calculator.checklistHint') }}</p>
+
+                @if (calculatorChecklistReady()) {
+                  <div class="quiz-scope-hero">
+                    <span class="quiz-scope-hero__badge">{{
+                      translation.t('home.calculator.estimateAfterMeasure')
+                    }}</span>
+                    <p class="quiz-scope-hero__text">{{ translation.t('home.calculator.estimateLead') }}</p>
+                    <div
+                      class="quiz-scope-steps"
+                      [attr.aria-label]="translation.t('home.calculator.estimateFlowAria')"
+                    >
+                      <span class="quiz-scope-steps__item quiz-scope-steps__item--done">{{
+                        translation.t('home.calculator.estimateFlow.request')
+                      }}</span>
+                      <span class="quiz-scope-steps__arrow" aria-hidden="true">→</span>
+                      <span class="quiz-scope-steps__item quiz-scope-steps__item--next">{{
+                        translation.t('home.calculator.estimateFlow.measure')
+                      }}</span>
+                      <span class="quiz-scope-steps__arrow" aria-hidden="true">→</span>
+                      <span class="quiz-scope-steps__item">{{
+                        translation.t('home.calculator.estimateFlow.quote')
+                      }}</span>
+                    </div>
+                  </div>
+
+                  <section class="quiz-checklist-extra">
+                    <h4 class="quiz-checklist-extra__title">
+                      {{ translation.t('home.calculator.checklistExtraTitle') }}
+                    </h4>
+                    <p class="quiz-checklist-extra__hint">
+                      {{ translation.t('home.calculator.checklistExtraHint') }}
+                    </p>
+
+                    @if (calculatorChecklistExtraGroup(); as extraGroup) {
+                      @if (extraGroup.items.length > 0) {
+                        <ul class="quiz-checklist-extra__grid">
+                          @for (item of extraGroup.items; track item.id) {
+                            <li
+                              class="quiz-checklist-extra__item"
+                              [class.quiz-checklist-extra__item--off]="!item.selected"
+                            >
+                              <label class="quiz-scope-line__toggle">
+                                <input
+                                  type="checkbox"
+                                  [checked]="item.selected"
+                                  (change)="toggleChecklistItem(item.id)"
+                                />
+                                <span>{{ translation.t(item.labelKey) }}</span>
+                              </label>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    } @else if (calculatorChecklistSearchQuery().trim()) {
+                      <p class="quiz-checklist-search-empty" role="status">
+                        {{ translation.t('home.calculator.checklistExtraEmpty') }}
+                      </p>
+                    }
+
+                    <div class="quiz-checklist-extra__custom">
+                      <p class="quiz-checklist-extra__custom-label">
+                        {{ translation.t('home.calculator.checklistCustomTitle') }}
+                      </p>
+                      <p class="quiz-checklist-extra__custom-hint">
+                        {{ translation.t('home.calculator.checklistCustomHint') }}
+                      </p>
+                      <div class="quiz-checklist-custom__row">
+                        <input
+                          type="text"
+                          class="quiz-checklist-custom__input"
+                          [value]="calculatorChecklistCustomDraft()"
+                          (input)="onCustomChecklistDraftInput($any($event.target).value)"
+                          [placeholder]="translation.t('home.calculator.checklistCustomPlaceholder')"
+                          (keydown.enter)="$event.preventDefault(); addCustomChecklistItem()"
+                        />
+                        <button
+                          type="button"
+                          class="quiz-checklist-custom__add"
+                          (click)="addCustomChecklistItem()"
+                        >
+                          {{ translation.t('home.calculator.checklistCustomAdd') }}
+                        </button>
+                      </div>
+                      @if (calculatorChecklistCustomError()) {
+                        <p class="quiz-field-error" role="alert">{{ calculatorChecklistCustomError() }}</p>
+                      }
+                      @if (calculatorChecklistFilteredCustomItems().length > 0) {
+                        <ul class="quiz-checklist-custom__list">
+                          @for (item of calculatorChecklistFilteredCustomItems(); track item) {
+                            <li class="quiz-checklist-custom__item">
+                              <span>{{ item }}</span>
+                              <button
+                                type="button"
+                                class="quiz-checklist-custom__remove"
+                                (click)="removeCustomChecklistItem(item)"
+                                [attr.aria-label]="translation.t('home.calculator.checklistCustomRemove')"
+                              >
+                                ×
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  </section>
+
+                  <h4 class="quiz-checklist-main-title">
+                    {{ translation.t('home.calculator.checklistMainTitle') }}
+                  </h4>
+
+                  <label class="quiz-checklist-search">
+                    <span class="quiz-checklist-search__label">{{
+                      translation.t('home.calculator.checklistSearchLabel')
+                    }}</span>
+                    <div class="quiz-checklist-search__row">
+                      <input
+                        type="search"
+                        class="quiz-checklist-search__input"
+                        [value]="calculatorChecklistSearchQuery()"
+                        (input)="calculatorChecklistSearchQuery.set($any($event.target).value)"
+                        [placeholder]="translation.t('home.calculator.checklistSearchPlaceholder')"
+                        autocomplete="off"
+                      />
+                      @if (calculatorChecklistSearchQuery().trim()) {
+                        <button
+                          type="button"
+                          class="quiz-checklist-search__clear"
+                          (click)="clearChecklistSearch()"
+                        >
+                          {{ translation.t('home.calculator.checklistSearchClear') }}
+                        </button>
+                      }
+                    </div>
+                    @if (calculatorChecklistSearchQuery().trim()) {
+                      <p class="quiz-checklist-search__meta">
+                        {{
+                          translation
+                            .t('home.calculator.checklistSearchResults')
+                            .replace('{{count}}', calculatorChecklistSearchResultsCount() + '')
+                        }}
+                      </p>
+                    }
+                  </label>
+
+                  <div class="quiz-checklist-toolbar">
+                    <p class="quiz-scope-count">
+                      {{
+                        translation
+                          .t('home.calculator.checklistScopeCount')
+                          .replace('{{count}}', totalSelectedWorkCount() + '')
+                      }}
+                    </p>
+                    <div class="quiz-checklist-actions">
+                      <button type="button" class="quiz-checklist-action" (click)="selectRecommendedChecklistItems()">
+                        {{ translation.t('home.calculator.checklistActions.selectRecommended') }}
+                      </button>
+                      <button type="button" class="quiz-checklist-action" (click)="selectAllChecklistItems()">
+                        {{ translation.t('home.calculator.checklistActions.selectAll') }}
+                      </button>
+                      <button type="button" class="quiz-checklist-action" (click)="clearChecklistSelection()">
+                        {{ translation.t('home.calculator.checklistActions.clear') }}
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (
+                    calculatorChecklistSearchQuery().trim() && !calculatorChecklistSearchHasResults()
+                  ) {
+                    <p class="quiz-checklist-search-empty" role="status">
+                      {{ translation.t('home.calculator.checklistSearchEmpty') }}
+                    </p>
+                  }
+
+                  <div class="quiz-estimate-breakdown quiz-checklist-breakdown">
+                    @for (group of calculatorChecklistMainFilteredGroups(); track group.phaseId) {
+                      @if (group.items.length > 0) {
+                        <section class="quiz-estimate-group quiz-checklist-phase">
+                          <h4 class="quiz-estimate-group__title">
+                            {{ translation.t(group.titleKey) }}
+                          </h4>
+                          <ul class="quiz-scope-lines">
+                            @for (item of group.items; track item.id) {
+                              <li
+                                class="quiz-scope-line"
+                                [class.quiz-scope-line--disabled]="!item.selected"
+                              >
+                                <label class="quiz-scope-line__toggle">
+                                  <input
+                                    type="checkbox"
+                                    [checked]="item.selected"
+                                    (change)="toggleChecklistItem(item.id)"
+                                  />
+                                  <span>{{ translation.t(item.labelKey) }}</span>
+                                </label>
+                              </li>
+                            }
+                          </ul>
+                        </section>
+                      }
+                    }
+                  </div>
+
+                  <p class="quiz-estimate-note">{{ translation.t('home.calculator.checklistNote') }}</p>
+
+                  @if (calculatorChecklistTouched() && totalSelectedWorkCount() === 0) {
+                    <p class="quiz-field-error" role="alert">
+                      {{ translation.t('home.calculator.checklistEmptyError') }}
+                    </p>
+                  }
+                }
+
+                <button type="button" class="quiz-continue-btn" (click)="continueCalculatorChecklist()">
+                  {{ translation.t('home.calculator.continueToPerformers') }}
+                </button>
+              </div>
+            }
+            @case (5) {
+              <div class="quiz-step" [attr.data-step]="5">
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
@@ -236,12 +459,20 @@
                 </button>
               </div>
             }
-            @case (5) {
-              <div class="quiz-step" [attr.data-step]="5">
+            @case (6) {
+              <div class="quiz-step" [attr.data-step]="6">
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
                 <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.contacts') }}</h3>
+
+                @if (calculatorChecklistReady() && totalSelectedWorkCount() > 0) {
+                  <div class="quiz-scope-reminder">
+                    <span aria-hidden="true">📋</span>
+                    <p>{{ translation.t('home.calculator.contactsEstimateNote') }}</p>
+                  </div>
+                }
+
                 @if (calculatorHasSelectedPerformers()) {
                   <p class="quiz-step__lead quiz-step__lead--directed">
                     {{

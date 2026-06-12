@@ -31,6 +31,9 @@ export class SiteLayoutComponent {
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
 
+  private adminSecretTapCount = 0;
+  private adminSecretTapTimer?: ReturnType<typeof setTimeout>;
+
   constructor() {
     afterNextRender(() => {
       this.supabase.prefetchActiveJobs();
@@ -87,6 +90,30 @@ export class SiteLayoutComponent {
 
   prefetchJobs() {
     this.supabase.prefetchActiveJobs();
+  }
+
+  onAdminSecretTap(event: MouseEvent) {
+    event.preventDefault();
+    this.adminSecretTapCount += 1;
+
+    if (this.adminSecretTapTimer) {
+      clearTimeout(this.adminSecretTapTimer);
+    }
+
+    if (this.adminSecretTapCount >= 5) {
+      this.adminSecretTapCount = 0;
+      this.openAdminLogin();
+      return;
+    }
+
+    this.adminSecretTapTimer = setTimeout(() => {
+      this.adminSecretTapCount = 0;
+    }, 2500);
+  }
+
+  adminLogout() {
+    void this.adminAuth.logout();
+    this.closeAdminLogin();
   }
 
   openAdminLogin() {

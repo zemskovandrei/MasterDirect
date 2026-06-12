@@ -35,6 +35,8 @@ export interface CalculatorJobklientJobInput {
   directedTo?: string;
   selectedCallOutFees?: string;
   paidCallOutAccepted: boolean;
+  estimatedTotal?: number;
+  estimateSummary?: string;
 }
 
 export interface JobDescriptionLabels {
@@ -45,6 +47,8 @@ export interface JobDescriptionLabels {
   directedTo: string;
   callOut: string;
   paidCallOutYes: string;
+  estimate?: string;
+  estimateTotal?: string;
 }
 
 export function buildJobklientJobInsert(
@@ -55,6 +59,9 @@ export function buildJobklientJobInsert(
     `${labels.customer}: ${input.customerName}`,
     `${labels.contact}: ${input.contact}`,
     `${labels.area}: ${input.areaSqm} m²`,
+    input.estimateSummary && labels.estimate
+      ? `${labels.estimate}:\n${input.estimateSummary}`
+      : '',
     input.photoLink ? `${labels.photo}: ${input.photoLink}` : '',
     input.directedTo ? `${labels.directedTo}: ${input.directedTo}` : '',
     input.selectedCallOutFees ? `${labels.callOut}: ${input.selectedCallOutFees}` : '',
@@ -382,6 +389,23 @@ export function mapJobklientRowsToJobs(rows: unknown): Job[] {
   return jobs;
 }
 
+const INACTIVE_JOB_STATUSES = new Set([
+  'completed',
+  'done',
+  'archived',
+  'deleted',
+  'closed',
+  'cancelled',
+  'canceled',
+  'выполнен',
+  'выполнено',
+  'закрыт',
+  'закрыто',
+  'удален',
+  'удалён',
+  'архив',
+]);
+
 export function isActiveJobklientJob(row: JobklientJobRow | null | undefined): boolean {
   if (!row || typeof row !== 'object') {
     return false;
@@ -392,11 +416,16 @@ export function isActiveJobklientJob(row: JobklientJobRow | null | undefined): b
   }
 
   const rawStatus = safeText(row.status);
+  const status = rawStatus.toLowerCase();
+
+  if (status && INACTIVE_JOB_STATUSES.has(status)) {
+    return false;
+  }
+
   if (['New', 'new', 'Active', 'active'].includes(rawStatus)) {
     return true;
   }
 
-  const status = rawStatus.toLowerCase();
   if (!status || status === '—') {
     return true;
   }

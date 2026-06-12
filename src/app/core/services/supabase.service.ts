@@ -12,6 +12,7 @@ import {
 import { PerformerProfile } from '../models/portfolio.models';
 import {
   furnitureCompanyToProfile,
+  masterRowToProfile,
   performerToProfile,
   profileToFurnitureCompany,
   profileToPerformer,
@@ -24,6 +25,7 @@ import {
   JobklientJobInsert,
   mapJobklientRowsToJobs,
 } from '../../models/job.model';
+import type { MasterRow } from '../models/master.model';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
@@ -40,6 +42,10 @@ export interface SupabaseMutationResult<T = Profile> {
 
 export interface JobklientInsertResult {
   data: Record<string, unknown> | null;
+  error: string | null;
+}
+
+export interface JobklientMutationResult {
   error: string | null;
 }
 
@@ -60,6 +66,7 @@ export class SupabaseService {
   private readonly activeJobsSignal = signal<Job[]>([]);
   private readonly jobsLoadingSignal = signal(false);
   private readonly jobsErrorSignal = signal<string | null>(null);
+  private readonly jobsAccessDeniedSignal = signal(false);
 
   readonly profiles = this.profilesSignal.asReadonly();
   readonly loaded = this.loadedSignal.asReadonly();
@@ -67,6 +74,7 @@ export class SupabaseService {
   readonly activeJobs = this.activeJobsSignal.asReadonly();
   readonly jobsLoading = this.jobsLoadingSignal.asReadonly();
   readonly jobsError = this.jobsErrorSignal.asReadonly();
+  readonly jobsAccessDenied = this.jobsAccessDeniedSignal.asReadonly();
 
   readonly brigades = computed(() =>
     this.profilesSignal()
@@ -101,6 +109,91 @@ export class SupabaseService {
     }
 
     void this.loadActiveJobs();
+  }
+
+  async loadJobsForAuthenticatedMaster(force = false): Promise<Job[]> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return [];
+    }
+
+    if (!this.isConfigured()) {
+      throw new Error(SUPABASE_NOT_CONFIGURED);
+    }
+
+    this.jobsLoadingSignal.set(true);
+    this.jobsErrorSignal.set(null);
+    this.jobsAccessDeniedSignal.set(false);
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        throw new Error(SUPABASE_NOT_CONFIGURED);
+      }
+
+      const {
+        data: { user },
+        error: authError,
+      } = await client.auth.getUser();
+
+      if (authError || !user) {
+        this.jobsAccessDeniedSignal.set(true);
+        this.activeJobsSignal.set([]);
+        return [];
+      }
+
+      const { data: master, error: masterError } = await client
+        .from(environment.supabase.mastersTable)
+        .select('city')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (masterError) {
+        throw new Error(masterError.message);
+      }
+
+      const masterCity = master?.city?.trim();
+      if (!masterCity) {
+        this.activeJobsSignal.set([]);
+        this.jobsErrorSignal.set('Master city is not set');
+        return [];
+      }
+
+      const cached = force ? null : this.readJobsCache();
+      if (cached && cached.jobs.length > 0 && !force) {
+        const filtered = cached.jobs.filter((job) => job.city === masterCity);
+        this.activeJobsSignal.set(filtered);
+        if (Date.now() - cached.at < JOBS_CACHE_TTL_MS) {
+          return filtered;
+        }
+      }
+
+      const query = new URLSearchParams({
+        select: JOBS_LIST_COLUMNS,
+        order: 'created_at.desc',
+        limit: '100',
+        city: `eq.${masterCity}`,
+      });
+      const rows = await this.fetchJobklientRows(query);
+      const jobs = mapJobklientRowsToJobs(rows);
+      this.activeJobsSignal.set(jobs);
+      if (jobs.length > 0) {
+        this.writeJobsCache(jobs);
+      } else {
+        this.invalidateJobsCache();
+      }
+      return jobs;
+    } catch (err) {
+      console.error('[SupabaseService] loadJobsForAuthenticatedMaster:', err);
+      this.activeJobsSignal.set([]);
+      this.jobsErrorSignal.set(err instanceof Error ? err.message : 'Failed to load jobs');
+      throw err;
+    } finally {
+      this.jobsLoadingSignal.set(false);
+    }
+  }
+
+  getClient(): Promise<SupabaseClient | null> {
+    return this.resolveClient();
   }
 
   async loadActiveJobs(force = false): Promise<Job[]> {
@@ -148,25 +241,36 @@ export class SupabaseService {
     return from(this.insertJobklientJobRow(input));
   }
 
+  completeJobklientJob(id: string): Observable<JobklientMutationResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ error: 'Browser only' });
+    }
+
+    return from(this.updateJobklientStatusRow(id, 'Completed'));
+  }
+
+  deleteJobklientJob(id: string): Observable<JobklientMutationResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ error: 'Browser only' });
+    }
+
+    return from(this.deleteJobklientJobRow(id));
+  }
+
   loadProfiles(): Observable<Profile[]> {
     if (!isPlatformBrowser(this.platformId)) {
       return of([]);
     }
 
-    this.loadingSignal.set(true);
-    const profiles = this.buildProfilesFromLocalStores();
-    this.profilesSignal.set(profiles);
-    this.loadedSignal.set(true);
-    this.loadingSignal.set(false);
-    return of(profiles);
+    return from(this.refreshProfilesFromDatabase());
   }
 
   getProfilesByType(type: ProfileType): Observable<Profile[]> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return of([]);
-    }
-
-    return of(this.buildProfilesFromLocalStores().filter((profile) => profile.type === type));
+    return from(
+      this.refreshProfilesFromDatabase().then((profiles) =>
+        profiles.filter((profile) => profile.type === type),
+      ),
+    );
   }
 
   insertProfile(input: ProfileInsert): Observable<SupabaseMutationResult> {
@@ -214,25 +318,7 @@ export class SupabaseService {
       return of({ data: null, error: 'Browser only' });
     }
 
-    const name = patch.name?.trim();
-    const specialty = patch.specialty?.trim();
-    const description = patch.description?.trim();
-
-    if (name && specialty && description) {
-      const updated = this.portfolioStore.updatePerformerProfile(id, {
-        name,
-        specialty,
-        description,
-      });
-
-      if (updated) {
-        const profile = this.buildProfilesFromLocalStores().find((item) => item.id === id) ?? null;
-        this.refreshProfilesFromLocalStores();
-        return of({ data: profile, error: null });
-      }
-    }
-
-    return of({ data: null, error: 'Profile not found' });
+    return from(this.updateProfileRow(id, patch));
   }
 
   deleteProfile(id: string): Observable<SupabaseMutationResult<null>> {
@@ -240,20 +326,116 @@ export class SupabaseService {
       return of({ data: null, error: 'Browser only' });
     }
 
-    const performerDeleted = this.portfolioStore.deletePerformer(id);
-    if (performerDeleted) {
-      this.refreshProfilesFromLocalStores();
-      return of({ data: null, error: null });
+    return from(this.deleteProfileRow(id));
+  }
+
+  private async updateProfileRow(
+    id: string,
+    patch: ProfileUpdate,
+  ): Promise<SupabaseMutationResult> {
+    const name = patch.name?.trim();
+    const specialty = patch.specialty?.trim();
+    const description = patch.description?.trim();
+
+    if (!name || !specialty || !description) {
+      return { data: null, error: 'Invalid profile data' };
+    }
+
+    const updatedLocally = this.portfolioStore.updatePerformerProfile(id, {
+      name,
+      specialty,
+      description,
+    });
+
+    if (updatedLocally) {
+      const profiles = await this.refreshProfilesFromDatabase();
+      const profile = profiles.find((item) => item.id === id) ?? null;
+      return { data: profile, error: null };
+    }
+
+    const masterProfile = this.profilesSignal().find(
+      (item) => item.id === id && item.type !== 'furniture',
+    );
+    if (!masterProfile) {
+      return { data: null, error: 'Profile not found' };
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.mastersTable)
+        .update({
+          full_name: name,
+          specialty,
+          description,
+        })
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        console.error('[SupabaseService] updateProfile:', error.message);
+        return { data: null, error: error.message };
+      }
+
+      if (!data) {
+        return { data: null, error: 'Profile not found' };
+      }
+
+      await this.refreshProfilesFromDatabase();
+      return { data: masterRowToProfile(data as MasterRow), error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      console.error('[SupabaseService] updateProfile:', err);
+      return { data: null, error: message };
+    }
+  }
+
+  private async deleteProfileRow(id: string): Promise<SupabaseMutationResult<null>> {
+    if (this.portfolioStore.deletePerformer(id)) {
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
     }
 
     const companyExists = this.furnitureStore.companies().some((company) => company.id === id);
     if (companyExists) {
       this.furnitureStore.removeCompanyIfExists(id);
-      this.refreshProfilesFromLocalStores();
-      return of({ data: null, error: null });
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
     }
 
-    return of({ data: null, error: 'Profile not found' });
+    const masterProfile = this.profilesSignal().find(
+      (item) => item.id === id && item.type !== 'furniture',
+    );
+    if (!masterProfile) {
+      return { data: null, error: 'Profile not found' };
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { error } = await client.from(environment.supabase.mastersTable).delete().eq('id', id);
+
+      if (error) {
+        console.error('[SupabaseService] deleteProfile:', error.message);
+        return { data: null, error: error.message };
+      }
+
+      this.portfolioStore.deletePerformer(id);
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      console.error('[SupabaseService] deleteProfile:', err);
+      return { data: null, error: message };
+    }
   }
 
   get clientInstance(): SupabaseClient | null {
@@ -432,14 +614,97 @@ export class SupabaseService {
     }
   }
 
-  private async fetchJobklientRows(): Promise<unknown[]> {
+  private async updateJobklientStatusRow(
+    id: string,
+    status: string,
+  ): Promise<JobklientMutationResult> {
+    try {
+      if (!this.isConfigured()) {
+        return { error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { url, anonKey, jobsTable } = environment.supabase;
+      const endpoint = `${url}/rest/v1/${jobsTable}?id=eq.${encodeURIComponent(id)}`;
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        return { error: message || `HTTP ${response.status}` };
+      }
+
+      this.removeJobFromLocalState(id);
+      return { error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      console.error('[SupabaseService] updateJobklientStatus:', err);
+      return { error: message };
+    }
+  }
+
+  private async deleteJobklientJobRow(id: string): Promise<JobklientMutationResult> {
+    try {
+      if (!this.isConfigured()) {
+        return { error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { url, anonKey, jobsTable } = environment.supabase;
+      const endpoint = `${url}/rest/v1/${jobsTable}?id=eq.${encodeURIComponent(id)}`;
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          Prefer: 'return=minimal',
+        },
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        return { error: message || `HTTP ${response.status}` };
+      }
+
+      this.removeJobFromLocalState(id);
+      return { error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      console.error('[SupabaseService] deleteJobklientJob:', err);
+      return { error: message };
+    }
+  }
+
+  private removeJobFromLocalState(id: string): void {
+    this.activeJobsSignal.update((jobs) => jobs.filter((job) => job.id !== id));
+
+    const cached = this.readJobsCache();
+    if (cached) {
+      const nextJobs = cached.jobs.filter((job) => job.id !== id);
+      if (nextJobs.length > 0) {
+        this.writeJobsCache(nextJobs);
+      } else {
+        this.invalidateJobsCache();
+      }
+    }
+  }
+
+  private async fetchJobklientRows(query?: URLSearchParams): Promise<unknown[]> {
     const { url, anonKey, jobsTable } = environment.supabase;
-    const query = new URLSearchParams({
-      select: JOBS_LIST_COLUMNS,
-      order: 'created_at.desc',
-      limit: '100',
-    });
-    const endpoint = `${url}/rest/v1/${jobsTable}?${query.toString()}`;
+    const params =
+      query ??
+      new URLSearchParams({
+        select: JOBS_LIST_COLUMNS,
+        order: 'created_at.desc',
+        limit: '100',
+      });
+    const endpoint = `${url}/rest/v1/${jobsTable}?${params.toString()}`;
     const response = await fetch(endpoint, {
       headers: {
         apikey: anonKey,
@@ -486,6 +751,38 @@ export class SupabaseService {
     return this.clientPromise;
   }
 
+  private async refreshProfilesFromDatabase(): Promise<Profile[]> {
+    this.loadingSignal.set(true);
+
+    try {
+      const client = await this.resolveClient();
+      let masterProfiles: Profile[] = [];
+
+      if (client) {
+        const { data, error } = await client
+          .from(environment.supabase.mastersTable)
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[SupabaseService] load masters:', error.message);
+        } else {
+          masterProfiles = (data as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
+        }
+      }
+
+      const furnitureProfiles = this.furnitureStore
+        .companies()
+        .map((company) => furnitureCompanyToProfile(company));
+      const profiles = [...masterProfiles, ...furnitureProfiles];
+      this.profilesSignal.set(profiles);
+      this.loadedSignal.set(true);
+      return profiles;
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
   private buildProfilesFromLocalStores(): Profile[] {
     const performers = this.portfolioStore
       .performers()
@@ -498,7 +795,7 @@ export class SupabaseService {
   }
 
   private refreshProfilesFromLocalStores(): void {
-    this.profilesSignal.set(this.buildProfilesFromLocalStores());
+    void this.refreshProfilesFromDatabase();
   }
 
   private toPerformer(profile: Profile): PerformerProfile {

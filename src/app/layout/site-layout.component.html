@@ -95,17 +95,6 @@
           </li>
           <li>
             <a
-              routerLink="/"
-              fragment="calculator"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              (click)="onNavClick()"
-            >
-              {{ translation.t('app.nav.estimate') }}
-            </a>
-          </li>
-          <li>
-            <a
               routerLink="/jobs"
               routerLinkActive="active"
               (click)="onNavClick()"
@@ -190,13 +179,14 @@
     </div>
 
     <div class="footer-bottom">
-      <span>{{ translation.t('app.footer.copyright') }}</span>
+      <span class="footer-secret-trigger" (click)="onAdminSecretTap($event)">{{
+        translation.t('app.footer.copyright')
+      }}</span>
       <span>{{ translation.t('app.footer.catalog') }}</span>
       @if (adminAuth.isAdmin()) {
         <span class="footer-admin-badge">{{ translation.t('admin.badge') }}</span>
-      } @else {
-        <button type="button" class="footer-admin-login" (click)="openAdminLogin()">
-          {{ translation.t('admin.footerLogin') }}
+        <button type="button" class="footer-admin-logout" (click)="adminLogout()">
+          {{ translation.t('admin.logout') }}
         </button>
       }
     </div>

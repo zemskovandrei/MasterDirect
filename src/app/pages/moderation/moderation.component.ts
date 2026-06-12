@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
@@ -15,39 +15,56 @@ import { TranslationService } from '../../core/services/translation.service';
 })
 export class ModerationComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly platformId = inject(PLATFORM_ID);
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
 
   protected readonly loginError = signal(false);
+  protected readonly submitting = signal(false);
 
   protected readonly loginForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(4)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  submitLogin() {
+  constructor() {
+    if (isPlatformBrowser(this.platformId) && this.adminAuth.isAdmin()) {
+      void this.reviewStore.loadPendingReviews();
+    }
+  }
+
+  async submitLogin() {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    const ok = this.adminAuth.login(this.loginForm.getRawValue().password);
+    this.submitting.set(true);
+    this.loginError.set(false);
+
+    const { email, password } = this.loginForm.getRawValue();
+    const ok = await this.adminAuth.login(email, password);
+
+    this.submitting.set(false);
     this.loginError.set(!ok);
+
     if (ok) {
       this.loginForm.reset();
+      await this.reviewStore.loadPendingReviews();
     }
   }
 
   logout() {
-    this.adminAuth.logout();
+    void this.adminAuth.logout();
     this.loginError.set(false);
   }
 
   approveReview(reviewId: string) {
-    this.reviewStore.approveReview(reviewId);
+    void this.reviewStore.approveReview(reviewId);
   }
 
   rejectReview(reviewId: string) {
-    this.reviewStore.rejectReview(reviewId);
+    void this.reviewStore.rejectReview(reviewId);
   }
 }

@@ -1,6 +1,10 @@
-import { Component, PLATFORM_ID, inject } from '@angular/core';
+import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { AdminAuthService } from '../../core/services/admin-auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Job, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
@@ -8,29 +12,145 @@ import { TranslationService } from '../../core/services/translation.service';
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './jobs-list.component.html',
   styleUrl: './jobs-list.component.css',
 })
 export class JobsListComponent {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly fb = inject(FormBuilder);
   private readonly supabase = inject(SupabaseService);
+  private readonly auth = inject(AuthService);
+  protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
 
   readonly isLoading = this.supabase.jobsLoading;
   readonly error = this.supabase.jobsError;
   readonly jobs = this.supabase.activeJobs;
+  readonly accessDenied = this.supabase.jobsAccessDenied;
+
+  protected readonly adminActionJobId = signal<string | null>(null);
+  protected readonly adminActionError = signal<string | null>(null);
+  protected readonly loginError = signal(false);
+  protected readonly loginSubmitting = signal(false);
+
+  protected readonly loginForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      void this.supabase.loadActiveJobs().catch(() => {
-        // Error state is handled in the service.
-      });
+      void this.loadJobs();
+    }
+  }
+
+  protected async loadJobs(force = false): Promise<void> {
+    try {
+      if (this.adminAuth.isAdmin()) {
+        await this.supabase.loadActiveJobs(force);
+        return;
+      }
+
+      await this.supabase.loadJobsForAuthenticatedMaster(force);
+    } catch {
+      // Error state is handled in the service.
     }
   }
 
   protected reloadJobs(): void {
-    void this.supabase.loadActiveJobs(true);
+    void this.loadJobs(true);
+  }
+
+  protected adminLogout(): void {
+    void this.adminAuth.logout();
+    this.adminActionError.set(null);
+    void this.loadJobs(true);
+  }
+
+  protected async submitMasterLogin(): Promise<void> {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+
+    this.loginSubmitting.set(true);
+    this.loginError.set(false);
+
+    const { email, password } = this.loginForm.getRawValue();
+    const result = await this.auth.signIn(email, password);
+
+    this.loginSubmitting.set(false);
+
+    if (result.error || !result.user) {
+      this.loginError.set(true);
+      return;
+    }
+
+    this.loginForm.reset();
+    await this.loadJobs(true);
+  }
+
+  protected isJobAdminBusy(jobId: string): boolean {
+    return this.adminActionJobId() === jobId;
+  }
+
+  async completeJob(job: Job): Promise<void> {
+    if (!this.adminAuth.isAdmin() || this.isJobAdminBusy(job.id)) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation.t('admin.jobs.completeConfirm').replace('{{title}}', this.displayTitle(job)),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.adminActionJobId.set(job.id);
+    this.adminActionError.set(null);
+
+    try {
+      const result = await firstValueFrom(this.supabase.completeJobklientJob(job.id));
+      if (result.error) {
+        this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+        console.error('[JobsListComponent] completeJob:', result.error);
+      }
+    } catch (err) {
+      this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+      console.error('[JobsListComponent] completeJob:', err);
+    } finally {
+      this.adminActionJobId.set(null);
+    }
+  }
+
+  async deleteJob(job: Job): Promise<void> {
+    if (!this.adminAuth.isAdmin() || this.isJobAdminBusy(job.id)) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation.t('admin.jobs.deleteConfirm').replace('{{title}}', this.displayTitle(job)),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.adminActionJobId.set(job.id);
+    this.adminActionError.set(null);
+
+    try {
+      const result = await firstValueFrom(this.supabase.deleteJobklientJob(job.id));
+      if (result.error) {
+        this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+        console.error('[JobsListComponent] deleteJob:', result.error);
+      }
+    } catch (err) {
+      this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+      console.error('[JobsListComponent] deleteJob:', err);
+    } finally {
+      this.adminActionJobId.set(null);
+    }
   }
 
   protected displayTitle(job: Job): string {

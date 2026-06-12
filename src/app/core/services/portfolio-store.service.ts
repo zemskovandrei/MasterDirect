@@ -75,6 +75,20 @@ export class PortfolioStoreService {
     socialLinks?: PerformerSocialLinks;
   }): PerformerProfile {
     const id = this.generateId(data.type, data.name);
+    return this.registerPerformerWithId(id, data);
+  }
+
+  registerPerformerWithId(
+    id: string,
+    data: {
+      type: PerformerType;
+      name: string;
+      specialty: string;
+      description: string;
+      callOutFee?: string;
+      socialLinks?: PerformerSocialLinks;
+    },
+  ): PerformerProfile {
     const socialLinks = normalizeSocialLinks(data.socialLinks);
     const callOutFee = normalizeCallOutFee(data.callOutFee ?? '') || null;
     const performer: PerformerProfile = {
@@ -88,7 +102,10 @@ export class PortfolioStoreService {
       works: [],
     };
 
-    this.performersSignal.update((list) => [...list, performer]);
+    this.performersSignal.update((list) => {
+      const withoutDuplicate = list.filter((item) => item.id !== id);
+      return [...withoutDuplicate, performer];
+    });
     this.sessionSignal.set({ performerId: id });
     this.persist();
     return performer;

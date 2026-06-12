@@ -5,20 +5,23 @@ import {
   ReviewNotification,
   ReviewSubmission,
 } from '../models/portfolio.models';
+import type { ReviewRow } from '../models/master.model';
+import { environment } from '../../../environments/environment';
 import { TranslationService } from './translation.service';
-import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
-
-const REVIEWS_KEY = 'smartbuild-tech-reviews';
+import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewStoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translation = inject(TranslationService);
+  private readonly supabase = inject(SupabaseService);
 
   private readonly reviewsSignal = signal<ReviewSubmission[]>([]);
   private readonly notificationsSignal = signal<ReviewNotification[]>([]);
+  private readonly loadingSignal = signal(false);
 
   readonly reviews = this.reviewsSignal.asReadonly();
+  readonly loading = this.loadingSignal.asReadonly();
   readonly pendingReviews = computed(() =>
     this.reviewsSignal().filter((review) => review.status === 'pending'),
   );
@@ -28,7 +31,9 @@ export class ReviewStoreService {
   readonly notifications = this.notificationsSignal.asReadonly();
 
   constructor() {
-    this.loadFromStorage();
+    if (isPlatformBrowser(this.platformId)) {
+      void this.loadApprovedReviews();
+    }
   }
 
   localizeReview(review: ReviewSubmission): string {
@@ -59,6 +64,17 @@ export class ReviewStoreService {
     return this.translation.t(`reviews.performerType.${key}`);
   }
 
+  isRecommendation(review: ReviewSubmission): boolean {
+    return review.kind === 'recommendation';
+  }
+
+  submissionKindLabel(review: ReviewSubmission): string {
+    this.translation.locale();
+    return this.isRecommendation(review)
+      ? this.translation.t('reviewsPage.kind.recommendation')
+      : this.translation.t('reviewsPage.kind.review');
+  }
+
   resolvePerformerTypeKey(review: ReviewSubmission): ReviewPerformerTypeKey {
     if (review.performerTypeKey) {
       return review.performerTypeKey;
@@ -75,7 +91,75 @@ export class ReviewStoreService {
     return 'master';
   }
 
-  addReview(data: {
+  async loadApprovedReviews(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.loadingSignal.set(true);
+
+    try {
+      const client = await this.supabase.getClient();
+      if (!client) {
+        return;
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.reviewsTable)
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[ReviewStoreService] loadApprovedReviews:', error.message);
+        return;
+      }
+
+      const approved = (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'approved')) ?? [];
+      this.reviewsSignal.update((current) => {
+        const pending = current.filter((review) => review.status === 'pending');
+        return [...pending, ...approved];
+      });
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  async loadPendingReviews(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.loadingSignal.set(true);
+
+    try {
+      const client = await this.supabase.getClient();
+      if (!client) {
+        return;
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.reviewsTable)
+        .select('*')
+        .eq('is_approved', false)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[ReviewStoreService] loadPendingReviews:', error.message);
+        return;
+      }
+
+      const pending = (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'pending')) ?? [];
+      this.reviewsSignal.update((current) => {
+        const approved = current.filter((review) => review.status === 'approved');
+        return [...pending, ...approved];
+      });
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  async addReview(data: {
     name: string;
     performerType: ReviewSubmission['performerType'];
     performerTypeKey?: ReviewPerformerTypeKey;
@@ -85,132 +169,137 @@ export class ReviewStoreService {
     rating?: number;
     beforeImage?: string;
     afterImage?: string;
-  }): ReviewSubmission {
+    kind?: ReviewSubmission['kind'];
+  }): Promise<ReviewSubmission | null> {
     const performerTypeKey: ReviewPerformerTypeKey =
-      data.performerTypeKey ?? this.resolvePerformerTypeKey({ performerType: data.performerType } as ReviewSubmission);
+      data.performerTypeKey ??
+      this.resolvePerformerTypeKey({ performerType: data.performerType } as ReviewSubmission);
 
-    const submission: ReviewSubmission = {
-      id: `review-${Date.now()}`,
-      name: data.name.trim(),
-      performerType: data.performerType,
-      performerTypeKey,
-      category: data.category,
-      review: data.review.trim(),
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+    const client = await this.supabase.getClient();
+    if (!client) {
+      console.error('[ReviewStoreService] addReview: Supabase is not configured');
+      return null;
+    }
+
+    const row = {
+      master_id: data.performerId ?? null,
+      client_name: data.name.trim(),
+      review_text: data.review.trim(),
+      rating: data.rating ?? null,
+      kind: data.kind ?? 'review',
+      performer_type: data.performerType,
+      performer_type_key: performerTypeKey,
+      performer_name: data.category,
+      before_image: data.beforeImage ?? null,
+      after_image: data.afterImage ?? null,
+      is_approved: false,
     };
 
-    if (data.performerId) {
-      submission.performerId = data.performerId;
-    }
-    if (data.rating) {
-      submission.rating = data.rating;
-    }
-    if (data.beforeImage) {
-      submission.beforeImage = data.beforeImage;
-    }
-    if (data.afterImage) {
-      submission.afterImage = data.afterImage;
+    const { data: inserted, error } = await client
+      .from(environment.supabase.reviewsTable)
+      .insert([row])
+      .select('*')
+      .single();
+
+    if (error || !inserted) {
+      console.error('[ReviewStoreService] addReview:', error?.message);
+      return null;
     }
 
+    const submission = this.mapRow(inserted as ReviewRow, 'pending');
     this.reviewsSignal.update((list) => [submission, ...list]);
-    this.persist();
     return submission;
   }
 
-  approveReview(id: string): void {
+  async approveReview(id: string): Promise<void> {
     const review = this.reviewsSignal().find((item) => item.id === id);
     if (!review || review.status === 'approved') {
       return;
     }
 
-    this.updateStatus(id, 'approved');
+    const client = await this.supabase.getClient();
+    if (!client) {
+      return;
+    }
+
+    const { error } = await client
+      .from(environment.supabase.reviewsTable)
+      .update({ is_approved: true })
+      .eq('id', id);
+
+    if (error) {
+      console.error('[ReviewStoreService] approveReview:', error.message);
+      return;
+    }
+
+    this.reviewsSignal.update((list) =>
+      list.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
+    );
     this.addPublicationNotification(review);
   }
 
-  rejectReview(id: string): void {
-    this.updateStatus(id, 'rejected');
+  async rejectReview(id: string): Promise<void> {
+    const client = await this.supabase.getClient();
+    if (!client) {
+      return;
+    }
+
+    const { error } = await client.from(environment.supabase.reviewsTable).delete().eq('id', id);
+
+    if (error) {
+      console.error('[ReviewStoreService] rejectReview:', error.message);
+      return;
+    }
+
+    this.reviewsSignal.update((list) => list.filter((review) => review.id !== id));
   }
 
-  private updateStatus(id: string, status: ReviewSubmission['status']): void {
-    this.reviewsSignal.update((list) =>
-      list.map((review) => (review.id === id ? { ...review, status } : review)),
-    );
-    this.persist();
+  private mapRow(row: ReviewRow, status: ReviewSubmission['status']): ReviewSubmission {
+    const performerType = (row.performer_type ??
+      'Мастер') as ReviewSubmission['performerType'];
+    const performerTypeKey = (row.performer_type_key ??
+      'master') as ReviewPerformerTypeKey;
+
+    const submission: ReviewSubmission = {
+      id: row.id,
+      name: row.client_name,
+      performerType,
+      performerTypeKey,
+      category: row.performer_name ?? '',
+      review: row.review_text,
+      status,
+      createdAt: row.created_at,
+      kind: row.kind === 'recommendation' ? 'recommendation' : 'review',
+    };
+
+    if (row.master_id) {
+      submission.performerId = row.master_id;
+    }
+    if (row.rating) {
+      submission.rating = row.rating;
+    }
+    if (row.before_image) {
+      submission.beforeImage = row.before_image;
+    }
+    if (row.after_image) {
+      submission.afterImage = row.after_image;
+    }
+
+    return submission;
   }
 
   private addPublicationNotification(review: ReviewSubmission): void {
+    const kindLabel = this.isRecommendation(review)
+      ? this.translation.t('reviewsPage.kind.recommendation')
+      : this.translation.t('reviewsPage.kind.review');
     const notification: ReviewNotification = {
       id: `notification-${Date.now()}`,
       reviewId: review.id,
-      message: `Отзыв "${review.category}" от ${review.name} опубликован. `,
-      link: '/brigades',
+      message: `${kindLabel}: "${review.category}" — ${review.name}.`,
+      link: '/reviews',
       createdAt: new Date().toISOString(),
     };
 
     this.notificationsSignal.update((list) => [notification, ...list]);
-    this.persist();
-  }
-
-  private loadFromStorage(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    if (shouldWipeCatalog()) {
-      wipeCatalogStorage();
-      this.reviewsSignal.set([]);
-      this.notificationsSignal.set([]);
-      return;
-    }
-
-    try {
-      const raw = localStorage.getItem(REVIEWS_KEY);
-      if (!raw) {
-        return;
-      }
-
-      const parsed = JSON.parse(raw);
-      const stored = Array.isArray(parsed)
-        ? (parsed as ReviewSubmission[])
-        : ((parsed.reviews || []) as ReviewSubmission[]);
-
-      const userReviews = stored
-        .filter((review) => !review.isDemo && !review.id.startsWith('seed-'))
-        .map((review) => this.normalizeReview(review));
-
-      this.reviewsSignal.set(userReviews);
-
-      if (!Array.isArray(parsed)) {
-        this.notificationsSignal.set((parsed.notifications || []) as ReviewNotification[]);
-      }
-    } catch {
-      localStorage.removeItem(REVIEWS_KEY);
-    }
-  }
-
-  private normalizeReview(review: ReviewSubmission): ReviewSubmission {
-    return {
-      ...review,
-      performerTypeKey: review.performerTypeKey ?? this.resolvePerformerTypeKey(review),
-    };
-  }
-
-  private persist(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    const userReviews = this.reviewsSignal().filter(
-      (review) => !review.isDemo && !review.id.startsWith('seed-'),
-    );
-
-    localStorage.setItem(
-      REVIEWS_KEY,
-      JSON.stringify({
-        reviews: userReviews,
-        notifications: this.notificationsSignal(),
-      }),
-    );
   }
 }

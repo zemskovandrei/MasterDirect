@@ -11,7 +11,6 @@ interface LanguageOption {
 const LANGUAGE_OPTIONS: LanguageOption[] = [
   { code: 'ru', label: 'Русский', initials: 'RU', flag: '🇷🇺' },
   { code: 'en', label: 'English', initials: 'EN', flag: '🇬🇧' },
-  { code: 'ge', label: 'ქართული', initials: 'GE', flag: '🇬🇪' },
 ];
 
 @Component({

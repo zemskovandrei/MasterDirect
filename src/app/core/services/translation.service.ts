@@ -4,10 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
 import en from '../../../assets/i18n/en.json';
-import ge from '../../../assets/i18n/ge.json';
 import ru from '../../../assets/i18n/ru.json';
+import checklistEn from '../../../assets/i18n/partials/checklist-en.json';
+import checklistRu from '../../../assets/i18n/partials/checklist-ru.json';
 import extendedEn from '../../../assets/i18n/partials/extended-en.json';
-import extendedGe from '../../../assets/i18n/partials/extended-ge.json';
 import extendedRu from '../../../assets/i18n/partials/extended-ru.json';
 
 function mergeTranslations(
@@ -37,7 +37,7 @@ function mergeTranslations(
   return result;
 }
 
-export type Locale = 'ru' | 'en' | 'ge';
+export type Locale = 'ru' | 'en';
 
 const LOCALE_KEY = 'smartbuild-tech-locale';
 
@@ -50,9 +50,14 @@ export class TranslationService {
 
   constructor() {
     this.translate.setFallbackLang('ru');
-    this.translate.setTranslation('ru', mergeTranslations(ru, extendedRu) as typeof ru);
-    this.translate.setTranslation('en', mergeTranslations(en, extendedEn) as typeof en);
-    this.translate.setTranslation('ge', mergeTranslations(ge, extendedGe) as typeof ge);
+    this.translate.setTranslation(
+      'ru',
+      mergeTranslations(mergeTranslations(ru, extendedRu), checklistRu) as typeof ru,
+    );
+    this.translate.setTranslation(
+      'en',
+      mergeTranslations(mergeTranslations(en, extendedEn), checklistEn) as typeof en,
+    );
     void this.setLocale(this.getSavedLocale());
   }
 
@@ -84,7 +89,7 @@ export class TranslationService {
       return 'ru';
     }
     const saved = localStorage.getItem(LOCALE_KEY);
-    if (saved === 'ru' || saved === 'en' || saved === 'ge') {
+    if (saved === 'ru' || saved === 'en') {
       return saved;
     }
     return 'ru';

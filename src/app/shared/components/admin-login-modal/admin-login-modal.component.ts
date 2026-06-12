@@ -22,19 +22,28 @@ export class AdminLoginModalComponent {
   readonly loggedIn = output<void>();
 
   protected readonly loginError = signal(false);
+  protected readonly submitting = signal(false);
 
   protected readonly loginForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(4)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  submitLogin() {
+  async submitLogin() {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    const ok = this.adminAuth.login(this.loginForm.getRawValue().password);
+    this.submitting.set(true);
+    this.loginError.set(false);
+
+    const { email, password } = this.loginForm.getRawValue();
+    const ok = await this.adminAuth.login(email, password);
+
+    this.submitting.set(false);
     this.loginError.set(!ok);
+
     if (ok) {
       this.loginForm.reset();
       this.loggedIn.emit();

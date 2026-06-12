@@ -69,6 +69,15 @@
     "nameLabel": "Name or company",
     "namePlaceholder": "John D. or «StroyComfort Team»",
     "nameError": "At least 2 characters",
+    "emailLabel": "Sign-in email",
+    "emailPlaceholder": "master@example.com",
+    "emailError": "Enter a valid email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "passwordError": "Password must be at least 6 characters",
+    "cityLabel": "Work city",
+    "cityHint": "On the jobs page you will only see requests from the selected city.",
+    "cityError": "Select a city",
     "specialtyLabel": "Specialization",
     "specialtyPlaceholder": "Select one or more specializations...",
     "specialtyError": "Select a specialization",
@@ -207,6 +216,21 @@
       "renovation": "How did the renovation go?"
     },
     "subtitle": "Your review will help other users find reliable specialists.",
+    "recommendationSubtitle": "Recommend a specialist you trust — it's quicker than a full review.",
+    "kind": {
+      "review": "Review",
+      "recommendation": "Recommendation"
+    },
+    "formModes": {
+      "review": "Leave a review",
+      "recommendation": "Recommend"
+    },
+    "recommendationTitles": {
+      "brigade": "Which brigade do you recommend?",
+      "master": "Which master do you recommend?",
+      "furniture": "Which furniture company do you recommend?",
+      "renovation": "Who would you recommend for renovation work?"
+    },
     "categories": {
       "brigade": "Teams",
       "master": "Masters",
@@ -218,6 +242,8 @@
       "title": "Tell us about your experience",
       "lead": "Pick a category and performer, rate the work and describe the outcome.",
       "success": "Thank you! Your review was sent for moderation.",
+      "recommendationSuccess": "Thank you! Your recommendation was sent for moderation.",
+      "modeAria": "Publication type",
       "categoryAria": "Performer category",
       "clientName": "Your name",
       "clientNamePh": "How to present you in the review",
@@ -233,12 +259,16 @@
       "ratingAria": "Rating from 1 to 5 stars",
       "text": "Review text",
       "textPh": "Describe timing, quality, communication and the final result…",
+      "recommendationText": "Why you recommend them",
+      "recommendationTextPh": "Briefly: what you liked, who this specialist is best for…",
+      "recommendConfirm": "I recommend this specialist to other clients",
       "photos": "Work photos (optional)",
       "photosHint": "You may attach a before/after pair to make the review more convincing.",
       "photoBefore": "Before",
       "photoAfter": "After",
       "dropTitle": "Drag a photo or click to upload",
       "submit": "Submit review",
+      "submitRecommendation": "Submit recommendation",
       "note": "Reviews are checked by an administrator before publication."
     },
     "errors": {
@@ -246,14 +276,16 @@
       "performer": "Select a performer from the list.",
       "rating": "Rate from 1 to 5 stars.",
       "text": "Write a review (at least 20 characters).",
+      "recommendationText": "Explain why you recommend them (at least 10 characters).",
+      "recommendConfirm": "Please confirm that you recommend this specialist.",
       "imageOnly": "Please choose an image file.",
       "fileTooLarge": "File is too large (max 800 KB)."
     },
     "feed": {
       "eyebrow": "Published",
-      "title": "Approved reviews",
-      "lead": "Real client recommendations on SmartBuild.Tech.",
-      "empty": "No published reviews yet. Be the first!",
+      "title": "Reviews and recommendations",
+      "lead": "Real client reviews and recommendations on SmartBuild.Tech.",
+      "empty": "No publications yet. Be the first!",
       "before": "Before",
       "after": "After"
     }

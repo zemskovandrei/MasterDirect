@@ -16,6 +16,7 @@ import { ProfileType } from '../../core/models/profile.models';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { AuthService } from '../../core/services/auth.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -61,6 +62,7 @@ export class CabinetComponent {
   protected readonly store = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly supabase = inject(SupabaseService);
+  protected readonly auth = inject(AuthService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
@@ -85,6 +87,9 @@ export class CabinetComponent {
 
   protected readonly registerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    city: ['batumi', Validators.required],
     specialty: ['', Validators.required],
     description: ['', [Validators.required, Validators.minLength(10), maxWordsValidator()]],
     callOutFee: [''],
@@ -94,6 +99,11 @@ export class CabinetComponent {
     instagram: [''],
     facebook: [''],
   });
+
+  protected readonly cityOptions = [
+    { id: 'batumi', labelKey: 'home.calculator.cities.batumi' },
+    { id: 'tbilisi', labelKey: 'home.calculator.cities.tbilisi' },
+  ] as const;
 
   protected readonly socialForm = this.fb.nonNullable.group({
     phone: [''],
@@ -118,6 +128,7 @@ export class CabinetComponent {
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   constructor() {
+    this.applyAccountTypeValidators(this.selectedAccountType());
     effect(() => {
       const performer = this.store.currentPerformer();
       const company = this.furnitureStore.currentCompany();
@@ -137,12 +148,46 @@ export class CabinetComponent {
   }
 
   isLoggedIn(): boolean {
-    return !!this.store.currentPerformer() || !!this.furnitureStore.currentCompany();
+    return (
+      !!this.auth.user() ||
+      !!this.store.currentPerformer() ||
+      !!this.furnitureStore.currentCompany()
+    );
+  }
+
+  cityLabel(cityId: string): string {
+    const option = this.cityOptions.find((item) => item.id === cityId);
+    return option ? this.translation.t(option.labelKey) : cityId;
   }
 
   selectAccountType(type: AccountType) {
     this.selectedAccountType.set(type);
     this.applySpecialtyForAccountType(type);
+    this.applyAccountTypeValidators(type);
+  }
+
+  private applyAccountTypeValidators(type: AccountType) {
+    const email = this.registerForm.get('email');
+    const password = this.registerForm.get('password');
+    const city = this.registerForm.get('city');
+
+    if (!email || !password || !city) {
+      return;
+    }
+
+    if (type === 'furniture') {
+      email.clearValidators();
+      password.clearValidators();
+      city.clearValidators();
+    } else {
+      email.setValidators([Validators.required, Validators.email]);
+      password.setValidators([Validators.required, Validators.minLength(6)]);
+      city.setValidators([Validators.required]);
+    }
+
+    email.updateValueAndValidity();
+    password.updateValueAndValidity();
+    city.updateValueAndValidity();
   }
 
   isSpecialtyLocked(): boolean {
@@ -184,31 +229,71 @@ export class CabinetComponent {
     this.registerErrorMessage.set(null);
 
     try {
-      const result = await firstValueFrom(
-        this.supabase.insertProfile({
+      if (profileType === 'furniture') {
+        const result = await firstValueFrom(
+          this.supabase.insertProfile({
+            type: profileType,
+            name: v.name,
+            specialty: v.specialty,
+            description: v.description,
+            phone: v.phone,
+            whatsapp: v.whatsapp,
+            telegram: v.telegram,
+            instagram: v.instagram,
+            facebook: v.facebook,
+          }),
+        );
+
+        if (result.error || !result.data) {
+          this.registerStatus.set('error');
+          this.registerErrorMessage.set(result.error ?? this.translation.t('cabinet.registerError'));
+          alert(this.registerErrorMessage() ?? this.translation.t('cabinet.registerError'));
+          return;
+        }
+      } else {
+        const authResult = await this.auth.signUp(v.email, v.password, {
+          full_name: v.name,
+          phone: v.phone || undefined,
+          city: v.city,
+          specialty: v.specialty,
+          description: v.description,
+          account_type: profileType,
+          call_out_fee: v.callOutFee || undefined,
+          whatsapp: v.whatsapp || undefined,
+          telegram: v.telegram || undefined,
+          instagram: v.instagram || undefined,
+          facebook: v.facebook || undefined,
+        });
+
+        if (authResult.error || !authResult.user) {
+          const message = authResult.error?.message ?? this.translation.t('cabinet.registerError');
+          this.registerStatus.set('error');
+          this.registerErrorMessage.set(message);
+          alert(message);
+          return;
+        }
+
+        this.store.registerPerformerWithId(authResult.user.id, {
           type: profileType,
           name: v.name,
           specialty: v.specialty,
           description: v.description,
-          callOutFee: profileType === 'furniture' ? undefined : v.callOutFee,
-          phone: v.phone,
-          whatsapp: v.whatsapp,
-          telegram: v.telegram,
-          instagram: v.instagram,
-          facebook: v.facebook,
-        }),
-      );
+          callOutFee: v.callOutFee,
+          socialLinks: {
+            phone: v.phone || undefined,
+            whatsapp: v.whatsapp || undefined,
+            telegram: v.telegram || undefined,
+            instagram: v.instagram || undefined,
+            facebook: v.facebook || undefined,
+          },
+        });
 
-      if (result.error || !result.data) {
-        this.registerStatus.set('error');
-        this.registerErrorMessage.set(result.error ?? this.translation.t('cabinet.registerError'));
-        alert(this.registerErrorMessage() ?? this.translation.t('cabinet.registerError'));
-        return;
+        await firstValueFrom(this.supabase.loadProfiles());
       }
 
       this.registerStatus.set('success');
       alert(this.translation.t('cabinet.registerSuccess'));
-      this.registerForm.reset();
+      this.registerForm.reset({ city: 'batumi' });
       this.applySpecialtyForAccountType(this.selectedAccountType());
     } catch (error) {
       const message =
@@ -404,7 +489,9 @@ export class CabinetComponent {
     this.resetFileInputs();
   }
 
-  registerFieldInvalid(field: 'name' | 'specialty' | 'description'): boolean {
+  registerFieldInvalid(
+    field: 'name' | 'email' | 'password' | 'city' | 'specialty' | 'description',
+  ): boolean {
     const control = this.registerForm.get(field);
     return !!control && control.invalid && control.touched;
   }

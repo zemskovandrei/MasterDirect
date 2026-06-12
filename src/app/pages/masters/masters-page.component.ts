@@ -113,7 +113,7 @@ export class MastersPageComponent implements OnInit {
   }
 
   adminLogout() {
-    this.adminAuth.logout();
+    void this.adminAuth.logout();
     this.closeEditPerformer();
   }
 }

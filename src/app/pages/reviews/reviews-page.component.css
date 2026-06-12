@@ -76,6 +76,77 @@
   border: none;
 }
 
+.form-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  background: #eef1f5;
+}
+
+.form-mode-tab {
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #5a677a;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-mode-tab--active {
+  background: #ffffff;
+  color: #0b1f3f;
+  box-shadow: 0 4px 14px rgba(12, 18, 34, 0.08);
+}
+
+.review-field--checkbox {
+  margin-top: -0.25rem;
+}
+
+.review-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.review-checkbox input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.review-card-kind {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(11, 31, 63, 0.08);
+  color: #0b1f3f;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.review-card-kind--recommendation {
+  background: rgba(0, 229, 168, 0.14);
+  color: #047857;
+}
+
+.review-card-kind--pending {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
 .category-tab {
   padding: 0.6rem 1.35rem;
   border-radius: 999px;

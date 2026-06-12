@@ -73,6 +73,8 @@ export interface ReviewSubmission {
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   isDemo?: boolean;
+  /** Client submission type: detailed review or short recommendation */
+  kind?: 'review' | 'recommendation';
 }
 
 export interface ReviewNotification {

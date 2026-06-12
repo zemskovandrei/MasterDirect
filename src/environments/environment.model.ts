@@ -3,7 +3,10 @@ export interface Environment {
   supabase: {
     url: string;
     anonKey: string;
-    /** PostgREST table for active job listings (public schema), e.g. jobklient. */
     jobsTable: string;
+    mastersTable: string;
+    reviewsTable: string;
+    /** Emails allowed to access admin moderation UI */
+    adminEmails: string[];
   };
 }

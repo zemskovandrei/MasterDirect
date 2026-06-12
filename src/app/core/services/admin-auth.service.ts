@@ -1,49 +1,61 @@
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-
-const ADMIN_SESSION_KEY = 'smartbuild-tech-admin-session';
-
-/** Локальные пароли администратора (в продакшене — серверная авторизация) */
-const ADMIN_PASSWORDS = new Set(['admin123', 'smartbuild-admin']);
+import type { User } from '@supabase/supabase-js';
+import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly auth = inject(AuthService);
   private readonly isAdminSignal = signal(false);
 
   readonly isAdmin = this.isAdminSignal.asReadonly();
 
   constructor() {
-    this.loadSession();
+    if (isPlatformBrowser(this.platformId)) {
+      void this.syncFromSession();
+    }
   }
 
-  login(password: string): boolean {
-    if (!ADMIN_PASSWORDS.has(password.trim())) {
+  async login(email: string, password: string): Promise<boolean> {
+    const result = await this.auth.signIn(email, password);
+    if (result.error || !result.user) {
       return false;
     }
+
+    if (!this.isAdminUser(result.user)) {
+      await this.auth.signOut();
+      return false;
+    }
+
     this.isAdminSignal.set(true);
-    this.persist();
     return true;
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    await this.auth.signOut();
     this.isAdminSignal.set(false);
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(ADMIN_SESSION_KEY);
-    }
   }
 
-  private loadSession(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-    this.isAdminSignal.set(localStorage.getItem(ADMIN_SESSION_KEY) === '1');
+  private async syncFromSession(): Promise<void> {
+    await this.auth.ensureInitialized();
+    const user = await this.auth.getUser();
+    this.isAdminSignal.set(this.isAdminUser(user));
   }
 
-  private persist(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
+  private isAdminUser(user: User | null): boolean {
+    if (!user?.email) {
+      return false;
     }
-    localStorage.setItem(ADMIN_SESSION_KEY, '1');
+
+    const email = user.email.trim().toLowerCase();
+    if (environment.supabase.adminEmails.some((item) => item.toLowerCase() === email)) {
+      return true;
+    }
+
+    const appRole = user.app_metadata?.['role'];
+    const userRole = user.user_metadata?.['role'];
+    return appRole === 'admin' || userRole === 'admin';
   }
 }

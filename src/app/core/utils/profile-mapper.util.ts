@@ -1,4 +1,5 @@
 import { FurnitureCompany } from '../models/furniture.models';
+import { MasterRow } from '../models/master.model';
 import { Profile } from '../models/profile.models';
 import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.models';
 
@@ -14,6 +15,23 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
   };
 
   return Object.values(links).some(Boolean) ? links : undefined;
+}
+
+export function masterRowToProfile(row: MasterRow): Profile {
+  return {
+    id: row.id,
+    type: row.account_type === 'brigade' ? 'brigade' : 'worker',
+    name: row.full_name,
+    specialty: row.specialty ?? '',
+    description: row.description ?? '',
+    city: row.city,
+    call_out_fee: row.call_out_fee,
+    phone: row.phone,
+    whatsapp: row.whatsapp,
+    telegram: row.telegram,
+    instagram: row.instagram,
+    facebook: row.facebook,
+  };
 }
 
 export function furnitureCompanyToProfile(company: FurnitureCompany): Profile {

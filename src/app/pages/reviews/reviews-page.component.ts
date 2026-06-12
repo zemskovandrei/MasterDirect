@@ -12,11 +12,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ReviewPerformerTypeKey } from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
+export type ReviewFormMode = 'review' | 'recommendation';
 
 interface PerformerOption {
   id: string;
@@ -35,10 +37,12 @@ export class ReviewsPageComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
+  protected readonly supabase = inject(SupabaseService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
 
   protected readonly category = signal<ReviewCategoryKey>('brigade');
+  protected readonly formMode = signal<ReviewFormMode>('review');
   protected readonly performerQuery = signal('');
   protected readonly performerMenuOpen = signal(false);
   protected readonly submitSuccess = signal(false);
@@ -61,18 +65,21 @@ export class ReviewsPageComponent {
     performerFreeText: [''],
     rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
     review: ['', [Validators.required, Validators.minLength(20), maxWordsValidator()]],
+    recommendConfirm: [false],
   });
+
+  protected readonly formModes: ReviewFormMode[] = ['review', 'recommendation'];
 
   protected readonly performerOptions = computed<PerformerOption[]>(() => {
     switch (this.category()) {
       case 'brigade':
-        return this.portfolioStore.brigades().map((p) => ({
+        return this.supabase.brigades().map((p) => ({
           id: p.id,
           name: p.name,
           subtitle: p.specialty,
         }));
       case 'master':
-        return this.portfolioStore.workers().map((p) => ({
+        return this.supabase.workers().map((p) => ({
           id: p.id,
           name: p.name,
           subtitle: p.specialty,
@@ -125,6 +132,18 @@ export class ReviewsPageComponent {
     this.reviewForm.get('performerFreeText')?.markAsUntouched();
   }
 
+  selectFormMode(mode: ReviewFormMode) {
+    this.formMode.set(mode);
+    this.applyFormModeValidators();
+    this.reviewForm.get('recommendConfirm')?.markAsUntouched();
+    this.reviewForm.get('rating')?.markAsUntouched();
+    this.reviewForm.get('review')?.markAsUntouched();
+  }
+
+  isRecommendationMode(): boolean {
+    return this.formMode() === 'recommendation';
+  }
+
   setRating(value: number) {
     this.reviewForm.patchValue({ rating: value });
     this.reviewForm.get('rating')?.markAsTouched();
@@ -146,7 +165,7 @@ export class ReviewsPageComponent {
     this.performerMenuOpen.set(false);
   }
 
-  submitReview() {
+  async submitReview() {
     if (this.category() === 'renovation') {
       const freeText = this.reviewForm.get('performerFreeText')?.value.trim() ?? '';
       if (!freeText) {
@@ -162,20 +181,28 @@ export class ReviewsPageComponent {
     }
 
     const v = this.reviewForm.getRawValue();
+    const kind = this.formMode();
     const { performerType, performerTypeKey } = this.mapCategory(this.category());
+    const sharedPayload = {
+      name: v.clientName,
+      performerType,
+      performerTypeKey,
+      review: v.review,
+      kind,
+      rating: kind === 'recommendation' ? 5 : v.rating,
+      beforeImage: kind === 'review' ? this.beforePreview() ?? undefined : undefined,
+      afterImage: kind === 'review' ? this.afterPreview() ?? undefined : undefined,
+    };
 
     if (this.category() === 'renovation') {
       const performerName = v.performerFreeText.trim();
-      this.reviewStore.addReview({
-        name: v.clientName,
-        performerType,
-        performerTypeKey,
+      const created = await this.reviewStore.addReview({
+        ...sharedPayload,
         category: performerName,
-        review: v.review,
-        rating: v.rating,
-        beforeImage: this.beforePreview() ?? undefined,
-        afterImage: this.afterPreview() ?? undefined,
       });
+      if (!created) {
+        return;
+      }
     } else {
       const performer = this.performerOptions().find((p) => p.id === v.performerId);
       if (!performer) {
@@ -184,17 +211,14 @@ export class ReviewsPageComponent {
         return;
       }
 
-      this.reviewStore.addReview({
-        name: v.clientName,
-        performerType,
-        performerTypeKey,
+      const created = await this.reviewStore.addReview({
+        ...sharedPayload,
         category: performer.name,
         performerId: performer.id,
-        review: v.review,
-        rating: v.rating,
-        beforeImage: this.beforePreview() ?? undefined,
-        afterImage: this.afterPreview() ?? undefined,
       });
+      if (!created) {
+        return;
+      }
     }
 
     this.submitSuccess.set(true);
@@ -204,7 +228,9 @@ export class ReviewsPageComponent {
       performerFreeText: '',
       rating: 0,
       review: '',
+      recommendConfirm: false,
     });
+    this.applyFormModeValidators();
     this.performerQuery.set('');
     this.beforePreview.set(null);
     this.afterPreview.set(null);
@@ -212,7 +238,9 @@ export class ReviewsPageComponent {
     setTimeout(() => this.submitSuccess.set(false), 6000);
   }
 
-  fieldInvalid(field: 'clientName' | 'performerId' | 'performerFreeText' | 'rating' | 'review'): boolean {
+  fieldInvalid(
+    field: 'clientName' | 'performerId' | 'performerFreeText' | 'rating' | 'review' | 'recommendConfirm',
+  ): boolean {
     const control = this.reviewForm.get(field);
     return !!control && control.invalid && control.touched;
   }
@@ -249,8 +277,51 @@ export class ReviewsPageComponent {
     return this.translation.t(`reviewsPage.categories.${key}`);
   }
 
+  formModeLabel(mode: ReviewFormMode): string {
+    return this.translation.t(`reviewsPage.formModes.${mode}`);
+  }
+
   dynamicTitle(): string {
-    return this.translation.t(`reviewsPage.titles.${this.category()}`);
+    const prefix = this.isRecommendationMode() ? 'recommendationTitles' : 'titles';
+    return this.translation.t(`reviewsPage.${prefix}.${this.category()}`);
+  }
+
+  dynamicSubtitle(): string {
+    return this.translation.t(
+      this.isRecommendationMode() ? 'reviewsPage.recommendationSubtitle' : 'reviewsPage.subtitle',
+    );
+  }
+
+  submitSuccessMessage(): string {
+    return this.translation.t(
+      this.isRecommendationMode()
+        ? 'reviewsPage.form.recommendationSuccess'
+        : 'reviewsPage.form.success',
+    );
+  }
+
+  submitButtonLabel(): string {
+    return this.translation.t(
+      this.isRecommendationMode() ? 'reviewsPage.form.submitRecommendation' : 'reviewsPage.form.submit',
+    );
+  }
+
+  reviewTextLabel(): string {
+    return this.translation.t(
+      this.isRecommendationMode() ? 'reviewsPage.form.recommendationText' : 'reviewsPage.form.text',
+    );
+  }
+
+  reviewTextPlaceholder(): string {
+    return this.translation.t(
+      this.isRecommendationMode() ? 'reviewsPage.form.recommendationTextPh' : 'reviewsPage.form.textPh',
+    );
+  }
+
+  reviewTextError(): string {
+    return this.translation.t(
+      this.isRecommendationMode() ? 'reviewsPage.errors.recommendationText' : 'reviewsPage.errors.text',
+    );
   }
 
   performerPlaceholder(): string {
@@ -260,6 +331,39 @@ export class ReviewsPageComponent {
   ratingDisplay(review: { rating?: number }): string {
     const value = review.rating ?? 0;
     return '★'.repeat(value) + '☆'.repeat(Math.max(0, 5 - value));
+  }
+
+  private applyFormModeValidators() {
+    const reviewControl = this.reviewForm.get('review');
+    const ratingControl = this.reviewForm.get('rating');
+    const confirmControl = this.reviewForm.get('recommendConfirm');
+
+    if (this.isRecommendationMode()) {
+      reviewControl?.setValidators([
+        Validators.required,
+        Validators.minLength(10),
+        maxWordsValidator(),
+      ]);
+      ratingControl?.clearValidators();
+      ratingControl?.setValue(5);
+      confirmControl?.setValidators([Validators.requiredTrue]);
+    } else {
+      reviewControl?.setValidators([
+        Validators.required,
+        Validators.minLength(20),
+        maxWordsValidator(),
+      ]);
+      ratingControl?.setValidators([Validators.required, Validators.min(1), Validators.max(5)]);
+      if (ratingControl?.value === 5 && !ratingControl.dirty) {
+        ratingControl.setValue(0);
+      }
+      confirmControl?.clearValidators();
+      confirmControl?.setValue(false);
+    }
+
+    reviewControl?.updateValueAndValidity({ emitEvent: false });
+    ratingControl?.updateValueAndValidity({ emitEvent: false });
+    confirmControl?.updateValueAndValidity({ emitEvent: false });
   }
 
   private mapCategory(category: ReviewCategoryKey): {

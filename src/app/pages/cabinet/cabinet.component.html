@@ -71,6 +71,68 @@
                 }
               </label>
 
+              @if (selectedAccountType() !== 'furniture') {
+                <label
+                  class="register-field"
+                  [class.register-field--error]="registerFieldInvalid('email')"
+                >
+                  <span class="register-label">
+                    <span class="field-icon" aria-hidden="true">✉</span>
+                    {{ translation.t('cabinet.emailLabel') }}
+                    <em>{{ translation.t('cabinet.required') }}</em>
+                  </span>
+                  <input
+                    type="email"
+                    formControlName="email"
+                    [placeholder]="translation.t('cabinet.emailPlaceholder')"
+                    autocomplete="email"
+                  />
+                  @if (registerFieldInvalid('email')) {
+                    <small class="field-error">{{ translation.t('cabinet.emailError') }}</small>
+                  }
+                </label>
+
+                <label
+                  class="register-field"
+                  [class.register-field--error]="registerFieldInvalid('password')"
+                >
+                  <span class="register-label">
+                    <span class="field-icon" aria-hidden="true">🔑</span>
+                    {{ translation.t('cabinet.passwordLabel') }}
+                    <em>{{ translation.t('cabinet.required') }}</em>
+                  </span>
+                  <input
+                    type="password"
+                    formControlName="password"
+                    [placeholder]="translation.t('cabinet.passwordPlaceholder')"
+                    autocomplete="new-password"
+                  />
+                  @if (registerFieldInvalid('password')) {
+                    <small class="field-error">{{ translation.t('cabinet.passwordError') }}</small>
+                  }
+                </label>
+
+                <label
+                  class="register-field"
+                  [class.register-field--error]="registerFieldInvalid('city')"
+                >
+                  <span class="register-label">
+                    <span class="field-icon" aria-hidden="true">📍</span>
+                    {{ translation.t('cabinet.cityLabel') }}
+                    <em>{{ translation.t('cabinet.required') }}</em>
+                  </span>
+                  <select formControlName="city">
+                    @for (option of cityOptions; track option.id) {
+                      <option [value]="option.id">{{ cityLabel(option.id) }}</option>
+                    }
+                  </select>
+                  <small class="register-field-hint">{{ translation.t('cabinet.cityHint') }}</small>
+                  @if (registerFieldInvalid('city')) {
+                    <small class="field-error">{{ translation.t('cabinet.cityError') }}</small>
+                  }
+                </label>
+              }
+
               <div
                 class="register-field register-field--specialty"
                 [class.register-field--error]="registerFieldInvalid('specialty')"

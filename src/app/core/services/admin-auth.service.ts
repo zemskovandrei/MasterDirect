@@ -1,8 +1,11 @@
-import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { User } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
+
+/** Отладка UI админки. Держите false в production. */
+export const DEBUG_FORCE_ADMIN_UI = false;
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
@@ -10,11 +13,34 @@ export class AdminAuthService {
   private readonly auth = inject(AuthService);
   private readonly isAdminSignal = signal(false);
 
-  readonly isAdmin = this.isAdminSignal.asReadonly();
+  /** true только при входе администратора через Supabase Auth. */
+  readonly isAdmin = computed(() =>
+    DEBUG_FORCE_ADMIN_UI ? true : this.isAdminSignal(),
+  );
+
+  /** Кнопки редактирования/удаления — только для авторизованного админа. */
+  readonly showAdminControls = this.isAdmin;
+
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      void this.syncFromSession();
+      this.initPromise = this.syncFromSession();
+
+      effect(() => {
+        this.isAdminSignal.set(this.isAdminUser(this.auth.user()));
+      });
+    }
+  }
+
+  /** Дождаться синхронизации сессии (нужно после F5, до загрузки заказов). */
+  async ensureReady(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (this.initPromise) {
+      await this.initPromise;
     }
   }
 
@@ -29,19 +55,16 @@ export class AdminAuthService {
       return false;
     }
 
-    this.isAdminSignal.set(true);
     return true;
   }
 
   async logout(): Promise<void> {
     await this.auth.signOut();
-    this.isAdminSignal.set(false);
   }
 
   private async syncFromSession(): Promise<void> {
     await this.auth.ensureInitialized();
-    const user = await this.auth.getUser();
-    this.isAdminSignal.set(this.isAdminUser(user));
+    await this.auth.getUser();
   }
 
   private isAdminUser(user: User | null): boolean {

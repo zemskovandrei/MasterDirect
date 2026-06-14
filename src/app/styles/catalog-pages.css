@@ -3,6 +3,126 @@
   background: var(--color-bg);
 }
 
+/* Full-page photo backdrop for Masters / Brigades / Furniture tabs */
+.catalog-tab-page {
+  background-attachment: scroll;
+}
+
+.catalog-tab-page .page-hero {
+  background: transparent;
+  padding-bottom: clamp(1.25rem, 3vw, 2rem);
+}
+
+.catalog-tab-page .page-hero::before,
+.catalog-tab-page .page-hero::after {
+  display: none;
+}
+
+.catalog-tab-page .page-hero h1 {
+  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.35);
+}
+
+.catalog-tab-page .page-hero p {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.28);
+}
+
+.catalog-tab-page .catalog {
+  background: transparent;
+  padding-top: 0;
+}
+
+.catalog-tab-page .catalog-group {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.catalog-tab-page .catalog-group--worker,
+.catalog-tab-page .catalog-group--brigade,
+.catalog-tab-page .catalog-group--furniture {
+  background: transparent;
+}
+
+.catalog-tab-page .catalog-group-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.catalog-tab-page .catalog-group-header h2 {
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+}
+
+.catalog-tab-page .catalog-group-lead {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.32);
+}
+
+.catalog-tab-page .catalog-group-count {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.28);
+}
+
+.catalog-tab-page .catalog-admin-toolbar {
+  margin-top: 1rem;
+}
+
+.catalog-tab-page .catalog-group-body {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.1),
+    0 24px 64px rgba(0, 0, 0, 0.16);
+}
+
+.catalog-tab-page .catalog-group--worker .catalog-group-body {
+  border-color: rgba(0, 184, 212, 0.22);
+}
+
+.catalog-tab-page .catalog-group--brigade .catalog-group-body {
+  border-color: rgba(16, 20, 38, 0.12);
+}
+
+.catalog-tab-page .catalog-group--furniture .catalog-group-body {
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.catalog-tab-page .jobs-board {
+  background: transparent;
+  padding-top: 0;
+}
+
+.catalog-tab-page .reviews-surface {
+  background: transparent;
+  padding-top: 0;
+}
+
+.catalog-tab-page .reviews-feed .section-header {
+  text-align: center;
+}
+
+.catalog-tab-page .reviews-feed .section-eyebrow {
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.28);
+}
+
+.catalog-tab-page .reviews-feed .section-header h2 {
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+}
+
+.catalog-tab-page .reviews-feed .section-subtitle {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.32);
+}
+
 .catalog-inner {
   max-width: 1200px;
   margin: 0 auto;
@@ -390,6 +510,13 @@
   font-size: 0.88rem;
 }
 
+.performer-phone {
+  margin: 0 0 0.5rem;
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .performer-specialty {
   margin: 0 0 0.5rem;
   color: var(--color-accent-dark);
@@ -595,6 +722,14 @@
 @media (max-width: 640px) {
   .catalog-group,
   .estimate-panel {
+    padding: 1.25rem;
+  }
+
+  .catalog-tab-page .catalog-group {
+    padding: 0;
+  }
+
+  .catalog-tab-page .catalog-group-body {
     padding: 1.25rem;
   }
 

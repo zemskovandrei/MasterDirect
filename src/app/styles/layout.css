@@ -82,6 +82,41 @@ h2 {
 }
 
 /* Hero Section */
+.site-marquee {
+  overflow: hidden;
+  background: var(--color-navy);
+  border-block: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.site-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: site-marquee-scroll 28s linear infinite;
+}
+
+.site-marquee__item {
+  flex: 0 0 auto;
+  padding: 0.85rem 2.5rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(0.82rem, 1.6vw, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.site-marquee__item::after {
+  content: '•';
+  margin-left: 2.5rem;
+  color: var(--color-mint);
+}
+
+@keyframes site-marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .hero-slider {
   padding: 0;
   position: relative;

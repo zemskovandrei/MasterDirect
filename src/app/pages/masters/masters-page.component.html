@@ -1,3 +1,4 @@
+<div class="catalog-tab-page" [ngStyle]="catalogTabBackground">
 <section class="page-hero">
   <div class="page-hero-inner">
     <h1>{{ translation.t('masters.title') }}</h1>
@@ -18,12 +19,12 @@
         </div>
         <h2>{{ translation.t('masters.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('masters.listLead') }}</p>
-        @if (supabase.workers().length > 0) {
+        @if (displayWorkers().length > 0) {
           <p class="catalog-group-count">
-            {{ supabase.workers().length }} {{ translation.t('masters.inCatalog') }}
+            {{ displayWorkers().length }} {{ translation.t('masters.inCatalog') }}
           </p>
         }
-        @if (adminAuth.isAdmin()) {
+        @if (adminAuth.showAdminControls()) {
           <div class="catalog-admin-toolbar">
             <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
             <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
@@ -33,13 +34,14 @@
         }
       </header>
 
+      <div class="catalog-group-body">
       <div class="performer-grid">
-        @for (p of supabase.workers(); track p.id) {
+        @for (p of displayWorkers(); track p.id) {
           <article
             class="performer-card performer-card--worker"
-            [class.performer-card--admin]="adminAuth.isAdmin()"
+            [class.performer-card--admin]="adminAuth.showAdminControls()"
           >
-            @if (adminAuth.isAdmin()) {
+            @if (adminAuth.showAdminControls()) {
               <div class="performer-admin-actions">
                 <button
                   type="button"
@@ -65,8 +67,15 @@
               <h3>
                 <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
               </h3>
-              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
+              @if (p.socialLinks?.phone; as phone) {
+                <p class="performer-phone">{{ phone }}</p>
+              }
+              @if (catalogL10n.performerSpecialty(p)) {
+                <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              }
+              @if (catalogL10n.performerDescription(p)) {
+                <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
+              }
             </div>
             @if (p.works[0]) {
               <app-before-after [work]="p.works[0]" layout="split" />
@@ -75,20 +84,22 @@
               {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
             </a>
           </article>
-        } @empty {
-          @if (supabase.loaded()) {
-            <div class="catalog-empty-cta">
-              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-              <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-                {{ translation.t('catalog.autoMatchCta') }}
-              </a>
-            </div>
-          }
         }
+
+        @if (showAutoMatchEmpty()) {
+          <div class="catalog-empty-cta">
+            <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
+            <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
+              {{ translation.t('catalog.autoMatchCta') }}
+            </a>
+          </div>
+        }
+      </div>
       </div>
     </section>
   </div>
 </section>
+</div>
 
 @if (editingPerformer(); as performer) {
   <div class="performer-edit-overlay" (click)="closeEditPerformer()">

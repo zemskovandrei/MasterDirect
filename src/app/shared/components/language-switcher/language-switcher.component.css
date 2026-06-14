@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
 .lang-switcher {
   position: relative;
   flex-shrink: 0;

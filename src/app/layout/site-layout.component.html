@@ -1,133 +1,161 @@
 <div class="site-layout">
   <header class="header">
     <div class="header-container">
-      <a class="logo" routerLink="/" [attr.aria-label]="title()">
-        <h1 class="visually-hidden">{{ title() }}</h1>
-        <svg
-          class="logo-mark"
-          viewBox="0 0 272 44"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="logo-cream" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#FFFDF9" />
-              <stop offset="100%" stop-color="#E7E0D4" />
-            </linearGradient>
-            <linearGradient id="logo-mint" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#7BC9A0" />
-              <stop offset="100%" stop-color="#00E5A8" />
-            </linearGradient>
-            <linearGradient id="logo-bridge" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#F2EBE2" />
-              <stop offset="45%" stop-color="#C5E6D4" />
-              <stop offset="100%" stop-color="#00E5A8" />
-            </linearGradient>
-            <filter id="logo-shadow" x="-8%" y="-20%" width="116%" height="140%">
-              <feDropShadow
-                dx="0"
-                dy="1.5"
-                stdDeviation="1.2"
-                flood-color="#020408"
-                flood-opacity="0.45"
+      <div class="header-logo">
+        <a class="logo" routerLink="/" [attr.aria-label]="title()">
+          <h1 class="visually-hidden">{{ title() }}</h1>
+          <svg
+            class="logo-mark"
+            viewBox="0 0 272 44"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="logo-cream" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FFFDF9" />
+                <stop offset="100%" stop-color="#E7E0D4" />
+              </linearGradient>
+              <linearGradient id="logo-mint" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#7BC9A0" />
+                <stop offset="100%" stop-color="#00E5A8" />
+              </linearGradient>
+              <linearGradient id="logo-bridge" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#F2EBE2" />
+                <stop offset="45%" stop-color="#C5E6D4" />
+                <stop offset="100%" stop-color="#00E5A8" />
+              </linearGradient>
+              <filter id="logo-shadow" x="-8%" y="-20%" width="116%" height="140%">
+                <feDropShadow
+                  dx="0"
+                  dy="1.5"
+                  stdDeviation="1.2"
+                  flood-color="#020408"
+                  flood-opacity="0.45"
+                />
+              </filter>
+              <filter id="logo-tech-glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation="2.5"
+                  flood-color="#00E5A8"
+                  flood-opacity="0.4"
+                />
+              </filter>
+            </defs>
+            <g filter="url(#logo-shadow)">
+              <text
+                x="0"
+                y="34"
+                font-family="Onest, system-ui, sans-serif"
+                font-size="30"
+                font-weight="700"
+                letter-spacing="-0.06em"
+              >
+                <tspan fill="url(#logo-cream)">SmartBuild</tspan>
+                <tspan fill="url(#logo-mint)" filter="url(#logo-tech-glow)">tech</tspan>
+              </text>
+              <path
+                d="M 154 19.5 Q 166 19.5 174 19.5 L 182 19.5"
+                fill="none"
+                stroke="url(#logo-bridge)"
+                stroke-width="2.25"
+                stroke-linecap="round"
               />
-            </filter>
-            <filter id="logo-tech-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow
-                dx="0"
-                dy="0"
-                stdDeviation="2.5"
-                flood-color="#00E5A8"
-                flood-opacity="0.4"
-              />
-            </filter>
-          </defs>
-          <g filter="url(#logo-shadow)">
-            <text
-              x="0"
-              y="34"
-              font-family="Onest, system-ui, sans-serif"
-              font-size="30"
-              font-weight="700"
-              letter-spacing="-0.06em"
-            >
-              <tspan fill="url(#logo-cream)">SmartBuild</tspan>
-              <tspan fill="url(#logo-mint)" filter="url(#logo-tech-glow)">tech</tspan>
-            </text>
-            <path
-              d="M 154 19.5 Q 166 19.5 174 19.5 L 182 19.5"
-              fill="none"
-              stroke="url(#logo-bridge)"
-              stroke-width="2.25"
-              stroke-linecap="round"
-            />
-          </g>
-        </svg>
-      </a>
-
-      <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
-        <ul>
-          <li>
-            <a
-              routerLink="/"
-              fragment="features"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              (click)="onNavClick()"
-            >
-              {{ translation.t('app.nav.features') }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="/brigades" routerLinkActive="active" (click)="onNavClick()">
-              {{ translation.t('app.nav.brigades') }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="/masters" routerLinkActive="active" (click)="onNavClick()">
-              {{ translation.t('app.nav.masters') }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="/furniture" routerLinkActive="active" (click)="onNavClick()">
-              {{ translation.t('app.nav.furniture') }}
-            </a>
-          </li>
-          <li>
-            <a
-              routerLink="/jobs"
-              routerLinkActive="active"
-              (click)="onNavClick()"
-              (mouseenter)="prefetchJobs()"
-              (focus)="prefetchJobs()"
-            >
-              {{ translation.t('app.nav.jobs') }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="/reviews" routerLinkActive="active" (click)="onNavClick()">
-              {{ translation.t('app.nav.reviews') }}
-            </a>
-          </li>
-        </ul>
-      </nav>
-
-      <div class="header-end">
-        <app-language-switcher />
+            </g>
+          </svg>
+        </a>
       </div>
 
-      <button
-        type="button"
-        class="menu-toggle"
-        (click)="toggleMobileMenu()"
-        [attr.aria-expanded]="mobileMenuOpen()"
-        aria-controls="main-nav"
-        [attr.aria-label]="translation.t('app.actions.openMenu')"
-      >
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-      </button>
+      <div class="header-menu">
+        <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
+          <ul>
+            <li>
+              <a
+                routerLink="/"
+                fragment="features"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="onNavClick()"
+              >
+                {{ translation.t('app.nav.features') }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="/brigades" routerLinkActive="active" (click)="onNavClick()">
+                {{ translation.t('app.nav.brigades') }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="/masters" routerLinkActive="active" (click)="onNavClick()">
+                {{ translation.t('app.nav.masters') }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="/furniture" routerLinkActive="active" (click)="onNavClick()">
+                {{ translation.t('app.nav.furniture') }}
+              </a>
+            </li>
+            <li>
+              <a
+                routerLink="/jobs"
+                routerLinkActive="active"
+                (click)="onNavClick()"
+                (mouseenter)="prefetchJobs()"
+                (focus)="prefetchJobs()"
+              >
+                {{ translation.t('app.nav.jobs') }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="/reviews" routerLinkActive="active" (click)="onNavClick()">
+                {{ translation.t('app.nav.reviews') }}
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="header-actions">
+        <app-language-switcher />
+        @if (isLoggedIn()) {
+          <a
+            class="header-profile"
+            [routerLink]="profileRoute()"
+            routerLinkActive="header-profile--active"
+            [attr.aria-label]="translation.t('app.nav.cabinet')"
+            (click)="onNavClick()"
+          >
+            @if (profileInitial()) {
+              <span class="header-profile__initial" aria-hidden="true">{{ profileInitial() }}</span>
+            } @else {
+              <svg
+                class="header-profile__icon"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                  fill="currentColor"
+                />
+              </svg>
+            }
+          </a>
+        }
+        <button
+          type="button"
+          class="menu-toggle"
+          (click)="toggleMobileMenu()"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-controls="main-nav"
+          [attr.aria-label]="translation.t('app.actions.openMenu')"
+        >
+          <span class="menu-toggle-bar"></span>
+          <span class="menu-toggle-bar"></span>
+          <span class="menu-toggle-bar"></span>
+        </button>
+      </div>
     </div>
 
     @if (mobileMenuOpen()) {

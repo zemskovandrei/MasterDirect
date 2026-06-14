@@ -81,7 +81,15 @@
   </div>
 </section>
 
-<section class="renovation-calculator" id="calculator">
+<div class="site-marquee" aria-hidden="true">
+  <div class="site-marquee__track">
+    @for (item of siteMarqueeItems; track item) {
+      <span class="site-marquee__item">SmartBuild.Tech</span>
+    }
+  </div>
+</div>
+
+<section class="renovation-calculator" id="calculator" [ngStyle]="calculatorBackground">
   <div class="renovation-calculator__container">
     <div class="section-header renovation-calculator__header">
       <span class="section-eyebrow">{{ translation.t('home.calculator.eyebrow') }}</span>
@@ -489,7 +497,7 @@
                       </article>
                     }
                   </div>
-                } @else {
+                } @else if (supabase.catalogReady()) {
                   <p class="quiz-step__empty">
                     {{ translation.t('home.calculator.performersEmpty') }}
                   </p>

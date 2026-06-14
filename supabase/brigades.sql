@@ -24,3 +24,15 @@ drop policy if exists "Public read brigades" on public.brigades;
 create policy "Public read brigades"
   on public.brigades for select
   using (true);
+
+-- Requires public.is_app_admin() from supabase/masters.sql
+drop policy if exists "Admin update brigades" on public.brigades;
+create policy "Admin update brigades"
+  on public.brigades for update
+  using (public.is_app_admin())
+  with check (public.is_app_admin());
+
+drop policy if exists "Admin delete brigades" on public.brigades;
+create policy "Admin delete brigades"
+  on public.brigades for delete
+  using (public.is_app_admin());

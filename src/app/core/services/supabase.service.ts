@@ -31,7 +31,9 @@ import {
   toJobklientDbRow,
 } from '../../models/job.model';
 import type { BrigadeRow, FurnitureOrderInsert, FurnitureOrderRow, MasterRow } from '../models/master.model';
+import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { logSupabaseError } from '../utils/supabase-error.util';
+import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
@@ -40,15 +42,6 @@ const JOBS_CACHE_KEY = 'smartbuild.jobs.v3';
 const JOBS_CACHE_TTL_MS = 2 * 60 * 1000;
 const JOBS_LIST_COLUMNS =
   'id,title,client_name,phone,city,category,budget,description,status,created_at';
-
-const MASTERS_SELECT_COLUMNS =
-  'id,full_name,phone,city,specialty,description,account_type,call_out_fee,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
-
-const BRIGADES_SELECT_COLUMNS =
-  'id,full_name,phone,city,specialty,description,call_out_fee,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
-
-const FURNITURE_ORDERS_PROFILE_COLUMNS =
-  'id,full_name,phone,city,specialty,description,furniture_type,work_type,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
 
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
@@ -81,10 +74,14 @@ export class SupabaseService {
   private clientPromise: Promise<SupabaseClient | null> | null = null;
   private jobsFetchPromise: Promise<Job[]> | null = null;
   private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
+  private profilesRefreshPromise: Promise<Profile[]> | null = null;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly loadedSignal = signal(false);
   private readonly loadingSignal = signal(false);
+  /** Фильтр по городу в каталоге — по умолчанию выключен. */
+  private readonly catalogCityFilterEnabledSignal = signal(false);
+  private readonly catalogCityFilterSignal = signal<string | null>(null);
   private readonly activeJobsSignal = signal<Job[]>([]);
   private readonly jobsLoadingSignal = signal(false);
   private readonly jobsErrorSignal = signal<string | null>(null);
@@ -97,24 +94,39 @@ export class SupabaseService {
   readonly jobsLoading = this.jobsLoadingSignal.asReadonly();
   readonly jobsError = this.jobsErrorSignal.asReadonly();
   readonly jobsAccessDenied = this.jobsAccessDeniedSignal.asReadonly();
+  readonly catalogCityFilterEnabled = this.catalogCityFilterEnabledSignal.asReadonly();
+  readonly catalogCityFilter = this.catalogCityFilterSignal.asReadonly();
+  readonly catalogReady = computed(() => this.loadedSignal() && !this.loadingSignal());
 
-  readonly brigades = computed(() =>
-    this.profilesSignal()
+  readonly brigades = computed(() => {
+    const filterEnabled = this.catalogCityFilterEnabledSignal();
+    const filterCity = this.catalogCityFilterSignal();
+
+    return this.profilesSignal()
       .filter((profile) => profile.type === 'brigade')
-      .map((profile) => this.toPerformer(profile)),
-  );
+      .filter((profile) => profileMatchesCatalogCity(profile, filterCity, filterEnabled))
+      .map((profile) => this.toPerformer(profile));
+  });
 
-  readonly workers = computed(() =>
-    this.profilesSignal()
+  readonly workers = computed(() => {
+    const filterEnabled = this.catalogCityFilterEnabledSignal();
+    const filterCity = this.catalogCityFilterSignal();
+
+    return this.profilesSignal()
       .filter((profile) => profile.type === 'worker')
-      .map((profile) => this.toPerformer(profile)),
-  );
+      .filter((profile) => profileMatchesCatalogCity(profile, filterCity, filterEnabled))
+      .map((profile) => this.toPerformer(profile));
+  });
 
-  readonly furnitureCompanies = computed(() =>
-    this.profilesSignal()
+  readonly furnitureCompanies = computed(() => {
+    const filterEnabled = this.catalogCityFilterEnabledSignal();
+    const filterCity = this.catalogCityFilterSignal();
+
+    return this.profilesSignal()
       .filter((profile) => profile.type === 'furniture')
-      .map((profile) => this.toFurnitureCompany(profile)),
-  );
+      .filter((profile) => profileMatchesCatalogCity(profile, filterCity, filterEnabled))
+      .map((profile) => this.toFurnitureCompany(profile));
+  });
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -306,11 +318,21 @@ export class SupabaseService {
   }
 
   deleteJobklientJob(id: string): Observable<JobklientMutationResult> {
+    return this.deleteJob(id);
+  }
+
+  /** Удаление заказа из таблицы Supabase `jobklient` по UUID. */
+  deleteJob(id: string): Observable<JobklientMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ error: 'Browser only' });
     }
 
-    return from(this.deleteJobklientJobRow(id));
+    return from(this.deleteJobklientJobRow(id)).pipe(
+      catchError((err) => {
+        console.error('Jobklient delete error:', err);
+        return of({ error: err instanceof Error ? err.message : 'Delete failed' });
+      }),
+    );
   }
 
   loadProfiles(): Observable<Profile[]> {
@@ -327,6 +349,10 @@ export class SupabaseService {
   }
 
   getProfilesByType(type: ProfileType): Observable<Profile[]> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of([]);
+    }
+
     return from(
       this.refreshProfilesFromDatabase().then((profiles) =>
         profiles.filter((profile) => profile.type === type),
@@ -387,12 +413,44 @@ export class SupabaseService {
     return from(this.updateProfileRow(id, patch));
   }
 
-  deleteProfile(id: string): Observable<SupabaseMutationResult<null>> {
+  deleteProfile(id: string, type?: ProfileType): Observable<SupabaseMutationResult<null>> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ data: null, error: 'Browser only' });
     }
 
-    return from(this.deleteProfileRow(id));
+    return from(this.deleteProfileRow(id, type)).pipe(
+      catchError((err) => {
+        console.error('Delete error:', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Delete failed',
+        });
+      }),
+    );
+  }
+
+  deleteMaster(id: string): Observable<SupabaseMutationResult<null>> {
+    return this.deleteProfile(id, 'worker');
+  }
+
+  deleteBrigade(id: string): Observable<SupabaseMutationResult<null>> {
+    return this.deleteProfile(id, 'brigade');
+  }
+
+  deleteFurnitureOrder(id: string): Observable<SupabaseMutationResult<null>> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.deleteFurnitureOrderRow(id)).pipe(
+      catchError((err) => {
+        console.error('Furniture delete error:', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Delete failed',
+        });
+      }),
+    );
   }
 
   private async updateProfileRow(
@@ -432,13 +490,34 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
+      const patchPayload = {
+        full_name: name,
+        specialty,
+        description,
+      };
+
+      if (masterProfile.type === 'brigade') {
+        const { data: brigadeData, error: brigadeError } = await client
+          .from(environment.supabase.brigadesTable)
+          .update(patchPayload)
+          .eq('id', id)
+          .select('*')
+          .maybeSingle();
+
+        if (brigadeError) {
+          console.error('[SupabaseService] updateProfile (brigades):', brigadeError.message);
+          return { data: null, error: brigadeError.message };
+        }
+
+        if (brigadeData) {
+          await this.refreshProfilesFromDatabase();
+          return { data: brigadeRowToProfile(brigadeData as BrigadeRow), error: null };
+        }
+      }
+
       const { data, error } = await client
         .from(environment.supabase.mastersTable)
-        .update({
-          full_name: name,
-          specialty,
-          description,
-        })
+        .update(patchPayload)
         .eq('id', id)
         .select('*')
         .maybeSingle();
@@ -461,24 +540,146 @@ export class SupabaseService {
     }
   }
 
-  private async deleteProfileRow(id: string): Promise<SupabaseMutationResult<null>> {
-    if (this.portfolioStore.deletePerformer(id)) {
-      await this.refreshProfilesFromDatabase();
-      return { data: null, error: null };
+  private async deleteProfileRow(
+    id: string,
+    type?: ProfileType,
+  ): Promise<SupabaseMutationResult<null>> {
+    const trimmedId = id?.trim();
+    if (!trimmedId) {
+      console.error('Delete error:', 'Missing profile id');
+      return { data: null, error: 'Missing profile id' };
     }
 
-    const companyExists = this.furnitureStore.companies().some((company) => company.id === id);
-    if (companyExists) {
-      this.furnitureStore.removeCompanyIfExists(id);
-      await this.refreshProfilesFromDatabase();
-      return { data: null, error: null };
+    const profile = this.profilesSignal().find((item) => item.id === trimmedId);
+    const resolvedType = type ?? profile?.type;
+
+    if (resolvedType === 'furniture') {
+      return this.deleteFurnitureOrderRow(trimmedId);
     }
 
-    const masterProfile = this.profilesSignal().find(
-      (item) => item.id === id && item.type !== 'furniture',
+    if (resolvedType === 'brigade') {
+      return this.deleteBrigadeRow(trimmedId);
+    }
+
+    return this.deleteMasterRow(trimmedId);
+  }
+
+  private removeProfileFromState(id: string): void {
+    const target = id.trim();
+    this.profilesSignal.update((profiles) =>
+      profiles.filter((profile) => profile.id !== target && profile.slug !== target),
     );
-    if (!masterProfile) {
-      return { data: null, error: 'Profile not found' };
+    this.portfolioStore.deletePerformer(target);
+    this.furnitureStore.removeCompanyIfExists(target);
+  }
+
+  private removeLocalFurnitureBySlug(slug: string): void {
+    const target = slug.trim();
+    if (!target) {
+      return;
+    }
+
+    this.furnitureStore.removeCompanyIfExists(target);
+    this.profilesSignal.update((profiles) =>
+      profiles.filter((profile) => profile.id !== target && profile.slug !== target),
+    );
+  }
+
+  private resolveFurnitureOrderDbId(idOrSlug: string): string | null {
+    const key = idOrSlug.trim();
+    if (!key) {
+      return null;
+    }
+
+    if (isUuid(key)) {
+      return key;
+    }
+
+    const furnitureProfiles = this.profilesSignal().filter((profile) => profile.type === 'furniture');
+    const matchedProfile = furnitureProfiles.find(
+      (profile) => profile.id === key || profile.slug === key,
+    );
+    if (matchedProfile && isUuid(matchedProfile.id)) {
+      return matchedProfile.id;
+    }
+
+    const localCompany = this.furnitureStore.getCompany(key);
+    if (!localCompany) {
+      return null;
+    }
+
+    const localDbId = normalizeUuid(localCompany.dbId);
+    if (localDbId) {
+      return localDbId;
+    }
+
+    const byName = furnitureProfiles.find(
+      (profile) =>
+        isUuid(profile.id) &&
+        profile.name.trim().toLowerCase() === localCompany.name.trim().toLowerCase(),
+    );
+    return byName && isUuid(byName.id) ? byName.id : null;
+  }
+
+  private logFurnitureDeleteResponse(
+    error: { message?: string; details?: string } | null,
+    dbId: string,
+  ): void {
+    if (error) {
+      console.error('КРИТИЧЕСКАЯ ОШИБКА Supabase при удалении мебели:', error.message, error.details, {
+        dbId,
+      });
+      return;
+    }
+
+    console.log('Успешный ответ Supabase при удалении мебели:', { id: dbId });
+  }
+
+  private async deleteFurnitureOrderRow(id: string): Promise<SupabaseMutationResult<null>> {
+    const dbId = normalizeUuid(id?.trim()) || this.resolveFurnitureOrderDbId(id?.trim() ?? '');
+    if (!dbId) {
+      console.error('Furniture delete error: missing UUID', id);
+      return { data: null, error: 'Missing furniture order UUID (dbId)' };
+    }
+
+    try {
+      if (!this.isConfigured()) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      console.log('[SupabaseService] deleteFurnitureOrder: DELETE by id', dbId);
+
+      const { error } = await client
+        .from(environment.supabase.furnitureOrdersTable)
+        .delete()
+        .eq('id', dbId);
+
+      this.logFurnitureDeleteResponse(error, dbId);
+
+      if (error) {
+        return { data: null, error: error.message };
+      }
+
+      this.removeProfileFromState(dbId);
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
+    } catch (err) {
+      console.error('КРИТИЧЕСКАЯ ОШИБКА Supabase при удалении мебели:', err);
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      return { data: null, error: message };
+    }
+  }
+
+  private async deleteMasterRow(id: string): Promise<SupabaseMutationResult<null>> {
+    if (this.portfolioStore.deletePerformer(id)) {
+      this.removeProfileFromState(id);
+      void this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
     }
 
     try {
@@ -487,19 +688,85 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const { error } = await client.from(environment.supabase.mastersTable).delete().eq('id', id);
+      const { data, error } = await client
+        .from(environment.supabase.mastersTable)
+        .delete()
+        .eq('id', id)
+        .select('id');
 
       if (error) {
-        console.error('[SupabaseService] deleteProfile:', error.message);
+        console.error('Delete error:', error);
         return { data: null, error: error.message };
       }
 
-      this.portfolioStore.deletePerformer(id);
+      if (!data?.length) {
+        const message = 'Master not found or access denied';
+        console.error('Delete error:', message);
+        return { data: null, error: message };
+      }
+
+      this.removeProfileFromState(id);
       await this.refreshProfilesFromDatabase();
       return { data: null, error: null };
     } catch (err) {
+      console.error('Delete error:', err);
       const message = err instanceof Error ? err.message : 'Delete failed';
-      console.error('[SupabaseService] deleteProfile:', err);
+      return { data: null, error: message };
+    }
+  }
+
+  private async deleteBrigadeRow(id: string): Promise<SupabaseMutationResult<null>> {
+    if (this.portfolioStore.deletePerformer(id)) {
+      this.removeProfileFromState(id);
+      void this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { data: brigadeRows, error: brigadeError } = await client
+        .from(environment.supabase.brigadesTable)
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+      const { data: masterRows, error: masterError } = await client
+        .from(environment.supabase.mastersTable)
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+      if (brigadeError) {
+        console.error('Delete error (brigades):', brigadeError);
+      }
+      if (masterError) {
+        console.error('Delete error (masters):', masterError);
+      }
+
+      if (brigadeError && masterError) {
+        return { data: null, error: brigadeError.message || masterError.message };
+      }
+
+      const deletedCount = (brigadeRows?.length ?? 0) + (masterRows?.length ?? 0);
+      if (deletedCount === 0) {
+        const message =
+          brigadeError?.message ||
+          masterError?.message ||
+          'Brigade not found or access denied';
+        console.error('Delete error:', message);
+        return { data: null, error: message };
+      }
+
+      this.removeProfileFromState(id);
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
+    } catch (err) {
+      console.error('Delete error:', err);
+      const message = err instanceof Error ? err.message : 'Delete failed';
       return { data: null, error: message };
     }
   }
@@ -592,16 +859,23 @@ export class SupabaseService {
       }
 
       const row = toFurnitureOrderDbRow(input);
+      const payload = {
+        client_name: row.client_name,
+        client_phone: row.client_phone,
+        furniture_type: row.furniture_type,
+        work_type: row.work_type,
+        description: row.description,
+      };
 
       const { data, error } = await client
         .from(environment.supabase.furnitureOrdersTable)
-        .insert([row])
+        .insert([payload])
         .select('*')
         .single();
 
       if (error) {
         logSupabaseError('insertFurnitureOrder', error);
-        console.error('[SupabaseService] insertFurnitureOrder payload:', row);
+        console.error('[SupabaseService] insertFurnitureOrder payload:', payload);
         return {
           data: null,
           error: error.message,
@@ -768,6 +1042,12 @@ export class SupabaseService {
   }
 
   private async deleteJobklientJobRow(id: string): Promise<JobklientMutationResult> {
+    const jobId = normalizeUuid(id?.trim());
+    if (!jobId) {
+      console.error('Jobklient delete error: missing UUID', id);
+      return { error: 'Missing job id' };
+    }
+
     try {
       if (!this.isConfigured()) {
         return { error: SUPABASE_NOT_CONFIGURED };
@@ -778,16 +1058,24 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const { error } = await client.from(environment.supabase.jobsTable).delete().eq('id', id);
+      console.log('[SupabaseService] deleteJobklientJob: DELETE by id', jobId);
+
+      const { error } = await client
+        .from(environment.supabase.jobsTable)
+        .delete()
+        .eq('id', jobId);
 
       if (error) {
+        console.error('Jobklient delete error:', error.message, error.details);
         logSupabaseError('deleteJobklientJob', error);
         return { error: error.message };
       }
 
-      this.removeJobFromLocalState(id);
+      console.log('Успешный ответ Supabase при удалении jobklient:', { id: jobId });
+      this.removeJobFromLocalState(jobId);
       return { error: null };
     } catch (err) {
+      console.error('Jobklient delete error:', err);
       logSupabaseError('deleteJobklientJob', err);
       const message = err instanceof Error ? err.message : 'Delete failed';
       return { error: message };
@@ -874,7 +1162,26 @@ export class SupabaseService {
     return this.clientPromise;
   }
 
-  private async refreshProfilesFromDatabase(): Promise<Profile[]> {
+  setCatalogCityFilter(city: string | null, enabled = false): void {
+    this.catalogCityFilterSignal.set(city?.trim() || null);
+    this.catalogCityFilterEnabledSignal.set(enabled);
+  }
+
+  private refreshProfilesFromDatabase(): Promise<Profile[]> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return Promise.resolve([]);
+    }
+
+    if (!this.profilesRefreshPromise) {
+      this.profilesRefreshPromise = this.fetchProfilesFromDatabase().finally(() => {
+        this.profilesRefreshPromise = null;
+      });
+    }
+
+    return this.profilesRefreshPromise;
+  }
+
+  private async fetchProfilesFromDatabase(): Promise<Profile[]> {
     this.loadingSignal.set(true);
 
     try {
@@ -892,49 +1199,65 @@ export class SupabaseService {
               : SUPABASE_NOT_CONFIGURED,
           ),
         );
-      } else {
+        return this.profilesSignal();
+      }
+
+      {
         const { data: mastersData, error: mastersError } = await client
           .from(environment.supabase.mastersTable)
-          .select(MASTERS_SELECT_COLUMNS)
-          .eq('account_type', 'worker')
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (mastersError) {
           logSupabaseError('loadMasters', mastersError);
-        } else {
-          masterProfiles =
-            (mastersData as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
+        } else if (mastersData) {
+          for (const row of mastersData as MasterRow[]) {
+            if (!row?.id) {
+              continue;
+            }
+
+            const profile = masterRowToProfile(row);
+            if (profile.name.trim().length === 0) {
+              continue;
+            }
+            if (row.account_type === 'brigade') {
+              brigadeProfiles.push(profile);
+            } else {
+              // worker, null или любое другое значение — показываем в каталоге мастеров
+              masterProfiles.push(profile);
+            }
+          }
         }
+
+        const brigadeById = new Map<string, Profile>(
+          brigadeProfiles.map((profile) => [profile.id, profile]),
+        );
 
         const { data: brigadesData, error: brigadesError } = await client
           .from(environment.supabase.brigadesTable)
-          .select(BRIGADES_SELECT_COLUMNS)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (brigadesError) {
           logSupabaseError('loadBrigades', brigadesError);
-          const { data: fallbackBrigades, error: fallbackError } = await client
-            .from(environment.supabase.mastersTable)
-            .select(MASTERS_SELECT_COLUMNS)
-            .eq('account_type', 'brigade')
-            .order('created_at', { ascending: false });
-
-          if (fallbackError) {
-            logSupabaseError('loadBrigadesFallback', fallbackError);
-          }
-
-          brigadeProfiles =
-            (fallbackBrigades as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
         } else {
-          brigadeProfiles =
-            (brigadesData as BrigadeRow[] | null)?.map(brigadeRowToProfile) ?? [];
+          for (const row of (brigadesData as BrigadeRow[] | null) ?? []) {
+            if (!row?.id) {
+              continue;
+            }
+
+            const profile = brigadeRowToProfile(row);
+            if (profile.name.trim().length > 0) {
+              brigadeById.set(profile.id, profile);
+            }
+          }
         }
+
+        brigadeProfiles = [...brigadeById.values()];
 
         const { data: furnitureData, error: furnitureError } = await client
           .from(environment.supabase.furnitureOrdersTable)
-          .select(FURNITURE_ORDERS_PROFILE_COLUMNS)
-          .not('full_name', 'is', null)
-          .neq('full_name', '')
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (furnitureError) {
@@ -943,22 +1266,48 @@ export class SupabaseService {
           furnitureProfilesFromDb =
             (furnitureData as FurnitureOrderRow[] | null)
               ?.map(furnitureOrderRowToProfile)
-              .filter((profile) => profile.name.trim().length > 0) ?? [];
+              .filter(
+                (profile): profile is Profile =>
+                  profile != null && profile.name.trim().length > 0,
+              ) ?? [];
         }
-      }
 
-      const localFurnitureProfiles = this.furnitureStore
-        .companies()
-        .map((company) => furnitureCompanyToProfile(company));
-      const furnitureById = new Map<string, Profile>();
-      for (const profile of [...furnitureProfilesFromDb, ...localFurnitureProfiles]) {
-        furnitureById.set(profile.id, profile);
+        console.info('[SupabaseService] catalog loaded', {
+          workers: masterProfiles.length,
+          brigades: brigadeProfiles.length,
+          furniture: furnitureProfilesFromDb.length,
+        });
+
+        const localFurnitureProfiles = this.furnitureStore
+          .companies()
+          .map((company) => furnitureCompanyToProfile(company));
+        const furnitureById = new Map<string, Profile>();
+        const dbNames = new Set(
+          furnitureProfilesFromDb.map((profile) => profile.name.trim().toLowerCase()),
+        );
+
+        for (const profile of furnitureProfilesFromDb) {
+          furnitureById.set(profile.id, profile);
+        }
+
+        for (const profile of localFurnitureProfiles) {
+          if (isUuid(profile.id)) {
+            furnitureById.set(profile.id, profile);
+            continue;
+          }
+
+          if (dbNames.has(profile.name.trim().toLowerCase())) {
+            continue;
+          }
+
+          furnitureById.set(profile.id, profile);
+        }
+        const furnitureProfiles = [...furnitureById.values()];
+        const profiles = [...brigadeProfiles, ...masterProfiles, ...furnitureProfiles];
+        this.profilesSignal.set(profiles);
+        this.loadedSignal.set(true);
+        return profiles;
       }
-      const furnitureProfiles = [...furnitureById.values()];
-      const profiles = [...brigadeProfiles, ...masterProfiles, ...furnitureProfiles];
-      this.profilesSignal.set(profiles);
-      this.loadedSignal.set(true);
-      return profiles;
     } catch (err) {
       logSupabaseError('refreshProfilesFromDatabase', err);
       throw err;
@@ -993,7 +1342,12 @@ export class SupabaseService {
   }
 
   private toFurnitureCompany(profile: Profile): FurnitureCompany {
-    const local = this.furnitureStore.companies().find((item) => item.id === profile.id);
+    const local = this.furnitureStore.companies().find(
+      (item) =>
+        item.id === profile.id ||
+        item.dbId === profile.id ||
+        (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
+    );
     return profileToFurnitureCompany(profile, local?.works ?? []);
   }
 }

@@ -10,9 +10,10 @@
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: none;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -512,28 +513,8 @@
 
 /* Header mobile */
 @media (max-width: 900px) {
-  .header-container {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    grid-template-areas: 'logo end toggle';
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-    padding: 0.65rem 1rem;
-  }
-
-  .logo {
-    grid-area: logo;
-    min-width: 0;
-  }
-
-  .header-end {
-    grid-area: end;
-  }
-
   .menu-toggle {
     display: flex;
-    grid-area: toggle;
-    justify-self: end;
   }
 
   .nav {

@@ -8,6 +8,8 @@ export interface Profile {
   name: string;
   specialty: string;
   description: string;
+  /** Локальный slug (не UUID) для маршрутов и legacy localStorage. */
+  slug?: string | null;
   city?: string | null;
   call_out_fee?: string | null;
   avatar_url?: string | null;

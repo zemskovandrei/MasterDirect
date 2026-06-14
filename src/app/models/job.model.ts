@@ -127,6 +127,7 @@ export interface CalculatorFurnitureOrderInput {
 export interface FurnitureOrderDescriptionLabels {
   customer: string;
   contact: string;
+  city?: string;
   area: string;
   photo: string;
   directedTo: string;
@@ -140,6 +141,7 @@ export function buildFurnitureOrderInsert(
   const descriptionLines = [
     `${labels.customer}: ${input.customerName}`,
     `${labels.contact}: ${input.contact}`,
+    input.city.trim() && labels.city ? `${labels.city}: ${input.city.trim()}` : '',
     `${labels.area}: ${input.areaSqm} m²`,
     input.estimateSummary && labels.estimate
       ? `${labels.estimate}:\n${input.estimateSummary}`
@@ -163,7 +165,6 @@ export function toFurnitureOrderDbRow(input: FurnitureOrderInsert): {
   client_phone: string;
   furniture_type: string;
   work_type: string;
-  city: string | null;
   description: string | null;
 } {
   return {
@@ -171,7 +172,6 @@ export function toFurnitureOrderDbRow(input: FurnitureOrderInsert): {
     client_phone: input.client_phone.trim(),
     furniture_type: input.furniture_type.trim(),
     work_type: input.work_type.trim(),
-    city: input.city?.trim() || null,
     description: input.description?.trim() || null,
   };
 }

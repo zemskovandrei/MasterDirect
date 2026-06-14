@@ -42,10 +42,12 @@ export class FurnitureStoreService {
     city?: string;
     socialLinks?: PerformerSocialLinks;
   }): FurnitureCompany {
-    const id = this.generateId(data.name);
+    const slug = this.generateId(data.name);
     const socialLinks = normalizeSocialLinks(data.socialLinks);
     const company: FurnitureCompany = {
-      id,
+      id: slug,
+      slug,
+      dbId: null,
       name: data.name.trim(),
       specialty: data.specialty.trim(),
       description: data.description.trim(),
@@ -55,7 +57,7 @@ export class FurnitureStoreService {
     };
 
     this.companiesSignal.update((list) => [...list, company]);
-    this.sessionSignal.set({ companyId: id });
+    this.sessionSignal.set({ companyId: slug });
     this.persist();
     return company;
   }

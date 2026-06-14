@@ -19,35 +19,94 @@
 
 .site-layout .header-container {
   overflow: visible;
+  position: relative;
 }
 
-.header-end {
+.site-layout .header-logo {
+  flex: 1 1 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.site-layout .header-menu .nav {
+  flex: none;
+  min-width: 0;
+}
+
+.site-layout .header-menu .nav ul {
+  justify-content: center;
+}
+
+.site-layout .header-actions .menu-toggle {
   flex-shrink: 0;
 }
 
+.header-profile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 168, 0.45);
+  background: linear-gradient(145deg, rgba(0, 229, 168, 0.22), rgba(12, 18, 34, 0.92));
+  color: #f8fffd;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.header-profile:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 229, 168, 0.85);
+  box-shadow: 0 4px 14px rgba(0, 229, 168, 0.22);
+}
+
+.header-profile--active {
+  border-color: var(--color-mint, #00e5a8);
+  box-shadow: 0 0 0 3px rgba(0, 229, 168, 0.18);
+}
+
+.header-profile__initial {
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.header-profile__icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  opacity: 0.92;
+}
+
 @media (max-width: 900px) {
-  .site-layout .header-container {
-    grid-template-columns: 1fr auto auto;
-    grid-template-areas:
-      'logo end toggle';
+  .site-layout .header-logo {
+    flex: 1 1 auto;
   }
 
-  .site-layout .logo {
-    grid-area: logo;
+  .site-layout .header-menu {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
   }
 
-  .header-end {
-    grid-area: end;
+  .site-layout .header-actions {
+    flex: 0 0 auto !important;
+    justify-content: flex-end !important;
   }
 
-  .site-layout .menu-toggle {
-    grid-area: toggle;
-  }
-
-  .site-layout .nav {
-    /* fixed slide-out — grid area not used */
+  .header-profile {
+    width: 2.75rem;
+    height: 2.75rem;
+    position: relative;
+    z-index: 2;
   }
 }
 
@@ -127,11 +186,7 @@
   line-height: 1.2;
 }
 
-.header-end .header-actions {
-  margin-right: 0.75rem;
-}
-
-.header-end .header-actions .btn-sm {
+.site-layout .header-actions .btn-sm {
   padding: 0.4rem 0.85rem;
   font-size: 0.82rem;
   white-space: nowrap;
@@ -293,5 +348,93 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* ——— Header: лого | меню (центр) | действия ——— */
+.site-layout .header-container {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  padding: 0 24px !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+}
+
+.site-layout .header-logo {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  min-width: 0 !important;
+}
+
+.site-layout .header-menu {
+  flex: 0 0 auto !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.site-layout .header-menu .nav {
+  flex: none !important;
+  min-width: auto !important;
+}
+
+.site-layout .header-menu .nav ul {
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: clamp(0.75rem, 1.5vw, 1.5rem) !important;
+}
+
+.site-layout .header-actions {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 150px !important;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+.site-layout .header-actions > app-language-switcher {
+  order: 1;
+  flex-shrink: 0;
+}
+
+.site-layout .header-actions > .header-profile {
+  order: 2;
+  flex-shrink: 0;
+  margin-left: 0 !important;
+}
+
+.site-layout .header-actions > .menu-toggle {
+  order: 3;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .site-layout .header-container {
+    padding: 0 16px !important;
+  }
+
+  .site-layout .header-menu {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+  }
+
+  .site-layout .header-actions {
+    flex: 0 0 auto !important;
+    gap: 16px !important;
+  }
+
+  .site-layout .header-actions > .header-profile {
+    margin-left: 96px !important;
+  }
 }
 

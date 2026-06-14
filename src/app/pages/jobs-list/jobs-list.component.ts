@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Job, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
@@ -15,15 +16,18 @@ import { logSupabaseError } from '../../core/utils/supabase-error.util';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './jobs-list.component.html',
-  styleUrl: './jobs-list.component.css',
+  styleUrls: ['../../styles/catalog-pages.css', './jobs-list.component.css'],
 })
-export class JobsListComponent {
-  private readonly platformId = inject(PLATFORM_ID);
+export class JobsListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('jobs');
+
+  constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {}
 
   readonly isLoading = this.supabase.jobsLoading;
   readonly error = this.supabase.jobsError;
@@ -40,13 +44,25 @@ export class JobsListComponent {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  constructor() {
-    if (isPlatformBrowser(this.platformId)) {
-      void this.loadJobs();
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
     }
+
+    void this.initBrowserJobs();
+  }
+
+  private async initBrowserJobs(): Promise<void> {
+    await this.auth.ensureInitialized();
+    await this.adminAuth.ensureReady();
+    await this.loadJobs();
   }
 
   protected async loadJobs(force = false): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     try {
       if (this.adminAuth.isAdmin()) {
         await this.supabase.loadActiveJobs(force);
@@ -97,7 +113,7 @@ export class JobsListComponent {
   }
 
   async completeJob(job: Job): Promise<void> {
-    if (!this.adminAuth.isAdmin() || this.isJobAdminBusy(job.id)) {
+    if (!job.id?.trim() || this.isJobAdminBusy(job.id)) {
       return;
     }
 
@@ -126,7 +142,7 @@ export class JobsListComponent {
   }
 
   async deleteJob(job: Job): Promise<void> {
-    if (!this.adminAuth.isAdmin() || this.isJobAdminBusy(job.id)) {
+    if (!job.id?.trim() || this.isJobAdminBusy(job.id)) {
       return;
     }
 
@@ -141,14 +157,14 @@ export class JobsListComponent {
     this.adminActionError.set(null);
 
     try {
-      const result = await firstValueFrom(this.supabase.deleteJobklientJob(job.id));
+      const result = await firstValueFrom(this.supabase.deleteJob(job.id));
       if (result.error) {
         this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-        console.error('[JobsListComponent] deleteJob:', result.error);
+        console.error('Jobklient delete error:', result.error);
       }
     } catch (err) {
       this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-      console.error('[JobsListComponent] deleteJob:', err);
+      console.error('Jobklient delete error:', err);
     } finally {
       this.adminActionJobId.set(null);
     }

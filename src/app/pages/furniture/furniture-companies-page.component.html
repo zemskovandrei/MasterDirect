@@ -1,3 +1,4 @@
+<div class="catalog-tab-page" [ngStyle]="catalogTabBackground">
 <section class="page-hero">
   <div class="page-hero-inner">
     <h1>{{ translation.t('furniture.title') }}</h1>
@@ -18,16 +19,40 @@
         </div>
         <h2>{{ translation.t('furniture.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('furniture.listLead') }}</p>
-        @if (supabase.furnitureCompanies().length > 0) {
+        @if (displayCompanies().length > 0) {
           <p class="catalog-group-count">
-            {{ supabase.furnitureCompanies().length }} {{ translation.t('furniture.inCatalog') }}
+            {{ displayCompanies().length }} {{ translation.t('furniture.inCatalog') }}
           </p>
+        }
+        @if (adminAuth.showAdminControls()) {
+          <div class="catalog-admin-toolbar">
+            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
+            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
+              {{ translation.t('admin.logout') }}
+            </button>
+          </div>
         }
       </header>
 
+      <div class="catalog-group-body">
       <div class="performer-grid">
-        @for (company of supabase.furnitureCompanies(); track company.id) {
-          <article class="performer-card performer-card--furniture">
+        @for (company of displayCompanies(); track company.id) {
+          <article
+            class="performer-card performer-card--furniture"
+            [class.performer-card--admin]="adminAuth.showAdminControls()"
+          >
+            @if (adminAuth.showAdminControls()) {
+              <div class="performer-admin-actions">
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--delete"
+                  (click)="deleteCompany(company)"
+                >
+                  ❌ {{ translation.t('admin.masters.delete') }}
+                </button>
+              </div>
+            }
+
             <div class="performer-head">
               <span class="performer-badge performer-badge-furniture">{{
                 translation.t('furniture.badge')
@@ -35,9 +60,18 @@
               <h3>
                 <a [routerLink]="['/furniture', company.id]">{{ company.name }}</a>
               </h3>
-              <p class="performer-city">{{ company.city }}</p>
-              <p class="performer-specialty">{{ company.specialty }}</p>
-              <p class="performer-desc">{{ company.description }}</p>
+              @if (company.city) {
+                <p class="performer-city">{{ company.city }}</p>
+              }
+              @if (company.socialLinks?.phone; as phone) {
+                <p class="performer-phone">{{ phone }}</p>
+              }
+              @if (company.specialty) {
+                <p class="performer-specialty">{{ company.specialty }}</p>
+              }
+              @if (company.description) {
+                <p class="performer-desc">{{ company.description }}</p>
+              }
             </div>
             @if (company.works[0]) {
               <app-before-after [work]="company.works[0]" layout="split" />
@@ -46,17 +80,19 @@
               {{ translation.t('furniture.allWorks') }} ({{ company.works.length }}) →
             </a>
           </article>
-        } @empty {
-          @if (supabase.loaded()) {
-            <div class="catalog-empty-cta">
-              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-              <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-                {{ translation.t('catalog.autoMatchCta') }}
-              </a>
-            </div>
-          }
         }
+
+        @if (showAutoMatchEmpty()) {
+          <div class="catalog-empty-cta">
+            <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
+            <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
+              {{ translation.t('catalog.autoMatchCta') }}
+            </a>
+          </div>
+        }
+      </div>
       </div>
     </section>
   </div>
 </section>
+</div>

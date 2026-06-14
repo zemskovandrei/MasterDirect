@@ -7,6 +7,20 @@
   padding: 2.5rem 1.5rem 5rem;
 }
 
+.catalog-tab-page .review-form-panel {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.catalog-tab-page .review-card,
+.catalog-tab-page .reviews-empty {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .reviews-page {
   padding: 0;
 }

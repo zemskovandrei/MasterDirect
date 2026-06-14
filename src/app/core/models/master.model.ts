@@ -96,6 +96,7 @@ export interface AuthSignUpMetadata {
 /** Строка таблицы `furniture_orders` (профиль компании или заказ из калькулятора). */
 export interface FurnitureOrderRow {
   id: string;
+  slug?: string | null;
   full_name?: string | null;
   client_name?: string | null;
   client_phone?: string | null;

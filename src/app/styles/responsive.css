@@ -8,6 +8,15 @@ html {
   overflow-x: clip;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .site-marquee__track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
 /* ——— Hero (единая высота, без горизонтального скролла) ——— */
 .hero-slider {
   min-height: 0;
@@ -66,15 +75,6 @@ h2 {
 
 /* ——— Шапка ——— */
 @media (max-width: 900px) {
-  .header-container {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    grid-template-areas: 'logo end toggle';
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-    padding: 0.65rem 1rem;
-  }
-
   .logo {
     min-width: 0;
   }
@@ -83,12 +83,8 @@ h2 {
     min-width: 0;
   }
 
-  .header-end {
-    grid-area: end;
-  }
-
   .menu-toggle {
-    grid-area: toggle;
+    display: flex;
   }
 }
 

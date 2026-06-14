@@ -3,6 +3,62 @@
   background: linear-gradient(180deg, #f7fbfd 0%, var(--color-bg) 60%);
 }
 
+.catalog-tab-page.cabinet-tab-page {
+  min-height: 100%;
+  background-color: #0f172a;
+}
+
+.catalog-tab-page .cabinet {
+  background: transparent;
+}
+
+.catalog-tab-page .register-panel,
+.catalog-tab-page .cabinet-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 8px 32px rgba(15, 45, 76, 0.12),
+    0 24px 64px rgba(0, 0, 0, 0.12);
+}
+
+.catalog-tab-page .register-header {
+  background: transparent;
+}
+
+.catalog-tab-page .register-layout {
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+
+.catalog-tab-page .register-block--form {
+  background: transparent;
+}
+
+.catalog-tab-page .register-field input,
+.catalog-tab-page .register-field textarea,
+.catalog-tab-page .register-field select {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.catalog-tab-page .account-type-tabs {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.catalog-tab-page .account-type-tab {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.catalog-tab-page .plan-card {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.catalog-tab-page .demo-banner {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .cabinet-inner {
   max-width: 1120px;
   margin: 0 auto;

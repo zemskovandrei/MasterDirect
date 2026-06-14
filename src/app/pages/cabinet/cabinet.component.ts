@@ -4,6 +4,7 @@ import {
   HostListener,
   effect,
   inject,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
@@ -23,6 +24,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
+import { cabinetTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 /** Ключи специализаций для i18n: cabinet.specialties.* */
 export const SPECIALTY_OPTION_KEYS = [
@@ -55,7 +57,7 @@ export const BRIGADE_SPECIALTY_KEY = 'renovation_turnkey';
     SocialLinksComponent,
   ],
   templateUrl: './cabinet.component.html',
-  styleUrls: ['./cabinet.component.css'],
+  styleUrls: ['../../styles/catalog-pages.css', './cabinet.component.css'],
 })
 export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
@@ -75,6 +77,28 @@ export class CabinetComponent {
   protected readonly countWords = countWords;
   protected readonly accountTypes = ACCOUNT_TYPES;
   protected readonly selectedAccountType = signal<AccountType>('worker');
+
+  protected readonly cabinetBackground = computed(() => {
+    const performer = this.store.currentPerformer();
+    if (performer) {
+      return cabinetTabBackgroundStyle(performer.type === 'brigade' ? 'cabinetBrigade' : 'cabinetWorker');
+    }
+
+    if (this.furnitureStore.currentCompany()) {
+      return cabinetTabBackgroundStyle('cabinetFurniture');
+    }
+
+    const accountType = this.selectedAccountType();
+    if (accountType === 'brigade') {
+      return cabinetTabBackgroundStyle('cabinetBrigade');
+    }
+    if (accountType === 'furniture') {
+      return cabinetTabBackgroundStyle('cabinetFurniture');
+    }
+
+    return cabinetTabBackgroundStyle('cabinetWorker');
+  });
+
   protected readonly specialtyOptions = SPECIALTY_OPTION_KEYS;
   protected readonly brigadeSpecialtyKey = BRIGADE_SPECIALTY_KEY;
   protected readonly specialtyMenuOpen = signal(false);

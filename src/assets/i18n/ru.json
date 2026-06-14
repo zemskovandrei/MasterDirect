@@ -503,6 +503,8 @@
     "statusNew": "Новый",
     "statusActive": "Активный",
     "budgetUnknown": "Бюджет не указан",
+    "budgetLabel": "Бюджет",
+    "inList": "активных заказов",
     "areaValue": "{{value}} м²",
     "directedTo": "Направлено исполнителям",
     "viewPhoto": "Смотреть фото",

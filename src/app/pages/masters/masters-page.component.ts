@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, Inject, PLATFORM_ID, afterNextRender, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,7 +8,9 @@ import { PerformerProfile } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { isCatalogPerformerVisible } from '../../core/utils/catalog-filter.util';
 import { firstValueFrom } from 'rxjs';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
@@ -18,16 +20,35 @@ import { logSupabaseError } from '../../core/utils/supabase-error.util';
   templateUrl: './masters-page.component.html',
   styleUrls: ['../../styles/catalog-pages.css', './masters-page.component.css'],
 })
-export class MastersPageComponent implements OnInit {
-  private readonly platformId = inject(PLATFORM_ID);
+export class MastersPageComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly supabase = inject(SupabaseService);
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
+  private catalogLoadStarted = false;
+
+  constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {
+    afterNextRender(() => {
+      this.initCatalog();
+    });
+  }
+
   protected readonly editingPerformer = signal<PerformerProfile | null>(null);
   protected readonly adminSaving = signal(false);
+
+  protected readonly catalogTabBackground = catalogTabBackgroundStyle('workers');
+
+  protected readonly displayWorkers = computed(() =>
+    this.supabase.workers().filter((performer) => isCatalogPerformerVisible(performer)),
+  );
+
+  protected readonly catalogReady = computed(() => this.supabase.catalogReady());
+
+  protected readonly showAutoMatchEmpty = computed(
+    () => this.catalogReady() && this.displayWorkers().length === 0,
+  );
 
   protected readonly editForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -35,12 +56,15 @@ export class MastersPageComponent implements OnInit {
     description: ['', [Validators.required, Validators.minLength(4)]],
   });
 
-  ngOnInit() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe({
-        error: (err) => logSupabaseError('MastersPage.loadProfiles', err),
-      });
+  private initCatalog(): void {
+    if (!isPlatformBrowser(this.platformId) || this.catalogLoadStarted) {
+      return;
     }
+
+    this.catalogLoadStarted = true;
+    this.supabase.loadProfiles().subscribe({
+      error: (err) => logSupabaseError('MastersPage.loadProfiles', err),
+    });
   }
 
   performerLink(id: string): string[] {
@@ -99,12 +123,18 @@ export class MastersPageComponent implements OnInit {
       return;
     }
 
+    if (!performer.id?.trim()) {
+      console.error('Delete error:', 'Missing master id', performer);
+      alert('Missing master id');
+      return;
+    }
+
     const confirmed = window.confirm(this.translation.t('admin.masters.deleteConfirm'));
     if (!confirmed) {
       return;
     }
 
-    const result = await firstValueFrom(this.supabase.deleteProfile(performer.id));
+    const result = await firstValueFrom(this.supabase.deleteMaster(performer.id));
     if (result.error) {
       alert(result.error);
       return;

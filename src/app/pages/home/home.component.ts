@@ -23,8 +23,11 @@ import {
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
+import { isCatalogPerformerVisible } from '../../core/utils/catalog-filter.util';
 import { isPaidCallOutFee } from '../../core/utils/call-out-fee.util';
 import { redirectToExecutor } from '../../core/utils/executor-messenger.util';
+import { logSupabaseError } from '../../core/utils/supabase-error.util';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import {
   buildChecklistPhaseGroups,
   buildChecklistScopeSummary,
@@ -58,6 +61,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly calculatorLeadStore = inject(CalculatorLeadStoreService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly translation = inject(TranslationService);
+  protected readonly calculatorBackground = catalogTabBackgroundStyle('calculator');
+  protected readonly siteMarqueeItems = Array.from({ length: 16 }, (_, index) => index);
   protected currentSlideIndex = signal(0);
 
   protected readonly calculatorStep = signal(1);
@@ -118,11 +123,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (pool === 'brigade') {
       return this.supabase
         .brigades()
+        .filter((performer) => isCatalogPerformerVisible(performer))
         .map((performer) => this.mapPerformerCard(performer, 'brigade'));
     }
 
     if (pool === 'worker') {
-      return this.supabase.workers().map((performer) => this.mapPerformerCard(performer, 'worker'));
+      return this.supabase
+        .workers()
+        .filter((performer) => isCatalogPerformerVisible(performer))
+        .map((performer) => this.mapPerformerCard(performer, 'worker'));
     }
 
     if (pool === 'furniture') {
@@ -304,7 +313,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe();
+      this.supabase.loadProfiles().subscribe({
+        error: (err) => logSupabaseError('HomePage.loadProfiles', err),
+      });
       this.resolveSlideTone(0);
       this.sliderImages.forEach((_, index) => {
         if (index !== 0) {
@@ -669,6 +680,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return {
       customer: this.translation.t('jobs.fields.customer'),
       contact: this.translation.t('jobs.fields.contact'),
+      city: this.translation.t('home.calculator.orderMessage.city'),
       area: this.translation.t('jobs.fields.area'),
       photo: this.translation.t('jobs.fields.photo'),
       directedTo: this.translation.t('jobs.fields.directedTo'),

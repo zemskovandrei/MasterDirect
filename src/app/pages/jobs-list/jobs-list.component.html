@@ -1,16 +1,24 @@
-<section class="jobs-page">
-  <div class="jobs-page__inner">
-    <header class="jobs-page__header">
-      <span class="jobs-page__eyebrow">{{ translation.t('jobs.eyebrow') }}</span>
-      <h1 class="jobs-page__title">{{ translation.t('jobs.title') }}</h1>
-      <p class="jobs-page__lead">{{ translation.t('jobs.lead') }}</p>
-    </header>
+<div class="catalog-tab-page" [ngStyle]="pageBackground">
+<section class="page-hero jobs-hero">
+  <div class="page-hero-inner">
+    <span class="jobs-hero__eyebrow">{{ translation.t('jobs.eyebrow') }}</span>
+    <h1>{{ translation.t('jobs.title') }}</h1>
+    <p>{{ translation.t('jobs.lead') }}</p>
+    <a routerLink="/" fragment="calculator" class="btn-primary jobs-hero__cta">
+      {{ translation.t('jobs.publishAction') }}
+    </a>
+  </div>
+</section>
 
+<section class="jobs-board">
+  <div class="jobs-board__inner">
     @if (accessDenied() && !adminAuth.isAdmin()) {
-      <div class="jobs-state jobs-state--error" role="alert">
-        <span class="jobs-state__icon" aria-hidden="true">🔒</span>
-        <h2 class="jobs-state__title">{{ translation.t('jobs.accessDeniedTitle') }}</h2>
-        <p class="jobs-state__text">{{ translation.t('jobs.accessDeniedText') }}</p>
+      <div class="jobs-panel jobs-panel--alert" role="alert">
+        <span class="jobs-panel__icon" aria-hidden="true">🔒</span>
+        <div class="jobs-panel__body">
+          <h2 class="jobs-panel__title">{{ translation.t('jobs.accessDeniedTitle') }}</h2>
+          <p class="jobs-panel__text">{{ translation.t('jobs.accessDeniedText') }}</p>
+        </div>
       </div>
 
       <section class="jobs-login-panel">
@@ -34,11 +42,7 @@
               {{ translation.t('jobs.loginError') }}
             </p>
           }
-          <button
-            type="submit"
-            class="jobs-state__btn jobs-state__btn--primary"
-            [disabled]="loginSubmitting()"
-          >
+          <button type="submit" class="jobs-btn jobs-btn--primary" [disabled]="loginSubmitting()">
             {{
               loginSubmitting()
                 ? translation.t('jobs.loginSubmitting')
@@ -52,7 +56,7 @@
         </p>
       </section>
     } @else {
-      @if (adminAuth.isAdmin()) {
+      @if (adminAuth.showAdminControls()) {
         <div class="jobs-admin-toolbar">
           <span class="jobs-admin-badge">{{ translation.t('admin.badge') }}</span>
           <p class="jobs-admin-lead">{{ translation.t('admin.jobs.toolbarLead') }}</p>
@@ -67,6 +71,7 @@
       }
 
       <aside class="jobs-publish-cta">
+        <div class="jobs-publish-cta__glow" aria-hidden="true"></div>
         <div class="jobs-publish-cta__content">
           <span class="jobs-publish-cta__badge">{{ translation.t('jobs.publishBadge') }}</span>
           <h2 class="jobs-publish-cta__title">{{ translation.t('jobs.publishTitle') }}</h2>
@@ -77,126 +82,160 @@
         </a>
       </aside>
 
-      <div *ngIf="isLoading()" class="jobs-loader" role="status" aria-live="polite">
-        <div class="jobs-loader__spinner" aria-hidden="true"></div>
-        <p class="jobs-loader__text">{{ translation.t('jobs.loading') }}</p>
-      </div>
+      @if (isLoading()) {
+        <div class="jobs-panel jobs-panel--loading" role="status" aria-live="polite">
+          <div class="jobs-loader__spinner" aria-hidden="true"></div>
+          <p class="jobs-panel__text">{{ translation.t('jobs.loading') }}</p>
+        </div>
+      }
 
-      <div *ngIf="!isLoading() && error()" class="jobs-state jobs-state--error" role="alert">
-        <span class="jobs-state__icon" aria-hidden="true">!</span>
-        <h2 class="jobs-state__title">{{ translation.t('jobs.errorTitle') }}</h2>
-        <p class="jobs-state__text">{{ translation.t('jobs.errorDefault') }}</p>
-        @if (error()) {
-          <p class="jobs-state__debug" role="status">{{ error() }}</p>
-        }
-        <button type="button" class="jobs-state__btn" (click)="reloadJobs()">
-          {{ translation.t('jobs.retry') }}
-        </button>
-      </div>
-
-      <div *ngIf="!isLoading() && !error() && jobs().length === 0" class="jobs-state">
-        <span class="jobs-state__icon" aria-hidden="true">📋</span>
-        <h2 class="jobs-state__title">{{ translation.t('jobs.emptyTitle') }}</h2>
-        <p class="jobs-state__text">{{ translation.t('jobs.emptyText') }}</p>
-        <a routerLink="/" fragment="calculator" class="jobs-state__btn jobs-state__btn--primary">
-          {{ translation.t('jobs.emptyAction') }}
-        </a>
-      </div>
-
-      <div *ngIf="!isLoading() && !error() && jobs().length > 0" class="jobs-grid">
-        <article class="job-card" *ngFor="let job of jobs(); trackBy: trackByJobId">
-          <div class="job-card__top">
-            <span class="job-card__category">{{ job.category }}</span>
-            <span class="job-card__status">{{ displayStatus(job) }}</span>
+      @if (!isLoading() && error()) {
+        <div class="jobs-panel jobs-panel--error" role="alert">
+          <span class="jobs-panel__icon" aria-hidden="true">!</span>
+          <div class="jobs-panel__body">
+            <h2 class="jobs-panel__title">{{ translation.t('jobs.errorTitle') }}</h2>
+            <p class="jobs-panel__text">{{ translation.t('jobs.errorDefault') }}</p>
+            @if (error()) {
+              <p class="jobs-panel__debug">{{ error() }}</p>
+            }
+            <button type="button" class="jobs-btn" (click)="reloadJobs()">
+              {{ translation.t('jobs.retry') }}
+            </button>
           </div>
+        </div>
+      }
 
-          <h2 class="job-card__title">{{ displayTitle(job) }}</h2>
-
-          <div class="job-card__meta">
-            <span class="job-card__chip job-card__chip--city">
-              <span aria-hidden="true">📍</span>
-              {{ job.city }}
-            </span>
-            <span *ngIf="displayArea(job) as area" class="job-card__chip">
-              <span aria-hidden="true">📐</span>
-              {{ area }}
-            </span>
-            <span class="job-card__budget">{{ displayBudget(job) }}</span>
+      @if (!isLoading() && !error() && jobs().length === 0) {
+        <div class="jobs-panel jobs-panel--empty">
+          <span class="jobs-panel__icon" aria-hidden="true">📋</span>
+          <div class="jobs-panel__body">
+            <h2 class="jobs-panel__title">{{ translation.t('jobs.emptyTitle') }}</h2>
+            <p class="jobs-panel__text">{{ translation.t('jobs.emptyText') }}</p>
+            <a routerLink="/" fragment="calculator" class="jobs-btn jobs-btn--primary">
+              {{ translation.t('jobs.emptyAction') }}
+            </a>
           </div>
+        </div>
+      }
 
-          <p *ngIf="hasSummary(job)" class="job-card__description">{{ displaySummary(job) }}</p>
-          <p *ngIf="!hasSummary(job)" class="job-card__description job-card__description--empty">
-            {{ translation.t('jobs.noDescription') }}
+      @if (!isLoading() && !error() && jobs().length > 0) {
+        <div class="jobs-board__meta">
+          <span class="jobs-board__live" aria-hidden="true"></span>
+          <p class="jobs-board__count-line">
+            <strong>{{ jobs().length }}</strong>
+            {{ translation.t('jobs.inList') }}
           </p>
+        </div>
 
-          <p *ngIf="job.details.directedTo" class="job-card__directed">
-            <span class="job-card__directed-label">{{ translation.t('jobs.directedTo') }}</span>
-            {{ job.details.directedTo }}
-          </p>
+        <div class="jobs-grid">
+          @for (job of jobs(); track trackByJobId($index, job)) {
+            <article class="job-card">
+              <div class="job-card__accent" aria-hidden="true"></div>
 
-          <div class="job-card__actions">
-            <a
-              *ngIf="job.details.photoLink"
-              class="job-card__action job-card__action--ghost"
-              [href]="job.details.photoLink"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ translation.t('jobs.viewPhoto') }}
-            </a>
-            <a
-              *ngIf="phoneHref(job) as phone"
-              class="job-card__action job-card__action--primary"
-              [href]="phone"
-            >
-              {{ translation.t('jobs.callCustomer') }}
-            </a>
-            <a
-              *ngIf="telegramHref(job) as telegram"
-              class="job-card__action job-card__action--telegram"
-              [href]="telegram"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ translation.t('jobs.messageCustomer') }}
-            </a>
-          </div>
+              <div class="job-card__top">
+                <span class="job-card__category">{{ job.category }}</span>
+                <span class="job-card__status">{{ displayStatus(job) }}</span>
+              </div>
 
-          @if (adminAuth.isAdmin()) {
-            <div class="job-card__admin">
-              <button
-                type="button"
-                class="job-card__admin-btn job-card__admin-btn--complete"
-                [disabled]="isJobAdminBusy(job.id)"
-                (click)="completeJob(job)"
-              >
-                {{ translation.t('admin.jobs.complete') }}
-              </button>
-              <button
-                type="button"
-                class="job-card__admin-btn job-card__admin-btn--delete"
-                [disabled]="isJobAdminBusy(job.id)"
-                (click)="deleteJob(job)"
-              >
-                {{ translation.t('admin.jobs.delete') }}
-              </button>
-            </div>
+              <h2 class="job-card__title">{{ displayTitle(job) }}</h2>
+
+              <div class="job-card__meta">
+                <span class="job-card__chip job-card__chip--city">
+                  <span class="job-card__chip-icon" aria-hidden="true">📍</span>
+                  {{ job.city }}
+                </span>
+                @if (displayArea(job); as area) {
+                  <span class="job-card__chip">
+                    <span class="job-card__chip-icon" aria-hidden="true">📐</span>
+                    {{ area }}
+                  </span>
+                }
+              </div>
+
+              <div class="job-card__budget-wrap">
+                <span class="job-card__budget-label">{{ translation.t('jobs.budgetLabel') }}</span>
+                <span class="job-card__budget">{{ displayBudget(job) }}</span>
+              </div>
+
+              @if (hasSummary(job)) {
+                <p class="job-card__description">{{ displaySummary(job) }}</p>
+              } @else {
+                <p class="job-card__description job-card__description--empty">
+                  {{ translation.t('jobs.noDescription') }}
+                </p>
+              }
+
+              @if (job.details.directedTo) {
+                <p class="job-card__directed">
+                  <span class="job-card__directed-label">{{ translation.t('jobs.directedTo') }}</span>
+                  {{ job.details.directedTo }}
+                </p>
+              }
+
+              <div class="job-card__actions">
+                @if (job.details.photoLink) {
+                  <a
+                    class="job-card__action job-card__action--ghost"
+                    [href]="job.details.photoLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ translation.t('jobs.viewPhoto') }}
+                  </a>
+                }
+                @if (phoneHref(job); as phone) {
+                  <a class="job-card__action job-card__action--primary" [href]="phone">
+                    {{ translation.t('jobs.callCustomer') }}
+                  </a>
+                }
+                @if (telegramHref(job); as telegram) {
+                  <a
+                    class="job-card__action job-card__action--telegram"
+                    [href]="telegram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ translation.t('jobs.messageCustomer') }}
+                  </a>
+                }
+              </div>
+
+              @if (adminAuth.showAdminControls()) {
+                <div class="job-card__admin">
+                  <button
+                    type="button"
+                    class="job-card__admin-btn job-card__admin-btn--complete"
+                    [disabled]="isJobAdminBusy(job.id)"
+                    (click)="completeJob(job)"
+                  >
+                    {{ translation.t('admin.jobs.complete') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="job-card__admin-btn job-card__admin-btn--delete"
+                    [disabled]="isJobAdminBusy(job.id)"
+                    (click)="deleteJob(job)"
+                  >
+                    {{ translation.t('admin.jobs.delete') }}
+                  </button>
+                </div>
+              }
+
+              <footer class="job-card__footer">
+                @if (job.createdAt) {
+                  <time class="job-card__date" [dateTime]="job.createdAt.toISOString()">
+                    {{ translation.t('jobs.posted') }} {{ job.createdAt | date: 'mediumDate' }}
+                  </time>
+                }
+                @if (!hasContactActions(job)) {
+                  <span class="job-card__hint">{{ translation.t('jobs.contactInDescription') }}</span>
+                }
+              </footer>
+            </article>
           }
-
-          <footer class="job-card__footer">
-            <time
-              *ngIf="job.createdAt"
-              class="job-card__date"
-              [dateTime]="job.createdAt.toISOString()"
-            >
-              {{ translation.t('jobs.posted') }} {{ job.createdAt | date: 'mediumDate' }}
-            </time>
-            <span *ngIf="!hasContactActions(job)" class="job-card__hint">
-              {{ translation.t('jobs.contactInDescription') }}
-            </span>
-          </footer>
-        </article>
-      </div>
+        </div>
+      }
     }
   </div>
 </section>
+</div>

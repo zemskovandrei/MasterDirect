@@ -1,7 +1,29 @@
 /* ——— Умный калькулятор ремонта ——— */
 section.renovation-calculator {
-  padding: clamp(1.5rem, 4vw, 2.5rem) 2rem clamp(3rem, 6vw, 5rem);
+  position: relative;
+  padding: clamp(2rem, 5vw, 3.5rem) 2rem clamp(3rem, 6vw, 5rem);
   background: var(--color-bg);
+  background-attachment: scroll;
+}
+
+section.renovation-calculator .section-header {
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+section.renovation-calculator .section-eyebrow {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+section.renovation-calculator .section-header h2 {
+  color: #fff;
+  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.4);
+}
+
+section.renovation-calculator .section-subtitle {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.32);
 }
 
 .renovation-calculator__container {
@@ -18,14 +40,16 @@ section.renovation-calculator {
 }
 
 .quiz-card {
-  margin-top: 50px;
+  margin-top: 0;
   padding: 40px;
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+  box-shadow:
+    0 12px 40px rgba(15, 23, 42, 0.28),
+    0 24px 64px rgba(0, 0, 0, 0.18);
 }
 
 .quiz-card--wide {

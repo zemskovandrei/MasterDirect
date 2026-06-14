@@ -16,6 +16,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
 export type ReviewFormMode = 'review' | 'recommendation';
@@ -31,7 +32,7 @@ interface PerformerOption {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './reviews-page.component.html',
-  styleUrls: ['./reviews-page.component.css'],
+  styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
 })
 export class ReviewsPageComponent {
   private readonly fb = inject(FormBuilder);
@@ -40,6 +41,8 @@ export class ReviewsPageComponent {
   protected readonly supabase = inject(SupabaseService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('reviews');
 
   protected readonly category = signal<ReviewCategoryKey>('brigade');
   protected readonly formMode = signal<ReviewFormMode>('review');

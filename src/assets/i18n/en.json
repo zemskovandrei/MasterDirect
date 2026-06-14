@@ -503,6 +503,8 @@
     "statusNew": "New",
     "statusActive": "Active",
     "budgetUnknown": "Budget not specified",
+    "budgetLabel": "Budget",
+    "inList": "active jobs",
     "areaValue": "{{value}} sq.m",
     "directedTo": "Sent to performers",
     "viewPhoto": "View photo",

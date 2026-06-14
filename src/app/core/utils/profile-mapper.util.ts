@@ -4,6 +4,7 @@ import { Profile } from '../models/profile.models';
 import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.models';
 
 import { normalizeCallOutFee } from './call-out-fee.util';
+import { buildFurnitureSlug, isUuid, normalizeUuid } from './furniture-id.util';
 
 function resolveWhatsappPhone(
   whatsapp_phone?: string | null,
@@ -37,65 +38,79 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
 }
 
 export function masterRowToProfile(row: MasterRow): Profile {
+  const accountType = row?.account_type === 'brigade' ? 'brigade' : 'worker';
+
   return {
-    id: row.id,
-    type: row.account_type === 'brigade' ? 'brigade' : 'worker',
-    name: row.full_name,
-    specialty: row.specialty ?? '',
-    description: row.description ?? '',
-    city: row.city,
-    call_out_fee: row.call_out_fee,
-    phone: row.phone,
-    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
-    tg_username: resolveTgUsername(row.tg_username, row.telegram),
-    whatsapp: row.whatsapp,
-    telegram: row.telegram,
-    instagram: row.instagram,
-    facebook: row.facebook,
+    id: row?.id ?? '',
+    type: accountType,
+    name: row?.full_name?.trim() || row?.phone?.trim() || row?.id || '',
+    specialty: row?.specialty?.trim() || '',
+    description: row?.description?.trim() || '',
+    city: row?.city ?? null,
+    call_out_fee: row?.call_out_fee ?? null,
+    phone: row?.phone ?? null,
+    whatsapp_phone: resolveWhatsappPhone(row?.whatsapp_phone, row?.whatsapp),
+    tg_username: resolveTgUsername(row?.tg_username, row?.telegram),
+    whatsapp: row?.whatsapp ?? null,
+    telegram: row?.telegram ?? null,
+    instagram: row?.instagram ?? null,
+    facebook: row?.facebook ?? null,
   };
 }
 
 export function brigadeRowToProfile(row: BrigadeRow): Profile {
   return {
-    id: row.id,
+    id: row?.id ?? '',
     type: 'brigade',
-    name: row.full_name,
-    specialty: row.specialty ?? '',
-    description: row.description ?? '',
-    city: row.city,
-    call_out_fee: row.call_out_fee,
-    phone: row.phone,
-    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
-    tg_username: resolveTgUsername(row.tg_username, row.telegram),
-    whatsapp: row.whatsapp,
-    telegram: row.telegram,
-    instagram: row.instagram,
-    facebook: row.facebook,
+    name: row?.full_name?.trim() || row?.phone?.trim() || row?.id || '',
+    specialty: row?.specialty?.trim() || '',
+    description: row?.description?.trim() || '',
+    city: row?.city ?? null,
+    call_out_fee: row?.call_out_fee ?? null,
+    phone: row?.phone ?? null,
+    whatsapp_phone: resolveWhatsappPhone(row?.whatsapp_phone, row?.whatsapp),
+    tg_username: resolveTgUsername(row?.tg_username, row?.telegram),
+    whatsapp: row?.whatsapp ?? null,
+    telegram: row?.telegram ?? null,
+    instagram: row?.instagram ?? null,
+    facebook: row?.facebook ?? null,
   };
 }
 
-/** Профиль мебельной компании из строки `furniture_orders` (колонка `full_name`). */
-export function furnitureOrderRowToProfile(row: FurnitureOrderRow): Profile {
+/** Профиль мебельной компании из строки `furniture_orders` (колонка `id` = UUID). */
+export function furnitureOrderRowToProfile(row: FurnitureOrderRow): Profile | null {
+  const dbId = normalizeUuid(row?.id);
+  if (!dbId) {
+    return null;
+  }
+
+  const name = row?.full_name?.trim() || row?.client_name?.trim() || '';
+
   return {
-    id: row.id,
+    id: dbId,
+    slug: row?.slug?.trim() || buildFurnitureSlug(name),
     type: 'furniture',
-    name: row.full_name?.trim() || row.client_name?.trim() || '',
-    specialty: row.specialty ?? row.furniture_type ?? '',
-    description: row.description ?? '',
-    city: row.city ?? null,
-    phone: row.phone ?? row.client_phone ?? null,
-    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
-    tg_username: resolveTgUsername(row.tg_username, row.telegram),
-    whatsapp: row.whatsapp,
-    telegram: row.telegram,
-    instagram: row.instagram,
-    facebook: row.facebook,
+    name,
+    specialty: row?.specialty?.trim() || row?.furniture_type?.trim() || '',
+    description: row?.description?.trim() || '',
+    city: row?.city ?? null,
+    phone: row?.phone ?? row?.client_phone ?? null,
+    whatsapp_phone: resolveWhatsappPhone(row?.whatsapp_phone, row?.whatsapp),
+    tg_username: resolveTgUsername(row?.tg_username, row?.telegram),
+    whatsapp: row?.whatsapp ?? null,
+    telegram: row?.telegram ?? null,
+    instagram: row?.instagram ?? null,
+    facebook: row?.facebook ?? null,
   };
 }
 
 export function furnitureCompanyToProfile(company: FurnitureCompany): Profile {
+  const dbId = normalizeUuid(company.dbId) || (isUuid(company.id) ? company.id : '');
+  const slug = company.slug?.trim() || (!isUuid(company.id) ? company.id : buildFurnitureSlug(company.name));
+
   return {
-    id: company.id,
+    id: dbId || company.id,
+    slug,
     type: 'furniture',
     name: company.name,
     specialty: company.specialty,
@@ -153,8 +168,13 @@ export function profileToFurnitureCompany(
   profile: Profile,
   works: FurnitureCompany['works'] = [],
 ): FurnitureCompany {
+  const dbId = isUuid(profile.id) ? profile.id : null;
+  const slug = profile.slug?.trim() || (!isUuid(profile.id) ? profile.id : buildFurnitureSlug(profile.name));
+
   return {
-    id: profile.id,
+    id: dbId || profile.id,
+    dbId: dbId || null,
+    slug,
     name: profile.name,
     specialty: profile.specialty,
     description: profile.description,

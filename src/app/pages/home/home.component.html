@@ -574,6 +574,40 @@
           <div class="quiz-success__icon" aria-hidden="true">✓</div>
           <h3>{{ translation.t('home.calculator.successTitle') }}</h3>
           <p>{{ translation.t('home.calculator.successText') }}</p>
+
+          @if (calculatorSubmittedExecutors().length > 0) {
+            <p class="quiz-success__contact-lead">{{ translation.t('home.calculator.successContactLead') }}</p>
+            <div class="quiz-success__executors">
+              @for (executor of calculatorSubmittedExecutors(); track executor.id) {
+                <div class="quiz-success__executor">
+                  <strong class="quiz-success__executor-name">{{ executor.name }}</strong>
+                  <div class="quiz-success__messenger-actions">
+                    <button
+                      type="button"
+                      class="quiz-messenger-btn quiz-messenger-btn--whatsapp"
+                      [disabled]="!executorHasMessenger(executor, 'whatsapp')"
+                      (click)="openExecutorMessenger('whatsapp', executor)"
+                    >
+                      {{ translation.t('home.calculator.messengerWhatsApp') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="quiz-messenger-btn quiz-messenger-btn--telegram"
+                      [disabled]="!executorHasMessenger(executor, 'telegram')"
+                      (click)="openExecutorMessenger('telegram', executor)"
+                    >
+                      {{ translation.t('home.calculator.messengerTelegram') }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (calculatorMessengerWarning()) {
+            <p class="quiz-field-error" role="alert">{{ calculatorMessengerWarning() }}</p>
+          }
+
           <div class="quiz-success__actions">
             <a routerLink="/jobs" class="quiz-submit-btn">{{
               translation.t('home.calculator.successViewJobs')

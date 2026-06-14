@@ -14,6 +14,8 @@ export interface Profile {
   phone?: string | null;
   whatsapp?: string | null;
   telegram?: string | null;
+  whatsapp_phone?: string | null;
+  tg_username?: string | null;
   instagram?: string | null;
   facebook?: string | null;
   created_at?: string | null;

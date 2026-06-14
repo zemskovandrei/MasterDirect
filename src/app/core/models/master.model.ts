@@ -1,5 +1,6 @@
 export type MasterAccountType = 'worker' | 'brigade';
 
+/** Строка таблицы `masters` (мастера / worker). */
 export interface MasterRow {
   id: string;
   full_name: string;
@@ -9,11 +10,57 @@ export interface MasterRow {
   description: string | null;
   account_type: MasterAccountType | null;
   call_out_fee: string | null;
+  whatsapp_phone: string | null;
+  tg_username: string | null;
   whatsapp: string | null;
   telegram: string | null;
   instagram: string | null;
   facebook: string | null;
   created_at?: string;
+}
+
+/** Строка таблицы `brigades`. */
+export interface BrigadeRow {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  city: string | null;
+  specialty: string | null;
+  description: string | null;
+  call_out_fee: string | null;
+  whatsapp_phone: string | null;
+  tg_username: string | null;
+  whatsapp: string | null;
+  telegram: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  created_at?: string;
+}
+
+/** Мастер (worker) для UI и калькулятора. */
+export interface Master {
+  id: string;
+  full_name: string;
+  phone?: string | null;
+  city?: string | null;
+  specialty?: string | null;
+  description?: string | null;
+  call_out_fee?: string | null;
+  whatsapp_phone?: string;
+  tg_username?: string;
+}
+
+/** Бригада для UI и калькулятора. */
+export interface Brigade {
+  id: string;
+  full_name: string;
+  phone?: string | null;
+  city?: string | null;
+  specialty?: string | null;
+  description?: string | null;
+  call_out_fee?: string | null;
+  whatsapp_phone?: string;
+  tg_username?: string;
 }
 
 export interface ReviewRow {

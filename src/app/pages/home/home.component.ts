@@ -6,7 +6,6 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CalculatorLeadStoreService } from '../../core/services/calculator-lead-store.service';
-import { CalculatorTelegramService } from '../../core/services/calculator-telegram.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import {
   CalculatorPerformerCard,
@@ -20,6 +19,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 import { isPaidCallOutFee } from '../../core/utils/call-out-fee.util';
+import { redirectToExecutor } from '../../core/utils/executor-messenger.util';
 import {
   buildChecklistPhaseGroups,
   buildChecklistScopeSummary,
@@ -30,7 +30,6 @@ import {
   splitChecklistPhaseGroups,
   getAllVisibleChecklistItemIds,
 } from '../../core/utils/renovation-checklist.util';
-import { firstValueFrom } from 'rxjs';
 
 interface ServiceItem {
   image: string;
@@ -52,7 +51,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly supabase = inject(SupabaseService);
   protected readonly calculatorLeadStore = inject(CalculatorLeadStoreService);
-  protected readonly calculatorTelegram = inject(CalculatorTelegramService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly translation = inject(TranslationService);
   protected currentSlideIndex = signal(0);
@@ -61,6 +59,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected readonly calculatorSubmitted = signal(false);
   protected readonly calculatorSubmitting = signal(false);
   protected readonly calculatorSubmitError = signal<string | null>(null);
+  protected readonly calculatorLastOrderDetails = signal('');
+  protected readonly calculatorSubmittedExecutors = signal<CalculatorPerformerCard[]>([]);
+  protected readonly calculatorMessengerWarning = signal<string | null>(null);
   protected readonly calculatorRoomType = signal<CalculatorRoomType | null>(null);
   protected readonly calculatorRenovationType = signal<CalculatorRenovationType | null>(null);
   protected readonly calculatorArea = signal('');
@@ -128,6 +129,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         experience: this.catalogL10n.localizeSpecialtyField(company.specialty),
         callOutFee: null,
         callOutPaid: false,
+        whatsapp_phone: company.whatsapp_phone ?? company.socialLinks?.whatsapp ?? null,
+        tg_username: company.tg_username ?? company.socialLinks?.telegram ?? null,
       }));
     }
 
@@ -588,11 +591,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       selectedPerformers,
     });
 
+    // Сопоставление полей калькулятора с колонками таблицы jobklient (snake_case).
     const jobklientPayload = buildJobklientJobInsert(
       {
         customerName: name,
         contact,
-        city: city,
+        city,
         roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
         renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
         areaSqm,
@@ -605,46 +609,111 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.jobDescriptionLabels(),
     );
 
-    try {
-      const insertResult = await firstValueFrom(
-        this.supabase.insertJobklientJob(jobklientPayload),
-      );
-      if (insertResult.error) {
-        console.error('[HomeComponent] jobklient insert:', insertResult.error);
-        this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
-        this.calculatorSubmitting.set(false);
-        return;
-      }
-    } catch (insertError) {
-      console.error('[HomeComponent] jobklient insert:', insertError);
+    // 1) Сначала Supabase — при ошибке прерываем, Telegram не вызываем.
+    const insertResult = await this.supabase.insertJobklientJobAsync(jobklientPayload);
+
+    if (insertResult.error) {
+      console.error('Полный объект ошибки Supabase:', insertResult.supabaseError ?? insertResult.error);
+      console.error('[HomeComponent] jobklient insert failed:', insertResult.error);
       this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
       this.calculatorSubmitting.set(false);
       return;
     }
 
-    try {
-      await firstValueFrom(
-        this.calculatorTelegram.sendLead({
-          directedTo,
-          name,
-          contact,
-          roomType,
-          renovationType,
-          roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
-          renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
-          areaSqm,
-          photoLink,
-          paidCallOutAccepted,
-          selectedCallOutFees,
-        }),
-      );
-    } catch (telegramError) {
-      console.warn('[HomeComponent] telegram notify:', telegramError);
-    }
+    const orderDetails = this.buildCalculatorOrderDetails({
+      name,
+      contact,
+      city,
+      roomType,
+      renovationType,
+      areaSqm,
+      photoLink,
+      directedTo,
+      selectedCallOutFees,
+      paidCallOutAccepted,
+      estimateSummary,
+    });
+
+    this.calculatorLastOrderDetails.set(orderDetails);
+    this.calculatorSubmittedExecutors.set(selectedCards);
+    this.calculatorMessengerWarning.set(null);
 
     void this.supabase.loadActiveJobs(true);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitted.set(true);
+  }
+
+  protected openExecutorMessenger(
+    messenger: 'whatsapp' | 'telegram',
+    executor: CalculatorPerformerCard,
+  ): void {
+    const orderDetails = this.calculatorLastOrderDetails();
+    if (!orderDetails) {
+      return;
+    }
+
+    const opened = redirectToExecutor(messenger, executor, orderDetails);
+    if (!opened) {
+      const key =
+        messenger === 'whatsapp'
+          ? 'home.calculator.messengerMissingWhatsApp'
+          : 'home.calculator.messengerMissingTelegram';
+      this.calculatorMessengerWarning.set(
+        this.translation.t(key).replace('{{name}}', executor.name),
+      );
+    }
+  }
+
+  protected executorHasMessenger(
+    executor: CalculatorPerformerCard,
+    messenger: 'whatsapp' | 'telegram',
+  ): boolean {
+    if (messenger === 'whatsapp') {
+      return !!executor.whatsapp_phone?.replace(/\D/g, '');
+    }
+    return !!executor.tg_username?.replace(/^@/, '').trim();
+  }
+
+  private buildCalculatorOrderDetails(input: {
+    name: string;
+    contact: string;
+    city: string;
+    roomType: CalculatorRoomType;
+    renovationType: CalculatorRenovationType;
+    areaSqm: number;
+    photoLink?: string;
+    directedTo: string;
+    selectedCallOutFees: string;
+    paidCallOutAccepted: boolean;
+    estimateSummary: string;
+  }): string {
+    const cityLabel = this.calculatorCityLabel(input.city);
+    const lines = [
+      `🎯 ${this.translation.t('home.calculator.orderMessage.directed')}: ${input.directedTo || '—'}`,
+      `👤 ${this.translation.t('home.calculator.orderMessage.customer')}: ${input.name.trim()}`,
+      `📞 ${this.translation.t('home.calculator.orderMessage.contact')}: ${input.contact.trim()}`,
+      `🏠 ${this.translation.t('home.calculator.orderMessage.room')}: ${this.calculatorRoomTypeLabel(input.roomType)}`,
+      `🔧 ${this.translation.t('home.calculator.orderMessage.renovation')}: ${this.calculatorRenovationTypeLabel(input.renovationType)}`,
+      `📐 ${this.translation.t('home.calculator.orderMessage.area')}: ${input.areaSqm} m²`,
+      `📍 ${this.translation.t('home.calculator.orderMessage.city')}: ${cityLabel}`,
+    ];
+
+    if (input.estimateSummary.trim()) {
+      lines.push(
+        `📋 ${this.translation.t('home.calculator.orderMessage.scope')}:\n${input.estimateSummary.trim()}`,
+      );
+    }
+    if (input.photoLink?.trim()) {
+      lines.push(`📷 ${this.translation.t('home.calculator.orderMessage.photo')}: ${input.photoLink.trim()}`);
+    }
+    if (input.selectedCallOutFees.trim()) {
+      lines.push(`💰 ${this.translation.t('home.calculator.orderMessage.callOut')}: ${input.selectedCallOutFees.trim()}`);
+    }
+    if (input.paidCallOutAccepted) {
+      lines.push(`✅ ${this.translation.t('home.calculator.paidCallOutConsent')}`);
+    }
+
+    return lines.join('\n');
   }
 
   private jobDescriptionLabels(): JobDescriptionLabels {
@@ -670,6 +739,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.calculatorSubmitted.set(false);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitError.set(null);
+    this.calculatorLastOrderDetails.set('');
+    this.calculatorSubmittedExecutors.set([]);
+    this.calculatorMessengerWarning.set(null);
     this.calculatorStep.set(1);
     this.calculatorRoomType.set(null);
     this.calculatorRenovationType.set(null);
@@ -695,6 +767,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       experience: this.formatCalculatorExperience(performer.works.length),
       callOutFee,
       callOutPaid: isPaidCallOutFee(callOutFee),
+      whatsapp_phone: performer.whatsapp_phone ?? performer.socialLinks?.whatsapp ?? null,
+      tg_username: performer.tg_username ?? performer.socialLinks?.telegram ?? null,
     };
   }
 

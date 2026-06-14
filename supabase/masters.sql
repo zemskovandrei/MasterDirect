@@ -14,6 +14,8 @@ create table if not exists public.masters (
   telegram text,
   instagram text,
   facebook text,
+  whatsapp_phone text,
+  tg_username text,
   created_at timestamptz not null default now()
 );
 

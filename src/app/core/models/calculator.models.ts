@@ -13,6 +13,8 @@ export interface CalculatorPerformerCard {
   experience: string;
   callOutFee?: string | null;
   callOutPaid: boolean;
+  whatsapp_phone?: string | null;
+  tg_username?: string | null;
 }
 
 export interface CalculatorSelectedPerformer {

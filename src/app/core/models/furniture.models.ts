@@ -11,6 +11,8 @@ export interface FurnitureCompany {
   description: string;
   city: string;
   socialLinks?: PerformerSocialLinks;
+  whatsapp_phone?: string | null;
+  tg_username?: string | null;
   works: WorkProject[];
   isDemo?: boolean;
 }

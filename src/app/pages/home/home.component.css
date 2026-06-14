@@ -461,6 +461,61 @@ section.renovation-calculator {
   text-decoration: none;
 }
 
+.quiz-success__contact-lead {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.quiz-success__executors {
+  display: grid;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 520px;
+  margin: 0.75rem auto 0;
+}
+
+.quiz-success__executor {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.quiz-success__executor-name {
+  display: block;
+  margin-bottom: 0.65rem;
+}
+
+.quiz-success__messenger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quiz-messenger-btn {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quiz-messenger-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quiz-messenger-btn--whatsapp {
+  background: #25d366;
+  color: #052e16;
+}
+
+.quiz-messenger-btn--telegram {
+  background: #229ed9;
+  color: #fff;
+}
+
 .quiz-field select {
   width: 100%;
   min-height: 48px;

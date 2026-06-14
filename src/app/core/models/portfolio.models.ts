@@ -47,6 +47,10 @@ export interface PerformerProfile {
   socialLinks?: PerformerSocialLinks;
   works: WorkProject[];
   isDemo?: boolean;
+  /** Прямой контакт WhatsApp (колонка whatsapp_phone в Supabase). */
+  whatsapp_phone?: string | null;
+  /** Прямой контакт Telegram (колонка tg_username в Supabase). */
+  tg_username?: string | null;
   /** Стоимость выезда на замер (хранится в Supabase `city` для worker/brigade). */
   callOutFee?: string | null;
 }

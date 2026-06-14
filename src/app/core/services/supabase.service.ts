@@ -13,6 +13,7 @@ import { PerformerProfile } from '../models/portfolio.models';
 import {
   furnitureCompanyToProfile,
   masterRowToProfile,
+  brigadeRowToProfile,
   performerToProfile,
   profileToFurnitureCompany,
   profileToPerformer,
@@ -24,8 +25,9 @@ import {
   Job,
   JobklientJobInsert,
   mapJobklientRowsToJobs,
+  toJobklientDbRow,
 } from '../../models/job.model';
-import type { MasterRow } from '../models/master.model';
+import type { BrigadeRow, MasterRow } from '../models/master.model';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
@@ -33,7 +35,13 @@ const SUPABASE_NOT_CONFIGURED =
 const JOBS_CACHE_KEY = 'smartbuild.jobs.v3';
 const JOBS_CACHE_TTL_MS = 2 * 60 * 1000;
 const JOBS_LIST_COLUMNS =
-  'id,title,city,category,budget,description,status,created_at';
+  'id,title,client_name,phone,city,category,budget,description,status,created_at';
+
+const MASTERS_SELECT_COLUMNS =
+  'id,full_name,phone,city,specialty,description,account_type,call_out_fee,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
+
+const BRIGADES_SELECT_COLUMNS =
+  'id,full_name,phone,city,specialty,description,call_out_fee,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
 
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
@@ -43,6 +51,7 @@ export interface SupabaseMutationResult<T = Profile> {
 export interface JobklientInsertResult {
   data: Record<string, unknown> | null;
   error: string | null;
+  supabaseError?: unknown;
 }
 
 export interface JobklientMutationResult {
@@ -239,6 +248,14 @@ export class SupabaseService {
     }
 
     return from(this.insertJobklientJobRow(input));
+  }
+
+  async insertJobklientJobAsync(input: JobklientJobInsert): Promise<JobklientInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    return this.insertJobklientJobRow(input);
   }
 
   completeJobklientJob(id: string): Observable<JobklientMutationResult> {
@@ -463,37 +480,41 @@ export class SupabaseService {
 
   private async insertJobklientJobRow(input: JobklientJobInsert): Promise<JobklientInsertResult> {
     try {
+      if (!this.isConfigured()) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
       const client = await this.resolveClient();
       if (!client) {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const row = {
-        title: input.title,
-        city: input.city,
-        category: input.category,
-        budget: input.budget ?? null,
-        description: input.description ?? null,
-        status: input.status ?? 'New',
-      };
+      // Только колонки таблицы jobklient (snake_case), без лишних полей.
+      const row = toJobklientDbRow(input);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await client
         .from(environment.supabase.jobsTable)
         .insert([row])
         .select('*')
         .single();
 
       if (error) {
-        console.error('[SupabaseService] insertJobklientJob:', error.message);
-        return { data: null, error: error.message };
+        console.error('Полный объект ошибки Supabase:', error);
+        console.error('[SupabaseService] insertJobklientJob payload:', row);
+        return {
+          data: null,
+          error: error.message,
+          supabaseError: error,
+        };
       }
 
       this.invalidateJobsCache();
       return { data: (data as Record<string, unknown> | null) ?? null, error: null };
     } catch (err) {
+      console.error('Полный объект ошибки Supabase:', err);
       const message = err instanceof Error ? err.message : 'Insert failed';
       console.error('[SupabaseService] insertJobklientJob:', err);
-      return { data: null, error: message };
+      return { data: null, error: message, supabaseError: err };
     }
   }
 
@@ -757,24 +778,47 @@ export class SupabaseService {
     try {
       const client = await this.resolveClient();
       let masterProfiles: Profile[] = [];
+      let brigadeProfiles: Profile[] = [];
 
       if (client) {
-        const { data, error } = await client
+        const { data: mastersData, error: mastersError } = await client
           .from(environment.supabase.mastersTable)
-          .select('*')
+          .select(MASTERS_SELECT_COLUMNS)
+          .eq('account_type', 'worker')
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('[SupabaseService] load masters:', error.message);
+        if (mastersError) {
+          console.error('[SupabaseService] load masters:', mastersError.message);
         } else {
-          masterProfiles = (data as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
+          masterProfiles =
+            (mastersData as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
+        }
+
+        const { data: brigadesData, error: brigadesError } = await client
+          .from(environment.supabase.brigadesTable)
+          .select(BRIGADES_SELECT_COLUMNS)
+          .order('created_at', { ascending: false });
+
+        if (brigadesError) {
+          console.warn('[SupabaseService] load brigades table:', brigadesError.message);
+          const { data: fallbackBrigades } = await client
+            .from(environment.supabase.mastersTable)
+            .select(MASTERS_SELECT_COLUMNS)
+            .eq('account_type', 'brigade')
+            .order('created_at', { ascending: false });
+
+          brigadeProfiles =
+            (fallbackBrigades as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
+        } else {
+          brigadeProfiles =
+            (brigadesData as BrigadeRow[] | null)?.map(brigadeRowToProfile) ?? [];
         }
       }
 
       const furnitureProfiles = this.furnitureStore
         .companies()
         .map((company) => furnitureCompanyToProfile(company));
-      const profiles = [...masterProfiles, ...furnitureProfiles];
+      const profiles = [...brigadeProfiles, ...masterProfiles, ...furnitureProfiles];
       this.profilesSignal.set(profiles);
       this.loadedSignal.set(true);
       return profiles;

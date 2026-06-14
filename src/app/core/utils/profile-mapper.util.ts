@@ -1,15 +1,34 @@
 import { FurnitureCompany } from '../models/furniture.models';
-import { MasterRow } from '../models/master.model';
+import { BrigadeRow, MasterRow } from '../models/master.model';
 import { Profile } from '../models/profile.models';
 import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.models';
 
-import { isPaidCallOutFee, normalizeCallOutFee } from './call-out-fee.util';
+import { normalizeCallOutFee } from './call-out-fee.util';
+
+function resolveWhatsappPhone(
+  whatsapp_phone?: string | null,
+  whatsapp?: string | null,
+): string | null {
+  const direct = whatsapp_phone?.trim();
+  if (direct) {
+    return direct;
+  }
+  return whatsapp?.trim() || null;
+}
+
+function resolveTgUsername(tg_username?: string | null, telegram?: string | null): string | null {
+  const direct = tg_username?.trim();
+  if (direct) {
+    return direct;
+  }
+  return telegram?.trim() || null;
+}
 
 function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
   const links: PerformerSocialLinks = {
     phone: profile.phone ?? undefined,
-    whatsapp: profile.whatsapp ?? undefined,
-    telegram: profile.telegram ?? undefined,
+    whatsapp: resolveWhatsappPhone(profile.whatsapp_phone, profile.whatsapp) ?? undefined,
+    telegram: resolveTgUsername(profile.tg_username, profile.telegram) ?? undefined,
     instagram: profile.instagram ?? undefined,
     facebook: profile.facebook ?? undefined,
   };
@@ -27,6 +46,27 @@ export function masterRowToProfile(row: MasterRow): Profile {
     city: row.city,
     call_out_fee: row.call_out_fee,
     phone: row.phone,
+    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
+    tg_username: resolveTgUsername(row.tg_username, row.telegram),
+    whatsapp: row.whatsapp,
+    telegram: row.telegram,
+    instagram: row.instagram,
+    facebook: row.facebook,
+  };
+}
+
+export function brigadeRowToProfile(row: BrigadeRow): Profile {
+  return {
+    id: row.id,
+    type: 'brigade',
+    name: row.full_name,
+    specialty: row.specialty ?? '',
+    description: row.description ?? '',
+    city: row.city,
+    call_out_fee: row.call_out_fee,
+    phone: row.phone,
+    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
+    tg_username: resolveTgUsername(row.tg_username, row.telegram),
     whatsapp: row.whatsapp,
     telegram: row.telegram,
     instagram: row.instagram,
@@ -83,6 +123,8 @@ export function profileToPerformer(
     description: profile.description,
     avatarUrl: profile.avatar_url ?? undefined,
     socialLinks: buildSocialLinks(profile),
+    whatsapp_phone: profile.whatsapp_phone ?? profile.whatsapp,
+    tg_username: profile.tg_username ?? profile.telegram,
     works,
     callOutFee,
   };
@@ -99,6 +141,8 @@ export function profileToFurnitureCompany(
     description: profile.description,
     city: profile.city ?? '',
     socialLinks: buildSocialLinks(profile),
+    whatsapp_phone: profile.whatsapp_phone ?? profile.whatsapp,
+    tg_username: profile.tg_username ?? profile.telegram,
     works,
   };
 }

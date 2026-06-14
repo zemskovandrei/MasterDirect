@@ -12,7 +12,9 @@
       <header class="catalog-group-header">
         <div class="catalog-group-label">
           <span class="catalog-group-icon" aria-hidden="true">🔧</span>
-          <span class="performer-badge performer-badge-worker">{{ translation.t('masters.badge') }}</span>
+          <span class="performer-badge performer-badge-worker">{{
+            translation.t('masters.badge')
+          }}</span>
         </div>
         <h2>{{ translation.t('masters.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('masters.listLead') }}</p>
@@ -57,7 +59,9 @@
             }
 
             <div class="performer-head">
-              <span class="performer-badge performer-badge-worker">{{ translation.t('masters.badge') }}</span>
+              <span class="performer-badge performer-badge-worker">{{
+                translation.t('masters.badge')
+              }}</span>
               <h3>
                 <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
               </h3>

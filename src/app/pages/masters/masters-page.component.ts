@@ -9,6 +9,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { firstValueFrom } from 'rxjs';
+import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-masters-page',
@@ -36,7 +37,9 @@ export class MastersPageComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe();
+      this.supabase.loadProfiles().subscribe({
+        error: (err) => logSupabaseError('MastersPage.loadProfiles', err),
+      });
     }
   }
 

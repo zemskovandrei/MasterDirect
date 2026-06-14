@@ -2,6 +2,7 @@ import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Observable, from, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
 import {
   Profile,
@@ -12,6 +13,7 @@ import {
 import { PerformerProfile } from '../models/portfolio.models';
 import {
   furnitureCompanyToProfile,
+  furnitureOrderRowToProfile,
   masterRowToProfile,
   brigadeRowToProfile,
   performerToProfile,
@@ -25,9 +27,11 @@ import {
   Job,
   JobklientJobInsert,
   mapJobklientRowsToJobs,
+  toFurnitureOrderDbRow,
   toJobklientDbRow,
 } from '../../models/job.model';
-import type { BrigadeRow, MasterRow } from '../models/master.model';
+import type { BrigadeRow, FurnitureOrderInsert, FurnitureOrderRow, MasterRow } from '../models/master.model';
+import { logSupabaseError } from '../utils/supabase-error.util';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
@@ -43,12 +47,21 @@ const MASTERS_SELECT_COLUMNS =
 const BRIGADES_SELECT_COLUMNS =
   'id,full_name,phone,city,specialty,description,call_out_fee,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
 
+const FURNITURE_ORDERS_PROFILE_COLUMNS =
+  'id,full_name,phone,city,specialty,description,furniture_type,work_type,whatsapp_phone,tg_username,whatsapp,telegram,instagram,facebook,created_at';
+
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
   error: string | null;
 }
 
 export interface JobklientInsertResult {
+  data: Record<string, unknown> | null;
+  error: string | null;
+  supabaseError?: unknown;
+}
+
+export interface FurnitureOrderInsertResult {
   data: Record<string, unknown> | null;
   error: string | null;
   supabaseError?: unknown;
@@ -109,6 +122,13 @@ export class SupabaseService {
       if (cached) {
         this.activeJobsSignal.set(cached.jobs);
       }
+
+      console.info('[SupabaseService] runtime config', {
+        production: environment.production,
+        url: environment.supabase.url,
+        jobsTable: environment.supabase.jobsTable,
+        configured: this.isConfigured(),
+      });
     }
   }
 
@@ -126,6 +146,7 @@ export class SupabaseService {
     }
 
     if (!this.isConfigured()) {
+      logSupabaseError('loadJobsForAuthenticatedMaster', new Error(SUPABASE_NOT_CONFIGURED));
       throw new Error(SUPABASE_NOT_CONFIGURED);
     }
 
@@ -144,6 +165,10 @@ export class SupabaseService {
         error: authError,
       } = await client.auth.getUser();
 
+      if (authError) {
+        logSupabaseError('loadJobsForAuthenticatedMaster.auth', authError);
+      }
+
       if (authError || !user) {
         this.jobsAccessDeniedSignal.set(true);
         this.activeJobsSignal.set([]);
@@ -157,6 +182,7 @@ export class SupabaseService {
         .maybeSingle();
 
       if (masterError) {
+        logSupabaseError('loadJobsForAuthenticatedMaster.masterCity', masterError);
         throw new Error(masterError.message);
       }
 
@@ -176,13 +202,7 @@ export class SupabaseService {
         }
       }
 
-      const query = new URLSearchParams({
-        select: JOBS_LIST_COLUMNS,
-        order: 'created_at.desc',
-        limit: '100',
-        city: `eq.${masterCity}`,
-      });
-      const rows = await this.fetchJobklientRows(query);
+      const rows = await this.fetchJobklientRows({ city: masterCity });
       const jobs = mapJobklientRowsToJobs(rows);
       this.activeJobsSignal.set(jobs);
       if (jobs.length > 0) {
@@ -192,7 +212,7 @@ export class SupabaseService {
       }
       return jobs;
     } catch (err) {
-      console.error('[SupabaseService] loadJobsForAuthenticatedMaster:', err);
+      logSupabaseError('loadJobsForAuthenticatedMaster', err);
       this.activeJobsSignal.set([]);
       this.jobsErrorSignal.set(err instanceof Error ? err.message : 'Failed to load jobs');
       throw err;
@@ -211,6 +231,7 @@ export class SupabaseService {
     }
 
     if (!this.isConfigured()) {
+      logSupabaseError('loadActiveJobs', new Error(SUPABASE_NOT_CONFIGURED));
       throw new Error(SUPABASE_NOT_CONFIGURED);
     }
 
@@ -258,6 +279,24 @@ export class SupabaseService {
     return this.insertJobklientJobRow(input);
   }
 
+  insertFurnitureOrder(input: FurnitureOrderInsert): Observable<FurnitureOrderInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.insertFurnitureOrderRow(input));
+  }
+
+  async insertFurnitureOrderAsync(
+    input: FurnitureOrderInsert,
+  ): Promise<FurnitureOrderInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    return this.insertFurnitureOrderRow(input);
+  }
+
   completeJobklientJob(id: string): Observable<JobklientMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ error: 'Browser only' });
@@ -279,7 +318,12 @@ export class SupabaseService {
       return of([]);
     }
 
-    return from(this.refreshProfilesFromDatabase());
+    return from(this.refreshProfilesFromDatabase()).pipe(
+      catchError((err) => {
+        logSupabaseError('loadProfiles', err);
+        return of([]);
+      }),
+    );
   }
 
   getProfilesByType(type: ProfileType): Observable<Profile[]> {
@@ -287,6 +331,11 @@ export class SupabaseService {
       this.refreshProfilesFromDatabase().then((profiles) =>
         profiles.filter((profile) => profile.type === type),
       ),
+    ).pipe(
+      catchError((err) => {
+        logSupabaseError(`getProfilesByType:${type}`, err);
+        return of([]);
+      }),
     );
   }
 
@@ -469,13 +518,25 @@ export class SupabaseService {
 
   isConfigured(): boolean {
     const { url, anonKey } = environment.supabase;
-    return (
-      url.startsWith('https://') &&
-      !url.includes('YOUR_SUPABASE') &&
-      !url.includes('mqnrevts') &&
-      anonKey.length > 20 &&
-      !anonKey.includes('YOUR_SUPABASE')
-    );
+    if (!url?.trim() || !anonKey?.trim()) {
+      return false;
+    }
+
+    if (url.includes('YOUR_SUPABASE') || anonKey.includes('YOUR_SUPABASE')) {
+      return false;
+    }
+
+    if (/localhost|127\.0\.0\.1/i.test(url)) {
+      return false;
+    }
+
+    const hasSupabaseHost = /^https:\/\/[a-z0-9]+\.supabase\.co\/?$/i.test(url.trim());
+    const hasPublicKey =
+      anonKey.startsWith('eyJ') ||
+      anonKey.startsWith('sb_publishable_') ||
+      anonKey.startsWith('sb_');
+
+    return hasSupabaseHost && hasPublicKey && anonKey.length > 20;
   }
 
   private async insertJobklientJobRow(input: JobklientJobInsert): Promise<JobklientInsertResult> {
@@ -499,7 +560,7 @@ export class SupabaseService {
         .single();
 
       if (error) {
-        console.error('Полный объект ошибки Supabase:', error);
+        logSupabaseError('insertJobklientJob', error);
         console.error('[SupabaseService] insertJobklientJob payload:', row);
         return {
           data: null,
@@ -511,9 +572,47 @@ export class SupabaseService {
       this.invalidateJobsCache();
       return { data: (data as Record<string, unknown> | null) ?? null, error: null };
     } catch (err) {
-      console.error('Полный объект ошибки Supabase:', err);
+      logSupabaseError('insertJobklientJob', err);
       const message = err instanceof Error ? err.message : 'Insert failed';
-      console.error('[SupabaseService] insertJobklientJob:', err);
+      return { data: null, error: message, supabaseError: err };
+    }
+  }
+
+  private async insertFurnitureOrderRow(
+    input: FurnitureOrderInsert,
+  ): Promise<FurnitureOrderInsertResult> {
+    try {
+      if (!this.isConfigured()) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const row = toFurnitureOrderDbRow(input);
+
+      const { data, error } = await client
+        .from(environment.supabase.furnitureOrdersTable)
+        .insert([row])
+        .select('*')
+        .single();
+
+      if (error) {
+        logSupabaseError('insertFurnitureOrder', error);
+        console.error('[SupabaseService] insertFurnitureOrder payload:', row);
+        return {
+          data: null,
+          error: error.message,
+          supabaseError: error,
+        };
+      }
+
+      return { data: (data as Record<string, unknown> | null) ?? null, error: null };
+    } catch (err) {
+      logSupabaseError('insertFurnitureOrder', err);
+      const message = err instanceof Error ? err.message : 'Insert failed';
       return { data: null, error: message, supabaseError: err };
     }
   }
@@ -540,7 +639,7 @@ export class SupabaseService {
         }
         return jobs;
       } catch (err) {
-        console.error('[SupabaseService] loadActiveJobs:', err);
+        logSupabaseError('loadActiveJobs', err);
         if (showLoading || this.activeJobsSignal().length === 0) {
           this.activeJobsSignal.set([]);
           this.jobsErrorSignal.set(
@@ -644,29 +743,26 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const { url, anonKey, jobsTable } = environment.supabase;
-      const endpoint = `${url}/rest/v1/${jobsTable}?id=eq.${encodeURIComponent(id)}`;
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: {
-          apikey: anonKey,
-          Authorization: `Bearer ${anonKey}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify({ status }),
-      });
+      const client = await this.resolveClient();
+      if (!client) {
+        return { error: SUPABASE_NOT_CONFIGURED };
+      }
 
-      if (!response.ok) {
-        const message = await response.text();
-        return { error: message || `HTTP ${response.status}` };
+      const { error } = await client
+        .from(environment.supabase.jobsTable)
+        .update({ status })
+        .eq('id', id);
+
+      if (error) {
+        logSupabaseError('updateJobklientStatus', error);
+        return { error: error.message };
       }
 
       this.removeJobFromLocalState(id);
       return { error: null };
     } catch (err) {
+      logSupabaseError('updateJobklientStatus', err);
       const message = err instanceof Error ? err.message : 'Update failed';
-      console.error('[SupabaseService] updateJobklientStatus:', err);
       return { error: message };
     }
   }
@@ -677,27 +773,23 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const { url, anonKey, jobsTable } = environment.supabase;
-      const endpoint = `${url}/rest/v1/${jobsTable}?id=eq.${encodeURIComponent(id)}`;
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: {
-          apikey: anonKey,
-          Authorization: `Bearer ${anonKey}`,
-          Prefer: 'return=minimal',
-        },
-      });
+      const client = await this.resolveClient();
+      if (!client) {
+        return { error: SUPABASE_NOT_CONFIGURED };
+      }
 
-      if (!response.ok) {
-        const message = await response.text();
-        return { error: message || `HTTP ${response.status}` };
+      const { error } = await client.from(environment.supabase.jobsTable).delete().eq('id', id);
+
+      if (error) {
+        logSupabaseError('deleteJobklientJob', error);
+        return { error: error.message };
       }
 
       this.removeJobFromLocalState(id);
       return { error: null };
     } catch (err) {
+      logSupabaseError('deleteJobklientJob', err);
       const message = err instanceof Error ? err.message : 'Delete failed';
-      console.error('[SupabaseService] deleteJobklientJob:', err);
       return { error: message };
     }
   }
@@ -716,31 +808,30 @@ export class SupabaseService {
     }
   }
 
-  private async fetchJobklientRows(query?: URLSearchParams): Promise<unknown[]> {
-    const { url, anonKey, jobsTable } = environment.supabase;
-    const params =
-      query ??
-      new URLSearchParams({
-        select: JOBS_LIST_COLUMNS,
-        order: 'created_at.desc',
-        limit: '100',
-      });
-    const endpoint = `${url}/rest/v1/${jobsTable}?${params.toString()}`;
-    const response = await fetch(endpoint, {
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        Prefer: 'count=none',
-      },
-    });
-
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || `HTTP ${response.status}`);
+  private async fetchJobklientRows(filters?: { city?: string }): Promise<unknown[]> {
+    const client = await this.resolveClient();
+    if (!client) {
+      throw new Error(SUPABASE_NOT_CONFIGURED);
     }
 
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    let query = client
+      .from(environment.supabase.jobsTable)
+      .select(JOBS_LIST_COLUMNS)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (filters?.city) {
+      query = query.eq('city', filters.city);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      logSupabaseError('fetchJobklientRows', error);
+      throw new Error(error.message);
+    }
+
+    return data ?? [];
   }
 
   private resolveClient(): Promise<SupabaseClient | null> {
@@ -749,6 +840,7 @@ export class SupabaseService {
     }
 
     if (!this.isConfigured()) {
+      logSupabaseError('resolveClient', new Error(SUPABASE_NOT_CONFIGURED));
       return Promise.resolve(null);
     }
 
@@ -760,10 +852,20 @@ export class SupabaseService {
       const { url, anonKey } = environment.supabase;
       this.clientPromise = import('@supabase/supabase-js')
         .then(({ createClient }) => {
-          this.supabaseClient = createClient(url, anonKey);
+          this.supabaseClient = createClient(url, anonKey, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+            },
+            global: {
+              // Нативный fetch браузера — без лишних заголовков Angular HttpClient.
+              fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+            },
+          });
           return this.supabaseClient;
         })
-        .catch(() => {
+        .catch((err) => {
+          logSupabaseError('createClient', err);
           this.clientPromise = null;
           return null;
         });
@@ -779,8 +881,18 @@ export class SupabaseService {
       const client = await this.resolveClient();
       let masterProfiles: Profile[] = [];
       let brigadeProfiles: Profile[] = [];
+      let furnitureProfilesFromDb: Profile[] = [];
 
-      if (client) {
+      if (!client) {
+        logSupabaseError(
+          'refreshProfilesFromDatabase',
+          new Error(
+            this.isConfigured()
+              ? 'Supabase client failed to initialize'
+              : SUPABASE_NOT_CONFIGURED,
+          ),
+        );
+      } else {
         const { data: mastersData, error: mastersError } = await client
           .from(environment.supabase.mastersTable)
           .select(MASTERS_SELECT_COLUMNS)
@@ -788,7 +900,7 @@ export class SupabaseService {
           .order('created_at', { ascending: false });
 
         if (mastersError) {
-          console.error('[SupabaseService] load masters:', mastersError.message);
+          logSupabaseError('loadMasters', mastersError);
         } else {
           masterProfiles =
             (mastersData as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
@@ -800,12 +912,16 @@ export class SupabaseService {
           .order('created_at', { ascending: false });
 
         if (brigadesError) {
-          console.warn('[SupabaseService] load brigades table:', brigadesError.message);
-          const { data: fallbackBrigades } = await client
+          logSupabaseError('loadBrigades', brigadesError);
+          const { data: fallbackBrigades, error: fallbackError } = await client
             .from(environment.supabase.mastersTable)
             .select(MASTERS_SELECT_COLUMNS)
             .eq('account_type', 'brigade')
             .order('created_at', { ascending: false });
+
+          if (fallbackError) {
+            logSupabaseError('loadBrigadesFallback', fallbackError);
+          }
 
           brigadeProfiles =
             (fallbackBrigades as MasterRow[] | null)?.map(masterRowToProfile) ?? [];
@@ -813,15 +929,39 @@ export class SupabaseService {
           brigadeProfiles =
             (brigadesData as BrigadeRow[] | null)?.map(brigadeRowToProfile) ?? [];
         }
+
+        const { data: furnitureData, error: furnitureError } = await client
+          .from(environment.supabase.furnitureOrdersTable)
+          .select(FURNITURE_ORDERS_PROFILE_COLUMNS)
+          .not('full_name', 'is', null)
+          .neq('full_name', '')
+          .order('created_at', { ascending: false });
+
+        if (furnitureError) {
+          logSupabaseError('loadFurnitureOrders', furnitureError);
+        } else {
+          furnitureProfilesFromDb =
+            (furnitureData as FurnitureOrderRow[] | null)
+              ?.map(furnitureOrderRowToProfile)
+              .filter((profile) => profile.name.trim().length > 0) ?? [];
+        }
       }
 
-      const furnitureProfiles = this.furnitureStore
+      const localFurnitureProfiles = this.furnitureStore
         .companies()
         .map((company) => furnitureCompanyToProfile(company));
+      const furnitureById = new Map<string, Profile>();
+      for (const profile of [...furnitureProfilesFromDb, ...localFurnitureProfiles]) {
+        furnitureById.set(profile.id, profile);
+      }
+      const furnitureProfiles = [...furnitureById.values()];
       const profiles = [...brigadeProfiles, ...masterProfiles, ...furnitureProfiles];
       this.profilesSignal.set(profiles);
       this.loadedSignal.set(true);
       return profiles;
+    } catch (err) {
+      logSupabaseError('refreshProfilesFromDatabase', err);
+      throw err;
     } finally {
       this.loadingSignal.set(false);
     }

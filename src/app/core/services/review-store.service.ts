@@ -9,6 +9,7 @@ import type { ReviewRow } from '../models/master.model';
 import { environment } from '../../../environments/environment';
 import { TranslationService } from './translation.service';
 import { SupabaseService } from './supabase.service';
+import { logSupabaseError } from '../utils/supabase-error.util';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewStoreService {
@@ -111,7 +112,7 @@ export class ReviewStoreService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[ReviewStoreService] loadApprovedReviews:', error.message);
+        logSupabaseError('loadApprovedReviews', error);
         return;
       }
 
@@ -145,7 +146,7 @@ export class ReviewStoreService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[ReviewStoreService] loadPendingReviews:', error.message);
+        logSupabaseError('loadPendingReviews', error);
         return;
       }
 
@@ -177,7 +178,7 @@ export class ReviewStoreService {
 
     const client = await this.supabase.getClient();
     if (!client) {
-      console.error('[ReviewStoreService] addReview: Supabase is not configured');
+      logSupabaseError('addReview', new Error('Supabase is not configured'));
       return null;
     }
 
@@ -202,7 +203,7 @@ export class ReviewStoreService {
       .single();
 
     if (error || !inserted) {
-      console.error('[ReviewStoreService] addReview:', error?.message);
+      logSupabaseError('addReview', error ?? new Error('Insert failed'));
       return null;
     }
 
@@ -228,7 +229,7 @@ export class ReviewStoreService {
       .eq('id', id);
 
     if (error) {
-      console.error('[ReviewStoreService] approveReview:', error.message);
+      logSupabaseError('approveReview', error);
       return;
     }
 
@@ -247,7 +248,7 @@ export class ReviewStoreService {
     const { error } = await client.from(environment.supabase.reviewsTable).delete().eq('id', id);
 
     if (error) {
-      console.error('[ReviewStoreService] rejectReview:', error.message);
+      logSupabaseError('rejectReview', error);
       return;
     }
 

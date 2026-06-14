@@ -14,7 +14,12 @@ import {
   CalculatorRoomType,
 } from '../../core/models/calculator.models';
 import { PerformerProfile } from '../../core/models/portfolio.models';
-import { buildJobklientJobInsert, JobDescriptionLabels } from '../../models/job.model';
+import {
+  buildFurnitureOrderInsert,
+  buildJobklientJobInsert,
+  FurnitureOrderDescriptionLabels,
+  JobDescriptionLabels,
+} from '../../models/job.model';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
@@ -174,12 +179,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const renovationType = this.calculatorRenovationType();
     const areaSqm = Number(this.calculatorArea().replace(',', '.'));
 
-    return !!(
-      roomType &&
-      renovationType &&
-      Number.isFinite(areaSqm) &&
-      areaSqm >= 5
-    );
+    return !!(roomType && renovationType && Number.isFinite(areaSqm) && areaSqm >= 5);
   });
 
   protected readonly calculatorChecklistGroups = computed(() => {
@@ -207,17 +207,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     );
   });
 
-  protected readonly calculatorChecklistMainFilteredGroups = computed(() =>
-    splitChecklistPhaseGroups(this.calculatorChecklistFilteredGroups()).main,
+  protected readonly calculatorChecklistMainFilteredGroups = computed(
+    () => splitChecklistPhaseGroups(this.calculatorChecklistFilteredGroups()).main,
   );
 
   protected readonly calculatorChecklistExtraGroup = computed(
     () => splitChecklistPhaseGroups(this.calculatorChecklistFilteredGroups()).extra,
   );
 
-  protected readonly calculatorChecklistSearchResultsCount = computed(() =>
-    countChecklistItemsInGroups(this.calculatorChecklistFilteredGroups()) +
-    this.calculatorChecklistFilteredCustomItems().length,
+  protected readonly calculatorChecklistSearchResultsCount = computed(
+    () =>
+      countChecklistItemsInGroups(this.calculatorChecklistFilteredGroups()) +
+      this.calculatorChecklistFilteredCustomItems().length,
   );
 
   protected readonly calculatorChecklistFilteredCustomItems = computed(() => {
@@ -428,9 +429,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!roomType || !renovationType) {
       return;
     }
-    this.calculatorChecklistSelection.set(
-      getAllVisibleChecklistItemIds(renovationType, roomType),
-    );
+    this.calculatorChecklistSelection.set(getAllVisibleChecklistItemIds(renovationType, roomType));
   }
 
   selectRecommendedChecklistItems() {
@@ -591,30 +590,53 @@ export class HomeComponent implements OnInit, OnDestroy {
       selectedPerformers,
     });
 
-    // Сопоставление полей калькулятора с колонками таблицы jobklient (snake_case).
-    const jobklientPayload = buildJobklientJobInsert(
-      {
-        customerName: name,
-        contact,
-        city,
-        roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
-        renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
-        areaSqm,
-        photoLink,
-        directedTo,
-        selectedCallOutFees,
-        paidCallOutAccepted,
-        estimateSummary,
-      },
-      this.jobDescriptionLabels(),
-    );
-
-    // 1) Сначала Supabase — при ошибке прерываем, Telegram не вызываем.
-    const insertResult = await this.supabase.insertJobklientJobAsync(jobklientPayload);
+    // Сопоставление полей калькулятора с колонками Supabase (snake_case).
+    const isFurnitureOrder = renovationType === 'furniture';
+    const insertResult = isFurnitureOrder
+      ? await this.supabase.insertFurnitureOrderAsync(
+          buildFurnitureOrderInsert(
+            {
+              customerName: name,
+              contact,
+              city,
+              roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
+              workTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
+              areaSqm,
+              photoLink,
+              directedTo,
+              estimateSummary,
+            },
+            this.furnitureOrderDescriptionLabels(),
+          ),
+        )
+      : await this.supabase.insertJobklientJobAsync(
+          buildJobklientJobInsert(
+            {
+              customerName: name,
+              contact,
+              city,
+              roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
+              renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
+              areaSqm,
+              photoLink,
+              directedTo,
+              selectedCallOutFees,
+              paidCallOutAccepted,
+              estimateSummary,
+            },
+            this.jobDescriptionLabels(),
+          ),
+        );
 
     if (insertResult.error) {
-      console.error('Полный объект ошибки Supabase:', insertResult.supabaseError ?? insertResult.error);
-      console.error('[HomeComponent] jobklient insert failed:', insertResult.error);
+      console.error(
+        'Полный объект ошибки Supabase:',
+        insertResult.supabaseError ?? insertResult.error,
+      );
+      console.error(
+        `[HomeComponent] ${isFurnitureOrder ? 'furniture_orders' : 'jobklient'} insert failed:`,
+        insertResult.error,
+      );
       this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
       this.calculatorSubmitting.set(false);
       return;
@@ -641,6 +663,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     void this.supabase.loadActiveJobs(true);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitted.set(true);
+  }
+
+  private furnitureOrderDescriptionLabels(): FurnitureOrderDescriptionLabels {
+    return {
+      customer: this.translation.t('jobs.fields.customer'),
+      contact: this.translation.t('jobs.fields.contact'),
+      area: this.translation.t('jobs.fields.area'),
+      photo: this.translation.t('jobs.fields.photo'),
+      directedTo: this.translation.t('jobs.fields.directedTo'),
+      estimate: this.translation.t('jobs.fields.estimate'),
+    };
   }
 
   protected openExecutorMessenger(
@@ -704,10 +737,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       );
     }
     if (input.photoLink?.trim()) {
-      lines.push(`📷 ${this.translation.t('home.calculator.orderMessage.photo')}: ${input.photoLink.trim()}`);
+      lines.push(
+        `📷 ${this.translation.t('home.calculator.orderMessage.photo')}: ${input.photoLink.trim()}`,
+      );
     }
     if (input.selectedCallOutFees.trim()) {
-      lines.push(`💰 ${this.translation.t('home.calculator.orderMessage.callOut')}: ${input.selectedCallOutFees.trim()}`);
+      lines.push(
+        `💰 ${this.translation.t('home.calculator.orderMessage.callOut')}: ${input.selectedCallOutFees.trim()}`,
+      );
     }
     if (input.paidCallOutAccepted) {
       lines.push(`✅ ${this.translation.t('home.calculator.paidCallOutConsent')}`);
@@ -732,7 +769,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private calculatorCityLabel(city: string): string {
     const option = this.calculatorCityOptions.find((item) => item.id === city);
-    return option ? this.translation.t(option.labelKey) : this.translation.t('home.calculator.cities.both');
+    return option
+      ? this.translation.t(option.labelKey)
+      : this.translation.t('home.calculator.cities.both');
   }
 
   resetCalculator() {

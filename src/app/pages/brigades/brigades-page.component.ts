@@ -5,6 +5,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-brigades-page',
@@ -25,7 +26,9 @@ export class BrigadesPageComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe();
+      this.supabase.loadProfiles().subscribe({
+        error: (err) => logSupabaseError('BrigadesPage.loadProfiles', err),
+      });
     }
 
     this.route.fragment.subscribe((fragment) => {

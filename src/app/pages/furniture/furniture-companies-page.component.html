@@ -12,7 +12,9 @@
       <header class="catalog-group-header">
         <div class="catalog-group-label">
           <span class="catalog-group-icon" aria-hidden="true">🪑</span>
-          <span class="performer-badge performer-badge-furniture">{{ translation.t('furniture.badge') }}</span>
+          <span class="performer-badge performer-badge-furniture">{{
+            translation.t('furniture.badge')
+          }}</span>
         </div>
         <h2>{{ translation.t('furniture.listTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('furniture.listLead') }}</p>
@@ -27,7 +29,9 @@
         @for (company of supabase.furnitureCompanies(); track company.id) {
           <article class="performer-card performer-card--furniture">
             <div class="performer-head">
-              <span class="performer-badge performer-badge-furniture">{{ translation.t('furniture.badge') }}</span>
+              <span class="performer-badge performer-badge-furniture">{{
+                translation.t('furniture.badge')
+              }}</span>
               <h3>
                 <a [routerLink]="['/furniture', company.id]">{{ company.name }}</a>
               </h3>

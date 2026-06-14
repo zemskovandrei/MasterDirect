@@ -4,6 +4,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-furniture-companies-page',
@@ -19,7 +20,9 @@ export class FurnitureCompaniesPageComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe();
+      this.supabase.loadProfiles().subscribe({
+        error: (err) => logSupabaseError('FurniturePage.loadProfiles', err),
+      });
     }
   }
 }

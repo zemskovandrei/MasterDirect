@@ -306,8 +306,17 @@ h2 {
 }
 
 @media (max-width: 640px) {
-  .register-block {
-    padding: 1.25rem 1rem;
+  .register-block,
+  .register-block--form {
+    padding: 1.25rem 1rem 1.75rem;
+  }
+
+  .register-header {
+    padding: 2rem 1.25rem 1.25rem;
+  }
+
+  .register-form-footer {
+    padding-inline: 0;
   }
 
   .register-label em {

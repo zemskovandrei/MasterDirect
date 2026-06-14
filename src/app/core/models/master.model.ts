@@ -92,3 +92,34 @@ export interface AuthSignUpMetadata {
   instagram?: string;
   facebook?: string;
 }
+
+/** Строка таблицы `furniture_orders` (профиль компании или заказ из калькулятора). */
+export interface FurnitureOrderRow {
+  id: string;
+  full_name?: string | null;
+  client_name?: string | null;
+  client_phone?: string | null;
+  furniture_type?: string | null;
+  work_type?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  specialty?: string | null;
+  description?: string | null;
+  whatsapp_phone?: string | null;
+  tg_username?: string | null;
+  whatsapp?: string | null;
+  telegram?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+  created_at?: string;
+}
+
+/** Payload для `.insert()` в таблицу `furniture_orders`. */
+export interface FurnitureOrderInsert {
+  client_name: string;
+  client_phone: string;
+  furniture_type: string;
+  work_type: string;
+  city?: string;
+  description?: string | null;
+}

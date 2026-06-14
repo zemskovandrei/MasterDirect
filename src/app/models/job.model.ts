@@ -1,3 +1,5 @@
+import type { FurnitureOrderInsert } from '../core/models/master.model';
+
 /** Строка таблицы заказов в Supabase (`jobklient`). */
 export interface JobklientJobRow {
   id?: string | number | null;
@@ -107,6 +109,70 @@ export function toJobklientDbRow(input: JobklientJobInsert): {
     budget: input.budget ?? null,
     description: input.description?.trim() || null,
     status: input.status?.trim() || 'New',
+  };
+}
+
+export interface CalculatorFurnitureOrderInput {
+  customerName: string;
+  contact: string;
+  city: string;
+  roomTypeLabel: string;
+  workTypeLabel: string;
+  areaSqm: number;
+  photoLink?: string;
+  directedTo?: string;
+  estimateSummary?: string;
+}
+
+export interface FurnitureOrderDescriptionLabels {
+  customer: string;
+  contact: string;
+  area: string;
+  photo: string;
+  directedTo: string;
+  estimate?: string;
+}
+
+export function buildFurnitureOrderInsert(
+  input: CalculatorFurnitureOrderInput,
+  labels: FurnitureOrderDescriptionLabels,
+): FurnitureOrderInsert {
+  const descriptionLines = [
+    `${labels.customer}: ${input.customerName}`,
+    `${labels.contact}: ${input.contact}`,
+    `${labels.area}: ${input.areaSqm} m²`,
+    input.estimateSummary && labels.estimate
+      ? `${labels.estimate}:\n${input.estimateSummary}`
+      : '',
+    input.photoLink ? `${labels.photo}: ${input.photoLink}` : '',
+    input.directedTo ? `${labels.directedTo}: ${input.directedTo}` : '',
+  ].filter(Boolean);
+
+  return {
+    client_name: input.customerName.trim(),
+    client_phone: input.contact.trim(),
+    furniture_type: input.roomTypeLabel.trim(),
+    work_type: input.workTypeLabel.trim(),
+    city: input.city.trim(),
+    description: descriptionLines.join('\n') || null,
+  };
+}
+
+export function toFurnitureOrderDbRow(input: FurnitureOrderInsert): {
+  client_name: string;
+  client_phone: string;
+  furniture_type: string;
+  work_type: string;
+  city: string | null;
+  description: string | null;
+} {
+  return {
+    client_name: input.client_name.trim(),
+    client_phone: input.client_phone.trim(),
+    furniture_type: input.furniture_type.trim(),
+    work_type: input.work_type.trim(),
+    city: input.city?.trim() || null,
+    description: input.description?.trim() || null,
   };
 }
 

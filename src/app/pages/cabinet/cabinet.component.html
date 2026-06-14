@@ -73,7 +73,7 @@
 
               @if (selectedAccountType() !== 'furniture') {
                 <label
-                  class="register-field"
+                  class="register-field register-field--half"
                   [class.register-field--error]="registerFieldInvalid('email')"
                 >
                   <span class="register-label">
@@ -93,7 +93,7 @@
                 </label>
 
                 <label
-                  class="register-field"
+                  class="register-field register-field--half"
                   [class.register-field--error]="registerFieldInvalid('password')"
                 >
                   <span class="register-label">
@@ -314,29 +314,31 @@
                 </div>
               </div>
 
-              @if (registerStatus() === 'success') {
-                <p class="register-status register-status--success" role="status">
-                  {{ translation.t('cabinet.registerSuccess') }}
-                </p>
-              }
-              @if (registerStatus() === 'error' && registerErrorMessage()) {
-                <p class="register-status register-status--error" role="alert">
-                  {{ registerErrorMessage() }}
-                </p>
-              }
+              <div class="register-form-footer">
+                @if (registerStatus() === 'success') {
+                  <p class="register-status register-status--success" role="status">
+                    {{ translation.t('cabinet.registerSuccess') }}
+                  </p>
+                }
+                @if (registerStatus() === 'error' && registerErrorMessage()) {
+                  <p class="register-status register-status--error" role="alert">
+                    {{ registerErrorMessage() }}
+                  </p>
+                }
 
-              <button
-                type="submit"
-                class="btn-primary btn-large register-submit"
-                [disabled]="registerSubmitting()"
-              >
-                {{
-                  registerSubmitting()
-                    ? translation.t('cabinet.registerSubmitting')
-                    : translation.t('cabinet.submitRegister')
-                }}
-              </button>
-              <p class="register-note">{{ translation.t('cabinet.registerNote') }}</p>
+                <button
+                  type="submit"
+                  class="btn-primary btn-large register-submit"
+                  [disabled]="registerSubmitting()"
+                >
+                  {{
+                    registerSubmitting()
+                      ? translation.t('cabinet.registerSubmitting')
+                      : translation.t('cabinet.submitRegister')
+                  }}
+                </button>
+                <p class="register-note">{{ translation.t('cabinet.registerNote') }}</p>
+              </div>
             </form>
           </div>
         </div>

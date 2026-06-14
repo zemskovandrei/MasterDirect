@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Job, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
+import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-jobs-list',
@@ -53,8 +54,8 @@ export class JobsListComponent {
       }
 
       await this.supabase.loadJobsForAuthenticatedMaster(force);
-    } catch {
-      // Error state is handled in the service.
+    } catch (err) {
+      logSupabaseError('JobsList.loadJobs', err);
     }
   }
 

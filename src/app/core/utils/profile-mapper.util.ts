@@ -1,5 +1,5 @@
 import { FurnitureCompany } from '../models/furniture.models';
-import { BrigadeRow, MasterRow } from '../models/master.model';
+import { BrigadeRow, FurnitureOrderRow, MasterRow } from '../models/master.model';
 import { Profile } from '../models/profile.models';
 import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.models';
 
@@ -65,6 +65,25 @@ export function brigadeRowToProfile(row: BrigadeRow): Profile {
     city: row.city,
     call_out_fee: row.call_out_fee,
     phone: row.phone,
+    whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
+    tg_username: resolveTgUsername(row.tg_username, row.telegram),
+    whatsapp: row.whatsapp,
+    telegram: row.telegram,
+    instagram: row.instagram,
+    facebook: row.facebook,
+  };
+}
+
+/** Профиль мебельной компании из строки `furniture_orders` (колонка `full_name`). */
+export function furnitureOrderRowToProfile(row: FurnitureOrderRow): Profile {
+  return {
+    id: row.id,
+    type: 'furniture',
+    name: row.full_name?.trim() || row.client_name?.trim() || '',
+    specialty: row.specialty ?? row.furniture_type ?? '',
+    description: row.description ?? '',
+    city: row.city ?? null,
+    phone: row.phone ?? row.client_phone ?? null,
     whatsapp_phone: resolveWhatsappPhone(row.whatsapp_phone, row.whatsapp),
     tg_username: resolveTgUsername(row.tg_username, row.telegram),
     whatsapp: row.whatsapp,

@@ -124,7 +124,8 @@
 
 .catalog-group--brigade {
   border-color: rgba(16, 20, 38, 0.12);
-  background: linear-gradient(180deg, rgba(16, 20, 38, 0.03), transparent 120px), var(--color-bg-elevated);
+  background:
+    linear-gradient(180deg, rgba(16, 20, 38, 0.03), transparent 120px), var(--color-bg-elevated);
   transition:
     border-color 0.45s ease,
     box-shadow 0.45s ease;
@@ -163,12 +164,14 @@
 
 .catalog-group--worker {
   border-color: rgba(0, 184, 212, 0.2);
-  background: linear-gradient(180deg, rgba(0, 184, 212, 0.06), transparent 120px), var(--color-bg-elevated);
+  background:
+    linear-gradient(180deg, rgba(0, 184, 212, 0.06), transparent 120px), var(--color-bg-elevated);
 }
 
 .catalog-group--furniture {
   border-color: rgba(139, 92, 246, 0.22);
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.06), transparent 120px), var(--color-bg-elevated);
+  background:
+    linear-gradient(180deg, rgba(139, 92, 246, 0.06), transparent 120px), var(--color-bg-elevated);
 }
 
 .catalog-group-header {

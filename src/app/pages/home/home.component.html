@@ -6,12 +6,7 @@
       [class.slide-light]="slideTone() === 'light'"
     >
       <div class="slide-bg" aria-hidden="true">
-        <img
-          class="slide-bg-img"
-          [src]="currentSlide()"
-          alt=""
-          decoding="async"
-        />
+        <img class="slide-bg-img" [src]="currentSlide()" alt="" decoding="async" />
         <div class="slide-bg-overlay"></div>
       </div>
 
@@ -96,7 +91,10 @@
 
     <div class="quiz-card">
       @if (!calculatorSubmitted()) {
-        <div class="quiz-progress" [attr.aria-label]="translation.t('home.calculator.progressAria')">
+        <div
+          class="quiz-progress"
+          [attr.aria-label]="translation.t('home.calculator.progressAria')"
+        >
           @for (step of [1, 2, 3, 4, 5, 6]; track step) {
             <span
               class="quiz-progress__dot"
@@ -110,7 +108,9 @@
           @switch (calculatorStep()) {
             @case (1) {
               <div class="quiz-step" [attr.data-step]="1">
-                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.roomType') }}</h3>
+                <h3 class="quiz-step__title">
+                  {{ translation.t('home.calculator.steps.roomType') }}
+                </h3>
                 <div class="quiz-options">
                   @for (option of calculatorRoomOptions; track option.id) {
                     <button
@@ -130,7 +130,9 @@
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
-                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.renovationType') }}</h3>
+                <h3 class="quiz-step__title">
+                  {{ translation.t('home.calculator.steps.renovationType') }}
+                </h3>
                 <div class="quiz-options">
                   @for (option of calculatorRenovationOptions; track option.id) {
                     <button
@@ -179,7 +181,9 @@
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
-                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.estimate') }}</h3>
+                <h3 class="quiz-step__title">
+                  {{ translation.t('home.calculator.steps.estimate') }}
+                </h3>
                 <p class="quiz-step__hint">{{ translation.t('home.calculator.checklistHint') }}</p>
 
                 @if (calculatorChecklistReady()) {
@@ -187,7 +191,9 @@
                     <span class="quiz-scope-hero__badge">{{
                       translation.t('home.calculator.estimateAfterMeasure')
                     }}</span>
-                    <p class="quiz-scope-hero__text">{{ translation.t('home.calculator.estimateLead') }}</p>
+                    <p class="quiz-scope-hero__text">
+                      {{ translation.t('home.calculator.estimateLead') }}
+                    </p>
                     <div
                       class="quiz-scope-steps"
                       [attr.aria-label]="translation.t('home.calculator.estimateFlowAria')"
@@ -253,7 +259,9 @@
                           class="quiz-checklist-custom__input"
                           [value]="calculatorChecklistCustomDraft()"
                           (input)="onCustomChecklistDraftInput($any($event.target).value)"
-                          [placeholder]="translation.t('home.calculator.checklistCustomPlaceholder')"
+                          [placeholder]="
+                            translation.t('home.calculator.checklistCustomPlaceholder')
+                          "
                           (keydown.enter)="$event.preventDefault(); addCustomChecklistItem()"
                         />
                         <button
@@ -265,7 +273,9 @@
                         </button>
                       </div>
                       @if (calculatorChecklistCustomError()) {
-                        <p class="quiz-field-error" role="alert">{{ calculatorChecklistCustomError() }}</p>
+                        <p class="quiz-field-error" role="alert">
+                          {{ calculatorChecklistCustomError() }}
+                        </p>
                       }
                       @if (calculatorChecklistFilteredCustomItems().length > 0) {
                         <ul class="quiz-checklist-custom__list">
@@ -276,7 +286,9 @@
                                 type="button"
                                 class="quiz-checklist-custom__remove"
                                 (click)="removeCustomChecklistItem(item)"
-                                [attr.aria-label]="translation.t('home.calculator.checklistCustomRemove')"
+                                [attr.aria-label]="
+                                  translation.t('home.calculator.checklistCustomRemove')
+                                "
                               >
                                 ×
                               </button>
@@ -319,8 +331,8 @@
                         {{
                           translation
                             .t('home.calculator.checklistSearchResults')
-                            .replace('{{count}}', calculatorChecklistSearchResultsCount() + '')
-                        }}
+                            .replace('{{count
+                        }}', calculatorChecklistSearchResultsCount() + '') }}
                       </p>
                     }
                   </label>
@@ -330,24 +342,37 @@
                       {{
                         translation
                           .t('home.calculator.checklistScopeCount')
-                          .replace('{{count}}', totalSelectedWorkCount() + '')
-                      }}
+                          .replace('{{count
+                      }}', totalSelectedWorkCount() + '') }}
                     </p>
                     <div class="quiz-checklist-actions">
-                      <button type="button" class="quiz-checklist-action" (click)="selectRecommendedChecklistItems()">
+                      <button
+                        type="button"
+                        class="quiz-checklist-action"
+                        (click)="selectRecommendedChecklistItems()"
+                      >
                         {{ translation.t('home.calculator.checklistActions.selectRecommended') }}
                       </button>
-                      <button type="button" class="quiz-checklist-action" (click)="selectAllChecklistItems()">
+                      <button
+                        type="button"
+                        class="quiz-checklist-action"
+                        (click)="selectAllChecklistItems()"
+                      >
                         {{ translation.t('home.calculator.checklistActions.selectAll') }}
                       </button>
-                      <button type="button" class="quiz-checklist-action" (click)="clearChecklistSelection()">
+                      <button
+                        type="button"
+                        class="quiz-checklist-action"
+                        (click)="clearChecklistSelection()"
+                      >
                         {{ translation.t('home.calculator.checklistActions.clear') }}
                       </button>
                     </div>
                   </div>
 
                   @if (
-                    calculatorChecklistSearchQuery().trim() && !calculatorChecklistSearchHasResults()
+                    calculatorChecklistSearchQuery().trim() &&
+                    !calculatorChecklistSearchHasResults()
                   ) {
                     <p class="quiz-checklist-search-empty" role="status">
                       {{ translation.t('home.calculator.checklistSearchEmpty') }}
@@ -383,7 +408,9 @@
                     }
                   </div>
 
-                  <p class="quiz-estimate-note">{{ translation.t('home.calculator.checklistNote') }}</p>
+                  <p class="quiz-estimate-note">
+                    {{ translation.t('home.calculator.checklistNote') }}
+                  </p>
 
                   @if (calculatorChecklistTouched() && totalSelectedWorkCount() === 0) {
                     <p class="quiz-field-error" role="alert">
@@ -392,7 +419,11 @@
                   }
                 }
 
-                <button type="button" class="quiz-continue-btn" (click)="continueCalculatorChecklist()">
+                <button
+                  type="button"
+                  class="quiz-continue-btn"
+                  (click)="continueCalculatorChecklist()"
+                >
                   {{ translation.t('home.calculator.continueToPerformers') }}
                 </button>
               </div>
@@ -402,7 +433,9 @@
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
-                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.performers') }}</h3>
+                <h3 class="quiz-step__title">
+                  {{ translation.t('home.calculator.steps.performers') }}
+                </h3>
                 <p class="quiz-step__hint">{{ translation.t('home.calculator.performersHint') }}</p>
 
                 @if (calculatorPerformerCards().length > 0) {
@@ -411,11 +444,17 @@
                       <article
                         class="quiz-performer-card"
                         role="listitem"
-                        [class.quiz-performer-card--selected]="isCalculatorPerformerSelected(performer.id)"
+                        [class.quiz-performer-card--selected]="
+                          isCalculatorPerformerSelected(performer.id)
+                        "
                       >
                         <div class="quiz-performer-card__avatar" aria-hidden="true">
                           @if (performer.avatarUrl) {
-                            <img [src]="performer.avatarUrl" [alt]="performer.name" loading="lazy" />
+                            <img
+                              [src]="performer.avatarUrl"
+                              [alt]="performer.name"
+                              loading="lazy"
+                            />
                           } @else {
                             <span>{{ calculatorPerformerInitials(performer.name) }}</span>
                           }
@@ -451,10 +490,16 @@
                     }
                   </div>
                 } @else {
-                  <p class="quiz-step__empty">{{ translation.t('home.calculator.performersEmpty') }}</p>
+                  <p class="quiz-step__empty">
+                    {{ translation.t('home.calculator.performersEmpty') }}
+                  </p>
                 }
 
-                <button type="button" class="quiz-continue-btn" (click)="continueCalculatorPerformers()">
+                <button
+                  type="button"
+                  class="quiz-continue-btn"
+                  (click)="continueCalculatorPerformers()"
+                >
                   {{ translation.t('home.calculator.continue') }}
                 </button>
               </div>
@@ -464,7 +509,9 @@
                 <button type="button" class="quiz-back" (click)="calculatorBack()">
                   {{ translation.t('home.calculator.back') }}
                 </button>
-                <h3 class="quiz-step__title">{{ translation.t('home.calculator.steps.contacts') }}</h3>
+                <h3 class="quiz-step__title">
+                  {{ translation.t('home.calculator.steps.contacts') }}
+                </h3>
 
                 @if (calculatorChecklistReady() && totalSelectedWorkCount() > 0) {
                   <div class="quiz-scope-reminder">
@@ -478,14 +525,16 @@
                     {{
                       translation
                         .t('home.calculator.contactsDirected')
-                        .replace('{{names}}', calculatorSelectedPerformerNames().join(', '))
-                    }}
+                        .replace('{{names
+                    }}', calculatorSelectedPerformerNames().join(', ')) }}
                   </p>
                 } @else {
                   <p class="quiz-step__lead">{{ translation.t('home.calculator.contactsLead') }}</p>
                 }
 
-                <p class="quiz-step__notice">{{ translation.t('home.calculator.measurementNotice') }}</p>
+                <p class="quiz-step__notice">
+                  {{ translation.t('home.calculator.measurementNotice') }}
+                </p>
 
                 <form
                   class="quiz-contact-form"
@@ -576,7 +625,9 @@
           <p>{{ translation.t('home.calculator.successText') }}</p>
 
           @if (calculatorSubmittedExecutors().length > 0) {
-            <p class="quiz-success__contact-lead">{{ translation.t('home.calculator.successContactLead') }}</p>
+            <p class="quiz-success__contact-lead">
+              {{ translation.t('home.calculator.successContactLead') }}
+            </p>
             <div class="quiz-success__executors">
               @for (executor of calculatorSubmittedExecutors(); track executor.id) {
                 <div class="quiz-success__executor">
@@ -612,7 +663,11 @@
             <a routerLink="/jobs" class="quiz-submit-btn">{{
               translation.t('home.calculator.successViewJobs')
             }}</a>
-            <button type="button" class="quiz-submit-btn quiz-submit-btn--ghost" (click)="resetCalculator()">
+            <button
+              type="button"
+              class="quiz-submit-btn quiz-submit-btn--ghost"
+              (click)="resetCalculator()"
+            >
               {{ translation.t('home.calculator.reset') }}
             </button>
           </div>
@@ -621,7 +676,6 @@
     </div>
   </div>
 </section>
-
 <section class="features-block" id="features">
   <div class="features-heading">
     <h2 class="features-title">{{ translation.t('home.features.title') }}</h2>

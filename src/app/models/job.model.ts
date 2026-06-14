@@ -1,7 +1,9 @@
-/** Строка таблицы заказов в Supabase. */
+/** Строка таблицы заказов в Supabase (`jobklient`). */
 export interface JobklientJobRow {
   id?: string | number | null;
   title?: string | null;
+  client_name?: string | null;
+  phone?: string | null;
   city?: string | null;
   category?: string | null;
   budget?: number | string | null;
@@ -14,9 +16,14 @@ export interface JobklientJobRow {
   active?: boolean | null;
 }
 
-/** Payload for inserting a row into the `jobklient` jobs table. */
+/**
+ * Payload для `.insert()` в таблицу `jobklient`.
+ * Поля в snake_case — строго по колонкам Supabase.
+ */
 export interface JobklientJobInsert {
   title: string;
+  client_name: string;
+  phone: string;
   city: string;
   category: string;
   budget?: number | string | null;
@@ -70,11 +77,36 @@ export function buildJobklientJobInsert(
 
   return {
     title: `${input.roomTypeLabel} — ${input.renovationTypeLabel}`,
+    client_name: input.customerName.trim(),
+    phone: input.contact.trim(),
     city: input.city,
     category: input.renovationTypeLabel,
-    budget: null,
+    budget: input.estimatedTotal ?? null,
     description: descriptionLines.join('\n'),
     status: 'New',
+  };
+}
+
+/** Преобразует типизированный payload в объект для Supabase `.insert()`. */
+export function toJobklientDbRow(input: JobklientJobInsert): {
+  title: string;
+  client_name: string;
+  phone: string;
+  city: string;
+  category: string;
+  budget: number | string | null;
+  description: string | null;
+  status: string;
+} {
+  return {
+    title: input.title.trim(),
+    client_name: input.client_name.trim(),
+    phone: input.phone.trim(),
+    city: input.city.trim(),
+    category: input.category.trim(),
+    budget: input.budget ?? null,
+    description: input.description?.trim() || null,
+    status: input.status?.trim() || 'New',
   };
 }
 
@@ -349,6 +381,15 @@ export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, in
   try {
     const { budget, budgetLabel } = resolveJobBudget(row);
     const description = resolveJobDescription(row);
+    const details = parseJobDetails(description);
+
+    if (row.client_name?.trim() && !details.customerName) {
+      details.customerName = row.client_name.trim();
+    }
+
+    if (row.phone?.trim() && !details.contact?.display) {
+      details.contact = parseJobContact(row.phone.trim());
+    }
 
     return {
       id: row.id != null && String(row.id).trim() ? String(row.id).trim() : `job-${index}`,
@@ -360,7 +401,7 @@ export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, in
       description,
       status: resolveJobStatus(row),
       createdAt: resolveJobCreatedAt(row),
-      details: parseJobDetails(description),
+      details,
     };
   } catch {
     return null;

@@ -9,12 +9,13 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { Job, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { RenovationCalculatorComponent } from '../../shared/components/renovation-calculator/renovation-calculator.component';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, RenovationCalculatorComponent],
   templateUrl: './jobs-list.component.html',
   styleUrls: ['../../styles/catalog-pages.css', './jobs-list.component.css'],
 })

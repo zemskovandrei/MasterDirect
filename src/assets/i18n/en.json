@@ -6,6 +6,9 @@
   "app": {
     "tagline": "Professional renovation and finishing",
     "nav": {
+      "catalog": "Catalog",
+      "jobsBoard": "Job board",
+      "worksGallery": "Work gallery",
       "features": "Benefits",
       "services": "Masters",
       "brigades": "Teams",
@@ -21,41 +24,36 @@
     "actions": {
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
-      "getEstimate": "Get estimate"
+      "getEstimate": "Get estimate",
+      "enableDarkTheme": "Enable dark theme",
+      "enableLightTheme": "Enable light theme",
+      "headerThemeAuto": "Header theme: auto",
+      "headerThemeLight": "Header theme: light",
+      "headerThemeDark": "Header theme: dark"
     },
     "header": {
-      "langSelector": "Language selection"
+      "langSelector": "Language selection",
+      "tagline": "Find performers",
+      "primaryNav": "Catalog and benefits"
+    },
+    "auth": {
+      "login": "Sign in",
+      "register": "Register",
+      "cabinet": "Dashboard"
     },
     "footer": {
       "brand": "Renovation, finishing and custom furniture. Teams and masters publish before/after work in the catalog.",
       "sections": "Sections",
       "moderation": "Review moderation",
-      "copyright": "© 2026 SmartBuild.Tech",
+      "copyright": "© 2026 builders",
       "catalog": "Catalog of teams and masters"
     }
   },
-  "siteReview": {
-    "open": "Leave site feedback",
-    "eyebrow": "SmartBuild.Tech",
-    "title": "Site feedback",
-    "lead": "Share your impression or suggestion — it helps us improve.",
-    "nameLabel": "Your name",
-    "namePlaceholder": "How should we address you",
-    "nameError": "Enter your name (at least 2 characters)",
-    "textLabel": "Your review / suggestion",
-    "textPlaceholder": "What did you like or what could be better?",
-    "textError": "Write at least 10 characters",
-    "submit": "Send",
-    "submitting": "Sending…",
-    "success": "Thank you for your feedback!"
-  },
   "home": {
     "hero": {
-      "imageAlt": "Interior after renovation",
-      "title": "Renovation and finishing",
-      "subtitle": "Customers, teams and masters connect on SmartBuild.Tech and communicate directly.",
-      "primary": "Find a team",
-      "secondary": "Find a master",
+      "title": "Find performers",
+      "primary": "Teams",
+      "secondary": "Masters",
       "estimate": "Get an estimate",
       "jobs": "Browse jobs",
       "tagsAria": "Main services",
@@ -66,15 +64,7 @@
         "3": "Finishing",
         "4": "Custom furniture",
         "5": "Turnkey"
-      },
-      "benefits": {
-        "0": "Team or master",
-        "1": "Estimate before start",
-        "2": "Before and after work"
-      },
-      "prevSlide": "Previous slide",
-      "nextSlide": "Next slide",
-      "slide": "Slide"
+      }
     },
     "calculator": {
       "eyebrow": "Calculator",
@@ -231,12 +221,12 @@
     },
     "features": {
       "eyebrow": "Benefits",
-      "title": "SmartBuild.Tech",
+      "title": "Platform",
       "subtitle": "A neutral marketplace — customers and performers connect without a middleman",
       "cards": {
         "0": {
-          "title": "Reviews and portfolio",
-          "desc": "Go to the portfolio to see real reviews and work results."
+          "title": "Reviews",
+          "desc": "Real client feedback — choose your pro with confidence"
         },
         "1": {
           "title": "Team selection",
@@ -296,7 +286,7 @@
       "title": "Work by performers",
       "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
       "sampleTitle": "Sample completed order",
-      "sampleDesc": "A performer publication from the SmartBuild.Tech catalog",
+      "sampleDesc": "A performer publication from the catalog",
       "actions": {
         "view": "View case",
         "brigades": "All teams",
@@ -337,7 +327,7 @@
   },
   "portfolio": {
     "hub": {
-      "title": "SmartBuild.Tech catalog",
+      "title": "Catalog",
       "subtitle": "Teams, masters and furniture companies — before/after work and client reviews.",
       "cta": "Publish your work",
       "reviewsEyebrow": "Reviews",
@@ -371,7 +361,7 @@
     "empty": "No published teams yet.",
     "emptyCta": {
       "title": "Is your team ready for new projects?",
-      "desc": "SmartBuild.Tech is launching in Georgia! Register your construction crew or company now. The first 20 construction teams get lifetime PRO status and search priority — completely free.",
+      "desc": "The platform is launching in Georgia! Register your construction crew or company now. The first 20 construction teams get lifetime PRO status and search priority — completely free.",
       "btn": "List your team"
     },
     "estimateFor": "Estimate request for team «{{name}}»"
@@ -388,7 +378,7 @@
     "empty": "No published masters yet.",
     "emptyCta": {
       "title": "Looking for finishing, electrical, or plumbing jobs?",
-      "desc": "Create your master profile on SmartBuild.Tech. Get direct client contacts with no middlemen or hidden fees. The first 30 masters get lifetime PRO status and search priority — completely free.",
+      "desc": "Create your master profile on the platform. Get direct client contacts with no middlemen or hidden fees. The first 30 masters get lifetime PRO status and search priority — completely free.",
       "btn": "List your profile"
     }
   },
@@ -498,7 +488,7 @@
     }
   },
   "jobs": {
-    "eyebrow": "SmartBuild.Tech",
+    "eyebrow": "Jobs board",
     "title": "Active jobs",
     "lead": "Fresh renovation and finishing requests. Pick a suitable project and contact the customer directly.",
     "loading": "Loading jobs…",
@@ -506,7 +496,7 @@
     "errorDefault": "Check your internet connection and try again.",
     "retry": "Try again",
     "emptyTitle": "No active jobs yet",
-    "emptyText": "Be the first — post a request via the calculator on the home page.",
+    "emptyText": "Be the first — post a request via the calculator below.",
     "emptyAction": "Post a job",
     "publishBadge": "For customers",
     "publishTitle": "Need renovation? Post your job for free",
@@ -518,8 +508,6 @@
     "statusNew": "New",
     "statusActive": "Active",
     "budgetUnknown": "Budget not specified",
-    "budgetLabel": "Budget",
-    "inList": "active jobs",
     "areaValue": "{{value}} sq.m",
     "directedTo": "Sent to performers",
     "viewPhoto": "View photo",
@@ -551,7 +539,7 @@
   },
   "moderation": {
     "title": "Review moderation",
-    "subtitle": "Review and publish client feedback on SmartBuild.Tech",
+    "subtitle": "Review and publish client feedback on the site",
     "adminBadge": "Administrator mode",
     "logout": "Sign out",
     "login": {

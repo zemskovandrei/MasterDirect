@@ -20,6 +20,7 @@ export interface Profile {
   tg_username?: string | null;
   instagram?: string | null;
   facebook?: string | null;
+  header_bg?: string | null;
   created_at?: string | null;
 }
 

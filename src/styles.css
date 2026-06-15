@@ -45,6 +45,13 @@
 
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --header-h: 64px;
+  --profile-header-bg: linear-gradient(
+    155deg,
+    #0a0f1a 0%,
+    #121c32 40%,
+    #0f2438 70%,
+    #0c1222 100%
+  );
 }
 
 *,
@@ -69,6 +76,18 @@ body {
 
 body.no-scroll {
   overflow: hidden;
+}
+
+body[data-theme='dark'],
+:root[data-theme='dark'] {
+  --color-bg: #0a0f1a;
+  --color-bg-elevated: #121c32;
+  --color-text: #e8eef7;
+  --color-text-muted: #9aa8bc;
+  --color-text-soft: #7d8da6;
+  --color-border: #243049;
+  --color-border-strong: #33415f;
+  --color-navy: #f4f7fb;
 }
 
 img:not(.slide-bg-img):not(.slide-center-img) {

@@ -35,6 +35,12 @@
     "notFoundLead": "The profile may be unpublished or the link is outdated.",
     "contactTitle": "Contact directly",
     "callOutFeeLabel": "Site visit for measurement",
+    "theme": {
+      "title": "Profile appearance",
+      "headerColor": "Header color",
+      "day": "Day",
+      "night": "Night"
+    },
     "reviews": {
       "eyebrow": "Reviews",
       "titleBrigade": "What clients say about the team",
@@ -55,7 +61,7 @@
   },
   "cabinet": {
     "heroTitle": "Master / team dashboard",
-    "heroLead": "Create a profile and publish before/after work in the SmartBuild.Tech catalog.",
+    "heroLead": "Create a profile and publish before/after work in the catalog.",
     "demoBanner": "Demo mode. Profile and uploads are stored in the browser.",
     "registerEyebrow": "Registration",
     "registerTitle": "Create a catalog profile",
@@ -284,7 +290,7 @@
     "feed": {
       "eyebrow": "Published",
       "title": "Reviews and recommendations",
-      "lead": "Real client reviews and recommendations on SmartBuild.Tech.",
+      "lead": "Real client reviews and recommendations.",
       "empty": "No publications yet. Be the first!",
       "before": "Before",
       "after": "After"

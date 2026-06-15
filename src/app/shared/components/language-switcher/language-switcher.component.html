@@ -1,8 +1,4 @@
-<div
-  class="lang-switcher"
-  [class.lang-switcher--open]="menuOpen()"
-  (mouseleave)="closeMenu()"
->
+<div class="lang-switcher" [class.lang-switcher--open]="menuOpen()" (mouseleave)="closeMenu()">
   <button
     type="button"
     class="lang-switcher-trigger"
@@ -17,7 +13,11 @@
     <span class="lang-chevron" aria-hidden="true">▾</span>
   </button>
 
-  <ul class="lang-dropdown" role="listbox" [attr.aria-label]="translation.t('app.header.langSelector')">
+  <ul
+    class="lang-dropdown"
+    role="listbox"
+    [attr.aria-label]="translation.t('app.header.langSelector')"
+  >
     @for (option of options; track option.code) {
       <li role="option" [attr.aria-selected]="translation.locale() === option.code">
         <button

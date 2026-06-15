@@ -19,9 +19,23 @@ export const CATALOG_TAB_BACKGROUNDS = {
     'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1200',
 } as const;
 
+/** Modern home at golden hour — Unsplash / Erik Mclean */
+export const HOME_HERO_BACKGROUND =
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920';
+
 export type CatalogTabBackgroundKey = keyof typeof CATALOG_TAB_BACKGROUNDS;
 
 export type CabinetTabBackgroundKey = 'cabinetWorker' | 'cabinetBrigade' | 'cabinetFurniture';
+
+export function homeHeroBackgroundStyle(): Record<string, string> {
+  return {
+    backgroundColor: '#0c1222',
+    backgroundImage: `url('${HOME_HERO_BACKGROUND}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
+  };
+}
 
 export function catalogTabBackgroundStyle(
   key: CatalogTabBackgroundKey,

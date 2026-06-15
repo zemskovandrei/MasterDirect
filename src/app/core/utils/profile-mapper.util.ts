@@ -55,6 +55,7 @@ export function masterRowToProfile(row: MasterRow): Profile {
     telegram: row?.telegram ?? null,
     instagram: row?.instagram ?? null,
     facebook: row?.facebook ?? null,
+    header_bg: row?.header_bg ?? null,
   };
 }
 
@@ -161,6 +162,7 @@ export function profileToPerformer(
     tg_username: profile.tg_username ?? profile.telegram,
     works,
     callOutFee,
+    headerBg: profile.header_bg ?? null,
   };
 }
 

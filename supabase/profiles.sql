@@ -1,4 +1,4 @@
--- Таблица профилей исполнителей для SmartBuild.Tech
+-- Таблица профилей исполнителей для builders
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   type text not null check (type in ('worker', 'brigade', 'furniture')),

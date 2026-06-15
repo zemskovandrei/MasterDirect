@@ -1,4 +1,4 @@
--- Brigades table for SmartBuild.Tech
+-- Brigades table for builders
 -- Direct messenger columns for calculator deep links.
 
 create table if not exists public.brigades (

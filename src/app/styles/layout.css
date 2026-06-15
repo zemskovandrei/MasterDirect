@@ -14,10 +14,11 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --site-header-height: 4.25rem;
 }
 
 /* Общие настройки секций */
-section {
+section:not(.hero-section):not(.features-block):not(.services-block):not(.portfolio-teaser) {
   padding: 100px 0;
 }
 
@@ -82,41 +83,6 @@ h2 {
 }
 
 /* Hero Section */
-.site-marquee {
-  overflow: hidden;
-  background: var(--color-navy);
-  border-block: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.site-marquee__track {
-  display: flex;
-  width: max-content;
-  animation: site-marquee-scroll 28s linear infinite;
-}
-
-.site-marquee__item {
-  flex: 0 0 auto;
-  padding: 0.85rem 2.5rem;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: clamp(0.82rem, 1.6vw, 0.95rem);
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.site-marquee__item::after {
-  content: '•';
-  margin-left: 2.5rem;
-  color: var(--color-mint);
-}
-
-@keyframes site-marquee-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 .hero-slider {
   padding: 0;
   position: relative;

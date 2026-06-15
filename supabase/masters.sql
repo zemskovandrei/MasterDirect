@@ -1,4 +1,4 @@
--- Masters table + auth trigger for SmartBuild.Tech
+-- Masters table + auth trigger for builders
 -- Run in Supabase SQL editor after enabling Email auth.
 
 create table if not exists public.masters (
@@ -16,6 +16,7 @@ create table if not exists public.masters (
   facebook text,
   whatsapp_phone text,
   tg_username text,
+  header_bg text,
   created_at timestamptz not null default now()
 );
 

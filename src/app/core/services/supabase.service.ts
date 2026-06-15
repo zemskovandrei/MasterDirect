@@ -4,12 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
-import {
-  Profile,
-  ProfileInsert,
-  ProfileType,
-  ProfileUpdate,
-} from '../models/profile.models';
+import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/profile.models';
 import { PerformerProfile } from '../models/portfolio.models';
 import {
   furnitureCompanyToProfile,
@@ -30,7 +25,12 @@ import {
   toFurnitureOrderDbRow,
   toJobklientDbRow,
 } from '../../models/job.model';
-import type { BrigadeRow, FurnitureOrderInsert, FurnitureOrderRow, MasterRow } from '../models/master.model';
+import type {
+  BrigadeRow,
+  FurnitureOrderInsert,
+  FurnitureOrderRow,
+  MasterRow,
+} from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { logSupabaseError } from '../utils/supabase-error.util';
 import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
@@ -62,12 +62,6 @@ export interface FurnitureOrderInsertResult {
 
 export interface JobklientMutationResult {
   error: string | null;
-}
-
-export interface SiteReviewInsertResult {
-  data: Record<string, unknown> | null;
-  error: string | null;
-  supabaseError?: unknown;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -315,46 +309,6 @@ export class SupabaseService {
     return this.insertFurnitureOrderRow(input);
   }
 
-  async insertSiteReview(userName: string, reviewText: string): Promise<SiteReviewInsertResult> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return { data: null, error: 'Browser only' };
-    }
-
-    const name = userName?.trim();
-    const text = reviewText?.trim();
-    if (!name || !text) {
-      return { data: null, error: 'Missing review data' };
-    }
-
-    try {
-      if (!this.isConfigured()) {
-        return { data: null, error: SUPABASE_NOT_CONFIGURED };
-      }
-
-      const client = await this.resolveClient();
-      if (!client) {
-        return { data: null, error: SUPABASE_NOT_CONFIGURED };
-      }
-
-      const { data, error } = await client
-        .from(environment.supabase.siteReviewsTable)
-        .insert([{ user_name: name, review_text: text }])
-        .select('*')
-        .single();
-
-      if (error) {
-        logSupabaseError('insertSiteReview', error);
-        return { data: null, error: error.message, supabaseError: error };
-      }
-
-      return { data: (data as Record<string, unknown> | null) ?? null, error: null };
-    } catch (err) {
-      logSupabaseError('insertSiteReview', err);
-      const message = err instanceof Error ? err.message : 'Insert failed';
-      return { data: null, error: message, supabaseError: err };
-    }
-  }
-
   completeJobklientJob(id: string): Observable<JobklientMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ error: 'Browser only' });
@@ -499,6 +453,51 @@ export class SupabaseService {
     );
   }
 
+  async updateMasterHeaderBg(
+    masterId: string,
+    headerBg: string,
+  ): Promise<SupabaseMutationResult> {
+    const trimmedId = masterId?.trim();
+    const color = headerBg?.trim();
+    if (!trimmedId || !color) {
+      return { data: null, error: 'Invalid theme data' };
+    }
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.mastersTable)
+        .update({ header_bg: color })
+        .eq('id', trimmedId)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        console.error('[SupabaseService] updateMasterHeaderBg:', error.message);
+        return { data: null, error: error.message };
+      }
+
+      if (!data) {
+        return { data: null, error: 'Profile not found' };
+      }
+
+      await this.refreshProfilesFromDatabase();
+      return { data: masterRowToProfile(data as MasterRow), error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      console.error('[SupabaseService] updateMasterHeaderBg:', err);
+      return { data: null, error: message };
+    }
+  }
+
   private async updateProfileRow(
     id: string,
     patch: ProfileUpdate,
@@ -641,7 +640,9 @@ export class SupabaseService {
       return key;
     }
 
-    const furnitureProfiles = this.profilesSignal().filter((profile) => profile.type === 'furniture');
+    const furnitureProfiles = this.profilesSignal().filter(
+      (profile) => profile.type === 'furniture',
+    );
     const matchedProfile = furnitureProfiles.find(
       (profile) => profile.id === key || profile.slug === key,
     );
@@ -672,9 +673,14 @@ export class SupabaseService {
     dbId: string,
   ): void {
     if (error) {
-      console.error('КРИТИЧЕСКАЯ ОШИБКА Supabase при удалении мебели:', error.message, error.details, {
-        dbId,
-      });
+      console.error(
+        'КРИТИЧЕСКАЯ ОШИБКА Supabase при удалении мебели:',
+        error.message,
+        error.details,
+        {
+          dbId,
+        },
+      );
       return;
     }
 
@@ -800,9 +806,7 @@ export class SupabaseService {
       const deletedCount = (brigadeRows?.length ?? 0) + (masterRows?.length ?? 0);
       if (deletedCount === 0) {
         const message =
-          brigadeError?.message ||
-          masterError?.message ||
-          'Brigade not found or access denied';
+          brigadeError?.message || masterError?.message || 'Brigade not found or access denied';
         console.error('Delete error:', message);
         return { data: null, error: message };
       }
@@ -962,9 +966,7 @@ export class SupabaseService {
         logSupabaseError('loadActiveJobs', err);
         if (showLoading || this.activeJobsSignal().length === 0) {
           this.activeJobsSignal.set([]);
-          this.jobsErrorSignal.set(
-            err instanceof Error ? err.message : 'Failed to load jobs',
-          );
+          this.jobsErrorSignal.set(err instanceof Error ? err.message : 'Failed to load jobs');
         }
         throw err;
       } finally {
@@ -1106,10 +1108,7 @@ export class SupabaseService {
 
       console.log('[SupabaseService] deleteJobklientJob: DELETE by id', jobId);
 
-      const { error } = await client
-        .from(environment.supabase.jobsTable)
-        .delete()
-        .eq('id', jobId);
+      const { error } = await client.from(environment.supabase.jobsTable).delete().eq('id', jobId);
 
       if (error) {
         console.error('Jobklient delete error:', error.message, error.details);
@@ -1240,9 +1239,7 @@ export class SupabaseService {
         logSupabaseError(
           'refreshProfilesFromDatabase',
           new Error(
-            this.isConfigured()
-              ? 'Supabase client failed to initialize'
-              : SUPABASE_NOT_CONFIGURED,
+            this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED,
           ),
         );
         return this.profilesSignal();
@@ -1313,8 +1310,7 @@ export class SupabaseService {
             (furnitureData as FurnitureOrderRow[] | null)
               ?.map(furnitureOrderRowToProfile)
               .filter(
-                (profile): profile is Profile =>
-                  profile != null && profile.name.trim().length > 0,
+                (profile): profile is Profile => profile != null && profile.name.trim().length > 0,
               ) ?? [];
         }
 
@@ -1388,12 +1384,14 @@ export class SupabaseService {
   }
 
   private toFurnitureCompany(profile: Profile): FurnitureCompany {
-    const local = this.furnitureStore.companies().find(
-      (item) =>
-        item.id === profile.id ||
-        item.dbId === profile.id ||
-        (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
-    );
+    const local = this.furnitureStore
+      .companies()
+      .find(
+        (item) =>
+          item.id === profile.id ||
+          item.dbId === profile.id ||
+          (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
+      );
     return profileToFurnitureCompany(profile, local?.works ?? []);
   }
 }

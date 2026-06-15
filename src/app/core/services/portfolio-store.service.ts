@@ -136,6 +136,21 @@ export class PortfolioStoreService {
     return true;
   }
 
+  updatePerformerHeaderBg(performerId: string, headerBg: string): boolean {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return false;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) =>
+        item.id === performerId ? { ...item, headerBg: headerBg.trim() } : item,
+      ),
+    );
+    this.persist();
+    return true;
+  }
+
   deletePerformer(performerId: string): boolean {
     const performer = this.performersSignal().find((item) => item.id === performerId);
     if (!performer) {

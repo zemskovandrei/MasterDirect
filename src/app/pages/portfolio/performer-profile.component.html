@@ -1,5 +1,8 @@
 @if (performer(); as p) {
-  <section class="profile-hero">
+  <section
+    class="profile-hero"
+    [style.--profile-header-bg]="profileHeaderBg()"
+  >
     @if (heroImage(); as cover) {
       <div class="profile-hero-cover" aria-hidden="true">
         <img [src]="cover" alt="" />
@@ -84,6 +87,30 @@
           }
         </div>
       </div>
+
+      @if (showThemeSettings()) {
+        <div class="profile-theme-panel">
+          <h3>{{ translation.t('profile.theme.title') }}</h3>
+          <div class="profile-theme-panel__row">
+            <label class="profile-theme-field">
+              <span>{{ translation.t('profile.theme.headerColor') }}</span>
+              <input
+                type="color"
+                [value]="headerColor()"
+                [disabled]="theme.profileThemeSaving()"
+                (input)="onHeaderColorChange($event)"
+              />
+            </label>
+            <button
+              type="button"
+              class="profile-theme-toggle"
+              (click)="toggleGlobalTheme()"
+            >
+              {{ globalThemeLabel() }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
   </section>
 

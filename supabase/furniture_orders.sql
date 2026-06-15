@@ -1,4 +1,4 @@
--- Furniture orders / companies for SmartBuild.Tech
+-- Furniture orders / companies for builders
 -- Catalog rows use full_name; calculator inserts use client_name + client_phone.
 
 create table if not exists public.furniture_orders (

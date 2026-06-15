@@ -1,4 +1,4 @@
--- Таблица заказов SmartBuild.Tech
+-- Таблица заказов builders
 -- Актуальные колонки (проверено через REST API):
 -- id, created_at, title, client_name, phone, city, budget, category, description, status
 

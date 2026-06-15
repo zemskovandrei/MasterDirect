@@ -24,8 +24,8 @@
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(135deg, rgba(12, 18, 34, 0.88) 0%, rgba(12, 18, 34, 0.55) 45%, rgba(0, 120, 140, 0.35) 100%),
-    var(--gradient-hero);
+    linear-gradient(135deg, rgba(12, 18, 34, 0.82) 0%, rgba(12, 18, 34, 0.5) 45%, rgba(0, 0, 0, 0.25) 100%),
+    var(--profile-header-bg);
 }
 
 .profile-hero-bg::after {
@@ -443,6 +443,79 @@
 .profile-not-found .btn-primary {
   text-decoration: none;
   margin-top: 0.5rem;
+}
+
+.profile-not-found {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.profile-theme-panel {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.profile-theme-panel h3 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.profile-theme-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.profile-theme-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.profile-theme-field input[type='color'] {
+  width: 3rem;
+  height: 2.25rem;
+  padding: 0.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+.profile-theme-toggle {
+  min-height: 2.25rem;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+}
+
+.profile-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(0, 212, 255, 0.45);
 }
 
 @media (max-width: 640px) {

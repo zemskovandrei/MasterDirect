@@ -4,11 +4,13 @@
     <span class="jobs-hero__eyebrow">{{ translation.t('jobs.eyebrow') }}</span>
     <h1>{{ translation.t('jobs.title') }}</h1>
     <p>{{ translation.t('jobs.lead') }}</p>
-    <a routerLink="/" fragment="calculator" class="btn-primary jobs-hero__cta">
+    <a routerLink="." fragment="calculator" class="btn-primary jobs-hero__cta">
       {{ translation.t('jobs.publishAction') }}
     </a>
   </div>
 </section>
+
+<app-renovation-calculator />
 
 <section class="jobs-board">
   <div class="jobs-board__inner">
@@ -77,7 +79,7 @@
           <h2 class="jobs-publish-cta__title">{{ translation.t('jobs.publishTitle') }}</h2>
           <p class="jobs-publish-cta__text">{{ translation.t('jobs.publishText') }}</p>
         </div>
-        <a routerLink="/" fragment="calculator" class="jobs-publish-cta__btn">
+        <a routerLink="." fragment="calculator" class="jobs-publish-cta__btn">
           {{ translation.t('jobs.publishAction') }}
         </a>
       </aside>
@@ -111,7 +113,7 @@
           <div class="jobs-panel__body">
             <h2 class="jobs-panel__title">{{ translation.t('jobs.emptyTitle') }}</h2>
             <p class="jobs-panel__text">{{ translation.t('jobs.emptyText') }}</p>
-            <a routerLink="/" fragment="calculator" class="jobs-btn jobs-btn--primary">
+            <a routerLink="." fragment="calculator" class="jobs-btn jobs-btn--primary">
               {{ translation.t('jobs.emptyAction') }}
             </a>
           </div>

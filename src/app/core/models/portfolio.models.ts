@@ -53,6 +53,8 @@ export interface PerformerProfile {
   tg_username?: string | null;
   /** Стоимость выезда на замер (хранится в Supabase `city` для worker/brigade). */
   callOutFee?: string | null;
+  /** Цвет фона шапки профиля (Supabase `header_bg`). */
+  headerBg?: string | null;
 }
 
 export interface CabinetSession {

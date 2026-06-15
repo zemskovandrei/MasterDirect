@@ -7,9 +7,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AdminAuthService } from '../core/services/admin-auth.service';
+import { APP_BRAND_NAME } from '../core/constants/brand';
 import { AuthService } from '../core/services/auth.service';
 import { FurnitureStoreService } from '../core/services/furniture-store.service';
 import { PortfolioStoreService } from '../core/services/portfolio-store.service';
@@ -17,8 +18,12 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 import { AdminLoginModalComponent } from '../shared/components/admin-login-modal/admin-login-modal.component';
-import { SiteReviewModalComponent } from '../shared/components/site-review-modal/site-review-modal.component';
 import { logSupabaseError } from '../core/utils/supabase-error.util';
+
+type HeaderTheme = 'auto' | 'light' | 'dark';
+
+const HEADER_THEME_KEY = 'headerTheme';
+const HEADER_THEME_CYCLE: HeaderTheme[] = ['auto', 'light', 'dark'];
 
 @Component({
   selector: 'app-site-layout',
@@ -30,12 +35,12 @@ import { logSupabaseError } from '../core/utils/supabase-error.util';
     RouterLinkActive,
     LanguageSwitcherComponent,
     AdminLoginModalComponent,
-    SiteReviewModalComponent,
   ],
   templateUrl: './site-layout.component.html',
   styleUrls: ['./site-layout.component.css'],
 })
 export class SiteLayoutComponent {
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
@@ -44,10 +49,11 @@ export class SiteLayoutComponent {
   protected readonly translation = inject(TranslationService);
   protected readonly adminAuth = inject(AdminAuthService);
 
-  protected readonly title = signal('SmartBuild.Tech');
+  headerTheme: HeaderTheme = 'auto';
+
+  protected readonly title = signal(APP_BRAND_NAME);
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
-  protected readonly siteReviewOpen = signal(false);
 
   protected readonly isLoggedIn = computed(
     () =>
@@ -90,6 +96,13 @@ export class SiteLayoutComponent {
   private adminSecretTapTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const saved = localStorage.getItem(HEADER_THEME_KEY);
+      if (saved === 'auto' || saved === 'light' || saved === 'dark') {
+        this.headerTheme = saved;
+      }
+    }
+
     afterNextRender(() => {
       this.supabase.prefetchActiveJobs();
       this.supabase.loadProfiles().subscribe({
@@ -102,7 +115,6 @@ export class SiteLayoutComponent {
   onEscape() {
     this.closeMobileMenu();
     this.closeAdminLogin();
-    this.closeSiteReview();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -147,8 +159,42 @@ export class SiteLayoutComponent {
     this.closeMobileMenu();
   }
 
+  cycleHeaderTheme(): void {
+    const currentIndex = HEADER_THEME_CYCLE.indexOf(this.headerTheme);
+    this.headerTheme = HEADER_THEME_CYCLE[(currentIndex + 1) % HEADER_THEME_CYCLE.length];
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(HEADER_THEME_KEY, this.headerTheme);
+    }
+  }
+
+  headerThemeToggleLabel(): string {
+    if (this.headerTheme === 'light') {
+      return this.translation.t('app.actions.headerThemeLight');
+    }
+    if (this.headerTheme === 'dark') {
+      return this.translation.t('app.actions.headerThemeDark');
+    }
+    return this.translation.t('app.actions.headerThemeAuto');
+  }
+
   prefetchJobs() {
     this.supabase.prefetchActiveJobs();
+  }
+
+  protected isNavCatalogActive(): boolean {
+    const path = this.router.url.split('?')[0].split('#')[0];
+    return ['/portfolio', '/brigades', '/masters', '/furniture'].some(
+      (segment) => path === segment || path.startsWith(`${segment}/`),
+    );
+  }
+
+  protected isNavFeaturesActive(): boolean {
+    return this.router.url.includes('#features');
+  }
+
+  protected isNavGalleryActive(): boolean {
+    return this.router.url.includes('#catalog');
   }
 
   onAdminSecretTap(event: MouseEvent) {
@@ -181,18 +227,5 @@ export class SiteLayoutComponent {
 
   closeAdminLogin() {
     this.adminLoginOpen.set(false);
-  }
-
-  openReviewModal(event: Event) {
-    this.openSiteReview(event);
-  }
-
-  openSiteReview(event?: Event) {
-    event?.preventDefault();
-    this.siteReviewOpen.set(true);
-  }
-
-  closeSiteReview() {
-    this.siteReviewOpen.set(false);
   }
 }

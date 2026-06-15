@@ -1,4 +1,4 @@
--- Reviews table for SmartBuild.Tech
+-- Reviews table for builders
 
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),

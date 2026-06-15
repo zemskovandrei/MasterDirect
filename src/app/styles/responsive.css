@@ -54,7 +54,7 @@ html {
 }
 
 /* ——— Секции и типографика ——— */
-section:not(.hero-slider) {
+section:not(.hero-slider):not(.hero-section):not(.features-block):not(.services-block):not(.portfolio-teaser) {
   padding: clamp(3rem, 8vw, 6.25rem) 0;
 }
 

@@ -1,4 +1,3 @@
-<div class="catalog-tab-page" [ngStyle]="catalogTabBackground">
 <section class="page-hero">
   <div class="page-hero-inner">
     <h1>{{ translation.t('brigades.title') }}</h1>
@@ -17,28 +16,18 @@
         </div>
         <h2>{{ translation.t('brigades.pickTitle') }}</h2>
         <p class="catalog-group-lead">{{ translation.t('brigades.pickLead') }}</p>
-        @if (displayBrigades().length > 0) {
+        @if (supabase.brigades().length > 0) {
           <p class="catalog-group-count">
-            {{ displayBrigades().length }} {{ translation.t('brigades.inCatalog') }}
+            {{ supabase.brigades().length }} {{ translation.t('brigades.inCatalog') }}
           </p>
-        }
-        @if (adminAuth.showAdminControls()) {
-          <div class="catalog-admin-toolbar">
-            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
-            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
-              {{ translation.t('admin.logout') }}
-            </button>
-          </div>
         }
       </header>
 
-      <div class="catalog-group-body">
       <div class="performer-grid">
-        @for (p of displayBrigades(); track p.id) {
+        @for (p of supabase.brigades(); track p.id) {
           <article
             class="performer-card performer-card--brigade performer-card--selectable"
             [class.performer-card--selected]="selectedBrigadeId() === p.id"
-            [class.performer-card--admin]="adminAuth.showAdminControls()"
             role="button"
             tabindex="0"
             [attr.aria-pressed]="selectedBrigadeId() === p.id"
@@ -46,40 +35,14 @@
             (keydown.enter)="selectBrigade(p.id)"
             (keydown.space)="$event.preventDefault(); selectBrigade(p.id)"
           >
-            @if (adminAuth.showAdminControls()) {
-              <div class="performer-admin-actions">
-                <button
-                  type="button"
-                  class="performer-admin-btn performer-admin-btn--edit"
-                  (click)="$event.stopPropagation(); openEditPerformer(p)"
-                >
-                  ✏️ {{ translation.t('admin.masters.edit') }}
-                </button>
-                <button
-                  type="button"
-                  class="performer-admin-btn performer-admin-btn--delete"
-                  (click)="$event.stopPropagation(); deletePerformer(p)"
-                >
-                  ❌ {{ translation.t('admin.masters.delete') }}
-                </button>
-              </div>
-            }
-
             <div class="performer-head">
               <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
               @if (selectedBrigadeId() === p.id) {
                 <span class="performer-selected-mark" aria-hidden="true">✓</span>
               }
               <h3>{{ p.name }}</h3>
-              @if (p.socialLinks?.phone; as phone) {
-                <p class="performer-phone">{{ phone }}</p>
-              }
-              @if (catalogL10n.performerSpecialty(p)) {
-                <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-              }
-              @if (catalogL10n.performerDescription(p)) {
-                <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
-              }
+              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
             </div>
             @if (p.works[0]) {
               <app-before-after [work]="p.works[0]" layout="split" />
@@ -92,81 +55,17 @@
               {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
             </a>
           </article>
+        } @empty {
+          @if (supabase.loaded()) {
+            <div class="catalog-empty-cta">
+              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
+              <a routerLink="/jobs" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
+                {{ translation.t('catalog.autoMatchCta') }}
+              </a>
+            </div>
+          }
         }
-
-        @if (showAutoMatchEmpty()) {
-          <div class="catalog-empty-cta">
-            <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-            <a routerLink="/" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-              {{ translation.t('catalog.autoMatchCta') }}
-            </a>
-          </div>
-        }
-      </div>
       </div>
     </section>
   </div>
 </section>
-</div>
-
-@if (editingPerformer(); as performer) {
-  <div class="performer-edit-overlay" (click)="closeEditPerformer()">
-    <div
-      class="performer-edit-dialog"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="translation.t('admin.masters.editTitle')"
-      (click)="$event.stopPropagation()"
-    >
-      <button
-        type="button"
-        class="performer-edit-dialog__close"
-        (click)="closeEditPerformer()"
-        aria-label="×"
-      >
-        ×
-      </button>
-      <h2>{{ translation.t('admin.masters.editTitle') }}</h2>
-      <p class="performer-edit-dialog__subtitle">{{ performer.name }}</p>
-
-      <form class="performer-edit-form" [formGroup]="editForm" (ngSubmit)="saveEditedPerformer()">
-        <label class="performer-edit-field">
-          <span>{{ translation.t('admin.masters.nameLabel') }}</span>
-          <input type="text" formControlName="name" autocomplete="name" />
-        </label>
-        @if (editFieldInvalid('name')) {
-          <p class="performer-edit-error">{{ translation.t('admin.masters.nameError') }}</p>
-        }
-
-        <label class="performer-edit-field">
-          <span>{{ translation.t('admin.masters.specialtyLabel') }}</span>
-          <input type="text" formControlName="specialty" autocomplete="off" />
-        </label>
-        @if (editFieldInvalid('specialty')) {
-          <p class="performer-edit-error">{{ translation.t('admin.masters.specialtyError') }}</p>
-        }
-
-        <label class="performer-edit-field">
-          <span>{{ translation.t('admin.masters.descriptionLabel') }}</span>
-          <textarea formControlName="description" rows="4"></textarea>
-        </label>
-        @if (editFieldInvalid('description')) {
-          <p class="performer-edit-error">{{ translation.t('admin.masters.descriptionError') }}</p>
-        }
-
-        <div class="performer-edit-actions">
-          <button type="button" class="performer-edit-cancel" (click)="closeEditPerformer()">
-            {{ translation.t('admin.masters.cancel') }}
-          </button>
-          <button type="submit" class="btn-primary performer-edit-save" [disabled]="adminSaving()">
-            {{
-              adminSaving()
-                ? translation.t('admin.masters.saving')
-                : translation.t('admin.masters.save')
-            }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-}

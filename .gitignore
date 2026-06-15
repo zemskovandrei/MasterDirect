@@ -12,3 +12,7 @@ dist/
 
 # Логи
 *.log
+
+# Секреты и сборка API
+.env
+dist-api/

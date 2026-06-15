@@ -31,7 +31,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 interface JobklientBody {
-  name?: stringerve;
+  name?: string;
   client_name?: string;
   phone?: string;
   description?: string;

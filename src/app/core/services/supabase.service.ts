@@ -64,6 +64,12 @@ export interface JobklientMutationResult {
   error: string | null;
 }
 
+export interface SiteReviewInsertResult {
+  data: Record<string, unknown> | null;
+  error: string | null;
+  supabaseError?: unknown;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -307,6 +313,46 @@ export class SupabaseService {
     }
 
     return this.insertFurnitureOrderRow(input);
+  }
+
+  async insertSiteReview(userName: string, reviewText: string): Promise<SiteReviewInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    const name = userName?.trim();
+    const text = reviewText?.trim();
+    if (!name || !text) {
+      return { data: null, error: 'Missing review data' };
+    }
+
+    try {
+      if (!this.isConfigured()) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.siteReviewsTable)
+        .insert([{ user_name: name, review_text: text }])
+        .select('*')
+        .single();
+
+      if (error) {
+        logSupabaseError('insertSiteReview', error);
+        return { data: null, error: error.message, supabaseError: error };
+      }
+
+      return { data: (data as Record<string, unknown> | null) ?? null, error: null };
+    } catch (err) {
+      logSupabaseError('insertSiteReview', err);
+      const message = err instanceof Error ? err.message : 'Insert failed';
+      return { data: null, error: message, supabaseError: err };
+    }
   }
 
   completeJobklientJob(id: string): Observable<JobklientMutationResult> {

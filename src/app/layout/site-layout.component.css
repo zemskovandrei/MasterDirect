@@ -326,6 +326,16 @@
   user-select: none;
 }
 
+.footer-column .footer-review-link {
+  cursor: pointer;
+  color: #a0aec0;
+  transition: color 0.2s ease;
+}
+
+.footer-column .footer-review-link:hover {
+  color: #67e8f9;
+}
+
 .footer-admin-logout {
   border: none;
   background: none;

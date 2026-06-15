@@ -12,6 +12,7 @@ export const environment: Environment = {
     brigadesTable: 'brigades',
     furnitureOrdersTable: 'furniture_orders',
     reviewsTable: 'reviews',
+    siteReviewsTable: 'site_reviews',
     adminEmails: ['admin@smartbuild.tech'],
   },
   telegram: {

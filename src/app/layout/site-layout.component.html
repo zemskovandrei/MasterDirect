@@ -202,6 +202,24 @@
           <li>
             <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
           </li>
+          <li>
+            <div style="margin-top: 8px">
+              <a
+                href="#"
+                (click)="openReviewModal($event)"
+                style="
+                  cursor: pointer;
+                  color: #a0aec0;
+                  text-decoration: none;
+                  transition: color 0.2s;
+                "
+                onmouseover="this.style.color='#67e8f9'"
+                onmouseout="this.style.color='#a0aec0'"
+              >
+                Оставить отзыв о сайте
+              </a>
+            </div>
+          </li>
         </ul>
       </div>
     </div>
@@ -225,4 +243,6 @@
     (closed)="closeAdminLogin()"
     (loggedIn)="closeAdminLogin()"
   />
+
+  <app-site-review-modal [open]="siteReviewOpen()" (closed)="closeSiteReview()" />
 </div>

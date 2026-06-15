@@ -9,6 +9,7 @@ export interface Environment {
     brigadesTable: string;
     furnitureOrdersTable: string;
     reviewsTable: string;
+    siteReviewsTable: string;
     /** Emails allowed to access admin moderation UI */
     adminEmails: string[];
   };

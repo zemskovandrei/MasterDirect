@@ -17,6 +17,7 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 import { AdminLoginModalComponent } from '../shared/components/admin-login-modal/admin-login-modal.component';
+import { SiteReviewModalComponent } from '../shared/components/site-review-modal/site-review-modal.component';
 import { logSupabaseError } from '../core/utils/supabase-error.util';
 
 @Component({
@@ -29,6 +30,7 @@ import { logSupabaseError } from '../core/utils/supabase-error.util';
     RouterLinkActive,
     LanguageSwitcherComponent,
     AdminLoginModalComponent,
+    SiteReviewModalComponent,
   ],
   templateUrl: './site-layout.component.html',
   styleUrls: ['./site-layout.component.css'],
@@ -45,6 +47,7 @@ export class SiteLayoutComponent {
   protected readonly title = signal('SmartBuild.Tech');
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
+  protected readonly siteReviewOpen = signal(false);
 
   protected readonly isLoggedIn = computed(
     () =>
@@ -99,6 +102,7 @@ export class SiteLayoutComponent {
   onEscape() {
     this.closeMobileMenu();
     this.closeAdminLogin();
+    this.closeSiteReview();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -177,5 +181,18 @@ export class SiteLayoutComponent {
 
   closeAdminLogin() {
     this.adminLoginOpen.set(false);
+  }
+
+  openReviewModal(event: Event) {
+    this.openSiteReview(event);
+  }
+
+  openSiteReview(event?: Event) {
+    event?.preventDefault();
+    this.siteReviewOpen.set(true);
+  }
+
+  closeSiteReview() {
+    this.siteReviewOpen.set(false);
   }
 }

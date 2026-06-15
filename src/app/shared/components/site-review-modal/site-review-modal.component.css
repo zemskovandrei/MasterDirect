@@ -1,0 +1,106 @@
+.site-review-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.site-review-dialog {
+  position: relative;
+  width: min(100%, 460px);
+  padding: 2rem 1.75rem 1.75rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+}
+
+.site-review-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--color-navy);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.site-review-dialog h2 {
+  margin: 0.35rem 0 0.75rem;
+  color: var(--color-navy);
+  font-size: 1.45rem;
+}
+
+.site-review-dialog__lead {
+  margin: 0 0 1.25rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+.site-review-dialog__form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.site-review-dialog__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.site-review-dialog__field span {
+  color: var(--color-navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.site-review-dialog__field input,
+.site-review-dialog__field textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-navy);
+  font: inherit;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.site-review-dialog__field input:focus,
+.site-review-dialog__field textarea:focus {
+  outline: none;
+  border-color: rgba(0, 196, 224, 0.55);
+}
+
+.site-review-dialog__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.site-review-dialog__success {
+  margin: 0.5rem 0 0;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background: rgba(0, 229, 168, 0.12);
+  border: 1px solid rgba(0, 229, 168, 0.35);
+  color: var(--color-navy);
+  font-weight: 600;
+  text-align: center;
+}
+
+.site-review-dialog__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}

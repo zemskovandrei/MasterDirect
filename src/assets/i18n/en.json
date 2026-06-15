@@ -34,6 +34,21 @@
       "catalog": "Catalog of teams and masters"
     }
   },
+  "siteReview": {
+    "open": "Leave site feedback",
+    "eyebrow": "SmartBuild.Tech",
+    "title": "Site feedback",
+    "lead": "Share your impression or suggestion — it helps us improve.",
+    "nameLabel": "Your name",
+    "namePlaceholder": "How should we address you",
+    "nameError": "Enter your name (at least 2 characters)",
+    "textLabel": "Your review / suggestion",
+    "textPlaceholder": "What did you like or what could be better?",
+    "textError": "Write at least 10 characters",
+    "submit": "Send",
+    "submitting": "Sending…",
+    "success": "Thank you for your feedback!"
+  },
   "home": {
     "hero": {
       "imageAlt": "Interior after renovation",

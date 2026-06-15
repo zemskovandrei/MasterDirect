@@ -16,7 +16,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: APP_BASE_HREF, useValue: APP_BASE_HREF_VALUE },
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' })),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
+    ),
     provideHttpClient(withFetch()),
     importProvidersFrom(
       TranslateModule.forRoot({

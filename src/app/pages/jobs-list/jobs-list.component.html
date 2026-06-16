@@ -1,65 +1,11 @@
-<div class="catalog-tab-page" [ngStyle]="pageBackground">
-<section class="page-hero jobs-hero">
-  <div class="page-hero-inner">
-    <span class="jobs-hero__eyebrow">{{ translation.t('jobs.eyebrow') }}</span>
-    <h1>{{ translation.t('jobs.title') }}</h1>
-    <p>{{ translation.t('jobs.lead') }}</p>
-    <a routerLink="." fragment="calculator" class="btn-primary jobs-hero__cta">
-      {{ translation.t('jobs.publishAction') }}
-    </a>
-  </div>
-</section>
+<div class="catalog-tab-page jobs-page">
+  <section class="jobs-showcase" [ngStyle]="showcaseBackground">
+    <div class="jobs-showcase__inner">
+      <h1 class="jobs-showcase__title">{{ translation.t('jobs.title') }}</h1>
+      <p class="jobs-showcase__lead">{{ translation.t('jobs.lead') }}</p>
 
-<app-renovation-calculator />
-
-<section class="jobs-board">
-  <div class="jobs-board__inner">
-    @if (accessDenied() && !adminAuth.isAdmin()) {
-      <div class="jobs-panel jobs-panel--alert" role="alert">
-        <span class="jobs-panel__icon" aria-hidden="true">🔒</span>
-        <div class="jobs-panel__body">
-          <h2 class="jobs-panel__title">{{ translation.t('jobs.accessDeniedTitle') }}</h2>
-          <p class="jobs-panel__text">{{ translation.t('jobs.accessDeniedText') }}</p>
-        </div>
-      </div>
-
-      <section class="jobs-login-panel">
-        <h2 class="jobs-login-panel__title">{{ translation.t('jobs.loginTitle') }}</h2>
-        <p class="jobs-login-panel__lead">{{ translation.t('jobs.loginLead') }}</p>
-        <form
-          class="jobs-login-panel__form"
-          [formGroup]="loginForm"
-          (ngSubmit)="submitMasterLogin()"
-        >
-          <label class="jobs-login-panel__field">
-            <span>{{ translation.t('jobs.loginEmail') }}</span>
-            <input type="email" formControlName="email" autocomplete="email" />
-          </label>
-          <label class="jobs-login-panel__field">
-            <span>{{ translation.t('jobs.loginPassword') }}</span>
-            <input type="password" formControlName="password" autocomplete="current-password" />
-          </label>
-          @if (loginError()) {
-            <p class="jobs-login-panel__error" role="alert">
-              {{ translation.t('jobs.loginError') }}
-            </p>
-          }
-          <button type="submit" class="jobs-btn jobs-btn--primary" [disabled]="loginSubmitting()">
-            {{
-              loginSubmitting()
-                ? translation.t('jobs.loginSubmitting')
-                : translation.t('jobs.loginSubmit')
-            }}
-          </button>
-        </form>
-        <p class="jobs-login-panel__hint">
-          {{ translation.t('jobs.loginHint') }}
-          <a routerLink="/cabinet">{{ translation.t('app.nav.cabinet') }}</a>
-        </p>
-      </section>
-    } @else {
       @if (adminAuth.showAdminControls()) {
-        <div class="jobs-admin-toolbar">
+        <div class="jobs-admin-toolbar jobs-admin-toolbar--dark">
           <span class="jobs-admin-badge">{{ translation.t('admin.badge') }}</span>
           <p class="jobs-admin-lead">{{ translation.t('admin.jobs.toolbarLead') }}</p>
           <button type="button" class="jobs-admin-logout" (click)="adminLogout()">
@@ -68,176 +14,125 @@
         </div>
 
         @if (adminActionError()) {
-          <p class="jobs-admin-error" role="alert">{{ adminActionError() }}</p>
+          <p class="jobs-showcase__alert" role="alert">{{ adminActionError() }}</p>
         }
       }
 
-      <aside class="jobs-publish-cta">
-        <div class="jobs-publish-cta__glow" aria-hidden="true"></div>
-        <div class="jobs-publish-cta__content">
-          <span class="jobs-publish-cta__badge">{{ translation.t('jobs.publishBadge') }}</span>
-          <h2 class="jobs-publish-cta__title">{{ translation.t('jobs.publishTitle') }}</h2>
-          <p class="jobs-publish-cta__text">{{ translation.t('jobs.publishText') }}</p>
-        </div>
-        <a routerLink="." fragment="calculator" class="jobs-publish-cta__btn">
-          {{ translation.t('jobs.publishAction') }}
-        </a>
-      </aside>
-
       @if (isLoading()) {
-        <div class="jobs-panel jobs-panel--loading" role="status" aria-live="polite">
-          <div class="jobs-loader__spinner" aria-hidden="true"></div>
-          <p class="jobs-panel__text">{{ translation.t('jobs.loading') }}</p>
+        <div class="jobs-showcase__status" role="status" aria-live="polite">
+          <div class="jobs-loader__spinner jobs-loader__spinner--light" aria-hidden="true"></div>
+          <p>{{ translation.t('jobs.loading') }}</p>
         </div>
       }
 
       @if (!isLoading() && error()) {
-        <div class="jobs-panel jobs-panel--error" role="alert">
-          <span class="jobs-panel__icon" aria-hidden="true">!</span>
-          <div class="jobs-panel__body">
-            <h2 class="jobs-panel__title">{{ translation.t('jobs.errorTitle') }}</h2>
-            <p class="jobs-panel__text">{{ translation.t('jobs.errorDefault') }}</p>
-            @if (error()) {
-              <p class="jobs-panel__debug">{{ error() }}</p>
-            }
-            <button type="button" class="jobs-btn" (click)="reloadJobs()">
-              {{ translation.t('jobs.retry') }}
-            </button>
-          </div>
+        <div class="jobs-showcase__status jobs-showcase__status--error" role="alert">
+          <h2>{{ translation.t('jobs.errorTitle') }}</h2>
+          <p>{{ translation.t('jobs.errorDefault') }}</p>
+          @if (error()) {
+            <p class="jobs-showcase__debug">{{ error() }}</p>
+          }
+          <button type="button" class="jobs-showcase__cta jobs-showcase__cta--inline" (click)="reloadJobs()">
+            {{ translation.t('jobs.retry') }}
+          </button>
         </div>
       }
 
       @if (!isLoading() && !error() && jobs().length === 0) {
-        <div class="jobs-panel jobs-panel--empty">
-          <span class="jobs-panel__icon" aria-hidden="true">📋</span>
-          <div class="jobs-panel__body">
-            <h2 class="jobs-panel__title">{{ translation.t('jobs.emptyTitle') }}</h2>
-            <p class="jobs-panel__text">{{ translation.t('jobs.emptyText') }}</p>
-            <a routerLink="." fragment="calculator" class="jobs-btn jobs-btn--primary">
-              {{ translation.t('jobs.emptyAction') }}
-            </a>
-          </div>
+        <div class="jobs-showcase__status">
+          <h2>{{ translation.t('jobs.emptyTitle') }}</h2>
+          <p>{{ translation.t('jobs.emptyText') }}</p>
         </div>
       }
 
       @if (!isLoading() && !error() && jobs().length > 0) {
-        <div class="jobs-board__meta">
-          <span class="jobs-board__live" aria-hidden="true"></span>
-          <p class="jobs-board__count-line">
-            <strong>{{ jobs().length }}</strong>
-            {{ translation.t('jobs.inList') }}
-          </p>
-        </div>
+        <p class="jobs-showcase__eyebrow">{{ translation.t('jobs.galleryEyebrow') }}</p>
 
-        <div class="jobs-grid">
-          @for (job of jobs(); track trackByJobId($index, job)) {
-            <article class="job-card">
-              <div class="job-card__accent" aria-hidden="true"></div>
-
-              <div class="job-card__top">
-                <span class="job-card__category">{{ job.category }}</span>
-                <span class="job-card__status">{{ displayStatus(job) }}</span>
+        <div class="jobs-showcase__gallery jobs-orders-grid">
+          @for (order of jobs(); track trackByJobId($index, order)) {
+            @if (!isOrderCompleted(order)) {
+            <article class="jobs-glass-card">
+              <div class="jobs-glass-card__media">
+                <img
+                  [src]="jobCardImage(order, $index)"
+                  [alt]="order.title"
+                  loading="lazy"
+                />
               </div>
+              <div class="jobs-glass-card__body">
+                <h2 class="jobs-glass-card__title">{{ order.title }}</h2>
 
-              <h2 class="job-card__title">{{ displayTitle(job) }}</h2>
-
-              <div class="job-card__meta">
-                <span class="job-card__chip job-card__chip--city">
-                  <span class="job-card__chip-icon" aria-hidden="true">📍</span>
-                  {{ job.city }}
-                </span>
-                @if (displayArea(job); as area) {
-                  <span class="job-card__chip">
-                    <span class="job-card__chip-icon" aria-hidden="true">📐</span>
-                    {{ area }}
-                  </span>
+                @if (order.description) {
+                  <p class="jobs-glass-card__description">{{ order.description }}</p>
                 }
-              </div>
 
-              <div class="job-card__budget-wrap">
-                <span class="job-card__budget-label">{{ translation.t('jobs.budgetLabel') }}</span>
-                <span class="job-card__budget">{{ displayBudget(job) }}</span>
-              </div>
-
-              @if (hasSummary(job)) {
-                <p class="job-card__description">{{ displaySummary(job) }}</p>
-              } @else {
-                <p class="job-card__description job-card__description--empty">
-                  {{ translation.t('jobs.noDescription') }}
+                <p class="jobs-glass-card__budget">
+                  {{ translation.t('jobs.budgetLabel') }}: {{ formatOrderBudget(order) }}
                 </p>
-              }
 
-              @if (job.details.directedTo) {
-                <p class="job-card__directed">
-                  <span class="job-card__directed-label">{{ translation.t('jobs.directedTo') }}</span>
-                  {{ job.details.directedTo }}
-                </p>
-              }
+                @if (order.city) {
+                  <p class="jobs-glass-card__city">{{ order.city }}</p>
+                }
 
-              <div class="job-card__actions">
-                @if (job.details.photoLink) {
-                  <a
-                    class="job-card__action job-card__action--ghost"
-                    [href]="job.details.photoLink"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {{ translation.t('jobs.viewPhoto') }}
-                  </a>
-                }
-                @if (phoneHref(job); as phone) {
-                  <a class="job-card__action job-card__action--primary" [href]="phone">
-                    {{ translation.t('jobs.callCustomer') }}
-                  </a>
-                }
-                @if (telegramHref(job); as telegram) {
-                  <a
-                    class="job-card__action job-card__action--telegram"
-                    [href]="telegram"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {{ translation.t('jobs.messageCustomer') }}
-                  </a>
-                }
-              </div>
-
-              @if (adminAuth.showAdminControls()) {
-                <div class="job-card__admin">
-                  <button
-                    type="button"
-                    class="job-card__admin-btn job-card__admin-btn--complete"
-                    [disabled]="isJobAdminBusy(job.id)"
-                    (click)="completeJob(job)"
-                  >
-                    {{ translation.t('admin.jobs.complete') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="job-card__admin-btn job-card__admin-btn--delete"
-                    [disabled]="isJobAdminBusy(job.id)"
-                    (click)="deleteJob(job)"
-                  >
-                    {{ translation.t('admin.jobs.delete') }}
-                  </button>
+                <div class="jobs-glass-card__actions">
+                  @if (phoneHref(order); as phone) {
+                    <a class="jobs-glass-card__action" [href]="phone">
+                      {{ translation.t('jobs.callCustomer') }}
+                    </a>
+                  }
+                  @if (telegramHref(order); as telegram) {
+                    <a
+                      class="jobs-glass-card__action"
+                      [href]="telegram"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ translation.t('jobs.messageCustomer') }}
+                    </a>
+                  }
                 </div>
-              }
 
-              <footer class="job-card__footer">
-                @if (job.createdAt) {
-                  <time class="job-card__date" [dateTime]="job.createdAt.toISOString()">
-                    {{ translation.t('jobs.posted') }} {{ job.createdAt | date: 'mediumDate' }}
-                  </time>
+                @if (adminAuth.showAdminControls() && !isOrderCompleted(order)) {
+                  <button
+                    type="button"
+                    class="btn-complete"
+                    [disabled]="isJobAdminBusy(order.id)"
+                    (click)="completeOrder(order)"
+                  >
+                    Выполнено
+                  </button>
                 }
-                @if (!hasContactActions(job)) {
-                  <span class="job-card__hint">{{ translation.t('jobs.contactInDescription') }}</span>
+
+                @if (adminAuth.showAdminControls()) {
+                  <div class="jobs-glass-card__admin">
+                    <button
+                      type="button"
+                      class="job-card__admin-btn job-card__admin-btn--delete"
+                      [disabled]="isJobAdminBusy(order.id)"
+                      (click)="deleteJob(order)"
+                    >
+                      {{ translation.t('admin.jobs.delete') }}
+                    </button>
+                  </div>
                 }
-              </footer>
+              </div>
             </article>
+            }
           }
         </div>
       }
-    }
-  </div>
-</section>
+
+      <div class="jobs-showcase__cta-wrap">
+        <a routerLink="." fragment="calculator" class="jobs-showcase__cta">
+          {{ translation.t('jobs.publishAction') }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="calculator" class="jobs-calculator-section" [ngStyle]="calculatorBackground">
+    <div class="jobs-calculator-section__inner">
+      <app-renovation-calculator />
+    </div>
+  </section>
 </div>

@@ -1,11 +1,13 @@
 import type { FurnitureOrderInsert } from '../core/models/master.model';
 
-/** Строка таблицы заказов в Supabase (`jobklient`). */
+/** Строка таблицы заказов в Supabase (`order`). */
 export interface JobklientJobRow {
-  id?: string | number | null;
+  id?: number | string | null;
   title?: string | null;
   client_name?: string | null;
+  client_phone?: string | null;
   phone?: string | null;
+  file?: string | null;
   city?: string | null;
   category?: string | null;
   budget?: number | string | null;
@@ -19,18 +21,20 @@ export interface JobklientJobRow {
 }
 
 /**
- * Payload для `.insert()` в таблицу `jobklient`.
+ * Payload для `.insert()` в таблицу `order`.
  * Поля в snake_case — строго по колонкам Supabase.
  */
 export interface JobklientJobInsert {
   title: string;
   client_name: string;
   phone: string;
+  client_phone: string;
   city: string;
   category: string;
   budget?: number | string | null;
   description?: string;
   status?: string;
+  file?: string | null;
 }
 
 export interface CalculatorJobklientJobInput {
@@ -81,11 +85,12 @@ export function buildJobklientJobInsert(
     title: `${input.roomTypeLabel} — ${input.renovationTypeLabel}`,
     client_name: input.customerName.trim(),
     phone: input.contact.trim(),
+    client_phone: input.contact.trim(),
     city: input.city,
     category: input.renovationTypeLabel,
     budget: input.estimatedTotal ?? null,
     description: descriptionLines.join('\n'),
-    status: 'New',
+    status: 'active',
   };
 }
 
@@ -93,22 +98,28 @@ export function buildJobklientJobInsert(
 export function toJobklientDbRow(input: JobklientJobInsert): {
   title: string;
   client_name: string;
+  client_phone: string;
   phone: string;
   city: string;
   category: string;
   budget: number | string | null;
   description: string | null;
   status: string;
+  file: string | null;
 } {
+  const clientPhone = input.client_phone.trim() || input.phone.trim();
+
   return {
     title: input.title.trim(),
     client_name: input.client_name.trim(),
-    phone: input.phone.trim(),
+    client_phone: clientPhone,
+    phone: clientPhone,
     city: input.city.trim(),
     category: input.category.trim(),
     budget: input.budget ?? null,
     description: input.description?.trim() || null,
-    status: input.status?.trim() || 'New',
+    status: input.status?.trim() || 'active',
+    file: input.file?.trim() || null,
   };
 }
 
@@ -457,6 +468,14 @@ export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, in
       details.contact = parseJobContact(row.phone.trim());
     }
 
+    if (row.client_phone?.trim() && !details.contact?.display) {
+      details.contact = parseJobContact(row.client_phone.trim());
+    }
+
+    if (row.file?.trim() && !details.photoLink) {
+      details.photoLink = row.file.trim();
+    }
+
     return {
       id: row.id != null && String(row.id).trim() ? String(row.id).trim() : `job-${index}`,
       title: safeText(row.title, 'Без названия'),
@@ -512,6 +531,15 @@ const INACTIVE_JOB_STATUSES = new Set([
   'удалён',
   'архив',
 ]);
+
+export function isCompletedOrderStatus(status: string | null | undefined): boolean {
+  const normalized = safeText(status).toLowerCase();
+  if (!normalized || normalized === '—') {
+    return false;
+  }
+
+  return INACTIVE_JOB_STATUSES.has(normalized);
+}
 
 export function isActiveJobklientJob(row: JobklientJobRow | null | undefined): boolean {
   if (!row || typeof row !== 'object') {

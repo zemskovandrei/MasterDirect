@@ -1,49 +1,53 @@
 import { Component, Inject, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { Job, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
+import { Job, isCompletedOrderStatus, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
-import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { CATALOG_TAB_BACKGROUNDS, calculatorSectionBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { RenovationCalculatorComponent } from '../../shared/components/renovation-calculator/renovation-calculator.component';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, RenovationCalculatorComponent],
+  imports: [CommonModule, RouterLink, RenovationCalculatorComponent],
   templateUrl: './jobs-list.component.html',
   styleUrls: ['../../styles/catalog-pages.css', './jobs-list.component.css'],
 })
 export class JobsListComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
 
-  protected readonly pageBackground = catalogTabBackgroundStyle('jobs');
+  protected readonly showcaseBackground = {
+    backgroundColor: '#080808',
+    backgroundImage: `linear-gradient(90deg, rgba(8, 8, 8, 0.12) 0%, rgba(8, 8, 8, 0.78) 46%, rgba(8, 8, 8, 0.97) 100%), url('${CATALOG_TAB_BACKGROUNDS.jobs}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'left center',
+    backgroundRepeat: 'no-repeat',
+  };
+
+  protected readonly calculatorBackground = calculatorSectionBackgroundStyle();
+
+  private readonly showcaseFallbackImages = [
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800',
+    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800',
+  ];
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {}
 
   readonly isLoading = this.supabase.jobsLoading;
   readonly error = this.supabase.jobsError;
   readonly jobs = this.supabase.activeJobs;
-  readonly accessDenied = this.supabase.jobsAccessDenied;
 
   protected readonly adminActionJobId = signal<string | null>(null);
   protected readonly adminActionError = signal<string | null>(null);
-  protected readonly loginError = signal(false);
-  protected readonly loginSubmitting = signal(false);
-
-  protected readonly loginForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -56,7 +60,7 @@ export class JobsListComponent implements OnInit {
   private async initBrowserJobs(): Promise<void> {
     await this.auth.ensureInitialized();
     await this.adminAuth.ensureReady();
-    await this.loadJobs();
+    await this.loadJobs(true);
   }
 
   protected async loadJobs(force = false): Promise<void> {
@@ -86,79 +90,78 @@ export class JobsListComponent implements OnInit {
     void this.loadJobs(true);
   }
 
-  protected async submitMasterLogin(): Promise<void> {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
-
-    this.loginSubmitting.set(true);
-    this.loginError.set(false);
-
-    const { email, password } = this.loginForm.getRawValue();
-    const result = await this.auth.signIn(email, password);
-
-    this.loginSubmitting.set(false);
-
-    if (result.error || !result.user) {
-      this.loginError.set(true);
-      return;
-    }
-
-    this.loginForm.reset();
-    await this.loadJobs(true);
-  }
-
   protected isJobAdminBusy(jobId: string): boolean {
     return this.adminActionJobId() === jobId;
   }
 
-  async completeJob(job: Job): Promise<void> {
-    if (!job.id?.trim() || this.isJobAdminBusy(job.id)) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      this.translation.t('admin.jobs.completeConfirm').replace('{{title}}', this.displayTitle(job)),
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    this.adminActionJobId.set(job.id);
-    this.adminActionError.set(null);
-
-    try {
-      const result = await firstValueFrom(this.supabase.completeJobklientJob(job.id));
-      if (result.error) {
-        this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-        console.error('[JobsListComponent] completeJob:', result.error);
-      }
-    } catch (err) {
-      this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-      console.error('[JobsListComponent] completeJob:', err);
-    } finally {
-      this.adminActionJobId.set(null);
-    }
+  protected isOrderCompleted(order: Job): boolean {
+    return isCompletedOrderStatus(order.status);
   }
 
-  async deleteJob(job: Job): Promise<void> {
-    if (!job.id?.trim() || this.isJobAdminBusy(job.id)) {
+  protected completeOrder(order: Job): void {
+    const id = order?.id;
+    console.log('[JobsListComponent] Кликнули выполнить для ID:', id);
+
+    if (id == null || String(id).trim() === '') {
+      console.warn('[JobsListComponent] Ошибка: ID заказа пустой!');
+      return;
+    }
+
+    const orderId = Math.trunc(Number(id));
+    console.log('[JobsListComponent] completeOrder parsed id:', { raw: id, numeric: orderId });
+
+    if (!Number.isFinite(orderId) || orderId <= 0 || this.isJobAdminBusy(String(id))) {
+      console.error('[JobsListComponent] completeOrder invalid id:', id, '→', orderId);
       return;
     }
 
     const confirmed = window.confirm(
-      this.translation.t('admin.jobs.deleteConfirm').replace('{{title}}', this.displayTitle(job)),
+      this.translation.t('admin.jobs.completeConfirm').replace('{{title}}', order.title),
     );
     if (!confirmed) {
       return;
     }
 
-    this.adminActionJobId.set(job.id);
+    this.adminActionJobId.set(String(id));
+    this.adminActionError.set(null);
+
+    this.supabase.completeOrder(orderId).subscribe({
+      next: (result) => {
+        if (result.error) {
+          this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+          console.error('[JobsListComponent] completeOrder:', result.error);
+          return;
+        }
+
+        void this.loadJobs(true);
+      },
+      error: (err) => {
+        this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
+        logSupabaseError('JobsListComponent.completeOrder', err);
+      },
+      complete: () => {
+        this.adminActionJobId.set(null);
+      },
+    });
+  }
+
+  async deleteJob(order: Job): Promise<void> {
+    if (!order.id?.trim() || this.isJobAdminBusy(order.id)) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation.t('admin.jobs.deleteConfirm').replace('{{title}}', order.title),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.adminActionJobId.set(order.id);
     this.adminActionError.set(null);
 
     try {
-      const result = await firstValueFrom(this.supabase.deleteJob(job.id));
+      const result = await firstValueFrom(this.supabase.deleteJob(order.id));
       if (result.error) {
         this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
         console.error('Jobklient delete error:', result.error);
@@ -171,65 +174,44 @@ export class JobsListComponent implements OnInit {
     }
   }
 
-  protected displayTitle(job: Job): string {
-    if (job.title === 'Без названия') {
-      return this.translation.t('jobs.noTitle');
-    }
-    return job.title;
-  }
-
-  protected displayBudget(job: Job): string {
-    return job.budgetLabel === '—' ? this.translation.t('jobs.budgetUnknown') : job.budgetLabel;
-  }
-
-  protected displayStatus(job: Job): string {
-    const status = job.status.toLowerCase();
-    if (status === 'new') {
-      return this.translation.t('jobs.statusNew');
-    }
-    return this.translation.t('jobs.statusActive');
-  }
-
-  protected displayArea(job: Job): string | null {
-    if (job.details.areaSqm == null) {
-      return null;
+  protected formatOrderBudget(order: Job): string {
+    if (order.budget != null && Number.isFinite(order.budget)) {
+      try {
+        return `${new Intl.NumberFormat('ka-GE', { maximumFractionDigits: 0 }).format(order.budget)} ₾`;
+      } catch {
+        return `${Math.round(order.budget)} ₾`;
+      }
     }
 
-    return this.translation
-      .t('jobs.areaValue')
-      .replace('{{value}}', String(job.details.areaSqm));
-  }
-
-  protected displaySummary(job: Job): string {
-    const summary = job.details.summary.trim();
-    if (summary && summary !== job.description.trim()) {
-      return summary;
+    if (order.budgetLabel && order.budgetLabel !== '—') {
+      return order.budgetLabel;
     }
 
-    if (summary) {
-      return summary;
+    return this.translation.t('jobs.budgetUnknown');
+  }
+
+  protected phoneHref(order: Job): string | null {
+    return jobPhoneHref(order.details.contact);
+  }
+
+  protected telegramHref(order: Job): string | null {
+    return jobTelegramHref(order.details.contact);
+  }
+
+  protected hasContactActions(order: Job): boolean {
+    return !!(this.phoneHref(order) || this.telegramHref(order));
+  }
+
+  protected jobCardImage(order: Job, index: number): string {
+    const link = order.details.photoLink?.trim();
+    if (link && /^https?:\/\//i.test(link) && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(link)) {
+      return link;
     }
 
-    return job.description.trim();
+    return this.showcaseFallbackImages[index % this.showcaseFallbackImages.length];
   }
 
-  protected hasSummary(job: Job): boolean {
-    return this.displaySummary(job).length > 0;
-  }
-
-  protected phoneHref(job: Job): string | null {
-    return jobPhoneHref(job.details.contact);
-  }
-
-  protected telegramHref(job: Job): string | null {
-    return jobTelegramHref(job.details.contact);
-  }
-
-  protected hasContactActions(job: Job): boolean {
-    return !!(this.phoneHref(job) || this.telegramHref(job));
-  }
-
-  trackByJobId(_index: number, job: Job): string {
-    return job.id;
+  trackByJobId(_index: number, order: Job): string {
+    return order.id;
   }
 }

@@ -23,11 +23,25 @@ export interface ChecklistPhaseGroup {
   items: ChecklistViewItem[];
 }
 
+export interface ChecklistVisibilityOptions {
+  /** When true for capital/design renovation, show only the fixed package items */
+  limitToTurnkeyPackage?: boolean;
+}
+
+const PACKAGE_RENOVATION_TYPES: readonly CalculatorRenovationType[] = ['capital', 'design'];
+
+export function isTurnkeyRenovationType(
+  renovationType: CalculatorRenovationType | null | undefined,
+): boolean {
+  return renovationType != null && PACKAGE_RENOVATION_TYPES.includes(renovationType);
+}
+
 export function getVisibleChecklistItems(
   renovationType: CalculatorRenovationType,
   roomType: CalculatorRoomType,
+  options?: ChecklistVisibilityOptions,
 ): RenovationChecklistItemDef[] {
-  return RENOVATION_CHECKLIST_ITEMS.filter((item) => {
+  let items = RENOVATION_CHECKLIST_ITEMS.filter((item) => {
     if (item.hideFor?.includes(renovationType)) {
       return false;
     }
@@ -36,6 +50,12 @@ export function getVisibleChecklistItems(
     }
     return true;
   });
+
+  if (options?.limitToTurnkeyPackage && isTurnkeyRenovationType(renovationType)) {
+    items = items.filter((item) => item.defaultFor.includes(renovationType));
+  }
+
+  return items;
 }
 
 export function buildDefaultChecklistSelection(
@@ -53,8 +73,9 @@ export function buildChecklistPhaseGroups(
   renovationType: CalculatorRenovationType,
   roomType: CalculatorRoomType,
   selectedIds: ReadonlySet<string>,
+  options?: ChecklistVisibilityOptions,
 ): ChecklistPhaseGroup[] {
-  const visible = getVisibleChecklistItems(renovationType, roomType);
+  const visible = getVisibleChecklistItems(renovationType, roomType, options);
 
   return RENOVATION_CHECKLIST_PHASES.map((phase) => ({
     phaseId: phase.id,
@@ -112,8 +133,9 @@ export function countSelectedChecklistItems(selectedIds: ReadonlySet<string>): n
 export function getAllVisibleChecklistItemIds(
   renovationType: CalculatorRenovationType,
   roomType: CalculatorRoomType,
+  options?: ChecklistVisibilityOptions,
 ): string[] {
-  return getVisibleChecklistItems(renovationType, roomType).map((item) => item.id);
+  return getVisibleChecklistItems(renovationType, roomType, options).map((item) => item.id);
 }
 
 function normalizeSearchText(value: string): string {

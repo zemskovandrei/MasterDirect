@@ -21,6 +21,7 @@ import { environment } from '../../../environments/environment';
 import {
   Job,
   JobklientJobInsert,
+  isCompletedOrderStatus,
   mapJobklientRowsToJobs,
   toFurnitureOrderDbRow,
   toJobklientDbRow,
@@ -38,10 +39,13 @@ import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
 
-const JOBS_CACHE_KEY = 'smartbuild.jobs.v3';
+const JOBS_CACHE_KEY = 'smartbuild.jobs.v6';
 const JOBS_CACHE_TTL_MS = 2 * 60 * 1000;
-const JOBS_LIST_COLUMNS =
-  'id,title,client_name,phone,city,category,budget,description,status,created_at';
+const JOBS_LIST_COLUMNS = 'id,created_at,title,budget,description,category,city,status';
+const JOBS_ACTIVE_STATUS = 'active';
+const ORDER_COMPLETED_STATUS = 'completed';
+const ORDER_FILES_BUCKET = 'orders-files';
+const SPECIALIST_ACTIVE_ARCHIVE = false;
 
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
@@ -85,15 +89,15 @@ export class SupabaseService {
   private readonly activeJobsSignal = signal<Job[]>([]);
   private readonly jobsLoadingSignal = signal(false);
   private readonly jobsErrorSignal = signal<string | null>(null);
-  private readonly jobsAccessDeniedSignal = signal(false);
 
   readonly profiles = this.profilesSignal.asReadonly();
   readonly loaded = this.loadedSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
-  readonly activeJobs = this.activeJobsSignal.asReadonly();
+  readonly activeJobs = computed(() =>
+    this.activeJobsSignal().filter((job) => !isCompletedOrderStatus(job.status)),
+  );
   readonly jobsLoading = this.jobsLoadingSignal.asReadonly();
   readonly jobsError = this.jobsErrorSignal.asReadonly();
-  readonly jobsAccessDenied = this.jobsAccessDeniedSignal.asReadonly();
   readonly catalogCityFilterEnabled = this.catalogCityFilterEnabledSignal.asReadonly();
   readonly catalogCityFilter = this.catalogCityFilterSignal.asReadonly();
   readonly catalogReady = computed(() => this.loadedSignal() && !this.loadingSignal());
@@ -118,6 +122,9 @@ export class SupabaseService {
       .map((profile) => this.toPerformer(profile));
   });
 
+  /** Все активные специалисты из таблицы `specialist` (мастера и бригады). */
+  readonly specialists = computed(() => [...this.workers(), ...this.brigades()]);
+
   readonly furnitureCompanies = computed(() => {
     const filterEnabled = this.catalogCityFilterEnabledSignal();
     const filterCity = this.catalogCityFilterSignal();
@@ -130,11 +137,6 @@ export class SupabaseService {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      const cached = this.readJobsCache();
-      if (cached) {
-        this.activeJobsSignal.set(cached.jobs);
-      }
-
       console.info('[SupabaseService] runtime config', {
         production: environment.production,
         url: environment.supabase.url,
@@ -153,81 +155,78 @@ export class SupabaseService {
   }
 
   async loadJobsForAuthenticatedMaster(force = false): Promise<Job[]> {
+    console.log('[SUPABASE SERVICE] Запуск loadJobsForAuthenticatedMaster');
+
     if (!isPlatformBrowser(this.platformId)) {
       return [];
     }
 
-    if (!this.isConfigured()) {
-      logSupabaseError('loadJobsForAuthenticatedMaster', new Error(SUPABASE_NOT_CONFIGURED));
-      throw new Error(SUPABASE_NOT_CONFIGURED);
+    if (force) {
+      this.invalidateJobsCache();
     }
 
     this.jobsLoadingSignal.set(true);
     this.jobsErrorSignal.set(null);
-    this.jobsAccessDeniedSignal.set(false);
 
     try {
       const client = await this.resolveClient();
       if (!client) {
-        throw new Error(SUPABASE_NOT_CONFIGURED);
-      }
-
-      const {
-        data: { user },
-        error: authError,
-      } = await client.auth.getUser();
-
-      if (authError) {
-        logSupabaseError('loadJobsForAuthenticatedMaster.auth', authError);
-      }
-
-      if (authError || !user) {
-        this.jobsAccessDeniedSignal.set(true);
-        this.activeJobsSignal.set([]);
+        console.error('[SUPABASE SERVICE] Supabase client not configured');
         return [];
       }
 
-      const { data: master, error: masterError } = await client
-        .from(environment.supabase.mastersTable)
-        .select('city')
-        .eq('id', user.id)
-        .maybeSingle();
+      let query = client
+        .from(environment.supabase.jobsTable)
+        .select('*')
+        .neq('status', 'completed')
+        .order('created_at', { ascending: false });
 
-      if (masterError) {
-        logSupabaseError('loadJobsForAuthenticatedMaster.masterCity', masterError);
-        throw new Error(masterError.message);
-      }
+      try {
+        const authStorageKey = Object.keys(localStorage).find((key) => key.includes('-auth-token'));
+        const sessionStr = authStorageKey ? localStorage.getItem(authStorageKey) : null;
 
-      const masterCity = master?.city?.trim();
-      if (!masterCity) {
-        this.activeJobsSignal.set([]);
-        this.jobsErrorSignal.set('Master city is not set');
-        return [];
-      }
-
-      const cached = force ? null : this.readJobsCache();
-      if (cached && cached.jobs.length > 0 && !force) {
-        const filtered = cached.jobs.filter((job) => job.city === masterCity);
-        this.activeJobsSignal.set(filtered);
-        if (Date.now() - cached.at < JOBS_CACHE_TTL_MS) {
-          return filtered;
+        if (sessionStr) {
+          const session = JSON.parse(sessionStr) as { user?: { id?: string } };
+          const userId = session?.user?.id;
+          if (userId) {
+            console.log('[SUPABASE SERVICE] Найдена локальная сессия пользователя:', userId);
+          }
+        } else {
+          console.log('[SUPABASE SERVICE] Локальная сессия не найдена. Работаем в режиме гостя.');
         }
+      } catch {
+        console.log('[SUPABASE SERVICE] Не удалось разобрать локальную сессию, идем как гость.');
       }
 
-      const rows = await this.fetchJobklientRows({ city: masterCity });
-      const jobs = mapJobklientRowsToJobs(rows);
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('[SUPABASE SERVICE] Ошибка при чтении таблицы order:', error);
+        logSupabaseError('loadJobsForAuthenticatedMaster', error);
+        return [];
+      }
+
+      const rows = (data ?? []).filter(
+        (row) => !isCompletedOrderStatus((row as { status?: string | null }).status),
+      );
+      const jobs = this.filterPublicJobs(mapJobklientRowsToJobs(rows));
       this.activeJobsSignal.set(jobs);
+      this.jobsErrorSignal.set(null);
+
       if (jobs.length > 0) {
         this.writeJobsCache(jobs);
       } else {
         this.invalidateJobsCache();
       }
+
+      console.log('[SUPABASE SERVICE] Успешно загружено активных заказов:', jobs.length);
       return jobs;
-    } catch (err) {
-      logSupabaseError('loadJobsForAuthenticatedMaster', err);
+    } catch (error) {
+      console.error('[SUPABASE SERVICE] Критическая ошибка при загрузке:', error);
+      logSupabaseError('loadJobsForAuthenticatedMaster', error);
       this.activeJobsSignal.set([]);
-      this.jobsErrorSignal.set(err instanceof Error ? err.message : 'Failed to load jobs');
-      throw err;
+      this.jobsErrorSignal.set(null);
+      return [];
     } finally {
       this.jobsLoadingSignal.set(false);
     }
@@ -247,17 +246,8 @@ export class SupabaseService {
       throw new Error(SUPABASE_NOT_CONFIGURED);
     }
 
-    const cached = force ? null : this.readJobsCache();
-    if (cached && cached.jobs.length > 0) {
-      this.activeJobsSignal.set(cached.jobs);
-      this.jobsErrorSignal.set(null);
-
-      if (Date.now() - cached.at < JOBS_CACHE_TTL_MS) {
-        return cached.jobs;
-      }
-
-      void this.refreshActiveJobs(false);
-      return cached.jobs;
+    if (force) {
+      this.invalidateJobsCache();
     }
 
     this.jobsLoadingSignal.set(true);
@@ -291,6 +281,44 @@ export class SupabaseService {
     return this.insertJobklientJobRow(input);
   }
 
+  insertOrder(input: JobklientJobInsert, file: File): Observable<JobklientInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.insertOrderAsync(input, file));
+  }
+
+  async insertOrderAsync(input: JobklientJobInsert, file: File): Promise<JobklientInsertResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    const uploadResult = await this.uploadOrderFile(file);
+    if (uploadResult.error) {
+      logSupabaseError('insertOrder.upload', uploadResult.error);
+      return {
+        data: null,
+        error: uploadResult.error,
+        supabaseError: uploadResult.error,
+      };
+    }
+
+    const fileRef = uploadResult.publicUrl ?? uploadResult.path;
+    const clientPhone = input.client_phone?.trim() || input.phone.trim();
+    const description = [input.description?.trim(), fileRef ? `Фото объекта: ${fileRef}` : '']
+      .filter(Boolean)
+      .join('\n');
+
+    return this.insertJobklientJobRow({
+      ...input,
+      client_phone: clientPhone,
+      phone: clientPhone,
+      file: fileRef,
+      description,
+    });
+  }
+
   insertFurnitureOrder(input: FurnitureOrderInsert): Observable<FurnitureOrderInsertResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ data: null, error: 'Browser only' });
@@ -309,19 +337,38 @@ export class SupabaseService {
     return this.insertFurnitureOrderRow(input);
   }
 
-  completeJobklientJob(id: string): Observable<JobklientMutationResult> {
+  completeOrder(orderId: number): Observable<JobklientMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ error: 'Browser only' });
     }
 
-    return from(this.updateJobklientStatusRow(id, 'Completed'));
+    const numericId = Math.trunc(Number(orderId));
+    return from(this.completeOrderRow(numericId));
+  }
+
+  async completeOrderAsync(orderId: number): Promise<JobklientMutationResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { error: 'Browser only' };
+    }
+
+    return this.completeOrderRow(Math.trunc(Number(orderId)));
+  }
+
+  /** @deprecated Use completeOrder() */
+  completeJobklientJob(id: string): Observable<JobklientMutationResult> {
+    const orderId = this.parseOrderId(id);
+    if (orderId == null) {
+      return of({ error: 'Invalid order id' });
+    }
+
+    return this.completeOrder(orderId);
   }
 
   deleteJobklientJob(id: string): Observable<JobklientMutationResult> {
     return this.deleteJob(id);
   }
 
-  /** Удаление заказа из таблицы Supabase `jobklient` по UUID. */
+  /** Удаление заказа из таблицы Supabase `order` по UUID. */
   deleteJob(id: string): Observable<JobklientMutationResult> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ error: 'Browser only' });
@@ -742,18 +789,18 @@ export class SupabaseService {
 
       const { data, error } = await client
         .from(environment.supabase.mastersTable)
-        .delete()
+        .update({ is_archive: true })
         .eq('id', id)
         .select('id');
 
       if (error) {
-        console.error('Delete error:', error);
+        console.error('Archive error:', error);
         return { data: null, error: error.message };
       }
 
       if (!data?.length) {
         const message = 'Master not found or access denied';
-        console.error('Delete error:', message);
+        console.error('Archive error:', message);
         return { data: null, error: message };
       }
 
@@ -761,8 +808,8 @@ export class SupabaseService {
       await this.refreshProfilesFromDatabase();
       return { data: null, error: null };
     } catch (err) {
-      console.error('Delete error:', err);
-      const message = err instanceof Error ? err.message : 'Delete failed';
+      console.error('Archive error:', err);
+      const message = err instanceof Error ? err.message : 'Archive failed';
       return { data: null, error: message };
     }
   }
@@ -788,7 +835,7 @@ export class SupabaseService {
 
       const { data: masterRows, error: masterError } = await client
         .from(environment.supabase.mastersTable)
-        .delete()
+        .update({ is_archive: true })
         .eq('id', id)
         .select('id');
 
@@ -867,7 +914,6 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      // Только колонки таблицы jobklient (snake_case), без лишних полей.
       const row = toJobklientDbRow(input);
 
       const { data, error } = await client
@@ -892,6 +938,42 @@ export class SupabaseService {
       logSupabaseError('insertJobklientJob', err);
       const message = err instanceof Error ? err.message : 'Insert failed';
       return { data: null, error: message, supabaseError: err };
+    }
+  }
+
+  private async uploadOrderFile(
+    file: File,
+  ): Promise<{ path: string; publicUrl: string | null; error: string | null }> {
+    try {
+      if (!this.isConfigured()) {
+        return { path: '', publicUrl: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const client = await this.resolveClient();
+      if (!client) {
+        return { path: '', publicUrl: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const safeName = file.name.replace(/[^\w.-]+/g, '_') || 'upload.bin';
+      const path = `${Date.now()}-${safeName}`;
+
+      const { error } = await client.storage.from(ORDER_FILES_BUCKET).upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
+
+      if (error) {
+        logSupabaseError('uploadOrderFile', error);
+        return { path: '', publicUrl: null, error: error.message };
+      }
+
+      const { data } = client.storage.from(ORDER_FILES_BUCKET).getPublicUrl(path);
+      return { path, publicUrl: data.publicUrl, error: null };
+    } catch (err) {
+      logSupabaseError('uploadOrderFile', err);
+      const message = err instanceof Error ? err.message : 'File upload failed';
+      return { path: '', publicUrl: null, error: message };
     }
   }
 
@@ -953,7 +1035,7 @@ export class SupabaseService {
     this.jobsFetchPromise = (async () => {
       try {
         const data = await this.fetchJobklientRows();
-        const jobs = mapJobklientRowsToJobs(data);
+        const jobs = this.filterPublicJobs(mapJobklientRowsToJobs(data));
         this.activeJobsSignal.set(jobs);
         this.jobsErrorSignal.set(null);
         if (jobs.length > 0) {
@@ -980,7 +1062,12 @@ export class SupabaseService {
 
   private readJobsCache(): { at: number; jobs: Job[] } | null {
     if (this.memoryJobsCache) {
-      return this.memoryJobsCache;
+      const jobs = this.filterPublicJobs(this.memoryJobsCache.jobs);
+      if (jobs.length === 0) {
+        return null;
+      }
+
+      return { at: this.memoryJobsCache.at, jobs };
     }
 
     if (!isPlatformBrowser(this.platformId)) {
@@ -1002,10 +1089,16 @@ export class SupabaseService {
         return null;
       }
 
-      const jobs = parsed.jobs.map((job) => ({
-        ...job,
-        createdAt: job.createdAt ? new Date(job.createdAt) : null,
-      }));
+      const jobs = parsed.jobs
+        .map((job) => ({
+          ...job,
+          createdAt: job.createdAt ? new Date(job.createdAt) : null,
+        }))
+        .filter((job) => !isCompletedOrderStatus(job.status));
+
+      if (jobs.length === 0) {
+        return null;
+      }
 
       this.memoryJobsCache = { at: parsed.at, jobs };
       return this.memoryJobsCache;
@@ -1015,9 +1108,10 @@ export class SupabaseService {
   }
 
   private writeJobsCache(jobs: Job[]): void {
+    const visibleJobs = this.filterPublicJobs(jobs);
     const entry = {
       at: Date.now(),
-      jobs,
+      jobs: visibleJobs,
     };
 
     this.memoryJobsCache = entry;
@@ -1031,7 +1125,7 @@ export class SupabaseService {
         JOBS_CACHE_KEY,
         JSON.stringify({
           at: entry.at,
-          jobs: jobs.map((job) => ({
+          jobs: visibleJobs.map((job) => ({
             ...job,
             createdAt: job.createdAt?.toISOString() ?? null,
           })),
@@ -1056,36 +1150,71 @@ export class SupabaseService {
     }
   }
 
-  private async updateJobklientStatusRow(
-    id: string,
-    status: string,
-  ): Promise<JobklientMutationResult> {
+  private filterPublicJobs(jobs: Job[]): Job[] {
+    return jobs.filter((job) => !isCompletedOrderStatus(job.status));
+  }
+
+  private parseOrderId(value: string | number | null | undefined): number | null {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.trunc(value);
+    }
+
+    const trimmed = String(value ?? '').trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null;
+    }
+
+    return Math.trunc(parsed);
+  }
+
+  /** Хардкод-дебаг: пометка заказа выполненным в таблице `order`. */
+  private async completeOrderRow(id: any): Promise<any> {
+    console.log('!!! ХАРДКОД ДЕБАГ ЗАПУЩЕН !!!');
+    console.log('Пришедший ID:', id, 'Тип данных:', typeof id);
+
+    if (!id) {
+      console.error('Ошибка: ID вообще пустой или undefined!');
+      throw new Error('Order id is missing before calling Supabase');
+    }
+
     try {
-      if (!this.isConfigured()) {
-        return { error: SUPABASE_NOT_CONFIGURED };
-      }
+      const targetId = Number(id);
+      console.log('Отправляем запрос в Supabase для ID как number:', targetId);
 
       const client = await this.resolveClient();
       if (!client) {
-        return { error: SUPABASE_NOT_CONFIGURED };
+        throw new Error(SUPABASE_NOT_CONFIGURED);
       }
 
-      const { error } = await client
-        .from(environment.supabase.jobsTable)
-        .update({ status })
-        .eq('id', id);
+      const { data, error, count } = await client
+        .from('order')
+        .update({ status: 'completed' })
+        .eq('id', targetId)
+        .select();
+
+      console.log('ОТВЕТ БАЗЫ НАПРЯМУЮ:', { data, error, count });
 
       if (error) {
-        logSupabaseError('updateJobklientStatus', error);
-        return { error: error.message };
+        console.error('Supabase вернул ошибку выполнения SQL:', error);
+        throw error;
       }
 
-      this.removeJobFromLocalState(id);
-      return { error: null };
+      if (!data || data.length === 0) {
+        console.warn('Внимание: Запрос прошел, но ни одна строка не обновилась! (data пустой)');
+      } else {
+        this.removeJobFromLocalState(String(targetId));
+        this.invalidateJobsCache();
+      }
+
+      return data;
     } catch (err) {
-      logSupabaseError('updateJobklientStatus', err);
-      const message = err instanceof Error ? err.message : 'Update failed';
-      return { error: message };
+      console.error('Перехвачено исключение внутри try-catch метода:', err);
+      throw err;
     }
   }
 
@@ -1150,6 +1279,7 @@ export class SupabaseService {
     let query = client
       .from(environment.supabase.jobsTable)
       .select(JOBS_LIST_COLUMNS)
+      .neq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -1164,7 +1294,9 @@ export class SupabaseService {
       throw new Error(error.message);
     }
 
-    return data ?? [];
+    return (data ?? []).filter(
+      (row) => !isCompletedOrderStatus((row as { status?: string | null }).status),
+    );
   }
 
   private resolveClient(): Promise<SupabaseClient | null> {
@@ -1231,9 +1363,6 @@ export class SupabaseService {
 
     try {
       const client = await this.resolveClient();
-      let masterProfiles: Profile[] = [];
-      let brigadeProfiles: Profile[] = [];
-      let furnitureProfilesFromDb: Profile[] = [];
 
       if (!client) {
         logSupabaseError(
@@ -1245,111 +1374,38 @@ export class SupabaseService {
         return this.profilesSignal();
       }
 
-      {
-        const { data: mastersData, error: mastersError } = await client
-          .from(environment.supabase.mastersTable)
-          .select('*')
-          .order('created_at', { ascending: false });
+      const specialists: Profile[] = [];
 
-        if (mastersError) {
-          logSupabaseError('loadMasters', mastersError);
-        } else if (mastersData) {
-          for (const row of mastersData as MasterRow[]) {
-            if (!row?.id) {
-              continue;
-            }
+      const { data: specialistsData, error: specialistsError } = await client
+        .from(environment.supabase.mastersTable)
+        .select('*')
+        .eq('is_archive', SPECIALIST_ACTIVE_ARCHIVE)
+        .order('created_at', { ascending: false });
 
-            const profile = masterRowToProfile(row);
-            if (profile.name.trim().length === 0) {
-              continue;
-            }
-            if (row.account_type === 'brigade') {
-              brigadeProfiles.push(profile);
-            } else {
-              // worker, null или любое другое значение — показываем в каталоге мастеров
-              masterProfiles.push(profile);
-            }
-          }
-        }
-
-        const brigadeById = new Map<string, Profile>(
-          brigadeProfiles.map((profile) => [profile.id, profile]),
-        );
-
-        const { data: brigadesData, error: brigadesError } = await client
-          .from(environment.supabase.brigadesTable)
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (brigadesError) {
-          logSupabaseError('loadBrigades', brigadesError);
-        } else {
-          for (const row of (brigadesData as BrigadeRow[] | null) ?? []) {
-            if (!row?.id) {
-              continue;
-            }
-
-            const profile = brigadeRowToProfile(row);
-            if (profile.name.trim().length > 0) {
-              brigadeById.set(profile.id, profile);
-            }
-          }
-        }
-
-        brigadeProfiles = [...brigadeById.values()];
-
-        const { data: furnitureData, error: furnitureError } = await client
-          .from(environment.supabase.furnitureOrdersTable)
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (furnitureError) {
-          logSupabaseError('loadFurnitureOrders', furnitureError);
-        } else {
-          furnitureProfilesFromDb =
-            (furnitureData as FurnitureOrderRow[] | null)
-              ?.map(furnitureOrderRowToProfile)
-              .filter(
-                (profile): profile is Profile => profile != null && profile.name.trim().length > 0,
-              ) ?? [];
-        }
-
-        console.info('[SupabaseService] catalog loaded', {
-          workers: masterProfiles.length,
-          brigades: brigadeProfiles.length,
-          furniture: furnitureProfilesFromDb.length,
-        });
-
-        const localFurnitureProfiles = this.furnitureStore
-          .companies()
-          .map((company) => furnitureCompanyToProfile(company));
-        const furnitureById = new Map<string, Profile>();
-        const dbNames = new Set(
-          furnitureProfilesFromDb.map((profile) => profile.name.trim().toLowerCase()),
-        );
-
-        for (const profile of furnitureProfilesFromDb) {
-          furnitureById.set(profile.id, profile);
-        }
-
-        for (const profile of localFurnitureProfiles) {
-          if (isUuid(profile.id)) {
-            furnitureById.set(profile.id, profile);
+      if (specialistsError) {
+        logSupabaseError('loadSpecialists', specialistsError);
+      } else if (specialistsData) {
+        for (const row of specialistsData as MasterRow[]) {
+          if (!row?.id) {
             continue;
           }
 
-          if (dbNames.has(profile.name.trim().toLowerCase())) {
+          const profile = masterRowToProfile(row);
+          if (profile.name.trim().length === 0) {
             continue;
           }
 
-          furnitureById.set(profile.id, profile);
+          specialists.push(profile);
         }
-        const furnitureProfiles = [...furnitureById.values()];
-        const profiles = [...brigadeProfiles, ...masterProfiles, ...furnitureProfiles];
-        this.profilesSignal.set(profiles);
-        this.loadedSignal.set(true);
-        return profiles;
       }
+
+      console.info('[SupabaseService] catalog loaded', {
+        specialists: specialists.length,
+      });
+
+      this.profilesSignal.set(specialists);
+      this.loadedSignal.set(true);
+      return specialists;
     } catch (err) {
       logSupabaseError('refreshProfilesFromDatabase', err);
       throw err;

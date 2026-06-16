@@ -653,16 +653,33 @@ section.renovation-calculator {
   align-items: flex-start;
   gap: 0.65rem;
   padding: 0.85rem 0.95rem;
-  border-radius: 12px;
-  border: 1px solid rgba(77, 238, 234, 0.22);
-  background: rgba(77, 238, 234, 0.06);
+  border-radius: 14px;
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #0c4a6e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .quiz-scope-reminder p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.86);
+  color: #0c4a6e;
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.quiz-field--file .quiz-field__file-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.quiz-field__file-name {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .quiz-step--estimate {

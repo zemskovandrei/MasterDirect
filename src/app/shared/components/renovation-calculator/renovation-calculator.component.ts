@@ -22,10 +22,16 @@ import {
   buildDefaultChecklistSelection,
   countChecklistItemsInGroups,
   filterChecklistPhaseGroups,
+  isTurnkeyRenovationType,
   matchesChecklistSearch,
   splitChecklistPhaseGroups,
   getAllVisibleChecklistItemIds,
 } from '../../../core/utils/renovation-checklist.util';
+import {
+  ORDER_FILE_ACCEPT,
+  clientPhoneValidator,
+  orderFileValidator,
+} from '../../../core/utils/order-form.validators';
 
 @Component({
   selector: 'app-renovation-calculator',
@@ -68,7 +74,7 @@ export class RenovationCalculatorComponent implements OnInit {
     { id: 'commercial', labelKey: 'home.calculator.roomTypes.commercial' },
   ];
 
-  protected readonly calculatorRenovationOptions: {
+  protected readonly allRepairTypes: {
     id: CalculatorRenovationType;
     labelKey: string;
   }[] = [
@@ -77,6 +83,22 @@ export class RenovationCalculatorComponent implements OnInit {
     { id: 'design', labelKey: 'home.calculator.renovationTypes.design' },
     { id: 'furniture', labelKey: 'home.calculator.renovationTypes.furniture' },
   ];
+
+  private static readonly NEW_BUILD_RENOVATION_TYPES: CalculatorRenovationType[] = ['capital', 'design'];
+
+  protected get selectedBuildingType(): CalculatorRoomType | null {
+    return this.calculatorRoomType();
+  }
+
+  protected get filteredRepairTypes(): { id: CalculatorRenovationType; labelKey: string }[] {
+    if (this.selectedBuildingType === 'new_build') {
+      return this.allRepairTypes.filter((option) =>
+        RenovationCalculatorComponent.NEW_BUILD_RENOVATION_TYPES.includes(option.id),
+      );
+    }
+
+    return this.allRepairTypes;
+  }
 
   protected readonly calculatorPerformerPool = computed((): CalculatorPerformerPool | null => {
     const renovationType = this.calculatorRenovationType();
@@ -148,13 +170,15 @@ export class RenovationCalculatorComponent implements OnInit {
     { id: 'both', labelKey: 'home.calculator.cities.both' },
   ] as const;
 
-  protected readonly calculatorContactForm = this.fb.nonNullable.group({
-    city: ['batumi', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    contact: ['', [Validators.required, Validators.minLength(5)]],
-    photoLink: [''],
-    paidCallOutAccepted: [false],
+  protected readonly calculatorContactForm = this.fb.group({
+    city: this.fb.nonNullable.control('batumi', [Validators.required]),
+    name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+    client_phone: this.fb.nonNullable.control('', [Validators.required, clientPhoneValidator]),
+    file: this.fb.control<File | null>(null, [Validators.required, orderFileValidator]),
+    paidCallOutAccepted: this.fb.nonNullable.control(false),
   });
+
+  protected readonly orderFileAccept = ORDER_FILE_ACCEPT;
 
   protected readonly calculatorChecklistReady = computed(() => {
     const roomType = this.calculatorRoomType();
@@ -163,6 +187,10 @@ export class RenovationCalculatorComponent implements OnInit {
 
     return !!(roomType && renovationType && Number.isFinite(areaSqm) && areaSqm >= 5);
   });
+
+  protected readonly calculatorTurnkeyMode = computed(() =>
+    isTurnkeyRenovationType(this.calculatorRenovationType()),
+  );
 
   protected readonly calculatorChecklistGroups = computed(() => {
     this.translation.locale();
@@ -177,6 +205,7 @@ export class RenovationCalculatorComponent implements OnInit {
       renovationType,
       roomType,
       new Set(this.calculatorChecklistSelection()),
+      { limitToTurnkeyPackage: this.calculatorTurnkeyMode() },
     );
   });
 
@@ -231,6 +260,18 @@ export class RenovationCalculatorComponent implements OnInit {
 
   selectCalculatorRoom(type: CalculatorRoomType) {
     this.calculatorRoomType.set(type);
+
+    if (type === 'new_build') {
+      const renovationType = this.calculatorRenovationType();
+      if (
+        renovationType &&
+        !RenovationCalculatorComponent.NEW_BUILD_RENOVATION_TYPES.includes(renovationType)
+      ) {
+        this.calculatorRenovationType.set(null);
+        this.calculatorSelectedPerformerIds.set([]);
+      }
+    }
+
     this.resetChecklistSelection();
     this.goToCalculatorStep(2);
   }
@@ -247,7 +288,13 @@ export class RenovationCalculatorComponent implements OnInit {
     if (!this.isCalculatorAreaValid()) {
       return;
     }
-    this.ensureChecklistSelection();
+
+    if (this.calculatorTurnkeyMode()) {
+      this.applyTurnKeyJobs();
+    } else {
+      this.ensureChecklistSelection();
+    }
+
     this.goToCalculatorStep(4);
   }
 
@@ -314,10 +361,23 @@ export class RenovationCalculatorComponent implements OnInit {
     if (!roomType || !renovationType) {
       return;
     }
-    this.calculatorChecklistSelection.set(getAllVisibleChecklistItemIds(renovationType, roomType));
+
+    if (this.calculatorTurnkeyMode()) {
+      this.applyTurnKeyJobs();
+      return;
+    }
+
+    this.calculatorChecklistSelection.set(
+      getAllVisibleChecklistItemIds(renovationType, roomType),
+    );
   }
 
   selectRecommendedChecklistItems() {
+    if (this.calculatorTurnkeyMode()) {
+      this.applyTurnKeyJobs();
+      return;
+    }
+
     this.ensureChecklistSelection();
   }
 
@@ -338,6 +398,22 @@ export class RenovationCalculatorComponent implements OnInit {
     this.calculatorChecklistSelection.set([
       ...buildDefaultChecklistSelection(renovationType, roomType),
     ]);
+  }
+
+  protected applyTurnKeyJobs(): void {
+    const roomType = this.calculatorRoomType();
+    const renovationType = this.calculatorRenovationType();
+    if (!roomType || !renovationType || !isTurnkeyRenovationType(renovationType)) {
+      return;
+    }
+
+    this.calculatorChecklistSelection.set([
+      ...buildDefaultChecklistSelection(renovationType, roomType),
+    ]);
+    this.calculatorChecklistCustomItems.set([]);
+    this.calculatorChecklistCustomDraft.set('');
+    this.calculatorChecklistCustomError.set(null);
+    this.calculatorChecklistSearchQuery.set('');
   }
 
   private resetChecklistSelection() {
@@ -414,9 +490,51 @@ export class RenovationCalculatorComponent implements OnInit {
     return Number.isFinite(value) && value >= 5 && value <= 5000;
   }
 
-  calculatorFieldInvalid(field: 'name' | 'contact'): boolean {
+  calculatorFieldInvalid(field: 'name' | 'client_phone' | 'file'): boolean {
     const control = this.calculatorContactForm.get(field);
     return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  protected clientPhoneErrorKey(): string | null {
+    if (!this.calculatorFieldInvalid('client_phone')) {
+      return null;
+    }
+
+    const errors = this.calculatorContactForm.get('client_phone')?.errors;
+    if (errors?.['required']) {
+      return 'home.calculator.clientPhoneRequired';
+    }
+
+    return 'home.calculator.clientPhoneFormat';
+  }
+
+  protected fileErrorKey(): string | null {
+    if (!this.calculatorFieldInvalid('file')) {
+      return null;
+    }
+
+    const errors = this.calculatorContactForm.get('file')?.errors;
+    if (errors?.['required']) {
+      return 'home.calculator.fileRequiredError';
+    }
+
+    if (errors?.['invalidType']) {
+      return 'home.calculator.fileTypeError';
+    }
+
+    return 'home.calculator.fileError';
+  }
+
+  protected onOrderFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.calculatorContactForm.patchValue({ file });
+    this.calculatorContactForm.get('file')?.markAsTouched();
+    this.calculatorContactForm.get('file')?.updateValueAndValidity();
+  }
+
+  protected selectedOrderFileName(): string {
+    return this.calculatorContactForm.get('file')?.value?.name ?? '';
   }
 
   async submitCalculatorLead() {
@@ -435,8 +553,14 @@ export class RenovationCalculatorComponent implements OnInit {
       return;
     }
 
-    const { city, name, contact, photoLink, paidCallOutAccepted } =
+    const { city, name, client_phone, paidCallOutAccepted } =
       this.calculatorContactForm.getRawValue();
+    const file = this.calculatorContactForm.get('file')?.value;
+    if (!file) {
+      this.calculatorContactForm.get('file')?.markAsTouched();
+      return;
+    }
+
     const areaSqm = Number(this.calculatorArea().replace(',', '.'));
     const selectedIds = new Set(this.calculatorSelectedPerformerIds());
     const selectedCards = this.calculatorPerformerCards().filter((card) =>
@@ -469,8 +593,7 @@ export class RenovationCalculatorComponent implements OnInit {
       renovationType,
       areaSqm,
       name,
-      contact,
-      photoLink,
+      contact: client_phone,
       paidCallOutAccepted,
       selectedPerformers,
     });
@@ -478,12 +601,11 @@ export class RenovationCalculatorComponent implements OnInit {
     const jobklientPayload = buildJobklientJobInsert(
       {
         customerName: name,
-        contact,
+        contact: client_phone,
         city,
         roomTypeLabel: this.calculatorRoomTypeLabel(roomType),
         renovationTypeLabel: this.calculatorRenovationTypeLabel(renovationType),
         areaSqm,
-        photoLink,
         directedTo,
         selectedCallOutFees,
         paidCallOutAccepted,
@@ -492,27 +614,35 @@ export class RenovationCalculatorComponent implements OnInit {
       this.jobDescriptionLabels(),
     );
 
-    const insertResult = await this.supabase.insertJobklientJobAsync(jobklientPayload);
+    const insertResult = await this.supabase.insertOrderAsync(jobklientPayload, file);
 
     if (insertResult.error) {
       console.error(
         'Полный объект ошибки Supabase:',
         insertResult.supabaseError ?? insertResult.error,
       );
-      console.error('[RenovationCalculatorComponent] jobklient insert failed:', insertResult.error);
-      this.calculatorSubmitError.set(this.translation.t('home.calculator.errorText'));
+      console.error('[RenovationCalculatorComponent] order insert failed:', insertResult.error);
+      this.calculatorSubmitError.set(
+        insertResult.error || this.translation.t('home.calculator.errorText'),
+      );
+      alert(insertResult.error || this.translation.t('home.calculator.errorText'));
       this.calculatorSubmitting.set(false);
       return;
     }
 
+    console.log('[RenovationCalculatorComponent] Order submitted successfully:', insertResult.data);
+
     const orderDetails = this.buildCalculatorOrderDetails({
       name,
-      contact,
+      contact: client_phone,
       city,
       roomType,
       renovationType,
       areaSqm,
-      photoLink,
+      photoLink:
+        typeof insertResult.data?.['file'] === 'string'
+          ? String(insertResult.data['file'])
+          : undefined,
       directedTo,
       selectedCallOutFees,
       paidCallOutAccepted,
@@ -526,6 +656,7 @@ export class RenovationCalculatorComponent implements OnInit {
     void this.supabase.loadActiveJobs(true);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitted.set(true);
+    alert(this.translation.t('home.calculator.successTitle'));
   }
 
   protected openExecutorMessenger(

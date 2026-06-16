@@ -1,7 +1,6 @@
 <section class="renovation-calculator" id="calculator">
   <div class="renovation-calculator__container">
     <div class="section-header renovation-calculator__header">
-      <span class="section-eyebrow">{{ translation.t('home.calculator.eyebrow') }}</span>
       <h2>{{ translation.t('home.calculator.title') }}</h2>
       <p class="section-subtitle">{{ translation.t('home.calculator.subtitle') }}</p>
     </div>
@@ -51,7 +50,7 @@
                   {{ translation.t('home.calculator.steps.renovationType') }}
                 </h3>
                 <div class="quiz-options">
-                  @for (option of calculatorRenovationOptions; track option.id) {
+                  @for (option of filteredRepairTypes; track option.id) {
                     <button
                       type="button"
                       class="quiz-option"
@@ -101,7 +100,15 @@
                 <h3 class="quiz-step__title">
                   {{ translation.t('home.calculator.steps.estimate') }}
                 </h3>
-                <p class="quiz-step__hint">{{ translation.t('home.calculator.checklistHint') }}</p>
+                <p class="quiz-step__hint">
+                  @if (calculatorTurnkeyMode() && calculatorRenovationType() === 'design') {
+                    {{ translation.t('home.calculator.checklistDesignHint') }}
+                  } @else if (calculatorTurnkeyMode()) {
+                    {{ translation.t('home.calculator.checklistTurnkeyHint') }}
+                  } @else {
+                    {{ translation.t('home.calculator.checklistHint') }}
+                  }
+                </p>
 
                 @if (calculatorChecklistReady()) {
                   <div class="quiz-scope-hero">
@@ -129,7 +136,8 @@
                     </div>
                   </div>
 
-                  <section class="quiz-checklist-extra">
+                  @if (!calculatorTurnkeyMode()) {
+                    <section class="quiz-checklist-extra">
                     <h4 class="quiz-checklist-extra__title">
                       {{ translation.t('home.calculator.checklistExtraTitle') }}
                     </h4>
@@ -215,12 +223,14 @@
                       }
                     </div>
                   </section>
+                  }
 
                   <h4 class="quiz-checklist-main-title">
                     {{ translation.t('home.calculator.checklistMainTitle') }}
                   </h4>
 
-                  <label class="quiz-checklist-search">
+                  @if (!calculatorTurnkeyMode()) {
+                    <label class="quiz-checklist-search">
                     <span class="quiz-checklist-search__label">{{
                       translation.t('home.calculator.checklistSearchLabel')
                     }}</span>
@@ -252,47 +262,56 @@
                         }}', calculatorChecklistSearchResultsCount() + '') }}
                       </p>
                     }
-                  </label>
+                    </label>
 
-                  <div class="quiz-checklist-toolbar">
+                    <div class="quiz-checklist-toolbar">
+                      <p class="quiz-scope-count">
+                        {{
+                          translation
+                            .t('home.calculator.checklistScopeCount')
+                            .replace('{{count
+                        }}', totalSelectedWorkCount() + '') }}
+                      </p>
+                      <div class="quiz-checklist-actions">
+                        <button
+                          type="button"
+                          class="quiz-checklist-action"
+                          (click)="selectRecommendedChecklistItems()"
+                        >
+                          {{ translation.t('home.calculator.checklistActions.selectRecommended') }}
+                        </button>
+                        <button
+                          type="button"
+                          class="quiz-checklist-action"
+                          (click)="selectAllChecklistItems()"
+                        >
+                          {{ translation.t('home.calculator.checklistActions.selectAll') }}
+                        </button>
+                        <button
+                          type="button"
+                          class="quiz-checklist-action"
+                          (click)="clearChecklistSelection()"
+                        >
+                          {{ translation.t('home.calculator.checklistActions.clear') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    @if (
+                      calculatorChecklistSearchQuery().trim() &&
+                      !calculatorChecklistSearchHasResults()
+                    ) {
+                      <p class="quiz-checklist-search-empty" role="status">
+                        {{ translation.t('home.calculator.checklistSearchEmpty') }}
+                      </p>
+                    }
+                  } @else {
                     <p class="quiz-scope-count">
                       {{
                         translation
                           .t('home.calculator.checklistScopeCount')
                           .replace('{{count
                       }}', totalSelectedWorkCount() + '') }}
-                    </p>
-                    <div class="quiz-checklist-actions">
-                      <button
-                        type="button"
-                        class="quiz-checklist-action"
-                        (click)="selectRecommendedChecklistItems()"
-                      >
-                        {{ translation.t('home.calculator.checklistActions.selectRecommended') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="quiz-checklist-action"
-                        (click)="selectAllChecklistItems()"
-                      >
-                        {{ translation.t('home.calculator.checklistActions.selectAll') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="quiz-checklist-action"
-                        (click)="clearChecklistSelection()"
-                      >
-                        {{ translation.t('home.calculator.checklistActions.clear') }}
-                      </button>
-                    </div>
-                  </div>
-
-                  @if (
-                    calculatorChecklistSearchQuery().trim() &&
-                    !calculatorChecklistSearchHasResults()
-                  ) {
-                    <p class="quiz-checklist-search-empty" role="status">
-                      {{ translation.t('home.calculator.checklistSearchEmpty') }}
                     </p>
                   }
 
@@ -449,10 +468,6 @@
                   <p class="quiz-step__lead">{{ translation.t('home.calculator.contactsLead') }}</p>
                 }
 
-                <p class="quiz-step__notice">
-                  {{ translation.t('home.calculator.measurementNotice') }}
-                </p>
-
                 <form
                   class="quiz-contact-form"
                   [formGroup]="calculatorContactForm"
@@ -483,28 +498,38 @@
                   }
 
                   <label class="quiz-field">
-                    <span>{{ translation.t('home.calculator.contactLabel') }}</span>
+                    <span>{{ translation.t('home.calculator.clientPhoneLabel') }}</span>
                     <input
-                      type="text"
-                      formControlName="contact"
+                      type="tel"
+                      formControlName="client_phone"
                       autocomplete="tel"
-                      [placeholder]="translation.t('home.calculator.contactPlaceholder')"
+                      inputmode="tel"
+                      [placeholder]="translation.t('home.calculator.clientPhonePlaceholder')"
                     />
                   </label>
-                  @if (calculatorFieldInvalid('contact')) {
+                  @if (clientPhoneErrorKey(); as phoneErrorKey) {
                     <p class="quiz-field-error" role="alert">
-                      {{ translation.t('home.calculator.contactError') }}
+                      {{ translation.t(phoneErrorKey) }}
                     </p>
                   }
 
-                  <label class="quiz-field">
-                    <span>{{ translation.t('home.calculator.photoLabel') }}</span>
+                  <label class="quiz-field quiz-field--file">
+                    <span>{{ translation.t('home.calculator.fileLabel') }}</span>
                     <input
-                      type="url"
-                      formControlName="photoLink"
-                      [placeholder]="translation.t('home.calculator.photoPlaceholder')"
+                      type="file"
+                      class="quiz-field__file-input"
+                      [accept]="orderFileAccept"
+                      (change)="onOrderFileSelected($event)"
                     />
+                    @if (selectedOrderFileName()) {
+                      <span class="quiz-field__file-name">{{ selectedOrderFileName() }}</span>
+                    }
                   </label>
+                  @if (fileErrorKey(); as fileErrKey) {
+                    <p class="quiz-field-error" role="alert">
+                      {{ translation.t(fileErrKey) }}
+                    </p>
+                  }
 
                   @if (calculatorRequiresPaidCallOutConsent()) {
                     <label class="quiz-checkbox">

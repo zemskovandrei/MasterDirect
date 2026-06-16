@@ -94,9 +94,12 @@
   border-color: rgba(139, 92, 246, 0.2);
 }
 
-.catalog-tab-page .jobs-board {
+.catalog-tab-page.jobs-page {
+  background-attachment: scroll;
+}
+
+.catalog-tab-page .jobs-calculator-section section.renovation-calculator {
   background: transparent;
-  padding-top: 0;
 }
 
 .catalog-tab-page .reviews-surface {

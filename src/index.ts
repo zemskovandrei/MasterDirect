@@ -81,16 +81,16 @@ app.post('/api/jobklient', async (req: Request, res: Response) => {
 
     const row = {
       title: body.title?.trim() || 'Заявка с сайта',
-      client_name: clientName,
-      phone,
       city: body.city?.trim() || '—',
       category: body.category?.trim() || 'general',
       budget: body.budget ?? null,
-      description: description || null,
-      status: body.status?.trim() || 'New',
+      description:
+        description ||
+        [`Заказчик: ${clientName}`, `Контакт: ${phone}`].filter(Boolean).join('\n'),
+      status: body.status?.trim() || 'active',
     };
 
-    const { data, error } = await supabase.from('jobklient').insert([row]).select('*').single();
+    const { data, error } = await supabase.from('order').insert([row]).select('*').single();
 
     if (error) {
       console.error('[POST /api/jobklient] Supabase error:', error.message);
@@ -190,8 +190,9 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
   try {
     const [mastersResult, brigadesResult, furnitureResult] = await Promise.all([
       supabase
-        .from('masters')
+        .from('specialist')
         .select('*')
+        .eq('is_archive', false)
         .neq('account_type', 'brigade')
         .order('created_at', { ascending: false }),
       supabase.from('brigades').select('*').order('created_at', { ascending: false }),

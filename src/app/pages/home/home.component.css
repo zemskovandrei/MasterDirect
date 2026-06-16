@@ -232,43 +232,6 @@ section.hero-section {
   font-weight: 500;
 }
 
-.portfolio-gallery-cta {
-  max-width: 720px;
-  margin: 2rem auto 0;
-  padding: clamp(1.75rem, 4vw, 2.5rem);
-  text-align: center;
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid #4deeea;
-  border-radius: 16px;
-  box-shadow: 0 0 24px rgba(77, 238, 234, 0.12);
-}
-
-.portfolio-gallery-cta p {
-  margin: 0 auto 1.25rem;
-  max-width: 560px;
-  color: #ffffff;
-  font-size: clamp(0.95rem, 2vw, 1.08rem);
-  font-weight: 600;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
-}
-
-.portfolio-gallery-cta__btn {
-  background-color: #4deeea !important;
-  border: none !important;
-  color: #0f172a !important;
-  font-weight: 700;
-  box-shadow: 0 0 18px rgba(77, 238, 234, 0.3);
-}
-
-.portfolio-gallery-cta__btn:hover {
-  color: #0f172a !important;
-  background-color: #4deeea !important;
-  box-shadow: 0 0 24px rgba(77, 238, 234, 0.45);
-}
-
 .services .service-link {
   background: none;
   border: none;

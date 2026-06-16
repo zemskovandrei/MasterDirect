@@ -89,7 +89,6 @@
 <section class="portfolio-teaser" id="catalog">
   <div class="portfolio-container">
     <div class="section-header">
-      <span class="section-eyebrow">{{ translation.t('home.portfolio.eyebrow') }}</span>
       <h2>{{ translation.t('home.portfolio.title') }}</h2>
       <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
     </div>
@@ -109,23 +108,8 @@
     }
 
     <div class="teaser-actions">
-      @if (portfolioStore.brigades()[0]; as brigade) {
-        <a [routerLink]="['/brigades', brigade.id]" class="btn-primary btn-large">{{
-          translation.t('home.portfolio.actions.view')
-        }}</a>
-      } @else {
-        <a routerLink="/brigades" class="btn-primary btn-large">{{
-          translation.t('home.portfolio.actions.view')
-        }}</a>
-      }
       <a routerLink="/cabinet" class="btn-secondary btn-large">{{
         translation.t('home.portfolio.actions.place')
-      }}</a>
-      <a routerLink="/brigades" class="btn-secondary btn-large">{{
-        translation.t('home.portfolio.actions.brigades')
-      }}</a>
-      <a routerLink="/masters" class="btn-secondary btn-large">{{
-        translation.t('home.portfolio.actions.masters')
       }}</a>
     </div>
 
@@ -149,13 +133,6 @@
             <span>{{ translation.t('home.portfolio.stats.furniture') }}</span>
           </div>
         }
-      </div>
-    } @else {
-      <div class="portfolio-gallery-cta" role="complementary">
-        <p>{{ translation.t('home.portfolio.emptyGalleryCta') }}</p>
-        <a routerLink="/cabinet" class="btn-primary portfolio-gallery-cta__btn">{{
-          translation.t('home.portfolio.actions.place')
-        }}</a>
       </div>
     }
   </div>

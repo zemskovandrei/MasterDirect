@@ -6,11 +6,11 @@ export const CATALOG_TAB_BACKGROUNDS = {
   furniture:
     'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1200',
   jobs:
-    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1200',
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
   reviews:
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200',
   calculator:
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200',
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
   cabinetWorker:
     'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=1200',
   cabinetBrigade:
@@ -43,6 +43,19 @@ export function catalogTabBackgroundStyle(
   const photoUrl = CATALOG_TAB_BACKGROUNDS[key];
   return {
     background: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${photoUrl}') no-repeat center/cover`,
+  };
+}
+
+/** Светлый оверлей поверх фото — для секции «Оставить заказ» с белой формой. */
+export function calculatorSectionBackgroundStyle(): Record<string, string> {
+  const photoUrl = CATALOG_TAB_BACKGROUNDS.calculator;
+  return {
+    backgroundColor: '#f1f5f9',
+    backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.93) 0%, rgba(248, 250, 252, 0.88) 55%, rgba(241, 245, 249, 0.9) 100%), url('${photoUrl}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'scroll',
   };
 }
 

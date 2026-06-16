@@ -294,7 +294,7 @@
   color: inherit;
   flex: 0 0 auto;
   min-width: 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   max-width: 100%;
   transition: opacity var(--transition);
@@ -304,37 +304,55 @@
   opacity: 1;
 }
 
-.logo-brand {
+.logo-title-container {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: transform 0.25s ease;
 }
 
-.logo-emblem {
-  display: block;
-  height: 45px;
-  width: auto;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.logo-text {
-  font-family: sans-serif;
-  font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+.logo-title {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font, 'Onest', system-ui, sans-serif);
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.02em;
   line-height: 1;
-  color: #1e293b;
+  letter-spacing: -0.045em;
   user-select: none;
 }
 
-.site-layout .header.dark-header .logo-text {
-  color: #f8fafc;
+.logo-title__prefix {
+  color: #242f3d;
 }
 
-.logo:hover .logo-brand {
+.logo-title__accent {
+  background: linear-gradient(120deg, #00b8d4 0%, #00e5a8 55%, #7af0d8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(0, 229, 168, 0.28));
+}
+
+.site-layout .header.dark-header .logo-title__prefix {
+  color: #f8fafc;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
+}
+
+.site-layout .header.dark-header .logo-title__accent {
+  filter: drop-shadow(0 0 10px rgba(0, 229, 168, 0.45));
+}
+
+.logo:hover .logo-title__accent {
+  filter: drop-shadow(0 0 14px rgba(0, 229, 168, 0.55));
+}
+
+.logo:hover .logo-title-container {
   transform: translateY(-1px);
+}
+
+.logo-title-container {
+  transition: transform 0.25s ease;
 }
 
 .visually-hidden {
@@ -350,12 +368,9 @@
 }
 
 @media (max-width: 600px) {
-  .logo-emblem {
-    height: 38px;
-  }
-
-  .logo-text {
-    font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+  .logo-title {
+    font-size: 18px;
+    letter-spacing: -0.04em;
   }
 }
 

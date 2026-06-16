@@ -1,6 +1,6 @@
 export type MasterAccountType = 'worker' | 'brigade';
 
-/** Строка таблицы `masters` (мастера / worker). */
+/** Строка таблицы `specialist` (мастера / worker). */
 export interface MasterRow {
   id: string;
   full_name: string;
@@ -17,6 +17,7 @@ export interface MasterRow {
   instagram: string | null;
   facebook: string | null;
   header_bg?: string | null;
+  is_archive?: boolean | null;
   created_at?: string;
 }
 

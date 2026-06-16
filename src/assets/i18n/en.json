@@ -110,6 +110,8 @@
       "areaError": "Enter an area between 5 and 5000 sq.m",
       "estimateHint": "Check what you need — it helps the team prepare for the site visit. We don't show prices here: a fair quote is only possible after inspection.",
       "checklistHint": "Mark the main renovation stages first. Additional services (mounting, small installs) are in a separate block at the top — optional.",
+      "checklistTurnkeyHint": "Turnkey renovation: only the standard turnkey work package is shown below. Items are pre-selected — uncheck anything you do not need.",
+      "checklistDesignHint": "Designer renovation: only the standard designer work package is shown below. Items are pre-selected — uncheck anything you do not need.",
       "checklistScopeCount": "{{count}} items selected",
       "checklistNote": "This is not a final price but a detailed work plan. The total depends on site condition, materials, and on-site decisions.",
       "checklistEmptyError": "Select at least one item, add your own work below, or tap Recommended.",
@@ -145,7 +147,7 @@
       },
       "estimateScopeCount": "{{count}} work items included in your project",
       "continueToPerformers": "Choose a team for site visit",
-      "contactsEstimateNote": "Your work list is saved. After the site visit, the team sends an exact quote — no surprises or hidden extras.",
+      "contactsEstimateNote": "Your work list is saved. After the site visit, the team will send an exact quote.",
       "estimateNote": "This is not a final price, but a work plan. The total depends on the property condition, materials, and on-site decisions.",
       "estimate": {
         "categories": {
@@ -188,6 +190,14 @@
       "contactLabel": "Phone or Telegram",
       "contactPlaceholder": "+995 555 00 00 00 or @username",
       "contactError": "Enter a phone number or Telegram",
+      "clientPhoneLabel": "Phone",
+      "clientPhonePlaceholder": "+995555000000",
+      "clientPhoneRequired": "Phone number is required",
+      "clientPhoneFormat": "Phone must contain 7–15 digits and may start with +",
+      "fileLabel": "Attach a file (JPG, PNG, or PDF)",
+      "fileRequiredError": "Please attach a property file",
+      "fileTypeError": "Only JPG, PNG, or PDF files are allowed",
+      "fileError": "Invalid file",
       "measurementNotice": "The master's site visit for measurement may be paid (check the specialist's profile). If you proceed with the renovation, the measurement fee is often deducted from the estimate.",
       "photoLabel": "Attach property photo",
       "photoPlaceholder": "Photo link (Google Drive, Dropbox, etc.)",
@@ -241,7 +251,7 @@
           "desc": "The catalog features real projects with before and after photos"
         },
         "4": {
-          "title": "Jobs board",
+          "title": "Active jobs",
           "desc": "Post a request via the calculator — it appears instantly for performers"
         },
         "5": {
@@ -282,24 +292,18 @@
       }
     },
     "portfolio": {
-      "eyebrow": "Gallery",
       "title": "Work by performers",
       "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
       "sampleTitle": "Sample completed order",
       "sampleDesc": "A performer publication from the catalog",
       "actions": {
-        "view": "View case",
-        "brigades": "All teams",
-        "masters": "All masters",
-        "furniture": "Furniture companies",
         "place": "Publish work"
       },
       "stats": {
         "brigades": "teams",
         "workers": "masters",
         "furniture": "companies"
-      },
-      "emptyGalleryCta": "Be the first in our project gallery! Publish your best before/after cases and get hot leads."
+      }
     },
     "estimate": {
       "eyebrow": "Request",
@@ -488,9 +492,9 @@
     }
   },
   "jobs": {
-    "eyebrow": "Jobs board",
     "title": "Active jobs",
-    "lead": "Fresh renovation and finishing requests. Pick a suitable project and contact the customer directly.",
+    "lead": "Fresh renovation and finishing requests.",
+    "galleryEyebrow": "Current order gallery",
     "loading": "Loading jobs…",
     "errorTitle": "Could not load jobs",
     "errorDefault": "Check your internet connection and try again.",
@@ -515,16 +519,6 @@
     "messageCustomer": "Message on Telegram",
     "posted": "Posted",
     "contactInDescription": "Contact details are in the description",
-    "accessDeniedTitle": "Access denied",
-    "accessDeniedText": "Jobs are available only to registered masters and teams. Sign in with the email and password from your cabinet.",
-    "loginTitle": "Master sign-in",
-    "loginLead": "Use the email and password you chose during cabinet registration.",
-    "loginEmail": "Email",
-    "loginPassword": "Password",
-    "loginSubmit": "Sign in",
-    "loginSubmitting": "Signing in…",
-    "loginError": "Incorrect email or password.",
-    "loginHint": "No account yet? Register in",
     "fields": {
       "customer": "Customer",
       "contact": "Contact",

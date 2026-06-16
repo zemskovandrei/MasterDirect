@@ -1,4 +1,4 @@
--- Brigades table for builders
+-- Brigades table for FlooringLeader
 -- Direct messenger columns for calculator deep links.
 
 create table if not exists public.brigades (

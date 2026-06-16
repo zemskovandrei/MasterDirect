@@ -1,4 +1,4 @@
--- Masters table + auth trigger for builders
+-- Masters table + auth trigger for FlooringLeader
 -- Run in Supabase SQL editor after enabling Email auth.
 
 create table if not exists public.masters (

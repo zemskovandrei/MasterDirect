@@ -1,4 +1,4 @@
--- Furniture orders / companies for builders
+-- Furniture orders / companies for FlooringLeader
 -- Catalog rows use full_name; calculator inserts use client_name + client_phone.
 
 create table if not exists public.furniture_orders (

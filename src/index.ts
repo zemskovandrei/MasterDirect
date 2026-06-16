@@ -9,7 +9,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL?.trim() ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[builders API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
+  console.error('[FlooringLeader API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
   process.exit(1);
 }
 
@@ -263,9 +263,9 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ ok: true, service: 'builders API' });
+  res.json({ ok: true, service: 'FlooringLeader API' });
 });
 
 app.listen(PORT, () => {
-  console.log(`[builders API] Server listening on http://localhost:${PORT}`);
+  console.log(`[FlooringLeader API] Server listening on http://localhost:${PORT}`);
 });

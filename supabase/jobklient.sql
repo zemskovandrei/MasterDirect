@@ -1,4 +1,4 @@
--- Таблица заказов builders
+-- Таблица заказов FlooringLeader
 -- Актуальные колонки (проверено через REST API):
 -- id, created_at, title, client_name, phone, city, budget, category, description, status
 

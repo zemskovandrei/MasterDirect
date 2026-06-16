@@ -3,7 +3,7 @@
     class="header"
     [ngClass]="{
       'dark-header': headerTheme === 'dark',
-      'light-header': headerTheme === 'light'
+      'light-header': headerTheme === 'light',
     }"
     [style.background-color]="'var(--header-bg-color)'"
     [style.color]="'var(--header-text-color)'"
@@ -13,8 +13,16 @@
       <div class="header-logo">
         <a class="logo" routerLink="/" [attr.aria-label]="title()">
           <h1 class="visually-hidden">{{ title() }}</h1>
-          <span class="logo-wordmark" aria-hidden="true">
-            <span class="logo-wordmark__build">build</span><span class="logo-wordmark__up">ers</span>
+          <span class="logo-brand">
+            <img
+              class="logo-emblem"
+              [src]="logoMasterUrl"
+              alt=""
+              width="45"
+              height="45"
+              decoding="async"
+            />
+            <span class="logo-text">FlooringLeader</span>
           </span>
         </a>
       </div>
@@ -112,7 +120,11 @@
             <a routerLink="/cabinet" class="header-auth-link">
               {{ translation.t('app.auth.login') }}
             </a>
-            <a routerLink="/cabinet" fragment="register" class="header-auth-link header-auth-link--register">
+            <a
+              routerLink="/cabinet"
+              fragment="register"
+              class="header-auth-link header-auth-link--register"
+            >
               {{ translation.t('app.auth.register') }}
             </a>
           }

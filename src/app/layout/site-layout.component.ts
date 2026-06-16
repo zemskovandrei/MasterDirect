@@ -18,6 +18,7 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 import { AdminLoginModalComponent } from '../shared/components/admin-login-modal/admin-login-modal.component';
+import { resolveAssetUrl } from '../core/utils/asset-url.util';
 import { logSupabaseError } from '../core/utils/supabase-error.util';
 
 type HeaderTheme = 'auto' | 'light' | 'dark';
@@ -52,6 +53,7 @@ export class SiteLayoutComponent {
   headerTheme: HeaderTheme = 'auto';
 
   protected readonly title = signal(APP_BRAND_NAME);
+  protected readonly logoMasterUrl = resolveAssetUrl('assets/images/logo-master.png');
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
 

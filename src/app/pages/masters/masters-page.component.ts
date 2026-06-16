@@ -8,6 +8,7 @@ import { PerformerProfile } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -24,6 +25,8 @@ export class MastersPageComponent implements OnInit {
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('workers');
 
   protected readonly editingPerformer = signal<PerformerProfile | null>(null);
   protected readonly adminSaving = signal(false);

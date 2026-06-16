@@ -9,6 +9,8 @@ export const CATALOG_TAB_BACKGROUNDS = {
     'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
   reviews:
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200',
+  catalogHub:
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
   calculator:
     'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
   cabinetWorker:
@@ -42,7 +44,12 @@ export function catalogTabBackgroundStyle(
 ): Record<string, string> {
   const photoUrl = CATALOG_TAB_BACKGROUNDS[key];
   return {
-    background: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${photoUrl}') no-repeat center/cover`,
+    backgroundColor: '#0f172a',
+    backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.52), rgba(15, 23, 42, 0.65)), url('${photoUrl}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'scroll',
   };
 }
 

@@ -5,6 +5,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-brigades-page',
@@ -20,6 +21,8 @@ export class BrigadesPageComponent implements OnInit {
   protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('brigade');
 
   protected readonly selectedBrigadeId = signal<string | null>(null);
 

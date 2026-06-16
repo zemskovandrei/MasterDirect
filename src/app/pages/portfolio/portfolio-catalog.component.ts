@@ -5,6 +5,7 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-portfolio-catalog',
@@ -18,4 +19,6 @@ export class PortfolioCatalogComponent {
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('catalogHub');
 }

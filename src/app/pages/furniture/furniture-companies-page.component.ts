@@ -4,6 +4,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-furniture-companies-page',
@@ -16,6 +17,8 @@ export class FurnitureCompaniesPageComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
+
+  protected readonly pageBackground = catalogTabBackgroundStyle('furniture');
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {

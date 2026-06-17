@@ -16,3 +16,4 @@ dist/
 # Секреты и сборка API
 .env
 dist-api/
+*.tsbuildinfo

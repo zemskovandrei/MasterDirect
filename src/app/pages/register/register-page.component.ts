@@ -31,6 +31,7 @@ import {
   type SpecialtyKey,
 } from './register-page.model';
 import { evaluatePasswordStrength } from './password-strength.util';
+import { APP_BRAND_NAME } from '../../core/constants/brand';
 
 @Component({
   selector: 'app-register-page',
@@ -55,6 +56,7 @@ export class RegisterPageComponent {
   private readonly store = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly translation = inject(TranslationService);
+  protected readonly brandName = APP_BRAND_NAME;
 
   protected readonly proRoles = PRO_ROLES;
   protected readonly proRoleIcons = PRO_ROLE_ICONS;

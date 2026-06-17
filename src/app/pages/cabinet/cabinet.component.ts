@@ -1,22 +1,10 @@
-import {
-  Component,
-  ElementRef,
-  HostListener,
-  effect,
-  inject,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, ElementRef, effect, inject, computed, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { AccountType } from '../../core/models/portfolio.models';
-import { ProfileType } from '../../core/models/profile.models';
+import { RegisterPageComponent } from '../register/register-page.component';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
-import { SupabaseService } from '../../core/services/supabase.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
@@ -26,26 +14,6 @@ import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 import { cabinetTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
-/** Ключи специализаций для i18n: cabinet.specialties.* */
-export const SPECIALTY_OPTION_KEYS = [
-  'tiler',
-  'electrician',
-  'plumber',
-  'painter',
-  'drywall',
-  'turnkey',
-  'renovation_turnkey',
-  'furnitureAssembly',
-  'kitchenInstall',
-  'cabinetMaking',
-  'commercialInstall',
-] as const;
-
-export const ACCOUNT_TYPES: AccountType[] = ['worker', 'brigade', 'furniture'];
-
-/** Фиксированная специализация для типа «Бригадир». */
-export const BRIGADE_SPECIALTY_KEY = 'renovation_turnkey';
-
 @Component({
   selector: 'app-cabinet',
   standalone: true,
@@ -53,6 +21,7 @@ export const BRIGADE_SPECIALTY_KEY = 'renovation_turnkey';
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
+    RegisterPageComponent,
     BeforeAfterComponent,
     SocialLinksComponent,
   ],
@@ -63,7 +32,6 @@ export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
   protected readonly store = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
-  protected readonly supabase = inject(SupabaseService);
   protected readonly auth = inject(AuthService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -75,9 +43,6 @@ export class CabinetComponent {
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly maxTextWords = MAX_TEXT_WORDS;
   protected readonly countWords = countWords;
-  protected readonly accountTypes = ACCOUNT_TYPES;
-  protected readonly selectedAccountType = signal<AccountType>('worker');
-
   protected readonly cabinetBackground = computed(() => {
     const performer = this.store.currentPerformer();
     if (performer) {
@@ -88,46 +53,8 @@ export class CabinetComponent {
       return cabinetTabBackgroundStyle('cabinetFurniture');
     }
 
-    const accountType = this.selectedAccountType();
-    if (accountType === 'brigade') {
-      return cabinetTabBackgroundStyle('cabinetBrigade');
-    }
-    if (accountType === 'furniture') {
-      return cabinetTabBackgroundStyle('cabinetFurniture');
-    }
-
     return cabinetTabBackgroundStyle('cabinetWorker');
   });
-
-  protected readonly specialtyOptions = SPECIALTY_OPTION_KEYS;
-  protected readonly brigadeSpecialtyKey = BRIGADE_SPECIALTY_KEY;
-  protected readonly specialtyMenuOpen = signal(false);
-  protected readonly specialtyMenuTop = signal(0);
-  protected readonly specialtyMenuLeft = signal(0);
-  protected readonly specialtyMenuWidth = signal(0);
-  protected readonly registerSubmitting = signal(false);
-  protected readonly registerStatus = signal<'idle' | 'success' | 'error'>('idle');
-  protected readonly registerErrorMessage = signal<string | null>(null);
-
-  protected readonly registerForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    city: ['batumi', Validators.required],
-    specialty: ['', Validators.required],
-    description: ['', [Validators.required, Validators.minLength(10), maxWordsValidator()]],
-    callOutFee: [''],
-    phone: [''],
-    whatsapp: [''],
-    telegram: [''],
-    instagram: [''],
-    facebook: [''],
-  });
-
-  protected readonly cityOptions = [
-    { id: 'batumi', labelKey: 'home.calculator.cities.batumi' },
-    { id: 'tbilisi', labelKey: 'home.calculator.cities.tbilisi' },
-  ] as const;
 
   protected readonly socialForm = this.fb.nonNullable.group({
     phone: [''],
@@ -152,7 +79,6 @@ export class CabinetComponent {
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   constructor() {
-    this.applyAccountTypeValidators(this.selectedAccountType());
     effect(() => {
       const performer = this.store.currentPerformer();
       const company = this.furnitureStore.currentCompany();
@@ -177,157 +103,6 @@ export class CabinetComponent {
       !!this.store.currentPerformer() ||
       !!this.furnitureStore.currentCompany()
     );
-  }
-
-  cityLabel(cityId: string): string {
-    const option = this.cityOptions.find((item) => item.id === cityId);
-    return option ? this.translation.t(option.labelKey) : cityId;
-  }
-
-  selectAccountType(type: AccountType) {
-    this.selectedAccountType.set(type);
-    this.applySpecialtyForAccountType(type);
-    this.applyAccountTypeValidators(type);
-  }
-
-  private applyAccountTypeValidators(type: AccountType) {
-    const email = this.registerForm.get('email');
-    const password = this.registerForm.get('password');
-    const city = this.registerForm.get('city');
-
-    if (!email || !password || !city) {
-      return;
-    }
-
-    if (type === 'furniture') {
-      email.clearValidators();
-      password.clearValidators();
-      city.clearValidators();
-    } else {
-      email.setValidators([Validators.required, Validators.email]);
-      password.setValidators([Validators.required, Validators.minLength(6)]);
-      city.setValidators([Validators.required]);
-    }
-
-    email.updateValueAndValidity();
-    password.updateValueAndValidity();
-    city.updateValueAndValidity();
-  }
-
-  isSpecialtyLocked(): boolean {
-    return this.selectedAccountType() === 'brigade';
-  }
-
-  private applySpecialtyForAccountType(type: AccountType) {
-    this.closeSpecialtyMenu();
-    const control = this.registerForm.get('specialty');
-    if (!control) {
-      return;
-    }
-
-    if (type === 'brigade') {
-      control.setValue(BRIGADE_SPECIALTY_KEY);
-      control.markAsDirty();
-      return;
-    }
-
-    if (control.value === BRIGADE_SPECIALTY_KEY) {
-      control.setValue('');
-      control.markAsUntouched();
-    }
-  }
-
-  async register() {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    const v = this.registerForm.getRawValue();
-    const accountType = this.selectedAccountType();
-    const profileType: ProfileType =
-      accountType === 'furniture' ? 'furniture' : accountType === 'brigade' ? 'brigade' : 'worker';
-
-    this.registerSubmitting.set(true);
-    this.registerStatus.set('idle');
-    this.registerErrorMessage.set(null);
-
-    try {
-      if (profileType === 'furniture') {
-        const result = await firstValueFrom(
-          this.supabase.insertProfile({
-            type: profileType,
-            name: v.name,
-            specialty: v.specialty,
-            description: v.description,
-            phone: v.phone,
-            whatsapp: v.whatsapp,
-            telegram: v.telegram,
-            instagram: v.instagram,
-            facebook: v.facebook,
-          }),
-        );
-
-        if (result.error || !result.data) {
-          this.registerStatus.set('error');
-          this.registerErrorMessage.set(result.error ?? this.translation.t('cabinet.registerError'));
-          alert(this.registerErrorMessage() ?? this.translation.t('cabinet.registerError'));
-          return;
-        }
-      } else {
-        const authResult = await this.auth.signUp(v.email, v.password, {
-          full_name: v.name,
-          phone: v.phone || undefined,
-          city: v.city,
-          specialty: v.specialty,
-          description: v.description,
-          account_type: profileType,
-          call_out_fee: v.callOutFee || undefined,
-          whatsapp: v.whatsapp || undefined,
-          telegram: v.telegram || undefined,
-          instagram: v.instagram || undefined,
-          facebook: v.facebook || undefined,
-        });
-
-        if (authResult.error || !authResult.user) {
-          const message = authResult.error?.message ?? this.translation.t('cabinet.registerError');
-          this.registerStatus.set('error');
-          this.registerErrorMessage.set(message);
-          alert(message);
-          return;
-        }
-
-        this.store.registerPerformerWithId(authResult.user.id, {
-          type: profileType,
-          name: v.name,
-          specialty: v.specialty,
-          description: v.description,
-          callOutFee: v.callOutFee,
-          socialLinks: {
-            phone: v.phone || undefined,
-            whatsapp: v.whatsapp || undefined,
-            telegram: v.telegram || undefined,
-            instagram: v.instagram || undefined,
-            facebook: v.facebook || undefined,
-          },
-        });
-
-        await firstValueFrom(this.supabase.loadProfiles());
-      }
-
-      this.registerStatus.set('success');
-      alert(this.translation.t('cabinet.registerSuccess'));
-      this.registerForm.reset({ city: 'batumi' });
-      this.applySpecialtyForAccountType(this.selectedAccountType());
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : this.translation.t('cabinet.registerError');
-      this.registerStatus.set('error');
-      this.registerErrorMessage.set(message);
-      alert(message);
-    } finally {
-      this.registerSubmitting.set(false);
-    }
   }
 
   saveSocialLinks() {
@@ -505,19 +280,9 @@ export class CabinetComponent {
   signOut() {
     this.store.signOut();
     this.furnitureStore.signOut();
-    this.selectedAccountType.set('worker');
-    this.specialtyMenuOpen.set(false);
-    this.registerForm.reset();
     this.beforePreview.set(null);
     this.afterPreview.set(null);
     this.resetFileInputs();
-  }
-
-  registerFieldInvalid(
-    field: 'name' | 'email' | 'password' | 'city' | 'specialty' | 'description',
-  ): boolean {
-    const control = this.registerForm.get(field);
-    return !!control && control.invalid && control.touched;
   }
 
   workFieldInvalid(field: 'description'): boolean {
@@ -525,22 +290,8 @@ export class CabinetComponent {
     return !!control && control.invalid && control.touched;
   }
 
-  hasMaxWordsError(form: 'register' | 'work'): boolean {
-    const control =
-      form === 'register' ? this.registerForm.get('description') : this.workForm.get('description');
-    return !!control?.errors?.['maxWords'];
-  }
-
-  wordCountLabel(value: string): string {
-    return this.translation
-      .t('textLimits.wordCount')
-      .replace('{{count}}', String(countWords(value)))
-      .replace('{{max}}', String(MAX_TEXT_WORDS));
-  }
-
-  maxWordsError(form: 'register' | 'work'): string {
-    const control =
-      form === 'register' ? this.registerForm.get('description') : this.workForm.get('description');
+  maxWordsError(): string {
+    const control = this.workForm.get('description');
     const error = control?.errors?.['maxWords'] as { max: number; actual: number } | undefined;
     if (!error) {
       return '';
@@ -551,108 +302,18 @@ export class CabinetComponent {
       .replace('{{count}}', String(error.actual));
   }
 
-  specialtyDisplay(): string {
-    return this.catalogL10n.localizeSpecialtyField(
-      this.registerForm.get('specialty')?.value?.trim() ?? '',
-    );
-  }
-
-  accountTypeLabel(type: AccountType): string {
-    switch (type) {
-      case 'brigade':
-        return this.translation.t('cabinet.badgeBrigadier');
-      case 'furniture':
-        return this.translation.t('cabinet.accountFurniture');
-      default:
-        return this.translation.t('cabinet.badgeMaster');
-    }
+  wordCountLabel(value: string): string {
+    return this.translation
+      .t('textLimits.wordCount')
+      .replace('{{count}}', String(countWords(value)))
+      .replace('{{max}}', String(MAX_TEXT_WORDS));
   }
 
   furnitureSpecialtyDisplay(specialty: string): string {
     return this.catalogL10n.localizeSpecialtyField(specialty);
   }
 
-  specialtyOptionLabel(key: string): string {
-    return this.catalogL10n.specialtyLabel(key);
-  }
-
   myWorksLabel(count: number): string {
     return this.translation.t('cabinet.myWorksCount').replace('{{count}}', String(count));
-  }
-
-  toggleSpecialtyMenu(event: Event) {
-    event.stopPropagation();
-    if (this.isSpecialtyLocked()) {
-      return;
-    }
-    if (this.specialtyMenuOpen()) {
-      this.closeSpecialtyMenu();
-      return;
-    }
-
-    const trigger = event.currentTarget as HTMLElement;
-    const rect = trigger.getBoundingClientRect();
-    this.specialtyMenuTop.set(rect.bottom + 6);
-    this.specialtyMenuLeft.set(rect.left);
-    this.specialtyMenuWidth.set(rect.width);
-    this.specialtyMenuOpen.set(true);
-  }
-
-  closeSpecialtyMenu() {
-    if (!this.specialtyMenuOpen()) {
-      return;
-    }
-    this.specialtyMenuOpen.set(false);
-    this.registerForm.get('specialty')?.markAsTouched();
-  }
-
-  isSpecialtySelected(option: string): boolean {
-    const value = this.registerForm.get('specialty')?.value ?? '';
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .includes(option);
-  }
-
-  toggleSpecialtyOption(option: string, event: Event) {
-    event.stopPropagation();
-    if (this.isSpecialtyLocked()) {
-      return;
-    }
-    const control = this.registerForm.get('specialty');
-    if (!control) {
-      return;
-    }
-
-    const selected = control.value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    const next = selected.includes(option)
-      ? selected.filter((item) => item !== option)
-      : [...selected, option];
-
-    control.setValue(next.join(', '));
-    control.markAsDirty();
-  }
-
-  @HostListener('document:click')
-  onDocumentClick() {
-    this.closeSpecialtyMenu();
-  }
-
-  @HostListener('window:resize')
-  @HostListener('window:scroll')
-  onViewportChange() {
-    this.closeSpecialtyMenu();
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  onDocumentKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && this.specialtyMenuOpen()) {
-      this.closeSpecialtyMenu();
-    }
   }
 }

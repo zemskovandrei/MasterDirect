@@ -302,33 +302,18 @@ h2 {
 }
 
 @media (max-width: 640px) {
-  .register-block,
-  .register-block--form {
-    padding: 1.25rem 1rem 1.75rem;
-  }
-
   .register-header {
-    padding: 2rem 1.25rem 1.25rem;
+    padding-inline: 1rem;
   }
 
+  .register-form-section,
   .register-form-footer {
-    padding-inline: 0;
+    padding-inline: 1rem;
   }
 
   .register-label em {
     margin-left: 0;
     width: 100%;
     text-align: right;
-  }
-}
-
-@media (max-width: 400px) {
-  .account-type-tabs {
-    flex-wrap: wrap;
-  }
-
-  .account-type-tab,
-  .account-type-tab--active {
-    flex: 1 1 100%;
   }
 }

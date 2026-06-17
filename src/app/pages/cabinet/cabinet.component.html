@@ -1,350 +1,20 @@
-<div class="catalog-tab-page cabinet-tab-page" [ngStyle]="cabinetBackground()">
-<section class="page-hero cabinet-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translation.t('cabinet.heroTitle') }}</h1>
-    <p>{{ translation.t('cabinet.heroLead') }}</p>
-  </div>
-</section>
+<div
+  class="catalog-tab-page cabinet-tab-page"
+  [class.cabinet-tab-page--register]="!isLoggedIn()"
+  [ngStyle]="isLoggedIn() ? cabinetBackground() : null"
+>
+@if (!isLoggedIn()) {
+  <app-register-page />
+} @else {
+  <section class="page-hero cabinet-hero">
+    <div class="page-hero-inner">
+      <h1>{{ translation.t('cabinet.heroTitle') }}</h1>
+      <p>{{ translation.t('cabinet.heroLead') }}</p>
+    </div>
+  </section>
 
-<div class="cabinet">
-  <div class="cabinet-inner">
-    @if (!isLoggedIn()) {
-      <section class="register-panel" id="register">
-        <header class="register-header">
-          <span class="section-eyebrow">{{ translation.t('cabinet.registerEyebrow') }}</span>
-          <h2>{{ translation.t('cabinet.registerTitle') }}</h2>
-          <p class="register-lead">{{ translation.t('cabinet.registerLead') }}</p>
-        </header>
-
-        <ol class="register-steps" [attr.aria-label]="translation.t('cabinet.stepsAria')">
-          <li class="register-step register-step--active">
-            <span class="register-step-num">1</span>
-            <span class="register-step-text">{{ translation.t('cabinet.step1') }}</span>
-          </li>
-          <li class="register-step">
-            <span class="register-step-num">2</span>
-            <span class="register-step-text">{{ translation.t('cabinet.step2') }}</span>
-          </li>
-        </ol>
-
-        <div class="register-layout">
-          <div class="register-block register-block--form">
-            <h3 class="register-block-title">
-              <span class="register-block-icon" aria-hidden="true">①</span>
-              {{ translation.t('cabinet.profileData') }}
-            </h3>
-
-            <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
-              <fieldset
-                class="account-type-tabs"
-                [attr.aria-label]="translation.t('cabinet.accountType')"
-              >
-                <legend class="register-label">{{ translation.t('cabinet.accountType') }}</legend>
-                @for (type of accountTypes; track type) {
-                  <button
-                    type="button"
-                    class="account-type-tab"
-                    [class.account-type-tab--active]="selectedAccountType() === type"
-                    (click)="selectAccountType(type)"
-                  >
-                    {{ accountTypeLabel(type) }}
-                  </button>
-                }
-              </fieldset>
-
-              <label
-                class="register-field"
-                [class.register-field--error]="registerFieldInvalid('name')"
-              >
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">👤</span>
-                  {{ translation.t('cabinet.nameLabel') }}
-                  <em>{{ translation.t('cabinet.required') }}</em>
-                </span>
-                <input
-                  type="text"
-                  formControlName="name"
-                  [placeholder]="translation.t('cabinet.namePlaceholder')"
-                  autocomplete="name"
-                />
-                @if (registerFieldInvalid('name')) {
-                  <small class="field-error">{{ translation.t('cabinet.nameError') }}</small>
-                }
-              </label>
-
-              @if (selectedAccountType() !== 'furniture') {
-                <label
-                  class="register-field register-field--half"
-                  [class.register-field--error]="registerFieldInvalid('email')"
-                >
-                  <span class="register-label">
-                    <span class="field-icon" aria-hidden="true">✉</span>
-                    {{ translation.t('cabinet.emailLabel') }}
-                    <em>{{ translation.t('cabinet.required') }}</em>
-                  </span>
-                  <input
-                    type="email"
-                    formControlName="email"
-                    [placeholder]="translation.t('cabinet.emailPlaceholder')"
-                    autocomplete="email"
-                  />
-                  @if (registerFieldInvalid('email')) {
-                    <small class="field-error">{{ translation.t('cabinet.emailError') }}</small>
-                  }
-                </label>
-
-                <label
-                  class="register-field register-field--half"
-                  [class.register-field--error]="registerFieldInvalid('password')"
-                >
-                  <span class="register-label">
-                    <span class="field-icon" aria-hidden="true">🔑</span>
-                    {{ translation.t('cabinet.passwordLabel') }}
-                    <em>{{ translation.t('cabinet.required') }}</em>
-                  </span>
-                  <input
-                    type="password"
-                    formControlName="password"
-                    [placeholder]="translation.t('cabinet.passwordPlaceholder')"
-                    autocomplete="new-password"
-                  />
-                  @if (registerFieldInvalid('password')) {
-                    <small class="field-error">{{ translation.t('cabinet.passwordError') }}</small>
-                  }
-                </label>
-
-                <label
-                  class="register-field"
-                  [class.register-field--error]="registerFieldInvalid('city')"
-                >
-                  <span class="register-label">
-                    <span class="field-icon" aria-hidden="true">📍</span>
-                    {{ translation.t('cabinet.cityLabel') }}
-                    <em>{{ translation.t('cabinet.required') }}</em>
-                  </span>
-                  <select formControlName="city">
-                    @for (option of cityOptions; track option.id) {
-                      <option [value]="option.id">{{ cityLabel(option.id) }}</option>
-                    }
-                  </select>
-                  <small class="register-field-hint">{{ translation.t('cabinet.cityHint') }}</small>
-                  @if (registerFieldInvalid('city')) {
-                    <small class="field-error">{{ translation.t('cabinet.cityError') }}</small>
-                  }
-                </label>
-              }
-
-              <div
-                class="register-field register-field--specialty"
-                [class.register-field--error]="registerFieldInvalid('specialty')"
-                [class.register-field--specialty-open]="specialtyMenuOpen()"
-              >
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">🛠</span>
-                  {{ translation.t('cabinet.specialtyLabel') }}
-                  <em>{{ translation.t('cabinet.required') }}</em>
-                </span>
-
-                <input type="hidden" formControlName="specialty" />
-
-                @if (isSpecialtyLocked()) {
-                  <div class="specialty-locked" role="status">
-                    <span class="specialty-locked-value">{{
-                      specialtyOptionLabel(brigadeSpecialtyKey)
-                    }}</span>
-                    <span class="specialty-locked-hint">{{
-                      translation.t('cabinet.specialtyAutoHint')
-                    }}</span>
-                  </div>
-                } @else {
-                  <div class="specialty-dropdown-wrap" (click)="$event.stopPropagation()">
-                    <button
-                      type="button"
-                      class="specialty-trigger"
-                      [class.specialty-trigger--open]="specialtyMenuOpen()"
-                      aria-haspopup="listbox"
-                      [attr.aria-expanded]="specialtyMenuOpen()"
-                      (click)="toggleSpecialtyMenu($event)"
-                    >
-                      <span
-                        class="specialty-trigger-text"
-                        [class.specialty-trigger-text--empty]="!specialtyDisplay()"
-                      >
-                        {{ specialtyDisplay() || translation.t('cabinet.specialtyPlaceholder') }}
-                      </span>
-                      <span class="specialty-trigger-arrow" aria-hidden="true">▾</span>
-                    </button>
-
-                    @if (specialtyMenuOpen()) {
-                      <div
-                        class="specialty-dropdown-menu"
-                        role="listbox"
-                        aria-multiselectable="true"
-                        [style.top.px]="specialtyMenuTop()"
-                        [style.left.px]="specialtyMenuLeft()"
-                        [style.width.px]="specialtyMenuWidth()"
-                      >
-                        @for (option of specialtyOptions; track option) {
-                          <label class="specialty-dropdown-item">
-                            <input
-                              type="checkbox"
-                              [checked]="isSpecialtySelected(option)"
-                              (change)="toggleSpecialtyOption(option, $event)"
-                            />
-                            <span>{{ specialtyOptionLabel(option) }}</span>
-                          </label>
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-
-                @if (registerFieldInvalid('specialty')) {
-                  <small class="field-error">{{ translation.t('cabinet.specialtyError') }}</small>
-                }
-              </div>
-
-              <label
-                class="register-field"
-                [class.register-field--error]="registerFieldInvalid('description')"
-              >
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">📝</span>
-                  {{ translation.t('cabinet.aboutLabel') }}
-                  <em>{{ translation.t('cabinet.required') }}</em>
-                </span>
-                <textarea
-                  formControlName="description"
-                  rows="4"
-                  [placeholder]="translation.t('cabinet.aboutPlaceholder')"
-                ></textarea>
-                <span
-                  class="word-counter"
-                  [class.word-counter--over]="
-                    countWords(registerForm.get('description')?.value ?? '') > maxTextWords
-                  "
-                >
-                  {{ wordCountLabel(registerForm.get('description')?.value ?? '') }}
-                </span>
-                @if (registerFieldInvalid('description')) {
-                  @if (hasMaxWordsError('register')) {
-                    <small class="field-error">{{ maxWordsError('register') }}</small>
-                  } @else {
-                    <small class="field-error">{{ translation.t('cabinet.aboutError') }}</small>
-                  }
-                }
-              </label>
-
-              @if (selectedAccountType() !== 'furniture') {
-                <label class="register-field">
-                  <span class="register-label">
-                    <span class="field-icon" aria-hidden="true">🚗</span>
-                    {{ translation.t('cabinet.callOutFeeLabel') }}
-                  </span>
-                  <input
-                    type="text"
-                    formControlName="callOutFee"
-                    [placeholder]="translation.t('cabinet.callOutFeePlaceholder')"
-                    autocomplete="off"
-                  />
-                  <small class="register-field-hint">{{ translation.t('cabinet.callOutFeeHint') }}</small>
-                </label>
-              }
-
-              <div class="register-social-block">
-                <div class="register-social-head">
-                  <span class="register-label">
-                    <span class="field-icon" aria-hidden="true">💬</span>
-                    {{ translation.t('cabinet.socialTitle') }}
-                  </span>
-                  <p class="register-social-hint">{{ translation.t('cabinet.socialHint') }}</p>
-                </div>
-
-                <div class="register-social-grid">
-                  <label class="register-field">
-                    <span class="register-label">{{ translation.t('social.phone') }}</span>
-                    <input
-                      type="text"
-                      formControlName="phone"
-                      [placeholder]="translation.t('cabinet.socialPhonePh')"
-                      autocomplete="tel"
-                      inputmode="tel"
-                    />
-                  </label>
-
-                  <label class="register-field">
-                    <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
-                    <input
-                      type="text"
-                      formControlName="whatsapp"
-                      [placeholder]="translation.t('cabinet.socialWhatsappPh')"
-                      autocomplete="off"
-                      inputmode="tel"
-                    />
-                  </label>
-
-                  <label class="register-field">
-                    <span class="register-label">{{ translation.t('social.telegram') }}</span>
-                    <input
-                      type="text"
-                      formControlName="telegram"
-                      [placeholder]="translation.t('cabinet.socialTelegramPh')"
-                      autocomplete="off"
-                    />
-                  </label>
-
-                  <label class="register-field">
-                    <span class="register-label">{{ translation.t('social.instagram') }}</span>
-                    <input
-                      type="text"
-                      formControlName="instagram"
-                      [placeholder]="translation.t('cabinet.socialInstagramPh')"
-                      autocomplete="off"
-                    />
-                  </label>
-
-                  <label class="register-field register-field--full">
-                    <span class="register-label">{{ translation.t('social.facebook') }}</span>
-                    <input
-                      type="text"
-                      formControlName="facebook"
-                      [placeholder]="translation.t('cabinet.socialFacebookPh')"
-                      autocomplete="off"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div class="register-form-footer">
-                @if (registerStatus() === 'success') {
-                  <p class="register-status register-status--success" role="status">
-                    {{ translation.t('cabinet.registerSuccess') }}
-                  </p>
-                }
-                @if (registerStatus() === 'error' && registerErrorMessage()) {
-                  <p class="register-status register-status--error" role="alert">
-                    {{ registerErrorMessage() }}
-                  </p>
-                }
-
-                <button
-                  type="submit"
-                  class="btn-primary btn-large register-submit"
-                  [disabled]="registerSubmitting()"
-                >
-                  {{
-                    registerSubmitting()
-                      ? translation.t('cabinet.registerSubmitting')
-                      : translation.t('cabinet.submitRegister')
-                  }}
-                </button>
-                <p class="register-note">{{ translation.t('cabinet.registerNote') }}</p>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-    } @else {
+  <div class="cabinet">
+    <div class="cabinet-inner">
       @if (store.currentPerformer(); as performer) {
         <section class="cabinet-panel profile-summary">
           <div class="summary-head">
@@ -519,7 +189,7 @@
                     {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
                   </span>
                   @if (workFieldInvalid('description')) {
-                    <small class="field-error">{{ maxWordsError('work') }}</small>
+                    <small class="field-error">{{ maxWordsError() }}</small>
                   }
                 </label>
 
@@ -776,7 +446,7 @@
                     {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
                   </span>
                   @if (workFieldInvalid('description')) {
-                    <small class="field-error">{{ maxWordsError('work') }}</small>
+                    <small class="field-error">{{ maxWordsError() }}</small>
                   }
                 </label>
               </div>
@@ -877,7 +547,7 @@
           }
         </section>
       }
-    }
   </div>
 </div>
+}
 </div>

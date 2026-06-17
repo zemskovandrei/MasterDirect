@@ -1,0 +1,38 @@
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$orange-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: 'Onest',
+        brand-family: 'Onest',
+      ),
+      density: 0,
+    )
+  );
+}
+
+@include mat.core();
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Onest', system-ui, -apple-system, sans-serif;
+}
+
+.mat-mdc-form-field {
+  --mat-form-field-container-vertical-padding: 12px;
+}
+
+.mat-mdc-checkbox .mdc-label {
+  white-space: normal;
+}

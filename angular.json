@@ -31,6 +31,7 @@
               }
             ],
             "styles": [
+              "src/app/styles/material-theme.scss",
               "src/styles.css",
               "src/app/styles/site-global.css",
               "src/app/styles/theme.css",
@@ -62,8 +63,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "20kB",
-                  "maximumError": "28kB"
+                  "maximumWarning": "48kB",
+                  "maximumError": "72kB"
                 }
               ],
               "outputHashing": "all"
@@ -105,8 +106,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "20kB",
-                  "maximumError": "28kB"
+                  "maximumWarning": "48kB",
+                  "maximumError": "72kB"
                 }
               ]
             }

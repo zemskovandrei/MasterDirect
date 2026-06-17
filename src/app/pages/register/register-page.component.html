@@ -1,0 +1,208 @@
+<div class="register-page">
+  <div class="register-page__split">
+    <aside class="register-page__promo" [ngStyle]="promoStyle()" aria-labelledby="register-hero-title">
+      <div class="register-page__promo-inner">
+        <div class="register-page__brand">
+          <span class="register-page__logo" aria-hidden="true"></span>
+          <div>
+            <p class="register-page__brand-name">{{ translation.t('cabinet.registerBrand') }}</p>
+            <p class="register-page__brand-tagline">{{ translation.t('cabinet.registerTagline') }}</p>
+          </div>
+        </div>
+
+        <h1 id="register-hero-title" class="register-page__headline">
+          {{ translation.t('cabinet.registerHeroTitle') }}
+        </h1>
+        <p class="register-page__subheadline">{{ translation.t('cabinet.registerHeroSubtitle') }}</p>
+
+        <ul class="register-page__benefits" [attr.aria-label]="translation.t('cabinet.registerBenefitsAria')">
+          @for (benefit of [1, 2, 3, 4]; track benefit) {
+            <li>
+              <mat-icon class="register-page__benefit-icon" aria-hidden="true">check_circle</mat-icon>
+              {{ translation.t('cabinet.registerHeroBenefit' + benefit) }}
+            </li>
+          }
+        </ul>
+      </div>
+    </aside>
+
+    <main class="register-page__form-side" [ngStyle]="formSideStyle()">
+      <div class="register-page__glass">
+        @if (status() === 'success') {
+          <div class="register-page__success" role="status">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            <div>
+              <h2>{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
+              <p>{{ translation.t('cabinet.registerSuccess') }}</p>
+            </div>
+          </div>
+        } @else {
+          <header class="register-page__card-header">
+            <h2 class="register-page__title">{{ translation.t('cabinet.registerFormTitle') }}</h2>
+          </header>
+
+          @if (status() === 'error' && errorMessage()) {
+            <p class="register-page__alert register-page__alert--error" role="alert">{{ errorMessage() }}</p>
+          }
+
+          <form class="register-page__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="register-page__row">
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.firstNameLabel') }}</mat-label>
+                <input matInput formControlName="firstName" autocomplete="given-name" />
+                @if (fieldInvalid('firstName')) {
+                  <mat-error>{{ translation.t('cabinet.firstNameError') }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.lastNameLabel') }}</mat-label>
+                <input matInput formControlName="lastName" autocomplete="family-name" />
+                @if (fieldInvalid('lastName')) {
+                  <mat-error>{{ translation.t('cabinet.lastNameError') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+              <mat-label>{{ translation.t('cabinet.emailLabel') }}</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+              @if (fieldInvalid('email')) {
+                <mat-error>{{ translation.t('cabinet.emailError') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+              <mat-label>{{ translation.t('cabinet.phoneLabel') }}</mat-label>
+              <input matInput type="tel" formControlName="phone" autocomplete="tel" />
+              @if (fieldInvalid('phone')) {
+                <mat-error>{{ translation.t('cabinet.phoneError') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+              <mat-label>{{ translation.t('cabinet.registerSectionRole') }}</mat-label>
+              <mat-select formControlName="proRole" (selectionChange)="onRoleChange()">
+                @for (role of proRoles; track role) {
+                  <mat-option [value]="role">
+                    {{ proRoleIcons[role] }} {{ proRoleLabel(role) }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (fieldInvalid('proRole')) {
+                <mat-error>{{ translation.t('cabinet.proRoleError') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="register-page__row">
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.passwordLabel') }}</mat-label>
+                <input
+                  matInput
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="new-password"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  [attr.aria-label]="translation.t('cabinet.togglePassword')"
+                  (click)="togglePassword('password')"
+                >
+                  <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                @if (fieldInvalid('password')) {
+                  <mat-error>{{ translation.t('cabinet.passwordErrorMin8') }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.confirmPasswordLabel') }}</mat-label>
+                <input
+                  matInput
+                  [type]="showConfirmPassword() ? 'text' : 'password'"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                />
+                @if (fieldInvalid('confirmPassword')) {
+                  <mat-error>{{ translation.t('cabinet.confirmPasswordError') }}</mat-error>
+                } @else if (passwordMismatch()) {
+                  <mat-error>{{ translation.t('cabinet.passwordMismatch') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            @if (passwordStrength().level !== 'empty') {
+              <div class="register-page__strength" role="meter" [attr.aria-valuenow]="passwordStrength().percent" aria-valuemin="0" aria-valuemax="100">
+                <span class="register-page__strength-fill register-page__strength-fill--{{ passwordStrength().level }}" [style.width.%]="passwordStrength().percent"></span>
+              </div>
+            }
+
+            <p class="register-page__social-label">{{ translation.t('cabinet.registerSocialHint') }}</p>
+            <div class="register-page__row">
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>Telegram</mat-label>
+                <input matInput formControlName="telegram" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>WhatsApp</mat-label>
+                <input matInput formControlName="whatsapp" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
+              </mat-form-field>
+            </div>
+            <div class="register-page__row">
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>Instagram</mat-label>
+                <input matInput formControlName="instagram" [placeholder]="translation.t('cabinet.socialInstagramPh')" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>Facebook</mat-label>
+                <input matInput formControlName="facebook" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
+              </mat-form-field>
+            </div>
+
+            <mat-checkbox formControlName="acceptTerms" class="register-page__terms">
+              {{ translation.t('cabinet.privacyPrefix') }}
+              <a href="#" (click)="$event.preventDefault()">{{ translation.t('cabinet.privacyLink') }}</a>
+            </mat-checkbox>
+            @if (fieldInvalid('acceptTerms')) {
+              <p class="register-page__terms-error" role="alert">{{ translation.t('cabinet.termsError') }}</p>
+            }
+
+            <button mat-flat-button type="submit" class="register-page__submit" [disabled]="submitting()">
+              {{
+                submitting()
+                  ? translation.t('cabinet.registerSubmitting')
+                  : translation.t('cabinet.registerFormTitle')
+              }}
+            </button>
+          </form>
+
+          <p class="register-page__signin-link">
+            {{ translation.t('cabinet.alreadyHaveAccount') }}
+            <button type="button" class="register-page__link-btn" (click)="toggleSignIn()">
+              {{ translation.t('cabinet.signInLink') }}
+            </button>
+          </p>
+
+          @if (signInOpen()) {
+            <form [formGroup]="signInForm" (ngSubmit)="signInExisting()" class="register-page__signin-form">
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.emailShort') }}</mat-label>
+                <input matInput type="email" formControlName="email" autocomplete="email" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
+                <mat-label>{{ translation.t('cabinet.passwordLabel') }}</mat-label>
+                <input matInput type="password" formControlName="password" autocomplete="current-password" />
+              </mat-form-field>
+              @if (signInError()) {
+                <p class="register-page__alert register-page__alert--error" role="alert">{{ signInError() }}</p>
+              }
+              <button mat-flat-button type="submit" class="register-page__submit register-page__submit--secondary" [disabled]="signInSubmitting()">
+                {{ translation.t('cabinet.signInButton') }}
+              </button>
+            </form>
+          }
+        }
+      </div>
+    </main>
+  </div>
+</div>

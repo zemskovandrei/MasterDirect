@@ -1,0 +1,888 @@
+/* SmartBuild.Tech — Modern Clean B2B registration */
+
+.register-panel--glass {
+  --rg-cream: #faf8f5;
+  --rg-border: #e5e7eb;
+  --rg-text: #111827;
+  --rg-label: #6b7280;
+  --rg-muted: #9ca3af;
+  --rg-emerald: #059669;
+  --rg-emerald-dark: #047857;
+  --rg-radius: 12px;
+  --rg-radius-lg: 16px;
+  --rg-gap: 20px;
+  --rg-pad-x: clamp(1.5rem, 3.5vw, 2.25rem);
+  --rg-section-y: 1.75rem;
+  --rg-input-h: 46px;
+  --rg-photo: 168px;
+  --rg-shadow-float: 0 24px 60px rgba(15, 23, 42, 0.07), 0 8px 24px rgba(15, 23, 42, 0.04);
+  --rg-shadow-input: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  position: relative;
+  border-radius: var(--rg-radius-lg);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--rg-shadow-float);
+}
+
+.register-panel--glass::before {
+  content: none;
+}
+
+/* —— Header —— */
+.register-glass-header {
+  padding: 1.75rem var(--rg-pad-x) 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(250, 248, 245, 0.2) 100%);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.85);
+}
+
+.register-glass-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rg-emerald);
+}
+
+.register-glass-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.625rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--rg-text);
+}
+
+.register-glass-lead {
+  margin: 0 0 1.5rem;
+  max-width: 36rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--rg-label);
+}
+
+.register-glass-header--split .register-glass-title {
+  margin-bottom: 0.5rem;
+}
+
+/* Account type tabs */
+.register-glass-type {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 1.5rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--rg-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.register-glass-type__btn {
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0.625rem 1.25rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rg-label);
+  cursor: pointer;
+  transition:
+    color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
+}
+
+.register-glass-type__btn:hover {
+  color: var(--rg-text);
+  background: rgba(250, 248, 245, 0.9);
+}
+
+.register-glass-type__btn--active {
+  color: var(--rg-emerald-dark);
+  background: #ffffff;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.08),
+    0 1px 3px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Progress */
+.register-progress__track {
+  height: 3px;
+  margin-bottom: 0.875rem;
+  border-radius: 999px;
+  background: rgba(229, 231, 235, 0.9);
+  overflow: hidden;
+}
+
+.register-progress__fill {
+  display: block;
+  height: 100%;
+  width: 25%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--rg-emerald) 0%, #34d399 100%);
+}
+
+.register-progress__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.register-progress__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--rg-muted);
+}
+
+.register-progress__step span {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(229, 231, 235, 0.8);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--rg-label);
+}
+
+.register-progress__step.is-active {
+  color: var(--rg-text);
+  font-weight: 600;
+}
+
+.register-progress__step.is-active span {
+  background: rgba(5, 150, 105, 0.12);
+  color: var(--rg-emerald-dark);
+}
+
+/* —— Form body —— */
+.register-glass-form {
+  display: flex;
+  flex-direction: column;
+  background: var(--rg-cream);
+}
+
+.register-glass-section {
+  padding: var(--rg-section-y) var(--rg-pad-x);
+}
+
+.register-glass-section + .register-glass-section,
+.register-glass-footer {
+  border-top: 1px solid rgba(229, 231, 235, 0.9);
+}
+
+.register-glass-section__title {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--rg-text);
+}
+
+/* Section 1 — strict 3-column grid */
+.register-glass-s1 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--rg-photo);
+  grid-template-rows: auto auto;
+  column-gap: var(--rg-gap);
+  row-gap: var(--rg-gap);
+  align-items: start;
+}
+
+.register-glass-s1__photo {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.register-glass-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rg-label);
+  line-height: 1.3;
+}
+
+.register-glass-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.register-glass-field--ghost {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.register-glass-field__ghost {
+  min-height: var(--rg-input-h);
+}
+
+/* Inputs */
+.register-glass-form input:not([type='checkbox']),
+.register-glass-form select,
+.register-glass-control,
+.register-glass-skills {
+  width: 100%;
+  min-height: var(--rg-input-h);
+  padding: 0 1rem;
+  border: 1px solid var(--rg-border);
+  border-radius: var(--rg-radius);
+  background: #ffffff;
+  color: var(--rg-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  box-sizing: border-box;
+  box-shadow: var(--rg-shadow-input);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.register-glass-form input::placeholder {
+  color: #d1d5db;
+}
+
+.register-glass-form select {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+.register-glass-form input:focus,
+.register-glass-form select:focus,
+.register-glass-control:focus-within,
+.register-glass-skills:focus-within {
+  outline: none;
+  border-color: rgba(5, 150, 105, 0.45);
+  box-shadow:
+    var(--rg-shadow-input),
+    0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+.register-glass-control {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0 0.875rem;
+}
+
+.register-glass-control--phone {
+  grid-template-columns: auto auto 1fr;
+}
+
+.register-glass-control input {
+  min-height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.register-glass-control--password {
+  grid-template-columns: 1fr auto;
+  padding-right: 0.5rem;
+}
+
+.register-glass-phone-code {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--rg-label);
+  white-space: nowrap;
+}
+
+/* Monochrome social icons */
+.register-glass-icon {
+  flex-shrink: 0;
+  opacity: 0.42;
+}
+
+.register-glass-icon--phone {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 4px;
+  position: relative;
+}
+
+.register-glass-icon--phone::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 6px;
+  height: 6px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 1px;
+  transform: translate(-50%, -50%) rotate(-20deg);
+}
+
+.register-glass-icon--tg {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 50%;
+  position: relative;
+}
+
+.register-glass-icon--tg::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 5px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid #9ca3af;
+  transform: rotate(15deg);
+}
+
+.register-glass-icon--fb {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #9ca3af;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: Georgia, serif;
+  color: #9ca3af;
+  background: transparent;
+}
+
+.register-glass-icon--wa {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 50%;
+  position: relative;
+}
+
+.register-glass-icon--wa::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+.register-glass-icon--ig {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 5px;
+  position: relative;
+}
+
+.register-glass-icon--ig::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 4px;
+}
+
+.register-glass-icon--ig::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+/* Avatar upload */
+.register-glass-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  height: var(--rg-photo);
+  padding: 1rem;
+  border: 2px dashed #d1d5db;
+  border-radius: var(--rg-radius);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--rg-shadow-input);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.register-glass-photo:hover {
+  border-color: rgba(5, 150, 105, 0.45);
+  background: #ffffff;
+  box-shadow:
+    var(--rg-shadow-input),
+    0 4px 16px rgba(5, 150, 105, 0.08);
+}
+
+.register-glass-photo__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, #d1d5db 0 28%, transparent 29%),
+    linear-gradient(#d1d5db, #d1d5db) center 72% / 58% 34% no-repeat;
+}
+
+.register-glass-photo__text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--rg-label);
+  text-align: center;
+  line-height: 1.35;
+}
+
+.register-glass-photo__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--rg-radius) - 2px);
+}
+
+/* Section 2 — contacts 3×2 */
+.register-glass-s2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--rg-gap);
+  align-items: start;
+}
+
+.register-glass-skills-block {
+  margin-top: var(--rg-gap);
+}
+
+.register-glass-skills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  min-height: var(--rg-input-h);
+}
+
+.register-glass-skills__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.register-glass-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--rg-border);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.register-glass-chip__x {
+  border: none;
+  background: transparent;
+  color: var(--rg-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.register-glass-chip__add {
+  border: 1px dashed #d1d5db;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rg-label);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.75rem;
+  cursor: pointer;
+}
+
+/* Drop zone */
+.register-glass-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 148px;
+  padding: 2rem 1.5rem;
+  border: 2px dashed #d1d5db;
+  border-radius: var(--rg-radius);
+  background: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.register-glass-dropzone:hover {
+  border-color: rgba(5, 150, 105, 0.4);
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.register-glass-dropzone--drag {
+  border-color: var(--rg-emerald);
+  background: rgba(5, 150, 105, 0.04);
+}
+
+.register-glass-dropzone__icon {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #9ca3af;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  position: relative;
+  opacity: 0.5;
+}
+
+.register-glass-dropzone__icon::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 12px;
+  height: 12px;
+  border-left: 2px solid #9ca3af;
+  border-top: 2px solid #9ca3af;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.register-glass-dropzone__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--rg-text);
+}
+
+.register-glass-dropzone__hint {
+  font-size: 0.8125rem;
+  color: var(--rg-label);
+  max-width: 28rem;
+  line-height: 1.5;
+}
+
+.register-glass-dropzone__file {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rg-emerald-dark);
+}
+
+/* Section 4 — passwords */
+.register-glass-s4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--rg-gap);
+  align-items: start;
+}
+
+.register-glass-eye {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.25rem;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.register-glass-eye:hover {
+  opacity: 0.85;
+}
+
+.register-glass-eye span {
+  display: block;
+  width: 18px;
+  height: 11px;
+  border: 2px solid #6b7280;
+  border-radius: 50% 50% 45% 45%;
+  position: relative;
+}
+
+.register-glass-eye span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #6b7280;
+  transform: translate(-50%, -50%);
+}
+
+.register-glass-eye--visible span::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 50%;
+  height: 2px;
+  background: #6b7280;
+  transform: rotate(-35deg);
+}
+
+/* Footer */
+.register-glass-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: var(--rg-section-y) var(--rg-pad-x) 2rem;
+}
+
+.register-glass-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--rg-border);
+  border-radius: var(--rg-radius);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--rg-shadow-input);
+}
+
+.register-glass-legal__verification {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.register-glass-legal__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--rg-text);
+}
+
+.register-glass-legal__terms {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--rg-label);
+  cursor: pointer;
+}
+
+.register-glass-legal__terms a {
+  color: var(--rg-emerald-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-glass-legal__terms a:hover {
+  text-decoration: underline;
+}
+
+.register-glass-cta {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: var(--rg-radius);
+  background: var(--rg-emerald);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.28);
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.register-glass-cta:not(:disabled):hover {
+  background: var(--rg-emerald-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(5, 150, 105, 0.35);
+}
+
+.register-glass-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-glass-link {
+  border: none;
+  background: transparent;
+  color: var(--rg-label);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.register-glass-link:hover {
+  color: var(--rg-text);
+}
+
+.register-glass-error {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.register-glass-hint {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--rg-label);
+}
+
+.register-glass-field--error input,
+.register-glass-field--error select,
+.register-glass-field--error .register-glass-control {
+  border-color: rgba(220, 38, 38, 0.45);
+}
+
+.register-glass-status {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-radius: var(--rg-radius);
+  font-size: 0.875rem;
+}
+
+.register-glass-status--success {
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.register-glass-status--error {
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #b91c1c;
+}
+
+.register-signin-panel--glass {
+  padding: var(--rg-section-y) var(--rg-pad-x) 2rem;
+  border-top: 1px solid rgba(229, 231, 235, 0.9);
+  background: var(--rg-cream);
+}
+
+.register-signin-panel--glass .register-signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 420px;
+}
+
+.register-signin-panel--glass .register-signin-panel__title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--rg-text);
+}
+
+.register-toggle input:checked + .register-toggle-slider {
+  background: #6ee7b7;
+}
+
+@media (max-width: 900px) {
+  .register-panel--glass {
+    --rg-photo: 140px;
+    --rg-gap: 16px;
+    --rg-section-y: 1.35rem;
+  }
+
+  .register-glass-s1 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .register-glass-s1__photo {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .register-glass-s1__photo .register-glass-label {
+    margin-bottom: 0;
+    flex: 1;
+  }
+
+  .register-glass-s1__photo .register-glass-photo {
+    width: var(--rg-photo);
+    flex-shrink: 0;
+  }
+
+  .register-glass-s2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .register-glass-field--ghost {
+    display: none;
+  }
+
+  .register-glass-s4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .register-glass-type {
+    display: flex;
+    width: 100%;
+  }
+
+  .register-glass-type__btn {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+
+  .register-glass-s1,
+  .register-glass-s2 {
+    grid-template-columns: 1fr;
+  }
+
+  .register-glass-s1__photo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .register-glass-s1__photo .register-glass-photo {
+    width: 100%;
+    max-width: 200px;
+    align-self: center;
+  }
+}

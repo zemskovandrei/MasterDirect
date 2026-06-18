@@ -1,24 +1,38 @@
-<div class="register-page">
-  <div class="register-page__split">
-    <aside class="register-page__promo" [ngStyle]="promoStyle()" aria-labelledby="register-hero-title">
-      <div class="register-page__promo-inner">
-        <div class="register-page__brand">
-          <span class="register-page__logo" aria-hidden="true"></span>
+<div class="register-page min-h-[calc(100dvh-4.5rem)]">
+  <div class="grid min-h-inherit lg:grid-cols-[2fr_3.5fr]">
+    <!-- Promo panel -->
+    <aside
+      class="relative bg-slate-900 bg-cover bg-center text-white"
+      [ngStyle]="promoStyle()"
+      aria-labelledby="register-hero-title"
+    >
+      <div
+        class="flex min-h-full flex-col justify-center bg-gradient-to-br from-slate-900/60 via-slate-900/45 to-slate-900/55 px-7 py-10 md:px-10"
+      >
+        <div class="mb-8 flex items-center gap-3.5">
+          <span
+            class="h-11 w-11 shrink-0 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/30"
+            aria-hidden="true"
+          ></span>
           <div>
-            <p class="register-page__brand-name">{{ brandName }}</p>
-            <p class="register-page__brand-tagline">{{ translation.t('cabinet.registerTagline') }}</p>
+            <p class="m-0 text-lg font-extrabold tracking-wide">{{ brandName }}</p>
+            <p class="m-0 mt-1 max-w-xs text-sm leading-relaxed text-white/75">
+              {{ translation.t('cabinet.registerTagline') }}
+            </p>
           </div>
         </div>
 
-        <h1 id="register-hero-title" class="register-page__headline">
+        <h1 id="register-hero-title" class="mb-3 max-w-md text-3xl font-bold leading-tight drop-shadow-md">
           {{ translation.t('cabinet.registerHeroTitle') }}
         </h1>
-        <p class="register-page__subheadline">{{ translation.t('cabinet.registerHeroSubtitle') }}</p>
+        <p class="mb-7 max-w-lg text-base leading-relaxed text-white/85">
+          {{ translation.t('cabinet.registerHeroSubtitle') }}
+        </p>
 
-        <ul class="register-page__benefits" [attr.aria-label]="translation.t('cabinet.registerBenefitsAria')">
+        <ul class="m-0 flex max-w-lg list-none flex-col gap-3 p-0" [attr.aria-label]="translation.t('cabinet.registerBenefitsAria')">
           @for (benefit of [1, 2, 3, 4]; track benefit) {
-            <li>
-              <mat-icon class="register-page__benefit-icon" aria-hidden="true">check_circle</mat-icon>
+            <li class="flex items-start gap-2.5 text-[0.95rem] leading-snug">
+              <span class="mt-0.5 text-emerald-400" aria-hidden="true">✓</span>
               {{ translation.t('cabinet.registerHeroBenefit' + benefit) }}
             </li>
           }
@@ -26,177 +40,374 @@
       </div>
     </aside>
 
-    <main class="register-page__form-side" [ngStyle]="formSideStyle()">
-      <div class="register-page__glass">
+    <!-- Wizard form panel -->
+    <main class="flex items-center justify-center overflow-y-auto p-5 md:p-8" [ngStyle]="formSideStyle()">
+      <div
+        class="w-full max-w-2xl rounded-2xl border border-white/50 bg-white/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-[24px] md:p-8"
+      >
         @if (status() === 'success') {
-          <div class="register-page__success" role="status">
-            <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <div class="flex gap-3 text-slate-700" role="status">
+            <span class="text-2xl text-emerald-600" aria-hidden="true">✓</span>
             <div>
-              <h2>{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
-              <p>{{ translation.t('cabinet.registerSuccess') }}</p>
+              <h2 class="m-0 text-lg font-bold text-slate-900">{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
+              <p class="mt-1 text-sm text-slate-600">{{ translation.t('cabinet.registerSuccess') }}</p>
             </div>
           </div>
         } @else {
-          <header class="register-page__card-header">
-            <h2 class="register-page__title">{{ translation.t('cabinet.registerFormTitle') }}</h2>
+          <!-- Header: branding + role tabs -->
+          <header class="mb-6 space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Registration</p>
+                <h2 class="m-0 mt-1 text-2xl font-bold text-slate-800">
+                  {{ translation.t('cabinet.registerFormTitle') }}
+                  <span class="text-emerald-700">{{ brandName }}</span>
+                </h2>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2" role="tablist" aria-label="Тип аккаунта">
+              @for (tab of accountTabs; track tab.id) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="rounded-xl border px-4 py-2 text-sm font-semibold transition"
+                  [class.bg-emerald-600]="accountTab() === tab.id"
+                  [class.border-emerald-600]="accountTab() === tab.id"
+                  [class.text-white]="accountTab() === tab.id"
+                  [class.bg-white/80]="accountTab() !== tab.id"
+                  [class.border-slate-200]="accountTab() !== tab.id"
+                  [class.text-slate-600]="accountTab() !== tab.id"
+                  [attr.aria-selected]="accountTab() === tab.id"
+                  (click)="selectAccountTab(tab.id)"
+                >
+                  {{ tab.label }}
+                </button>
+              }
+            </div>
           </header>
 
+          <!-- Progress bar -->
+          <div class="mb-6">
+            <div class="mb-2 flex justify-between gap-2 text-xs font-medium text-slate-500">
+              @for (step of wizardSteps; track step.id; let i = $index) {
+                <span [class.text-emerald-700]="currentStep() === i" [class.font-semibold]="currentStep() === i">
+                  {{ i + 1 }}. {{ step.label }}
+                </span>
+              }
+            </div>
+            <div class="h-1.5 overflow-hidden rounded-full bg-slate-200/90" role="progressbar" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100">
+              <div class="h-full rounded-full bg-emerald-600 transition-all duration-300" [style.width.%]="progressPercent()"></div>
+            </div>
+          </div>
+
           @if (status() === 'error' && errorMessage()) {
-            <p class="register-page__alert register-page__alert--error" role="alert">{{ errorMessage() }}</p>
+            <p class="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ errorMessage() }}</p>
+          }
+          @if (stepError()) {
+            <p class="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800" role="alert">{{ stepError() }}</p>
           }
 
-          <form class="register-page__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <div class="register-page__row">
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.firstNameLabel') }}</mat-label>
-                <input matInput formControlName="firstName" autocomplete="given-name" />
-                @if (fieldInvalid('firstName')) {
-                  <mat-error>{{ translation.t('cabinet.firstNameError') }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.lastNameLabel') }}</mat-label>
-                <input matInput formControlName="lastName" autocomplete="family-name" />
-                @if (fieldInvalid('lastName')) {
-                  <mat-error>{{ translation.t('cabinet.lastNameError') }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
+          <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <!-- Step 1: Profile -->
+            @if (stepId() === 'profile') {
+              <section class="space-y-5" aria-labelledby="step-profile-title">
+                <h3 id="step-profile-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">1. Профиль</h3>
 
-            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-              <mat-label>{{ translation.t('cabinet.emailLabel') }}</mat-label>
-              <input matInput type="email" formControlName="email" autocomplete="email" />
-              @if (fieldInvalid('email')) {
-                <mat-error>{{ translation.t('cabinet.emailError') }}</mat-error>
-              }
-            </mat-form-field>
+                <!-- 3-column grid: Name | Middle Name | Photo -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">Имя и Фамилия *</span>
+                    <input
+                      type="text"
+                      formControlName="firstName"
+                      autocomplete="name"
+                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                      [class.border-red-400]="fieldInvalid('firstName')"
+                    />
+                    @if (fieldInvalid('firstName')) {
+                      <span class="text-xs text-red-600">{{ translation.t('cabinet.firstNameError') }}</span>
+                    }
+                  </label>
 
-            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-              <mat-label>{{ translation.t('cabinet.phoneLabel') }}</mat-label>
-              <input matInput type="tel" formControlName="phone" autocomplete="tel" />
-              @if (fieldInvalid('phone')) {
-                <mat-error>{{ translation.t('cabinet.phoneError') }}</mat-error>
-              }
-            </mat-form-field>
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">Отчество</span>
+                    <input
+                      type="text"
+                      formControlName="middleName"
+                      autocomplete="additional-name"
+                      placeholder="optional"
+                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                    />
+                  </label>
 
-            <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-              <mat-label>{{ translation.t('cabinet.registerSectionRole') }}</mat-label>
-              <mat-select formControlName="proRole" (selectionChange)="onRoleChange()">
-                @for (role of proRoles; track role) {
-                  <mat-option [value]="role">
-                    {{ proRoleIcons[role] }} {{ proRoleLabel(role) }}
-                  </mat-option>
-                }
-              </mat-select>
-              @if (fieldInvalid('proRole')) {
-                <mat-error>{{ translation.t('cabinet.proRoleError') }}</mat-error>
-              }
-            </mat-form-field>
+                  <!-- Profile image upload box -->
+                  <div
+                    class="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-3 text-center transition md:h-[150px] md:w-[150px] md:justify-self-end"
+                    [class.border-emerald-500]="dragProfile()"
+                    [class.bg-emerald-50/40]="dragProfile()"
+                    (dragover)="preventDragDefaults($event); dragProfile.set(true)"
+                    (dragleave)="dragProfile.set(false)"
+                    (drop)="onProfileDrop($event)"
+                  >
+                    @if (profilePreview()) {
+                      <img [src]="profilePreview()!" alt="" class="mb-2 h-20 w-20 rounded-xl object-cover" />
+                    } @else {
+                      <span class="mb-1 text-2xl text-slate-400" aria-hidden="true">👤</span>
+                    }
+                    <span class="text-xs font-medium text-slate-500">Profile image</span>
+                    <label class="mt-2 cursor-pointer text-xs font-semibold text-emerald-700 hover:underline">
+                      Upload
+                      <input type="file" accept="image/*" class="hidden" (change)="onProfileSelected($event)" />
+                    </label>
+                  </div>
+                </div>
 
-            <div class="register-page__row">
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.passwordLabel') }}</mat-label>
-                <input
-                  matInput
-                  [type]="showPassword() ? 'text' : 'password'"
-                  formControlName="password"
-                  autocomplete="new-password"
-                />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  type="button"
-                  [attr.aria-label]="translation.t('cabinet.togglePassword')"
-                  (click)="togglePassword('password')"
+                <!-- Row 2: Role + City -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.registerSectionRole') }} *</span>
+                    <select
+                      formControlName="proRole"
+                      (change)="onProRoleSelect()"
+                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                      [class.border-red-400]="fieldInvalid('proRole')"
+                    >
+                      <option value="master">🔨 {{ translation.t('cabinet.proRoles.master') }}</option>
+                      <option value="brigade">👷 {{ translation.t('cabinet.proRoles.brigade') }}</option>
+                      <option value="furniture_maker">🪚 {{ translation.t('cabinet.proRoles.furniture_maker') }}</option>
+                    </select>
+                  </label>
+
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.cityLabel') }} *</span>
+                    <select
+                      formControlName="city"
+                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                      [class.border-red-400]="fieldInvalid('city')"
+                    >
+                      @for (city of cities; track city) {
+                        <option [value]="city">{{ cityLabel(city) }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+              </section>
+            }
+
+            <!-- Step 2: Contacts -->
+            @if (stepId() === 'contacts') {
+              <section class="space-y-5" aria-labelledby="step-contacts-title">
+                <h3 id="step-contacts-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">2. Контакты</h3>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.emailLabel') }} *</span>
+                    <input
+                      type="email"
+                      formControlName="email"
+                      autocomplete="email"
+                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                      [class.border-red-400]="fieldInvalid('email')"
+                    />
+                    @if (fieldInvalid('email')) {
+                      <span class="text-xs text-red-600">{{ translation.t('cabinet.emailError') }}</span>
+                    }
+                  </label>
+
+                  <!-- Phone with icon -->
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.phoneLabel') }} *</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('phone')">
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+                      </span>
+                      <input type="tel" formControlName="phone" autocomplete="tel" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" placeholder="+995 XXX XXX XXX" />
+                    </div>
+                    @if (fieldInvalid('phone')) {
+                      <span class="text-xs text-red-600">{{ translation.t('cabinet.phoneError') }}</span>
+                    }
+                  </label>
+
+                  <!-- WhatsApp -->
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">WhatsApp</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M17.5 14.1c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.2-.3.3-.4.1-.1.1-.2.2-.3.1-.1.1-.2 0-.4 0-.2-.7-1.7-1-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.8 2.3.9 2.5c.1.2 1.6 2.5 3.9 3.4 1.4.6 2 .6 2.7.5.8-.1 2.5-1 2.9-2 .3-1 .3-1.9.2-2.1-.1-.2-.3-.3-.6-.4z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.3C8.9 21.5 10.4 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-3-.4-4.3-1.1l-.3-.2-3.1.8.8-3-.2-.3C4.4 15 4 13.5 4 12 4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8z"/></svg>
+                      </span>
+                      <input type="text" formControlName="whatsapp" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
+                    </div>
+                  </label>
+
+                  <!-- Telegram -->
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">Telegram</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M9.9 15.3 9.7 19c.4 0 .6-.2.8-.4l2-1.9 4.1 3c.8.4 1.3.2 1.5-.7l2.7-12.7c.3-1.2-.4-1.7-1.2-1.4L4 10.3c-1.1.4-1.1 1 0 1.3l4.1 1.3 9.6-6.1c.5-.3.9-.1.5.2"/></svg>
+                      </span>
+                      <input type="text" formControlName="telegram" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
+                    </div>
+                  </label>
+
+                  <!-- Facebook -->
+                  <label class="block space-y-1.5 md:col-span-2">
+                    <span class="text-sm font-medium text-slate-600">Facebook</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M13 10V7.5c0-.8.2-1.2 1.1-1.2H16V3h-2.2C11.1 3 10 4.9 10 7.2V10H7v3h3v8h3v-8h2.6l.4-3H13z"/></svg>
+                      </span>
+                      <input type="text" formControlName="facebook" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
+                    </div>
+                  </label>
+                </div>
+              </section>
+            }
+
+            <!-- Step 3: Documents -->
+            @if (stepId() === 'documents') {
+              <section class="space-y-4" aria-labelledby="step-documents-title">
+                <h3 id="step-documents-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">3. Документы</h3>
+
+                <div
+                  class="flex min-h-[180px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 px-6 py-10 text-center transition"
+                  [class.border-emerald-500]="dragDocuments()"
+                  [class.bg-emerald-50/30]="dragDocuments()"
+                  (dragover)="preventDragDefaults($event); dragDocuments.set(true)"
+                  (dragleave)="dragDocuments.set(false)"
+                  (drop)="onDocumentsDrop($event)"
                 >
-                  <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  <span class="mb-3 text-3xl text-slate-400" aria-hidden="true">📁</span>
+                  <p class="m-0 text-sm font-semibold text-slate-700">Перетащите файлы сюда</p>
+                  <p class="mt-1 text-xs text-slate-500">JPG, PNG, PDF — до 50 MB</p>
+                  <label class="mt-4 cursor-pointer rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                    Выбрать файлы
+                    <input type="file" multiple accept="image/*,.pdf" class="hidden" (change)="onDocumentsSelected($event)" />
+                  </label>
+                </div>
+
+                @if (documentFiles().length) {
+                  <ul class="m-0 space-y-2 p-0">
+                    @for (file of documentFiles(); track file.name + $index; let i = $index) {
+                      <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-700">
+                        <span class="truncate">{{ file.name }}</span>
+                        <button type="button" class="ml-3 text-xs font-semibold text-red-600 hover:underline" (click)="removeDocument(i)">Удалить</button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+
+            <!-- Step 4: Security -->
+            @if (stepId() === 'security') {
+              <section class="space-y-5" aria-labelledby="step-security-title">
+                <h3 id="step-security-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">4. Безопасность</h3>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.passwordLabel') }} *</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('password')">
+                      <input
+                        [type]="showPassword() ? 'text' : 'password'"
+                        formControlName="password"
+                        autocomplete="new-password"
+                        class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none"
+                      />
+                      <button type="button" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" [attr.aria-label]="translation.t('cabinet.togglePassword')" (click)="togglePassword('password')">
+                        {{ showPassword() ? '🙈' : '👁' }}
+                      </button>
+                    </div>
+                    @if (fieldInvalid('password')) {
+                      <span class="text-xs text-red-600">{{ translation.t('cabinet.passwordErrorMin8') }}</span>
+                    }
+                  </label>
+
+                  <label class="block space-y-1.5">
+                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('confirmPassword') || passwordMismatch()">
+                      <input
+                        [type]="showConfirmPassword() ? 'text' : 'password'"
+                        formControlName="confirmPassword"
+                        autocomplete="new-password"
+                        class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none"
+                      />
+                      <button type="button" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" (click)="togglePassword('confirm')">
+                        {{ showConfirmPassword() ? '🙈' : '👁' }}
+                      </button>
+                    </div>
+                    @if (passwordMismatch()) {
+                      <span class="text-xs text-red-600">{{ translation.t('cabinet.passwordMismatch') }}</span>
+                    }
+                  </label>
+                </div>
+
+                @if (passwordStrength().level !== 'empty') {
+                  <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                    <div class="h-full rounded-full bg-emerald-600 transition-all" [style.width.%]="passwordStrength().percent"></div>
+                  </div>
+                }
+
+                <label class="flex items-start gap-2 text-sm text-slate-600">
+                  <input type="checkbox" formControlName="acceptTerms" class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                  <span>
+                    {{ translation.t('cabinet.privacyPrefix') }}
+                    <a href="#" class="font-semibold text-emerald-700" (click)="$event.preventDefault()">{{ translation.t('cabinet.privacyLink') }}</a>
+                  </span>
+                </label>
+                @if (fieldInvalid('acceptTerms')) {
+                  <span class="text-xs text-red-600">{{ translation.t('cabinet.termsError') }}</span>
+                }
+              </section>
+            }
+
+            <!-- Wizard navigation -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-5">
+              <button
+                type="button"
+                class="rounded-xl border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white disabled:opacity-40"
+                [disabled]="currentStep() === 0"
+                (click)="prevStep()"
+              >
+                Назад
+              </button>
+
+              @if (currentStep() < wizardSteps.length - 1) {
+                <button
+                  type="button"
+                  class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700"
+                  (click)="nextStep()"
+                >
+                  Далее
                 </button>
-                @if (fieldInvalid('password')) {
-                  <mat-error>{{ translation.t('cabinet.passwordErrorMin8') }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.confirmPasswordLabel') }}</mat-label>
-                <input
-                  matInput
-                  [type]="showConfirmPassword() ? 'text' : 'password'"
-                  formControlName="confirmPassword"
-                  autocomplete="new-password"
-                />
-                @if (fieldInvalid('confirmPassword')) {
-                  <mat-error>{{ translation.t('cabinet.confirmPasswordError') }}</mat-error>
-                } @else if (passwordMismatch()) {
-                  <mat-error>{{ translation.t('cabinet.passwordMismatch') }}</mat-error>
-                }
-              </mat-form-field>
+              } @else {
+                <button
+                  type="submit"
+                  class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 disabled:opacity-60"
+                  [disabled]="submitting()"
+                >
+                  {{ submitting() ? translation.t('cabinet.registerSubmitting') : translation.t('cabinet.registerFormTitle') }}
+                </button>
+              }
             </div>
-
-            @if (passwordStrength().level !== 'empty') {
-              <div class="register-page__strength" role="meter" [attr.aria-valuenow]="passwordStrength().percent" aria-valuemin="0" aria-valuemax="100">
-                <span class="register-page__strength-fill register-page__strength-fill--{{ passwordStrength().level }}" [style.width.%]="passwordStrength().percent"></span>
-              </div>
-            }
-
-            <p class="register-page__social-label">{{ translation.t('cabinet.registerSocialHint') }}</p>
-            <div class="register-page__row">
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>Telegram</mat-label>
-                <input matInput formControlName="telegram" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>WhatsApp</mat-label>
-                <input matInput formControlName="whatsapp" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
-              </mat-form-field>
-            </div>
-            <div class="register-page__row">
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>Instagram</mat-label>
-                <input matInput formControlName="instagram" [placeholder]="translation.t('cabinet.socialInstagramPh')" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>Facebook</mat-label>
-                <input matInput formControlName="facebook" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
-              </mat-form-field>
-            </div>
-
-            <mat-checkbox formControlName="acceptTerms" class="register-page__terms">
-              {{ translation.t('cabinet.privacyPrefix') }}
-              <a href="#" (click)="$event.preventDefault()">{{ translation.t('cabinet.privacyLink') }}</a>
-            </mat-checkbox>
-            @if (fieldInvalid('acceptTerms')) {
-              <p class="register-page__terms-error" role="alert">{{ translation.t('cabinet.termsError') }}</p>
-            }
-
-            <button mat-flat-button type="submit" class="register-page__submit" [disabled]="submitting()">
-              {{
-                submitting()
-                  ? translation.t('cabinet.registerSubmitting')
-                  : translation.t('cabinet.registerFormTitle')
-              }}
-            </button>
           </form>
 
-          <p class="register-page__signin-link">
+          <p class="mt-6 text-center text-sm text-slate-500">
             {{ translation.t('cabinet.alreadyHaveAccount') }}
-            <button type="button" class="register-page__link-btn" (click)="toggleSignIn()">
+            <button type="button" class="font-semibold text-emerald-700 underline" (click)="toggleSignIn()">
               {{ translation.t('cabinet.signInLink') }}
             </button>
           </p>
 
           @if (signInOpen()) {
-            <form [formGroup]="signInForm" (ngSubmit)="signInExisting()" class="register-page__signin-form">
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.emailShort') }}</mat-label>
-                <input matInput type="email" formControlName="email" autocomplete="email" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" floatLabel="always" subscriptSizing="dynamic" class="register-page__field">
-                <mat-label>{{ translation.t('cabinet.passwordLabel') }}</mat-label>
-                <input matInput type="password" formControlName="password" autocomplete="current-password" />
-              </mat-form-field>
+            <form [formGroup]="signInForm" (ngSubmit)="signInExisting()" class="mt-4 space-y-3 border-t border-slate-200/80 pt-4">
+              <input type="email" formControlName="email" placeholder="Email" class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15" />
+              <input type="password" formControlName="password" placeholder="Password" class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15" />
               @if (signInError()) {
-                <p class="register-page__alert register-page__alert--error" role="alert">{{ signInError() }}</p>
+                <p class="text-sm text-red-600" role="alert">{{ signInError() }}</p>
               }
-              <button mat-flat-button type="submit" class="register-page__submit register-page__submit--secondary" [disabled]="signInSubmitting()">
+              <button type="submit" class="w-full rounded-xl bg-slate-800 py-2.5 text-sm font-semibold text-white" [disabled]="signInSubmitting()">
                 {{ translation.t('cabinet.signInButton') }}
               </button>
             </form>

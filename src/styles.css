@@ -1,3 +1,9 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', 'Onest', ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Design tokens & base */
 :root {
   --font: 'Onest', system-ui, -apple-system, sans-serif;

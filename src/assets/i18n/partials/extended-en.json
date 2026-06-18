@@ -236,6 +236,7 @@
     "socialSave": "Save contacts",
     "socialSaved": "Contacts updated.",
     "registerSubmitting": "Saving profile…",
+    "registerStepError": "Please complete the required fields on this step",
     "registerSuccess": "Profile created and added to the catalog!",
     "registerError": "Could not save the profile. Check your connection and Supabase settings.",
     "registerNote": "Your profile appears in the catalog immediately — you can upload before/after photos.",

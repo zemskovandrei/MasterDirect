@@ -1,0 +1,144 @@
+$cabinet-worker-photo: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920';
+$cabinet-master-form-photo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920';
+$cabinet-brigade-photo: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920';
+$cabinet-brigade-form-photo: 'https://images.unsplash.com/photo-1581094794329-cf1c4f5c8c2e?q=80&w=1920';
+$cabinet-furniture-photo: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920';
+$cabinet-furniture-form-photo: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1920';
+$cabinet-login-promo-photo: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920';
+$cabinet-login-form-photo: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920';
+
+$cabinet-promo-overlay: linear-gradient(
+  180deg,
+  rgba(12, 18, 34, 0.45) 0%,
+  rgba(12, 18, 34, 0.78) 100%
+);
+$cabinet-page-overlay: linear-gradient(
+  rgba(15, 23, 42, 0.52),
+  rgba(15, 23, 42, 0.65)
+);
+$cabinet-form-overlay: linear-gradient(
+  180deg,
+  rgba(244, 247, 251, 0.9) 0%,
+  rgba(244, 247, 251, 0.82) 55%,
+  rgba(236, 242, 248, 0.88) 100%
+);
+
+@mixin cabinet-promo-photo($photo) {
+  background-color: #0c1222;
+  background-image: $cabinet-promo-overlay, url(#{$photo});
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+@mixin cabinet-page-photo($photo) {
+  background-color: #0f172a;
+  background-image: $cabinet-page-overlay, url(#{$photo});
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+@mixin cabinet-form-side-photo($photo) {
+  background-color: #f4f7fb;
+  background-image: $cabinet-form-overlay, url(#{$photo});
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.register-page {
+  min-height: calc(100dvh - 4.5rem);
+  background-color: #0c1222;
+}
+
+.register-page__grid {
+  display: grid;
+  min-height: inherit;
+  grid-template-columns: 1fr;
+}
+
+.register-promo,
+.register-form-side {
+  transition: background-color 0.35s ease;
+}
+
+.register-promo {
+  color: #fff;
+  min-height: clamp(220px, 36vh, 360px);
+}
+
+@media (min-width: 1024px) {
+  .register-page__grid {
+    grid-template-columns: minmax(280px, 2fr) minmax(320px, 3fr);
+  }
+
+  .register-promo {
+    min-height: calc(100dvh - 4.5rem);
+    position: sticky;
+    top: 4.5rem;
+    align-self: start;
+  }
+}
+
+.cabinet-tab-page--worker,
+.register-page--worker {
+  @include cabinet-page-photo($cabinet-worker-photo);
+}
+
+.cabinet-tab-page--login,
+.register-page--login,
+.cabinet-tab-page--register,
+.register-page--register,
+.cabinet-tab-page--brigade,
+.register-page--brigade,
+.cabinet-tab-page--furniture,
+.register-page--furniture {
+  background-color: #0c1222;
+}
+
+.cabinet-tab-page--login .register-promo,
+.register-page--login .register-promo {
+  @include cabinet-promo-photo($cabinet-login-promo-photo);
+}
+
+.cabinet-tab-page--login .register-form-side,
+.register-page--login .register-form-side {
+  @include cabinet-form-side-photo($cabinet-login-form-photo);
+}
+
+.cabinet-tab-page--register .register-promo,
+.register-page--register .register-promo {
+  @include cabinet-promo-photo($cabinet-worker-photo);
+}
+
+.cabinet-tab-page--register .register-form-side,
+.register-page--register .register-form-side {
+  @include cabinet-form-side-photo($cabinet-master-form-photo);
+}
+
+.cabinet-tab-page--brigade .register-promo,
+.register-page--brigade .register-promo {
+  @include cabinet-promo-photo($cabinet-brigade-photo);
+}
+
+.cabinet-tab-page--brigade .register-form-side,
+.register-page--brigade .register-form-side {
+  @include cabinet-form-side-photo($cabinet-brigade-form-photo);
+}
+
+.cabinet-tab-page--furniture .register-promo,
+.register-page--furniture .register-promo {
+  @include cabinet-promo-photo($cabinet-furniture-photo);
+}
+
+.cabinet-tab-page--furniture .register-form-side,
+.register-page--furniture .register-form-side {
+  @include cabinet-form-side-photo($cabinet-furniture-form-photo);
+}
+
+.cabinet-tab-page--worker .register-promo,
+.register-page--worker .register-promo {
+  @include cabinet-promo-photo($cabinet-worker-photo);
+}

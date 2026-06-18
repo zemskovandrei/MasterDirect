@@ -15,6 +15,7 @@ import { AuthService } from '../core/services/auth.service';
 import { FurnitureStoreService } from '../core/services/furniture-store.service';
 import { PortfolioStoreService } from '../core/services/portfolio-store.service';
 import { SupabaseService } from '../core/services/supabase.service';
+import { CabinetSessionService } from '../core/services/cabinet-session.service';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 import { AdminLoginModalComponent } from '../shared/components/admin-login-modal/admin-login-modal.component';
@@ -46,6 +47,7 @@ export class SiteLayoutComponent {
   private readonly auth = inject(AuthService);
   private readonly portfolioStore = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
+  private readonly cabinetSession = inject(CabinetSessionService);
   protected readonly translation = inject(TranslationService);
   protected readonly adminAuth = inject(AdminAuthService);
 
@@ -62,9 +64,7 @@ export class SiteLayoutComponent {
       !!this.furnitureStore.currentCompany(),
   );
 
-  protected readonly profileRoute = computed(() =>
-    this.adminAuth.isAdmin() ? '/admin' : '/cabinet',
-  );
+  protected readonly profileRoute = computed(() => '/cabinet');
 
   protected readonly profileInitial = computed(() => {
     const user = this.auth.user();
@@ -106,6 +106,9 @@ export class SiteLayoutComponent {
     afterNextRender(() => {
       this.supabase.prefetchActiveJobs();
       this.supabase.loadProfiles().subscribe({
+        next: () => {
+          void this.cabinetSession.restoreForCurrentUser();
+        },
         error: (err) => logSupabaseError('SiteLayout.loadProfiles', err),
       });
     });

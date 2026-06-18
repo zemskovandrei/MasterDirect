@@ -1,62 +1,93 @@
 @if (performer(); as p) {
-  <section
-    class="profile-hero"
-    [style.--profile-header-bg]="profileHeaderBg()"
-  >
-    @if (heroImage(); as cover) {
-      <div class="profile-hero-cover" aria-hidden="true">
-        <img [src]="cover" alt="" />
-      </div>
-    }
-    <div class="profile-hero-bg" aria-hidden="true"></div>
-
-    <div class="profile-hero-inner">
-      <a [routerLink]="catalogLink()" class="back-link"
-        >←
-        {{
-          type() === 'brigade'
-            ? translation.t('profile.backBrigades')
-            : translation.t('profile.backMasters')
-        }}</a
-      >
-
-      <div class="profile-hero-card">
-        <div class="profile-hero-top">
-          <div class="profile-avatar" aria-hidden="true">
-            @if (heroImage(); as thumb) {
-              <img class="profile-avatar-photo" [src]="thumb" alt="" />
-            } @else {
-              <span class="profile-avatar-icon">{{ typeIcon() }}</span>
-            }
-          </div>
-
-          <div class="profile-hero-head">
-            <span class="profile-badge">{{ typeLabel() }}</span>
-            <h1>{{ p.name }}</h1>
-            <p class="profile-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-          </div>
+  <div class="profile-page">
+    <section
+      class="profile-hero profile-hero--premium"
+      [style.--profile-header-bg]="profileHeaderBg()"
+    >
+      @if (heroImage(); as cover) {
+        <div class="profile-hero-cover" aria-hidden="true">
+          <img [src]="cover" alt="" />
         </div>
+      }
+      <div class="profile-hero-bg" aria-hidden="true"></div>
 
-        <p class="profile-desc">{{ catalogL10n.performerDescription(p) }}</p>
+      <div class="profile-hero-inner">
+        <a [routerLink]="catalogLink()" class="back-link"
+          >←
+          {{
+            type() === 'brigade'
+              ? translation.t('profile.backBrigades')
+              : translation.t('profile.backMasters')
+          }}</a
+        >
 
-        @if (p.callOutFee) {
-          <p class="profile-call-out-fee">
-            <span class="profile-call-out-fee__label">{{ translation.t('profile.callOutFeeLabel') }}</span>
-            {{ p.callOutFee }}
-          </p>
-        }
+        <div class="profile-glass-card">
+          <div class="profile-glass-card__body">
+            <div class="profile-identity">
+              <div class="profile-avatar" aria-hidden="true">
+                @if (heroImage(); as thumb) {
+                  <img class="profile-avatar-photo" [src]="thumb" alt="" />
+                } @else {
+                  <span class="profile-avatar-icon">{{ typeIcon() }}</span>
+                }
+              </div>
 
-        @if (hasSocialLinks(p.socialLinks)) {
-          <div class="profile-contacts">
-            <p class="profile-contacts-title">{{ translation.t('profile.contactTitle') }}</p>
-            <app-social-links [links]="p.socialLinks" />
+              <div class="profile-identity__text">
+                <div class="profile-name-row">
+                  <h1>{{ p.name }}</h1>
+                  <span class="profile-verified" [attr.title]="translation.t('profile.verified')">
+                    <span class="material-icons" aria-hidden="true">verified</span>
+                    <span>{{ translation.t('profile.verified') }}</span>
+                  </span>
+                </div>
+
+                <p class="profile-meta profile-meta--role">{{ performerRoleLine(p) }}</p>
+
+                @if (performerSkillsLine(p); as skills) {
+                  <p class="profile-meta">{{ skills }}</p>
+                }
+
+                @if (performerLocationLine(p); as location) {
+                  <p class="profile-meta profile-meta--location">{{ location }}</p>
+                }
+
+                @if (p.callOutFee && looksLikeCallOutFee(p.callOutFee)) {
+                  <p class="profile-meta profile-meta--fee">
+                    <span>{{ translation.t('profile.callOutFeeLabel') }}:</span> {{ p.callOutFee }}
+                  </p>
+                }
+
+                @if (hasSocialLinks(p.socialLinks) && showContacts()) {
+                  <div class="profile-contact-icons">
+                    <app-social-links [links]="p.socialLinks" variant="profile-icons" />
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              @if (hasSocialLinks(p.socialLinks)) {
+                @if (showContacts()) {
+                  @if (!isProfileOwner()) {
+                    <button
+                      type="button"
+                      class="profile-select-btn profile-select-btn--ghost"
+                      (click)="toggleContacts()"
+                    >
+                      {{ translation.t('catalog.selected') }}
+                    </button>
+                  }
+                } @else {
+                  <button type="button" class="profile-select-btn profile-select-btn--primary" (click)="toggleContacts()">
+                    {{ translation.t('catalog.select') }}
+                  </button>
+                }
+              }
+            </div>
           </div>
-        }
 
-        <div class="profile-stats">
-          <div class="profile-stat">
-            <span class="profile-stat-icon" aria-hidden="true">📁</span>
-            <div>
+          <div class="profile-glass-card__stats">
+            <div class="profile-stat">
               <strong>{{ p.works.length }}</strong>
               <span>{{
                 p.works.length === 1
@@ -64,18 +95,8 @@
                   : translation.t('profile.projectMany')
               }}</span>
             </div>
-          </div>
-          <div class="profile-stat">
-            <span class="profile-stat-icon" aria-hidden="true">↔</span>
-            <div>
-              <strong>{{ translation.t('profile.beforeAfterTitle') }}</strong>
-              <span>{{ translation.t('profile.beforeAfterStat') }}</span>
-            </div>
-          </div>
-          @if (relevantReviews().length > 0) {
-            <div class="profile-stat">
-              <span class="profile-stat-icon" aria-hidden="true">★</span>
-              <div>
+            @if (relevantReviews().length > 0) {
+              <div class="profile-stat">
                 <strong>{{ relevantReviews().length }}</strong>
                 <span>{{
                   relevantReviews().length === 1
@@ -83,120 +104,119 @@
                     : translation.t('reviews.countMany')
                 }}</span>
               </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (showThemeSettings()) {
-        <div class="profile-theme-panel">
-          <h3>{{ translation.t('profile.theme.title') }}</h3>
-          <div class="profile-theme-panel__row">
-            <label class="profile-theme-field">
-              <span>{{ translation.t('profile.theme.headerColor') }}</span>
-              <input
-                type="color"
-                [value]="headerColor()"
-                [disabled]="theme.profileThemeSaving()"
-                (input)="onHeaderColorChange($event)"
-              />
-            </label>
-            <button
-              type="button"
-              class="profile-theme-toggle"
-              (click)="toggleGlobalTheme()"
-            >
-              {{ globalThemeLabel() }}
-            </button>
+            }
           </div>
         </div>
-      }
-    </div>
-  </section>
 
-  @if (relevantReviews().length > 0) {
-    <section class="profile-reviews">
-      <div class="showcase-inner">
-        <div class="showcase-intro">
-          <span class="section-eyebrow">{{ translation.t('profile.reviews.eyebrow') }}</span>
-          <h2>
-            {{
-              type() === 'brigade'
-                ? translation.t('profile.reviews.titleBrigade')
-                : translation.t('profile.reviews.titleMaster')
-            }}
-          </h2>
-          <p class="section-subtitle">{{ translation.t('profile.reviews.lead') }}</p>
-        </div>
-        <div class="review-grid">
-          @for (review of relevantReviews(); track review.id) {
-            <article class="profile-review-card">
-              <p>{{ reviewStore.localizeReview(review) }}</p>
-              <div class="profile-review-meta">
-                <strong>{{ review.name }}</strong>
-                <span>{{ reviewStore.localizeCategory(review) }}</span>
-              </div>
-            </article>
-          }
-        </div>
+        @if (showThemeSettings()) {
+          <div class="profile-theme-panel">
+            <h3>{{ translation.t('profile.theme.title') }}</h3>
+            <div class="profile-theme-panel__row">
+              <label class="profile-theme-field">
+                <span>{{ translation.t('profile.theme.headerColor') }}</span>
+                <input
+                  type="color"
+                  [value]="headerColor()"
+                  [disabled]="theme.profileThemeSaving()"
+                  (input)="onHeaderColorChange($event)"
+                />
+              </label>
+              <button type="button" class="profile-theme-toggle" (click)="toggleGlobalTheme()">
+                {{ globalThemeLabel() }}
+              </button>
+            </div>
+          </div>
+        }
       </div>
     </section>
-  }
 
-  <section class="showcase-works">
-    <div class="showcase-inner">
-      @if (p.works.length === 0) {
-        <div class="works-empty">
-          <span class="works-empty-icon" aria-hidden="true">📷</span>
-          <h2>{{ translation.t('profile.worksEmptyTitle') }}</h2>
-          <p>{{ translation.t('profile.worksEmptyLead') }}</p>
-        </div>
-      } @else {
-        <div class="showcase-intro">
-          <span class="section-eyebrow">{{ translation.t('profile.worksEyebrow') }}</span>
-          <h2>{{ translation.t('profile.worksTitle') }}</h2>
-          <p class="section-subtitle">{{ translation.t('profile.worksLead') }}</p>
-        </div>
-
-        @if (p.works[0]; as heroWork) {
-          <div class="showcase-featured">
-            <app-before-after [work]="heroWork" [featured]="true" layout="compare" />
+    @if (relevantReviews().length > 0) {
+      <section class="profile-reviews">
+        <div class="showcase-inner">
+          <div class="showcase-intro showcase-intro--left">
+            <span class="section-eyebrow">{{ translation.t('profile.reviews.eyebrow') }}</span>
+            <h2>
+              {{
+                type() === 'brigade'
+                  ? translation.t('profile.reviews.titleBrigade')
+                  : translation.t('profile.reviews.titleMaster')
+              }}
+            </h2>
+            <p class="section-subtitle">{{ translation.t('profile.reviews.lead') }}</p>
           </div>
-        }
-
-        @if (p.works.length > 1) {
-          <div class="showcase-more">
-            <h3 class="showcase-more-title">
-              <span>{{ translation.t('profile.moreProjects') }}</span>
-              <span class="showcase-count">{{ p.works.length - 1 }}</span>
-            </h3>
-            <div class="showcase-grid">
-              @for (work of p.works.slice(1); track work.id) {
-                <div class="showcase-grid-item">
-                  <app-before-after [work]="work" layout="compare" />
+          <div class="review-grid">
+            @for (review of relevantReviews(); track review.id) {
+              <article class="profile-review-card">
+                <p>{{ reviewStore.localizeReview(review) }}</p>
+                <div class="profile-review-meta">
+                  <strong>{{ review.name }}</strong>
+                  <span>{{ reviewStore.localizeCategory(review) }}</span>
                 </div>
+              </article>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <section class="showcase-works">
+      <div class="showcase-inner">
+        @if (p.works.length === 0) {
+          <div class="works-empty">
+            <span class="works-empty-icon" aria-hidden="true">📷</span>
+            <h2>{{ translation.t('profile.worksEmptyTitle') }}</h2>
+            <p>{{ translation.t('profile.worksEmptyLead') }}</p>
+          </div>
+        } @else {
+          <div class="showcase-intro">
+            <h2>{{ translation.t('profile.worksTitle') }}</h2>
+            <p class="section-subtitle">{{ translation.t('profile.worksLead') }}</p>
+          </div>
+
+          @if (p.works[0]; as heroWork) {
+            <div class="showcase-featured">
+              <app-before-after [work]="heroWork" [featured]="true" />
+            </div>
+          }
+
+          @if (p.works.length > 1) {
+            <div class="portfolio-grid">
+              @for (work of p.works.slice(1); track work.id) {
+                <article class="portfolio-thumb">
+                  <app-before-after [work]="work" [showCaption]="false" />
+                  <p class="portfolio-thumb__title">{{ catalogL10n.workTitle(work) }}</p>
+                </article>
               }
             </div>
+          }
+
+          <div class="showcase-cta">
+            <p>
+              {{
+                type() === 'brigade'
+                  ? translation.t('profile.ctaBrigade')
+                  : translation.t('profile.ctaMaster')
+              }}
+            </p>
+            <a [routerLink]="catalogLink()" class="btn-primary btn-large">{{
+              type() === 'brigade'
+                ? translation.t('profile.ctaBrigadeBtn')
+                : translation.t('profile.ctaMasterBtn')
+            }}</a>
           </div>
         }
+      </div>
+    </section>
 
-        <div class="showcase-cta">
-          <p>
-            {{
-              type() === 'brigade'
-                ? translation.t('profile.ctaBrigade')
-                : translation.t('profile.ctaMaster')
-            }}
-          </p>
-          <a [routerLink]="catalogLink()" class="btn-primary btn-large">{{
-            type() === 'brigade'
-              ? translation.t('profile.ctaBrigadeBtn')
-              : translation.t('profile.ctaMasterBtn')
-          }}</a>
+    @if (hasSocialLinks(p.socialLinks) && showContacts()) {
+      <footer class="profile-footer">
+        <div class="profile-footer__inner">
+          <p class="profile-footer__label">{{ translation.t('catalog.contactsTitle') }}</p>
+          <app-social-links [links]="p.socialLinks" variant="profile-icons" />
         </div>
-      }
-    </div>
-  </section>
+      </footer>
+    }
+  </div>
 } @else {
   <section class="profile-not-found">
     <h1>{{ translation.t('profile.notFoundTitle') }}</h1>

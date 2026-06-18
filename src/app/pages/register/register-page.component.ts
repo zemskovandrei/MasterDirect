@@ -1,5 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   AbstractControl,
   FormBuilder,
@@ -7,141 +8,185 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { merge, of, firstValueFrom } from 'rxjs';
+import { RegisterPageUiService } from './register-page-ui.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
+import { CabinetSessionService } from '../../core/services/cabinet-session.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { TranslationService } from '../../core/services/translation.service';
-import type { PerformerType } from '../../core/models/portfolio.models';
+import type { PerformerType, WorkProject } from '../../core/models/portfolio.models';
 import type { MasterAccountType } from '../../core/models/master.model';
 import {
   CITY_IDS,
+  SPECIALTY_KEYS,
   defaultSpecialtyForRole,
   mapProRoleToAccountType,
   type CityId,
   type ProRole,
+  type SpecialtyKey,
 } from './register-page.model';
 import { evaluatePasswordStrength } from './password-strength.util';
+import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { beforeAfterWork } from '../../core/utils/before-after.util';
 import { APP_BRAND_NAME } from '../../core/constants/brand';
+import { authErrorMessageKey, isDuplicateSignupUser, registerErrorMessageKey } from '../../core/utils/auth-error.util';
+import { buildFurnitureSlug } from '../../core/utils/furniture-id.util';
 
-/** Tab roles shown in the wizard header. */
-export type RegisterAccountTab = 'master' | 'brigade' | 'furniture';
-
-const TAB_TO_ROLE: Record<RegisterAccountTab, ProRole> = {
-  master: 'master',
-  brigade: 'brigade',
-  furniture: 'furniture_maker',
-};
-
-const WIZARD_STEPS = [
-  { id: 'profile', label: 'Профиль' },
-  { id: 'contacts', label: 'Контакты' },
-  { id: 'documents', label: 'Документы' },
-  { id: 'security', label: 'Безопасность' },
-] as const;
-
-type WizardStepId = (typeof WIZARD_STEPS)[number]['id'];
+/** Roles shown on the registration form. */
+export const REGISTRATION_ROLES: ProRole[] = ['builder', 'master', 'furniture_maker'];
 
 type RegisterFormControls = {
   firstName: string;
-  middleName: string;
-  city: CityId;
-  proRole: ProRole;
-  email: string;
+  lastName: string;
   phone: string;
-  whatsapp: string;
+  email: string;
+  proRole: ProRole;
+  specialty: SpecialtyKey;
+  city: CityId;
   telegram: string;
-  facebook: string;
+  whatsapp: string;
   instagram: string;
+  facebook: string;
+  tiktok: string;
   password: string;
   confirmPassword: string;
+  workTitle: string;
   acceptTerms: boolean;
 };
 
 @Component({
   selector: 'app-register-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent],
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss',
 })
 export class RegisterPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly cabinetSession = inject(CabinetSessionService);
   private readonly supabase = inject(SupabaseService);
   private readonly store = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
+  private readonly registerUi = inject(RegisterPageUiService);
   protected readonly translation = inject(TranslationService);
 
   protected readonly brandName = APP_BRAND_NAME;
-  protected readonly wizardSteps = WIZARD_STEPS;
+  protected readonly registrationRoles = REGISTRATION_ROLES;
   protected readonly cities = CITY_IDS;
-  protected readonly accountTabs: { id: RegisterAccountTab; label: string }[] = [
-    { id: 'master', label: 'Мастер' },
-    { id: 'brigade', label: 'Бригадир' },
-    { id: 'furniture', label: 'Мебельщик' },
-  ];
+  protected readonly specialties = SPECIALTY_KEYS;
 
-  protected readonly currentStep = signal(0);
-  protected readonly accountTab = signal<RegisterAccountTab>('master');
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
   protected readonly submitting = signal(false);
   protected readonly status = signal<'idle' | 'success' | 'error'>('idle');
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly signInOpen = signal(false);
   protected readonly signInSubmitting = signal(false);
   protected readonly signInError = signal<string | null>(null);
+  protected readonly forgotPasswordSubmitting = signal(false);
+  protected readonly forgotPasswordMessage = signal<string | null>(null);
+  protected readonly forgotPasswordError = signal<string | null>(null);
+  protected readonly resetPasswordSubmitting = signal(false);
+  protected readonly resetPasswordError = signal<string | null>(null);
   protected readonly profilePreview = signal<string | null>(null);
   protected readonly profileFile = signal<File | null>(null);
-  protected readonly documentFiles = signal<File[]>([]);
   protected readonly dragProfile = signal(false);
-  protected readonly dragDocuments = signal(false);
-  protected readonly stepError = signal<string | null>(null);
+  protected readonly beforePreview = signal<string | null>(null);
+  protected readonly afterPreview = signal<string | null>(null);
+  protected readonly beforeDragging = signal(false);
+  protected readonly afterDragging = signal(false);
 
-  protected readonly promoStyle = computed(() => ({
-    backgroundImage: `url('assets/images/register-hero.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-  }));
-
-  protected readonly formSideStyle = computed(() => ({
-    backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 250, 252, 0.72) 100%), url('assets/fon2.jpeg')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-  }));
-
-  protected readonly progressPercent = computed(
-    () => ((this.currentStep() + 1) / WIZARD_STEPS.length) * 100,
-  );
+  private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
+  private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   protected readonly form = this.fb.nonNullable.group(
     {
       firstName: ['', [Validators.required, Validators.minLength(2)]],
-      middleName: [''],
-      city: ['batumi' as CityId, Validators.required],
-      proRole: ['master' as ProRole, Validators.required],
-      email: ['', [Validators.required, Validators.email]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
       phone: ['', [Validators.required, Validators.minLength(6)]],
-      whatsapp: [''],
+      email: ['', [Validators.required, Validators.email]],
+      proRole: ['master' as ProRole, Validators.required],
+      specialty: ['electrician' as SpecialtyKey, Validators.required],
+      city: ['batumi' as CityId, Validators.required],
       telegram: [''],
-      facebook: [''],
+      whatsapp: [''],
       instagram: [''],
+      facebook: [''],
+      tiktok: [''],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]],
+      workTitle: [''],
       acceptTerms: [false, Validators.requiredTrue],
     },
     { validators: (group) => this.passwordMatchValidator(group) },
   );
 
+  private readonly proRole = toSignal(
+    merge(of(this.form.controls.proRole.value), this.form.controls.proRole.valueChanges),
+    { initialValue: this.form.controls.proRole.value },
+  );
+
+  private readonly routeFragment = toSignal(this.route.fragment, { initialValue: null });
+
+  protected readonly authMode = computed<'login' | 'register' | 'forgot-password' | 'reset-password'>(() => {
+    if (this.auth.passwordRecovery()) {
+      return 'reset-password';
+    }
+    const fragment = this.routeFragment();
+    if (fragment === 'register') {
+      return 'register';
+    }
+    if (fragment === 'forgot-password') {
+      return 'forgot-password';
+    }
+    return 'login';
+  });
+
+  readonly selectedProRole = this.proRole;
+
+  protected readonly registerPreviewWork = computed(() => {
+    const before = this.beforePreview();
+    const after = this.afterPreview();
+    if (!before || !after) {
+      return null;
+    }
+    const title = this.form.controls.workTitle.value.trim() || this.specialtyLabel(this.form.controls.specialty.value);
+    return beforeAfterWork('register-preview', before, after, title);
+  });
+
+  constructor() {
+    this.registerUi.selectedProRole.set(this.form.controls.proRole.value);
+  }
+
   protected readonly signInForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
+
+  protected readonly forgotPasswordForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  protected readonly resetPasswordForm = this.fb.nonNullable.group(
+    {
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    { validators: (group) => this.passwordMatchValidator(group) },
+  );
+
+  private readonly resetPasswordValue = toSignal(this.resetPasswordForm.controls.password.valueChanges, {
+    initialValue: '',
+  });
+
+  protected readonly resetPasswordStrength = computed(() =>
+    evaluatePasswordStrength(this.resetPasswordValue() ?? ''),
+  );
 
   private readonly passwordValue = toSignal(this.form.controls.password.valueChanges, {
     initialValue: '',
@@ -151,20 +196,16 @@ export class RegisterPageComponent {
     evaluatePasswordStrength(this.passwordValue() ?? ''),
   );
 
-  /** Fields validated before moving to the next wizard step. */
-  private readonly stepFieldMap: (keyof RegisterFormControls)[][] = [
-    ['firstName', 'proRole', 'city'],
-    ['email', 'phone'],
-    [],
-    ['password', 'confirmPassword', 'acceptTerms'],
-  ];
-
   protected cityLabel(city: CityId): string {
     const labels: Record<CityId, string> = {
       batumi: 'Батуми',
       tbilisi: 'Тбилиси',
     };
     return labels[city];
+  }
+
+  protected specialtyLabel(key: SpecialtyKey): string {
+    return this.translation.t(`cabinet.specialties.${key}`);
   }
 
   protected fieldInvalid(field: keyof RegisterFormControls): boolean {
@@ -179,45 +220,10 @@ export class RegisterPageComponent {
     );
   }
 
-  protected selectAccountTab(tab: RegisterAccountTab): void {
-    this.accountTab.set(tab);
-    this.form.controls.proRole.setValue(TAB_TO_ROLE[tab]);
-    this.form.controls.proRole.markAsTouched();
-  }
-
-  protected onProRoleSelect(): void {
+  protected onRoleChange(): void {
     const role = this.form.controls.proRole.value;
-    const tab = (Object.entries(TAB_TO_ROLE).find(([, r]) => r === role)?.[0] ??
-      'master') as RegisterAccountTab;
-    this.accountTab.set(tab);
-  }
-
-  protected goToStep(index: number): void {
-    if (index < 0 || index >= WIZARD_STEPS.length) {
-      return;
-    }
-    if (index > this.currentStep() && !this.validateStep(this.currentStep())) {
-      return;
-    }
-    this.stepError.set(null);
-    this.currentStep.set(index);
-  }
-
-  protected nextStep(): void {
-    if (!this.validateStep(this.currentStep())) {
-      return;
-    }
-    this.stepError.set(null);
-    if (this.currentStep() < WIZARD_STEPS.length - 1) {
-      this.currentStep.update((s) => s + 1);
-    }
-  }
-
-  protected prevStep(): void {
-    this.stepError.set(null);
-    if (this.currentStep() > 0) {
-      this.currentStep.update((s) => s - 1);
-    }
+    this.registerUi.selectedProRole.set(role);
+    this.form.controls.specialty.setValue(defaultSpecialtyForRole(role));
   }
 
   protected togglePassword(field: 'password' | 'confirm'): void {
@@ -228,9 +234,113 @@ export class RegisterPageComponent {
     this.showConfirmPassword.update((v) => !v);
   }
 
-  protected toggleSignIn(): void {
-    this.signInOpen.update((open) => !open);
+  protected openLogin(): void {
     this.signInError.set(null);
+    this.forgotPasswordMessage.set(null);
+    this.forgotPasswordError.set(null);
+    this.auth.clearPasswordRecovery();
+    void this.router.navigate([], { fragment: 'login', replaceUrl: true });
+  }
+
+  protected openRegister(): void {
+    this.signInError.set(null);
+    this.forgotPasswordMessage.set(null);
+    this.forgotPasswordError.set(null);
+    void this.router.navigate([], { fragment: 'register', replaceUrl: true });
+  }
+
+  protected openForgotPassword(): void {
+    const email = this.signInForm.controls.email.value.trim();
+    if (email) {
+      this.forgotPasswordForm.controls.email.setValue(email);
+    }
+    this.signInError.set(null);
+    this.forgotPasswordMessage.set(null);
+    this.forgotPasswordError.set(null);
+    void this.router.navigate([], { fragment: 'forgot-password', replaceUrl: true });
+  }
+
+  protected forgotPasswordFieldInvalid(field: 'email'): boolean {
+    const control = this.forgotPasswordForm.get(field);
+    return !!control && control.invalid && control.touched;
+  }
+
+  protected resetPasswordFieldInvalid(field: 'password' | 'confirmPassword'): boolean {
+    const control = this.resetPasswordForm.get(field);
+    return !!control && control.invalid && control.touched;
+  }
+
+  protected resetPasswordMismatch(): boolean {
+    return (
+      !!this.resetPasswordForm.errors?.['passwordMismatch'] &&
+      (this.resetPasswordForm.get('confirmPassword')?.touched ?? false)
+    );
+  }
+
+  async requestPasswordReset(): Promise<void> {
+    if (this.forgotPasswordForm.invalid) {
+      this.forgotPasswordForm.markAllAsTouched();
+      return;
+    }
+
+    const { email } = this.forgotPasswordForm.getRawValue();
+    this.forgotPasswordSubmitting.set(true);
+    this.forgotPasswordMessage.set(null);
+    this.forgotPasswordError.set(null);
+
+    try {
+      const { error } = await this.auth.resetPasswordForEmail(email);
+      if (error) {
+        const key = authErrorMessageKey(error);
+        this.forgotPasswordError.set(this.translation.t(key));
+        return;
+      }
+      this.forgotPasswordMessage.set(this.translation.t('cabinet.forgotPasswordSuccess'));
+    } catch {
+      this.forgotPasswordError.set(this.translation.t('cabinet.forgotPasswordError'));
+    } finally {
+      this.forgotPasswordSubmitting.set(false);
+    }
+  }
+
+  async submitNewPassword(): Promise<void> {
+    if (this.resetPasswordForm.invalid) {
+      this.resetPasswordForm.markAllAsTouched();
+      return;
+    }
+
+    const { password } = this.resetPasswordForm.getRawValue();
+    this.resetPasswordSubmitting.set(true);
+    this.resetPasswordError.set(null);
+
+    try {
+      const { error } = await this.auth.updatePassword(password);
+      if (error) {
+        const key = authErrorMessageKey(error);
+        this.resetPasswordError.set(this.translation.t(key));
+        return;
+      }
+
+      this.resetPasswordForm.reset();
+      await firstValueFrom(this.supabase.loadProfiles());
+      const restored = await this.cabinetSession.restoreForCurrentUser();
+      if (restored) {
+        void this.router.navigate(['/cabinet'], { replaceUrl: true });
+        return;
+      }
+
+      this.forgotPasswordMessage.set(this.translation.t('cabinet.resetPasswordSuccess'));
+      this.openLogin();
+    } catch {
+      this.resetPasswordError.set(this.translation.t('cabinet.resetPasswordError'));
+    } finally {
+      this.resetPasswordSubmitting.set(false);
+    }
+  }
+
+  protected signInFieldInvalid(field: 'email' | 'password'): boolean {
+    const control = this.signInForm.get(field);
+    return !!control && control.invalid && control.touched;
   }
 
   protected onProfileSelected(event: Event): void {
@@ -250,24 +360,42 @@ export class RegisterPageComponent {
     }
   }
 
-  protected onDocumentsSelected(event: Event): void {
+  protected onBeforeAfterSelected(side: 'before' | 'after', event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.documentFiles.update((files) => [...files, ...Array.from(input.files!)]);
+    const file = input.files?.[0];
+    if (!file) {
+      return;
     }
+    this.loadBeforeAfterImage(side, file, input);
   }
 
-  protected onDocumentsDrop(event: DragEvent): void {
+  protected onBeforeAfterDragOver(side: 'before' | 'after', event: DragEvent): void {
     event.preventDefault();
-    this.dragDocuments.set(false);
-    const dropped = event.dataTransfer?.files;
-    if (dropped?.length) {
-      this.documentFiles.update((files) => [...files, ...Array.from(dropped)]);
+    if (side === 'before') {
+      this.beforeDragging.set(true);
+    } else {
+      this.afterDragging.set(true);
     }
   }
 
-  protected removeDocument(index: number): void {
-    this.documentFiles.update((files) => files.filter((_, i) => i !== index));
+  protected onBeforeAfterDragLeave(side: 'before' | 'after'): void {
+    if (side === 'before') {
+      this.beforeDragging.set(false);
+    } else {
+      this.afterDragging.set(false);
+    }
+  }
+
+  protected onBeforeAfterDrop(side: 'before' | 'after', event: DragEvent): void {
+    event.preventDefault();
+    this.onBeforeAfterDragLeave(side);
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) {
+      return;
+    }
+    const input =
+      side === 'before' ? this.beforeInput()?.nativeElement : this.afterInput()?.nativeElement;
+    this.loadBeforeAfterImage(side, file, input);
   }
 
   protected preventDragDefaults(event: DragEvent): void {
@@ -276,23 +404,25 @@ export class RegisterPageComponent {
   }
 
   async submit(): Promise<void> {
-    if (!this.validateStep(WIZARD_STEPS.length - 1)) {
-      this.currentStep.set(WIZARD_STEPS.length - 1);
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
 
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const beforeAfterError = this.beforeAfterPairError();
+    if (beforeAfterError) {
+      this.status.set('error');
+      this.errorMessage.set(beforeAfterError);
       return;
     }
 
     const v = this.form.getRawValue();
     const proRole = v.proRole;
     const accountType = mapProRoleToAccountType(proRole);
-    const displayName = [v.firstName.trim(), v.middleName.trim()].filter(Boolean).join(' ');
+    const displayName = `${v.firstName.trim()} ${v.lastName.trim()}`;
     const roleLabel = this.translation.t(`cabinet.proRoles.${proRole}`);
-    const specialtyKey = defaultSpecialtyForRole(proRole);
-    const description = `${roleLabel}. ${displayName}. ${this.translation.t('cabinet.defaultDescriptionSuffix')}`;
+    const specialtyLabel = this.specialtyLabel(v.specialty);
+    const description = `${roleLabel}. ${specialtyLabel}. ${displayName}. ${this.translation.t('cabinet.defaultDescriptionSuffix')}`;
 
     const socialLinks = {
       phone: v.phone.trim(),
@@ -311,51 +441,144 @@ export class RegisterPageComponent {
         full_name: displayName,
         phone: v.phone.trim(),
         city: v.city,
-        specialty: specialtyKey,
+        specialty: v.specialty,
         description,
+        pro_role: proRole,
         account_type:
-          accountType && accountType !== 'furniture'
-            ? (accountType as MasterAccountType)
-            : undefined,
+          accountType === 'furniture'
+            ? 'furniture'
+            : accountType
+              ? (accountType as MasterAccountType)
+              : undefined,
         whatsapp: socialLinks.whatsapp,
         telegram: socialLinks.telegram,
         instagram: socialLinks.instagram,
         facebook: socialLinks.facebook,
       });
 
-      if (authResult.error || !authResult.user) {
-        const message = authResult.error?.message ?? this.translation.t('cabinet.registerError');
+      if (isDuplicateSignupUser(authResult.user)) {
+        await this.auth.signOut();
         this.status.set('error');
-        this.errorMessage.set(message);
+        this.errorMessage.set(this.translation.t('cabinet.registerErrorEmailExists'));
+        return;
+      }
+
+      if (authResult.error || !authResult.user || !authResult.session) {
+        const key = registerErrorMessageKey(authResult.error, authResult.user);
+        await this.auth.signOut();
+        this.status.set('error');
+        this.errorMessage.set(this.translation.t(key));
+        return;
+      }
+
+      const profileType =
+        accountType === 'furniture'
+          ? 'furniture'
+          : accountType === 'brigade'
+            ? 'brigade'
+            : 'worker';
+
+      const profileError = await this.supabase.registerAuthProfile({
+        userId: authResult.user.id,
+        accountType: profileType,
+        fullName: displayName,
+        phone: v.phone.trim(),
+        city: v.city,
+        specialty: v.specialty,
+        description,
+        whatsapp: socialLinks.whatsapp,
+        telegram: socialLinks.telegram,
+        instagram: socialLinks.instagram,
+        facebook: socialLinks.facebook,
+      });
+
+      if (profileError.error) {
+        await this.auth.signOut();
+        this.status.set('error');
+        this.errorMessage.set(profileError.error);
         return;
       }
 
       if (accountType === 'furniture') {
-        this.furnitureStore.registerCompany({
+        const slug = buildFurnitureSlug(displayName);
+        this.furnitureStore.registerCompanyWithId(slug, {
           name: displayName,
-          specialty: specialtyKey,
+          specialty: v.specialty,
           description,
           city: v.city,
           socialLinks,
+          dbId: authResult.user.id,
+          slug,
         });
       } else if (accountType) {
         this.store.registerPerformerWithId(authResult.user.id, {
           type: accountType as PerformerType,
           name: displayName,
-          specialty: specialtyKey,
+          specialty: v.specialty,
           description,
           socialLinks,
         });
       }
 
+      const beforeImage = this.beforePreview();
+      const afterImage = this.afterPreview();
+      if (beforeImage && afterImage) {
+        const workTitle = v.workTitle.trim() || specialtyLabel;
+        const ownerId = authResult.user.id;
+        const ownerType =
+          accountType === 'furniture'
+            ? 'furniture'
+            : accountType === 'brigade'
+              ? 'brigade'
+              : 'worker';
+
+        let work: WorkProject | null = null;
+
+        if (accountType === 'furniture') {
+          const company = this.furnitureStore.currentCompany();
+          if (company) {
+            work = this.furnitureStore.addWork(company.id, {
+              title: workTitle,
+              description: '',
+              beforeImage,
+              afterImage,
+            });
+          }
+        } else if (accountType) {
+          const added = this.store.addWork(authResult.user.id, {
+            title: workTitle,
+            description: '',
+            beforeImage,
+            afterImage,
+          });
+          work = added?.work ?? null;
+        }
+
+        if (work) {
+          const saveResult = await firstValueFrom(
+            this.supabase.savePortfolioWork({ ownerId, ownerType, work }),
+          );
+          if (saveResult.error) {
+            if (accountType === 'furniture') {
+              const company = this.furnitureStore.currentCompany();
+              if (company) {
+                this.furnitureStore.deleteWork(company.id, work.id);
+              }
+            } else {
+              this.store.deleteWork(authResult.user.id, work.id);
+            }
+            await this.auth.signOut();
+            this.status.set('error');
+            this.errorMessage.set(saveResult.error);
+            return;
+          }
+        }
+      }
+
       await firstValueFrom(this.supabase.loadProfiles());
-      this.status.set('success');
-      this.form.reset({ city: 'batumi', proRole: 'master', acceptTerms: false });
-      this.accountTab.set('master');
-      this.currentStep.set(0);
-      this.profilePreview.set(null);
-      this.profileFile.set(null);
-      this.documentFiles.set([]);
+      await this.cabinetSession.restoreForCurrentUser();
+      this.resetForm();
+      void this.router.navigate(['/cabinet'], { replaceUrl: true });
     } catch (error) {
       this.status.set('error');
       this.errorMessage.set(
@@ -379,48 +602,83 @@ export class RegisterPageComponent {
     try {
       const result = await this.auth.signIn(email, password);
       if (result.error || !result.user) {
-        this.signInError.set(result.error?.message ?? this.translation.t('cabinet.signInError'));
+        const key = authErrorMessageKey(result.error);
+        this.signInError.set(this.translation.t(key));
         return;
       }
 
       await firstValueFrom(this.supabase.loadProfiles());
-      this.signInOpen.set(false);
+      const restored = await this.cabinetSession.restoreForCurrentUser();
+      if (!restored) {
+        this.signInError.set(this.translation.t('cabinet.signInError'));
+        await this.auth.signOut();
+        return;
+      }
       this.signInForm.reset();
+      void this.router.navigate(['/cabinet'], { replaceUrl: true });
     } catch (error) {
-      this.signInError.set(
-        error instanceof Error ? error.message : this.translation.t('cabinet.signInError'),
-      );
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      const key =
+        message.includes('invalid login credentials') || message.includes('invalid email or password')
+          ? 'cabinet.signInErrorInvalidCredentials'
+          : 'cabinet.signInError';
+      this.signInError.set(this.translation.t(key));
     } finally {
       this.signInSubmitting.set(false);
     }
   }
 
-  protected stepId(): WizardStepId {
-    return WIZARD_STEPS[this.currentStep()].id;
+  private resetForm(): void {
+    this.form.reset({
+      proRole: 'master',
+      specialty: 'electrician',
+      city: 'batumi',
+      acceptTerms: false,
+    });
+    this.registerUi.selectedProRole.set('master');
+    this.profilePreview.set(null);
+    this.profileFile.set(null);
+    this.beforePreview.set(null);
+    this.afterPreview.set(null);
   }
 
-  private validateStep(stepIndex: number): boolean {
-    const fields = this.stepFieldMap[stepIndex] ?? [];
-    let valid = true;
+  private beforeAfterPairError(): string | null {
+    const before = this.beforePreview();
+    const after = this.afterPreview();
+    if ((before && !after) || (!before && after)) {
+      return this.translation.t('cabinet.alertBothPhotos');
+    }
+    return null;
+  }
 
-    for (const field of fields) {
-      const control = this.form.get(field);
-      control?.markAsTouched();
-      if (control?.invalid) {
-        valid = false;
+  private loadBeforeAfterImage(side: 'before' | 'after', file: File, input?: HTMLInputElement): void {
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage.set(this.translation.t('cabinet.alertImageOnly'));
+      if (input) {
+        input.value = '';
       }
+      return;
     }
 
-    if (stepIndex === WIZARD_STEPS.length - 1 && this.form.errors?.['passwordMismatch']) {
-      this.form.get('confirmPassword')?.markAsTouched();
-      valid = false;
+    if (file.size > 800_000) {
+      this.errorMessage.set(this.translation.t('cabinet.alertFileTooLarge'));
+      if (input) {
+        input.value = '';
+      }
+      return;
     }
 
-    if (!valid) {
-      this.stepError.set(this.translation.t('cabinet.registerStepError'));
-    }
-
-    return valid;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      if (side === 'before') {
+        this.beforePreview.set(dataUrl);
+      } else {
+        this.afterPreview.set(dataUrl);
+      }
+      this.errorMessage.set(null);
+    };
+    reader.readAsDataURL(file);
   }
 
   private setProfileFile(file: File): void {

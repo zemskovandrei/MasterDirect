@@ -294,6 +294,7 @@
     "portfolio": {
       "title": "Work by performers",
       "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
+      "empty": "No published work yet. Performers can add projects in their dashboard.",
       "sampleTitle": "Sample completed order",
       "sampleDesc": "A performer publication from the catalog",
       "actions": {
@@ -350,15 +351,16 @@
     }
   },
   "catalog": {
-    "autoMatchEmpty": "All specialists are busy — leave a request for auto-matching",
-    "autoMatchCta": "Submit a request in the calculator"
+    "select": "Select",
+    "selected": "Selected",
+    "contactsTitle": "Contacts"
   },
   "brigades": {
     "title": "Teams",
     "subtitle": "Crews for full renovation of apartments, houses and individual rooms.",
     "cta": "Publish a team",
     "pickTitle": "Choose a team",
-    "pickLead": "Click a card to select a team and view their work.",
+    "pickLead": "Click Select to view contacts and reach out to the team.",
     "inCatalog": "teams in catalog",
     "badge": "Team",
     "allWorks": "All work",
@@ -481,6 +483,12 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…"
+    },
+    "catalog": {
+      "deleteProfileConfirm": "Remove \"{{name}}\" from the catalog? This cannot be undone.",
+      "deleteWork": "Delete photos",
+      "deleteWorkConfirm": "Delete the before/after project \"{{title}}\"?",
+      "editTitle": "Edit profile"
     },
     "jobs": {
       "toolbarLead": "You can close completed jobs or remove them from the public list.",

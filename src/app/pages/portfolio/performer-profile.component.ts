@@ -7,12 +7,17 @@ import { PortfolioStoreService } from '../../core/services/portfolio-store.servi
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { PerformerType } from '../../core/models/portfolio.models';
+import { PerformerProfile, PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import {
+  matchesCatalogSelection,
+  saveCatalogSelection,
+  type CatalogSelectionType,
+} from '../../core/utils/catalog-selection.util';
 
 @Component({
   selector: 'app-performer-profile',
@@ -30,6 +35,7 @@ export class PerformerProfileComponent {
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly theme = inject(ThemeService);
   protected readonly hasSocialLinks = hasSocialLinks;
+  protected readonly contactsRevealed = signal(false);
 
   protected readonly headerColor = signal('#0c7489');
 
@@ -100,6 +106,17 @@ export class PerformerProfileComponent {
       }
       this.headerColor.set(this.toColorInputValue(performer.headerBg));
     });
+
+    effect(() => {
+      const type = this.type();
+      const id = this.id();
+      if (!id) {
+        this.contactsRevealed.set(false);
+        return;
+      }
+
+      this.contactsRevealed.set(matchesCatalogSelection(type as CatalogSelectionType, id));
+    });
   }
 
   protected typeLabel(): string {
@@ -110,6 +127,26 @@ export class PerformerProfileComponent {
 
   protected catalogLink(): string {
     return this.type() === 'brigade' ? '/brigades' : '/masters';
+  }
+
+  protected showContacts(): boolean {
+    return this.isProfileOwner() || this.contactsRevealed();
+  }
+
+  protected toggleContacts(): void {
+    const performer = this.performer();
+    if (!performer) {
+      return;
+    }
+
+    const next = !this.contactsRevealed();
+    this.contactsRevealed.set(next);
+
+    if (next) {
+      saveCatalogSelection({ type: this.type() as CatalogSelectionType, id: performer.id });
+    } else if (matchesCatalogSelection(this.type() as CatalogSelectionType, performer.id)) {
+      saveCatalogSelection(null);
+    }
   }
 
   protected globalThemeLabel(): string {
@@ -126,6 +163,55 @@ export class PerformerProfileComponent {
 
   protected toggleGlobalTheme() {
     this.theme.toggleTheme();
+  }
+
+  protected performerRoleLine(p: PerformerProfile): string {
+    const roleKey = this.type() === 'brigade' ? 'profile.roleBrigade' : 'profile.roleMaster';
+    const parts = p.specialty.split(',').map((s) => s.trim()).filter(Boolean);
+    const primary = parts[0]
+      ? this.catalogL10n.localizeSpecialtyField(parts[0])
+      : this.catalogL10n.performerSpecialty(p);
+    return `${this.translation.t(roleKey)}: ${primary.toUpperCase()}`;
+  }
+
+  protected performerSkillsLine(p: PerformerProfile): string {
+    const parts = p.specialty.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      return parts.slice(1).map((s) => this.catalogL10n.localizeSpecialtyField(s)).join(', ');
+    }
+    const desc = this.catalogL10n.performerDescription(p);
+    if (!desc) {
+      return '';
+    }
+    const roleLine = this.performerRoleLine(p);
+    if (desc.toUpperCase() === roleLine.split(':').slice(1).join(':').trim()) {
+      return '';
+    }
+    return desc.length <= 140 ? desc : '';
+  }
+
+  protected performerLocationLine(p: PerformerProfile): string {
+    const profile = this.supabase.profiles().find((item) => item.id === p.id);
+    const city = profile?.city?.trim();
+    if (!city || this.looksLikeCallOutFee(city)) {
+      return '';
+    }
+    return city
+      .split(/[,;]/)
+      .map((part) => part.trim().toUpperCase())
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  protected looksLikeCallOutFee(value: string): boolean {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return false;
+    }
+    if (/^\d/.test(trimmed) || /₾|gel|лари/i.test(trimmed)) {
+      return true;
+    }
+    return /^\d+[\d\s.,]*$/.test(trimmed);
   }
 
   private toColorInputValue(color: string): string {

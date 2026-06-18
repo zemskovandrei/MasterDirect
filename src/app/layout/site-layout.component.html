@@ -78,7 +78,7 @@
                       {{ translation.t('app.auth.cabinet') }}
                     </a>
                   } @else {
-                    <a routerLink="/cabinet" class="header-auth-link" (click)="onNavClick()">
+                    <a routerLink="/cabinet" fragment="login" class="header-auth-link" (click)="onNavClick()">
                       {{ translation.t('app.auth.login') }}
                     </a>
                     <a
@@ -112,7 +112,7 @@
               <span>{{ translation.t('app.auth.cabinet') }}</span>
             </a>
           } @else {
-            <a routerLink="/cabinet" class="header-auth-link">
+            <a routerLink="/cabinet" fragment="login" class="header-auth-link">
               {{ translation.t('app.auth.login') }}
             </a>
             <a

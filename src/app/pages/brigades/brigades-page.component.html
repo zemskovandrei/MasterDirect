@@ -22,52 +22,167 @@
             {{ supabase.brigades().length }} {{ translation.t('brigades.inCatalog') }}
           </p>
         }
+        @if (catalogAdmin.isAdmin()) {
+          <div class="catalog-admin-toolbar">
+            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
+            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
+              {{ translation.t('admin.logout') }}
+            </button>
+          </div>
+        }
       </header>
 
       <div class="performer-grid">
         @for (p of supabase.brigades(); track p.id) {
           <article
-            class="performer-card performer-card--brigade performer-card--selectable"
+            class="performer-card performer-card--brigade performer-card--enhanced"
+            [class.performer-card--admin]="catalogAdmin.isAdmin()"
             [class.performer-card--selected]="selectedBrigadeId() === p.id"
-            role="button"
-            tabindex="0"
-            [attr.aria-pressed]="selectedBrigadeId() === p.id"
-            (click)="selectBrigade(p.id)"
-            (keydown.enter)="selectBrigade(p.id)"
-            (keydown.space)="$event.preventDefault(); selectBrigade(p.id)"
           >
-            <div class="performer-head">
-              <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
-              @if (selectedBrigadeId() === p.id) {
-                <span class="performer-selected-mark" aria-hidden="true">✓</span>
-              }
-              <h3>{{ p.name }}</h3>
-              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
-            </div>
-            @if (p.works[0]) {
-              <app-before-after [work]="p.works[0]" layout="split" />
+            @if (catalogAdmin.isAdmin()) {
+              <div class="performer-admin-actions">
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--edit"
+                  (click)="openEditPerformer(p)"
+                >
+                  ✏️ {{ translation.t('admin.masters.edit') }}
+                </button>
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--delete"
+                  (click)="deletePerformer(p)"
+                >
+                  ❌ {{ translation.t('admin.masters.delete') }}
+                </button>
+              </div>
             }
-            <a
-              [routerLink]="performerLink(p.id)"
-              class="performer-more"
-              (click)="$event.stopPropagation()"
-            >
-              {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
-            </a>
-          </article>
-        } @empty {
-          @if (supabase.loaded()) {
-            <div class="catalog-empty-cta">
-              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-              <a routerLink="/jobs" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-                {{ translation.t('catalog.autoMatchCta') }}
-              </a>
+
+            @if (selectedBrigadeId() === p.id) {
+              <span class="performer-selected-mark" aria-hidden="true">✓</span>
+            }
+            <div class="performer-card__header">
+              <div class="performer-card__avatar" aria-hidden="true">
+                {{ p.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="performer-head">
+                <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
+                <h3>{{ p.name }}</h3>
+                <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              </div>
             </div>
-          }
+
+            @if (catalogL10n.performerDescription(p); as desc) {
+              <p class="performer-desc">{{ desc }}</p>
+            }
+
+            @if (p.works[0]; as work) {
+              <div class="performer-card__media">
+                @if (catalogAdmin.isAdmin()) {
+                  <button
+                    type="button"
+                    class="performer-admin-btn performer-admin-btn--delete performer-admin-work-delete"
+                    (click)="deleteWork(p, work.id, work.title)"
+                  >
+                    🗑 {{ translation.t('admin.catalog.deleteWork') }}
+                  </button>
+                }
+                <app-before-after [work]="work" [showCaption]="false" />
+              </div>
+            }
+
+            <div class="performer-card__footer">
+              @if (selectedBrigadeId() === p.id && hasSocialLinks(p.socialLinks)) {
+                <div class="performer-card__contacts">
+                  <p class="performer-card__contacts-title">{{ translation.t('catalog.contactsTitle') }}</p>
+                  <app-social-links [links]="p.socialLinks" variant="card-revealed" />
+                </div>
+              }
+
+              <div class="performer-card__actions">
+                <button
+                  type="button"
+                  class="performer-select-btn"
+                  [class.performer-select-btn--active]="selectedBrigadeId() === p.id"
+                  (click)="selectBrigade(p.id)"
+                >
+                  {{
+                    selectedBrigadeId() === p.id
+                      ? translation.t('catalog.selected')
+                      : translation.t('catalog.select')
+                  }}
+                </button>
+                <a [routerLink]="performerLink(p.id)" class="performer-more">
+                  {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
+                </a>
+              </div>
+            </div>
+          </article>
         }
       </div>
     </section>
   </div>
 </section>
 </div>
+
+@if (editingPerformer(); as performer) {
+  <div class="performer-edit-overlay" (click)="closeEditPerformer()">
+    <div
+      class="performer-edit-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translation.t('admin.catalog.editTitle')"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        class="performer-edit-dialog__close"
+        (click)="closeEditPerformer()"
+        aria-label="×"
+      >
+        ×
+      </button>
+      <h2>{{ translation.t('admin.catalog.editTitle') }}</h2>
+      <p class="performer-edit-dialog__subtitle">{{ performer.name }}</p>
+
+      <form class="performer-edit-form" [formGroup]="editForm" (ngSubmit)="saveEditedPerformer()">
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.nameLabel') }}</span>
+          <input type="text" formControlName="name" autocomplete="name" />
+        </label>
+        @if (editFieldInvalid('name')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.nameError') }}</p>
+        }
+
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.specialtyLabel') }}</span>
+          <input type="text" formControlName="specialty" autocomplete="off" />
+        </label>
+        @if (editFieldInvalid('specialty')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.specialtyError') }}</p>
+        }
+
+        <label class="performer-edit-field">
+          <span>{{ translation.t('admin.masters.descriptionLabel') }}</span>
+          <textarea formControlName="description" rows="4"></textarea>
+        </label>
+        @if (editFieldInvalid('description')) {
+          <p class="performer-edit-error">{{ translation.t('admin.masters.descriptionError') }}</p>
+        }
+
+        <div class="performer-edit-actions">
+          <button type="button" class="performer-edit-cancel" (click)="closeEditPerformer()">
+            {{ translation.t('admin.masters.cancel') }}
+          </button>
+          <button type="submit" class="btn-primary performer-edit-save" [disabled]="adminSaving()">
+            {{
+              adminSaving()
+                ? translation.t('admin.masters.saving')
+                : translation.t('admin.masters.save')
+            }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

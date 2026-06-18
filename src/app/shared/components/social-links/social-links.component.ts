@@ -1,4 +1,4 @@
-import { Component, computed, input, inject } from '@angular/core';
+import { Component, computed, input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PerformerSocialLinks, SocialLinkKey } from '../../../core/models/portfolio.models';
 import { buildSocialLinkItems } from '../../../core/utils/social-links.util';
@@ -10,6 +10,13 @@ const SOCIAL_ICONS: Record<SocialLinkKey, string> = {
   telegram: '✈️',
   instagram: '📷',
   facebook: 'f',
+};
+
+const MATERIAL_ICONS: Record<Exclude<SocialLinkKey, 'phone'>, string> = {
+  whatsapp: 'chat',
+  telegram: 'send',
+  instagram: 'photo_camera',
+  facebook: 'groups',
 };
 
 @Component({
@@ -24,15 +31,29 @@ export class SocialLinksComponent {
 
   readonly links = input<PerformerSocialLinks | undefined>();
   readonly compact = input(false);
-  readonly variant = input<'hero' | 'light'>('hero');
+  readonly variant = input<'hero' | 'light' | 'card' | 'card-revealed' | 'profile-icons'>('hero');
 
+  protected readonly phoneRevealed = signal(false);
   protected readonly items = computed(() => buildSocialLinkItems(this.links()));
 
   protected icon(key: SocialLinkKey): string {
     return SOCIAL_ICONS[key];
   }
 
+  protected materialIcon(key: SocialLinkKey): string {
+    if (key === 'phone') {
+      return 'phone';
+    }
+    return MATERIAL_ICONS[key];
+  }
+
   protected label(key: SocialLinkKey): string {
     return this.translation.t(`social.${key}`);
+  }
+
+  protected togglePhone(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.phoneRevealed.update((value) => !value);
   }
 }

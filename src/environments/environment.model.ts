@@ -8,6 +8,7 @@ export interface Environment {
     mastersTable: string;
     brigadesTable: string;
     furnitureOrdersTable: string;
+    portfolioWorksTable: string;
     reviewsTable: string;
     /** Emails allowed to access admin moderation UI */
     adminEmails: string[];

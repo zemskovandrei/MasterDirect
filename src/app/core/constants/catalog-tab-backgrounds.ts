@@ -14,11 +14,35 @@ export const CATALOG_TAB_BACKGROUNDS = {
   calculator:
     'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
   cabinetWorker:
-    'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=1200',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920',
   cabinetBrigade:
-    'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1200',
+    'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920',
   cabinetFurniture:
-    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1200',
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920',
+  /** Регистрация мастера — левая панель: ванная после ремонта. */
+  cabinetRegisterMasterPromo:
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920',
+  /** Регистрация мастера — форма: мастер за работой. */
+  cabinetRegisterMasterForm:
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
+  /** Регистрация бригады — левая панель: стройка с высоты. */
+  cabinetRegisterBrigadePromo:
+    'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920',
+  /** Регистрация бригады — форма: инженер на объекте. */
+  cabinetRegisterBrigadeForm:
+    'https://images.unsplash.com/photo-1581094794329-cf1c4f5c8c2e?q=80&w=1920',
+  /** Регистрация мебельщика — левая панель: интерьер. */
+  cabinetRegisterFurniturePromo:
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920',
+  /** Регистрация мебельщика — форма: мебель в интерьере. */
+  cabinetRegisterFurnitureForm:
+    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1920',
+  /** Вход — левая панель: дом в золотой час. */
+  cabinetLoginPromo:
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920',
+  /** Вход — правая панель с формой: светлая гостиная. */
+  cabinetLoginForm:
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
 } as const;
 
 /** Modern home at golden hour — Unsplash / Erik Mclean */
@@ -66,13 +90,24 @@ export function calculatorSectionBackgroundStyle(): Record<string, string> {
   };
 }
 
-export function cabinetTabBackgroundStyle(key: CabinetTabBackgroundKey): Record<string, string> {
+export function cabinetPageSurfaceStyle(): Record<string, string> {
+  return {
+    backgroundColor: '#f4f7fb',
+  };
+}
+
+/** Фон левой промо-панели кабинета — фото роли с тёмным оверлеем. */
+export function cabinetPromoBackgroundStyle(key: CabinetTabBackgroundKey): Record<string, string> {
   const photoUrl = CATALOG_TAB_BACKGROUNDS[key];
   return {
-    backgroundColor: '#0f172a',
-    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.3)), url("${photoUrl}")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
+    backgroundColor: '#0c1222',
+    backgroundImage: `linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%), url('${photoUrl}')`,
     backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
   };
+}
+
+export function cabinetTabBackgroundStyle(key: CabinetTabBackgroundKey): Record<string, string> {
+  return cabinetPromoBackgroundStyle(key);
 }

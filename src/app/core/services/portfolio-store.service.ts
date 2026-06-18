@@ -168,6 +168,24 @@ export class PortfolioStoreService {
     return true;
   }
 
+  deleteWork(performerId: string, workId: string): boolean {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return false;
+    }
+
+    const nextWorks = performer.works.filter((work) => work.id !== workId);
+    if (nextWorks.length === performer.works.length) {
+      return false;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) => (item.id === performerId ? { ...item, works: nextWorks } : item)),
+    );
+    this.persist();
+    return true;
+  }
+
   removePerformerIfExists(performerId: string): void {
     if (!this.performersSignal().some((item) => item.id === performerId)) {
       return;
@@ -176,21 +194,52 @@ export class PortfolioStoreService {
   }
 
   setSession(performerId: string): void {
-    if (!this.performersSignal().some((item) => item.id === performerId)) {
+    const exists = this.performersSignal().some((p) => p.id === performerId);
+    if (!exists) {
       return;
     }
     this.sessionSignal.set({ performerId });
     this.persistSession();
   }
 
+  ensurePerformer(performer: PerformerProfile): void {
+    this.performersSignal.update((list) => {
+      const index = list.findIndex((item) => item.id === performer.id);
+      if (index === -1) {
+        return [...list, performer];
+      }
+
+      const existing = list[index];
+      const merged: PerformerProfile = {
+        ...performer,
+        works: existing.works.length > 0 ? existing.works : performer.works,
+      };
+      return [...list.slice(0, index), merged, ...list.slice(index + 1)];
+    });
+    this.persist();
+  }
+
   replacePerformersFromRemote(remote: PerformerProfile[]): void {
     const existing = this.performersSignal();
     const merged = remote.map((performer) => {
       const local = existing.find((item) => item.id === performer.id);
-      return local ? { ...performer, works: local.works } : performer;
+      const works = performer.works.length > 0 ? performer.works : (local?.works ?? []);
+      return { ...performer, works };
     });
 
     this.performersSignal.set(merged);
+    this.persist();
+  }
+
+  setWorksForPerformer(performerId: string, works: WorkProject[]): void {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) => (item.id === performerId ? { ...item, works } : item)),
+    );
     this.persist();
   }
 
@@ -231,7 +280,7 @@ export class PortfolioStoreService {
     const verificationCode = wantsVerification ? generateVerificationCode() : undefined;
 
     const work: WorkProject = {
-      id: `work-${Date.now()}`,
+      id: crypto.randomUUID(),
       title: data.title.trim(),
       description: data.description.trim(),
       beforeImage: data.beforeImage,

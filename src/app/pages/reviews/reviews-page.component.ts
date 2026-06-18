@@ -9,13 +9,15 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ReviewPerformerTypeKey } from '../../core/models/portfolio.models';
+import { ReviewPerformerTypeKey, ReviewSubmission, WorkProject } from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
+import { beforeAfterWork } from '../../core/utils/before-after.util';
+import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
@@ -30,7 +32,7 @@ interface PerformerOption {
 @Component({
   selector: 'app-reviews-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent],
   templateUrl: './reviews-page.component.html',
   styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
 })
@@ -466,5 +468,12 @@ export class ReviewsPageComponent {
   @HostListener('document:click')
   closePerformerMenu() {
     this.performerMenuOpen.set(false);
+  }
+
+  protected reviewPhotosWork(item: ReviewSubmission): WorkProject | null {
+    if (!item.beforeImage || !item.afterImage) {
+      return null;
+    }
+    return beforeAfterWork(item.id, item.beforeImage, item.afterImage);
   }
 }

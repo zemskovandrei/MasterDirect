@@ -24,38 +24,99 @@
             {{ supabase.furnitureCompanies().length }} {{ translation.t('furniture.inCatalog') }}
           </p>
         }
+        @if (catalogAdmin.isAdmin()) {
+          <div class="catalog-admin-toolbar">
+            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
+            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
+              {{ translation.t('admin.logout') }}
+            </button>
+          </div>
+        }
       </header>
 
       <div class="performer-grid">
         @for (company of supabase.furnitureCompanies(); track company.id) {
-          <article class="performer-card performer-card--furniture">
-            <div class="performer-head">
-              <span class="performer-badge performer-badge-furniture">{{
-                translation.t('furniture.badge')
-              }}</span>
-              <h3>
-                <a [routerLink]="['/furniture', company.id]">{{ company.name }}</a>
-              </h3>
-              <p class="performer-city">{{ company.city }}</p>
-              <p class="performer-specialty">{{ company.specialty }}</p>
-              <p class="performer-desc">{{ company.description }}</p>
-            </div>
-            @if (company.works[0]) {
-              <app-before-after [work]="company.works[0]" layout="split" />
+          <article
+            class="performer-card performer-card--furniture performer-card--enhanced"
+            [class.performer-card--admin]="catalogAdmin.isAdmin()"
+            [class.performer-card--selected]="selectedCompanyId() === company.id"
+          >
+            @if (catalogAdmin.isAdmin()) {
+              <div class="performer-admin-actions">
+                <button
+                  type="button"
+                  class="performer-admin-btn performer-admin-btn--delete"
+                  (click)="deleteCompany(company)"
+                >
+                  ❌ {{ translation.t('admin.masters.delete') }}
+                </button>
+              </div>
             }
-            <a [routerLink]="['/furniture', company.id]" class="performer-more">
-              {{ translation.t('furniture.allWorks') }} ({{ company.works.length }}) →
-            </a>
-          </article>
-        } @empty {
-          @if (supabase.loaded()) {
-            <div class="catalog-empty-cta">
-              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-              <a routerLink="/jobs" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-                {{ translation.t('catalog.autoMatchCta') }}
-              </a>
+
+            <div class="performer-card__header">
+              <div class="performer-card__avatar performer-card__avatar--furniture" aria-hidden="true">
+                {{ company.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="performer-head">
+                <span class="performer-badge performer-badge-furniture">{{
+                  translation.t('furniture.badge')
+                }}</span>
+                <h3>
+                  <a [routerLink]="['/furniture', company.id]">{{ company.name }}</a>
+                </h3>
+                @if (company.city) {
+                  <p class="performer-city">{{ company.city }}</p>
+                }
+                <p class="performer-specialty">{{ company.specialty }}</p>
+              </div>
             </div>
-          }
+
+            @if (company.description) {
+              <p class="performer-desc">{{ company.description }}</p>
+            }
+
+            @if (company.works[0]; as work) {
+              <div class="performer-card__media">
+                @if (catalogAdmin.isAdmin()) {
+                  <button
+                    type="button"
+                    class="performer-admin-btn performer-admin-btn--delete performer-admin-work-delete"
+                    (click)="deleteWork(company, work.id, work.title)"
+                  >
+                    🗑 {{ translation.t('admin.catalog.deleteWork') }}
+                  </button>
+                }
+                <app-before-after [work]="work" [showCaption]="false" />
+              </div>
+            }
+
+            <div class="performer-card__footer">
+              @if (selectedCompanyId() === company.id && hasSocialLinks(company.socialLinks)) {
+                <div class="performer-card__contacts">
+                  <p class="performer-card__contacts-title">{{ translation.t('catalog.contactsTitle') }}</p>
+                  <app-social-links [links]="company.socialLinks" variant="card-revealed" />
+                </div>
+              }
+
+              <div class="performer-card__actions">
+                <button
+                  type="button"
+                  class="performer-select-btn"
+                  [class.performer-select-btn--active]="selectedCompanyId() === company.id"
+                  (click)="toggleSelect(company.id)"
+                >
+                  {{
+                    selectedCompanyId() === company.id
+                      ? translation.t('catalog.selected')
+                      : translation.t('catalog.select')
+                  }}
+                </button>
+                <a [routerLink]="['/furniture', company.id]" class="performer-more">
+                  {{ translation.t('furniture.allWorks') }} ({{ company.works.length }}) →
+                </a>
+              </div>
+            </div>
+          </article>
         }
       </div>
     </section>

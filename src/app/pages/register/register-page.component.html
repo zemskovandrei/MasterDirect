@@ -1,417 +1,463 @@
-<div class="register-page min-h-[calc(100dvh-4.5rem)]">
-  <div class="grid min-h-inherit lg:grid-cols-[2fr_3.5fr]">
-    <!-- Promo panel -->
-    <aside
-      class="relative bg-slate-900 bg-cover bg-center text-white"
-      [ngStyle]="promoStyle()"
-      aria-labelledby="register-hero-title"
-    >
-      <div
-        class="flex min-h-full flex-col justify-center bg-gradient-to-br from-slate-900/60 via-slate-900/45 to-slate-900/55 px-7 py-10 md:px-10"
-      >
-        <div class="mb-8 flex items-center gap-3.5">
-          <span
-            class="h-11 w-11 shrink-0 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/30"
-            aria-hidden="true"
-          ></span>
-          <div>
-            <p class="m-0 text-lg font-extrabold tracking-wide">{{ brandName }}</p>
-            <p class="m-0 mt-1 max-w-xs text-sm leading-relaxed text-white/75">
-              {{ translation.t('cabinet.registerTagline') }}
-            </p>
-          </div>
-        </div>
-
-        <h1 id="register-hero-title" class="mb-3 max-w-md text-3xl font-bold leading-tight drop-shadow-md">
-          {{ translation.t('cabinet.registerHeroTitle') }}
-        </h1>
-        <p class="mb-7 max-w-lg text-base leading-relaxed text-white/85">
-          {{ translation.t('cabinet.registerHeroSubtitle') }}
-        </p>
-
-        <ul class="m-0 flex max-w-lg list-none flex-col gap-3 p-0" [attr.aria-label]="translation.t('cabinet.registerBenefitsAria')">
-          @for (benefit of [1, 2, 3, 4]; track benefit) {
-            <li class="flex items-start gap-2.5 text-[0.95rem] leading-snug">
-              <span class="mt-0.5 text-emerald-400" aria-hidden="true">✓</span>
-              {{ translation.t('cabinet.registerHeroBenefit' + benefit) }}
-            </li>
+<div class="register-page"
+  [class.register-page--login]="authMode() === 'login' || authMode() === 'forgot-password' || authMode() === 'reset-password'"
+  [class.register-page--register]="authMode() === 'register' && selectedProRole() === 'master'"
+  [class.register-page--brigade]="authMode() === 'register' && selectedProRole() === 'builder'"
+  [class.register-page--furniture]="authMode() === 'register' && selectedProRole() === 'furniture_maker'">
+  <div class="register-page__grid">
+    <aside class="register-promo" aria-labelledby="register-hero-title">
+      <div class="register-promo__inner">
+        <p class="register-promo__eyebrow">{{ brandName }}</p>
+        <h1 id="register-hero-title" class="register-promo__title">
+          @switch (authMode()) {
+            @case ('register') {
+              {{ translation.t('cabinet.registerPromoTitle') }}
+            }
+            @case ('forgot-password') {
+              {{ translation.t('cabinet.forgotPasswordTitle') }}
+            }
+            @case ('reset-password') {
+              {{ translation.t('cabinet.resetPasswordTitle') }}
+            }
+            @default {
+              {{ translation.t('cabinet.signInTitle') }}
+            }
           }
-        </ul>
+        </h1>
+        <p class="register-promo__lead">
+          @switch (authMode()) {
+            @case ('register') {
+              {{ translation.t('cabinet.registerPromoLead') }}
+            }
+            @case ('forgot-password') {
+              {{ translation.t('cabinet.forgotPasswordLead') }}
+            }
+            @case ('reset-password') {
+              {{ translation.t('cabinet.resetPasswordLead') }}
+            }
+            @default {
+              {{ translation.t('cabinet.signInLead') }}
+            }
+          }
+        </p>
+        <div class="register-promo__accent" aria-hidden="true"></div>
       </div>
     </aside>
 
-    <!-- Wizard form panel -->
-    <main class="flex items-center justify-center overflow-y-auto p-5 md:p-8" [ngStyle]="formSideStyle()">
-      <div
-        class="w-full max-w-2xl rounded-2xl border border-white/50 bg-white/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-[24px] md:p-8"
-      >
+    <main class="register-form-side">
+      <div class="register-form-shell">
         @if (status() === 'success') {
-          <div class="flex gap-3 text-slate-700" role="status">
-            <span class="text-2xl text-emerald-600" aria-hidden="true">✓</span>
-            <div>
-              <h2 class="m-0 text-lg font-bold text-slate-900">{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
-              <p class="mt-1 text-sm text-slate-600">{{ translation.t('cabinet.registerSuccess') }}</p>
-            </div>
+          <div class="register-card" role="status">
+            <h2 class="register-card__title">{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
+            <p class="register-card__muted">{{ translation.t('cabinet.registerSuccess') }}</p>
+          </div>
+        } @else if (authMode() === 'forgot-password') {
+          <div class="register-card">
+            <h2 class="register-card__title register-card__title--form">
+              {{ translation.t('cabinet.forgotPasswordTitle') }}
+            </h2>
+            <p class="register-card__muted">{{ translation.t('cabinet.forgotPasswordHint') }}</p>
+
+            @if (forgotPasswordError()) {
+              <p class="register-alert register-alert--error" role="alert">{{ forgotPasswordError() }}</p>
+            }
+            @if (forgotPasswordMessage()) {
+              <p class="register-alert register-alert--ok" role="status">{{ forgotPasswordMessage() }}</p>
+            }
+
+            <form class="register-form" [formGroup]="forgotPasswordForm" (ngSubmit)="requestPasswordReset()" novalidate>
+              <label class="field">
+                <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
+                <input
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                  class="field-input"
+                  [class.field-input--error]="forgotPasswordFieldInvalid('email')"
+                />
+                @if (forgotPasswordFieldInvalid('email')) {
+                  <span class="field__error">{{ translation.t('cabinet.emailError') }}</span>
+                }
+              </label>
+
+              <button type="submit" class="btn-primary" [disabled]="forgotPasswordSubmitting()">
+                {{
+                  forgotPasswordSubmitting()
+                    ? translation.t('cabinet.forgotPasswordSubmitting')
+                    : translation.t('cabinet.forgotPasswordButton')
+                }}
+              </button>
+            </form>
+
+            <p class="register-card__signin">
+              <button type="button" class="link-accent" (click)="openLogin()">
+                {{ translation.t('cabinet.backToSignIn') }}
+              </button>
+            </p>
+          </div>
+        } @else if (authMode() === 'reset-password') {
+          <div class="register-card">
+            <h2 class="register-card__title register-card__title--form">
+              {{ translation.t('cabinet.resetPasswordTitle') }}
+            </h2>
+            <p class="register-card__muted">{{ translation.t('cabinet.resetPasswordHint') }}</p>
+
+            @if (resetPasswordError()) {
+              <p class="register-alert register-alert--error" role="alert">{{ resetPasswordError() }}</p>
+            }
+
+            <form class="register-form" [formGroup]="resetPasswordForm" (ngSubmit)="submitNewPassword()" novalidate>
+              <label class="field">
+                <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
+                <div class="field-input-wrap">
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    formControlName="password"
+                    autocomplete="new-password"
+                    class="field-input"
+                    [class.field-input--error]="resetPasswordFieldInvalid('password')"
+                  />
+                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">
+                    {{ showPassword() ? '🙈' : '👁' }}
+                  </button>
+                </div>
+                @if (resetPasswordFieldInvalid('password')) {
+                  <span class="field__error">{{ translation.t('cabinet.passwordErrorMin8') }}</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
+                <div class="field-input-wrap">
+                  <input
+                    [type]="showConfirmPassword() ? 'text' : 'password'"
+                    formControlName="confirmPassword"
+                    autocomplete="new-password"
+                    class="field-input"
+                    [class.field-input--error]="resetPasswordFieldInvalid('confirmPassword') || resetPasswordMismatch()"
+                  />
+                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('confirm')">
+                    {{ showConfirmPassword() ? '🙈' : '👁' }}
+                  </button>
+                </div>
+                @if (resetPasswordMismatch()) {
+                  <span class="field__error">{{ translation.t('cabinet.passwordMismatch') }}</span>
+                }
+              </label>
+
+              @if (resetPasswordStrength().level !== 'empty') {
+                <div class="register-form__strength">
+                  <div class="progress-bar" [style.width.%]="resetPasswordStrength().percent"></div>
+                </div>
+              }
+
+              <button type="submit" class="btn-primary" [disabled]="resetPasswordSubmitting()">
+                {{
+                  resetPasswordSubmitting()
+                    ? translation.t('cabinet.resetPasswordSubmitting')
+                    : translation.t('cabinet.resetPasswordButton')
+                }}
+              </button>
+            </form>
+          </div>
+        } @else if (authMode() === 'login') {
+          <div class="register-card">
+            <h2 class="register-card__title register-card__title--form">
+              {{ translation.t('cabinet.signInTitle') }}
+            </h2>
+
+            @if (signInError()) {
+              <p class="register-alert register-alert--error" role="alert">{{ signInError() }}</p>
+            }
+
+            <form class="register-form" [formGroup]="signInForm" (ngSubmit)="signInExisting()" novalidate>
+              <label class="field">
+                <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
+                <input
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                  class="field-input"
+                  [class.field-input--error]="signInFieldInvalid('email')"
+                />
+                @if (signInFieldInvalid('email')) {
+                  <span class="field__error">{{ translation.t('cabinet.emailError') }}</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
+                <div class="field-input-wrap">
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    formControlName="password"
+                    autocomplete="current-password"
+                    class="field-input"
+                    [class.field-input--error]="signInFieldInvalid('password')"
+                  />
+                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">
+                    {{ showPassword() ? '🙈' : '👁' }}
+                  </button>
+                </div>
+                @if (signInFieldInvalid('password')) {
+                  <span class="field__error">{{ translation.t('cabinet.passwordError') }}</span>
+                }
+                <button type="button" class="register-form__forgot-link" (click)="openForgotPassword()">
+                  {{ translation.t('cabinet.forgotPasswordLink') }}
+                </button>
+              </label>
+
+              <button type="submit" class="btn-primary" [disabled]="signInSubmitting()">
+                {{
+                  signInSubmitting()
+                    ? translation.t('cabinet.signInSubmitting')
+                    : translation.t('cabinet.signInButton')
+                }}
+              </button>
+            </form>
+
+            <p class="register-card__signin">
+              {{ translation.t('cabinet.noAccountYet') }}
+              <button type="button" class="link-accent" (click)="openRegister()">
+                {{ translation.t('app.auth.register') }}
+              </button>
+            </p>
           </div>
         } @else {
-          <!-- Header: branding + role tabs -->
-          <header class="mb-6 space-y-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p class="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Registration</p>
-                <h2 class="m-0 mt-1 text-2xl font-bold text-slate-800">
-                  {{ translation.t('cabinet.registerFormTitle') }}
-                  <span class="text-emerald-700">{{ brandName }}</span>
-                </h2>
-              </div>
-            </div>
+          <div class="register-card">
+            <h2 class="register-card__title register-card__title--form">
+              {{ translation.t('cabinet.registerFormTitle') }}
+            </h2>
 
-            <div class="flex flex-wrap gap-2" role="tablist" aria-label="Тип аккаунта">
-              @for (tab of accountTabs; track tab.id) {
-                <button
-                  type="button"
-                  role="tab"
-                  class="rounded-xl border px-4 py-2 text-sm font-semibold transition"
-                  [class.bg-emerald-600]="accountTab() === tab.id"
-                  [class.border-emerald-600]="accountTab() === tab.id"
-                  [class.text-white]="accountTab() === tab.id"
-                  [class.bg-white/80]="accountTab() !== tab.id"
-                  [class.border-slate-200]="accountTab() !== tab.id"
-                  [class.text-slate-600]="accountTab() !== tab.id"
-                  [attr.aria-selected]="accountTab() === tab.id"
-                  (click)="selectAccountTab(tab.id)"
+            @if (status() === 'error' && errorMessage()) {
+              <p class="register-alert register-alert--error" role="alert">{{ errorMessage() }}</p>
+            }
+
+            <form class="register-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+              <div class="register-form__photo">
+                <div
+                  class="register-form__photo-box"
+                  [class.register-form__photo-box--drag]="dragProfile()"
+                  (dragover)="preventDragDefaults($event); dragProfile.set(true)"
+                  (dragleave)="dragProfile.set(false)"
+                  (drop)="onProfileDrop($event)"
                 >
-                  {{ tab.label }}
-                </button>
-              }
-            </div>
-          </header>
+                  @if (profilePreview()) {
+                    <img [src]="profilePreview()!" alt="" class="h-full w-full rounded-lg object-cover" />
+                  } @else {
+                    <span class="text-lg opacity-40" aria-hidden="true">👤</span>
+                  }
+                </div>
+                <label class="register-form__photo-link">
+                  {{ translation.t('cabinet.registerPhotoLabel') }}
+                  <input type="file" accept="image/*" class="hidden" (change)="onProfileSelected($event)" />
+                </label>
+              </div>
 
-          <!-- Progress bar -->
-          <div class="mb-6">
-            <div class="mb-2 flex justify-between gap-2 text-xs font-medium text-slate-500">
-              @for (step of wizardSteps; track step.id; let i = $index) {
-                <span [class.text-emerald-700]="currentStep() === i" [class.font-semibold]="currentStep() === i">
-                  {{ i + 1 }}. {{ step.label }}
-                </span>
-              }
-            </div>
-            <div class="h-1.5 overflow-hidden rounded-full bg-slate-200/90" role="progressbar" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100">
-              <div class="h-full rounded-full bg-emerald-600 transition-all duration-300" [style.width.%]="progressPercent()"></div>
-            </div>
-          </div>
+              <div class="register-form__row">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.firstNameLabel') }} *</span>
+                  <input type="text" formControlName="firstName" autocomplete="given-name" class="field-input" [class.field-input--error]="fieldInvalid('firstName')" />
+                  @if (fieldInvalid('firstName')) {
+                    <span class="field__error">{{ translation.t('cabinet.firstNameError') }}</span>
+                  }
+                </label>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.lastNameLabel') }} *</span>
+                  <input type="text" formControlName="lastName" autocomplete="family-name" class="field-input" [class.field-input--error]="fieldInvalid('lastName')" />
+                  @if (fieldInvalid('lastName')) {
+                    <span class="field__error">{{ translation.t('cabinet.lastNameError') }}</span>
+                  }
+                </label>
+              </div>
 
-          @if (status() === 'error' && errorMessage()) {
-            <p class="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ errorMessage() }}</p>
-          }
-          @if (stepError()) {
-            <p class="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800" role="alert">{{ stepError() }}</p>
-          }
+              <div class="register-form__row">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.phoneLabel') }} *</span>
+                  <input type="tel" formControlName="phone" autocomplete="tel" class="field-input" [class.field-input--error]="fieldInvalid('phone')" />
+                  @if (fieldInvalid('phone')) {
+                    <span class="field__error">{{ translation.t('cabinet.phoneError') }}</span>
+                  }
+                </label>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
+                  <input type="email" formControlName="email" autocomplete="email" class="field-input" [class.field-input--error]="fieldInvalid('email')" />
+                  @if (fieldInvalid('email')) {
+                    <span class="field__error">{{ translation.t('cabinet.emailError') }}</span>
+                  }
+                </label>
+              </div>
 
-          <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <!-- Step 1: Profile -->
-            @if (stepId() === 'profile') {
-              <section class="space-y-5" aria-labelledby="step-profile-title">
-                <h3 id="step-profile-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">1. Профиль</h3>
+              <fieldset class="field">
+                <legend class="field__label">{{ translation.t('cabinet.registerSectionRole') }}</legend>
+                <div class="register-form__roles">
+                  @for (role of registrationRoles; track role) {
+                    <label class="role-option">
+                      <input type="radio" formControlName="proRole" [value]="role" (change)="onRoleChange()" />
+                      <span>{{ translation.t('cabinet.proRoles.' + role) }}</span>
+                    </label>
+                  }
+                </div>
+              </fieldset>
 
-                <!-- 3-column grid: Name | Middle Name | Photo -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">Имя и Фамилия *</span>
-                    <input
-                      type="text"
-                      formControlName="firstName"
-                      autocomplete="name"
-                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
-                      [class.border-red-400]="fieldInvalid('firstName')"
-                    />
-                    @if (fieldInvalid('firstName')) {
-                      <span class="text-xs text-red-600">{{ translation.t('cabinet.firstNameError') }}</span>
+              <div class="register-form__row">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.specialtyLabel') }} *</span>
+                  <select formControlName="specialty" class="field-input" [class.field-input--error]="fieldInvalid('specialty')">
+                    @for (key of specialties; track key) {
+                      <option [value]="key">{{ specialtyLabel(key) }}</option>
                     }
-                  </label>
-
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">Отчество</span>
-                    <input
-                      type="text"
-                      formControlName="middleName"
-                      autocomplete="additional-name"
-                      placeholder="optional"
-                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
-                    />
-                  </label>
-
-                  <!-- Profile image upload box -->
-                  <div
-                    class="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-3 text-center transition md:h-[150px] md:w-[150px] md:justify-self-end"
-                    [class.border-emerald-500]="dragProfile()"
-                    [class.bg-emerald-50/40]="dragProfile()"
-                    (dragover)="preventDragDefaults($event); dragProfile.set(true)"
-                    (dragleave)="dragProfile.set(false)"
-                    (drop)="onProfileDrop($event)"
-                  >
-                    @if (profilePreview()) {
-                      <img [src]="profilePreview()!" alt="" class="mb-2 h-20 w-20 rounded-xl object-cover" />
-                    } @else {
-                      <span class="mb-1 text-2xl text-slate-400" aria-hidden="true">👤</span>
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.cityLabel') }} *</span>
+                  <select formControlName="city" class="field-input" [class.field-input--error]="fieldInvalid('city')">
+                    @for (city of cities; track city) {
+                      <option [value]="city">{{ cityLabel(city) }}</option>
                     }
-                    <span class="text-xs font-medium text-slate-500">Profile image</span>
-                    <label class="mt-2 cursor-pointer text-xs font-semibold text-emerald-700 hover:underline">
-                      Upload
-                      <input type="file" accept="image/*" class="hidden" (change)="onProfileSelected($event)" />
+                  </select>
+                </label>
+              </div>
+
+              <div class="register-form__row register-form__row--social">
+                <label class="field">
+                  <span class="field__label">Telegram</span>
+                  <input type="text" formControlName="telegram" class="field-input" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
+                </label>
+                <label class="field">
+                  <span class="field__label">WhatsApp</span>
+                  <input type="text" formControlName="whatsapp" class="field-input" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
+                </label>
+                <label class="field">
+                  <span class="field__label">Instagram</span>
+                  <input type="text" formControlName="instagram" class="field-input" [placeholder]="translation.t('cabinet.socialInstagramPh')" />
+                </label>
+                <label class="field">
+                  <span class="field__label">Facebook</span>
+                  <input type="text" formControlName="facebook" class="field-input" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
+                </label>
+                <label class="field register-form__row-full">
+                  <span class="field__label">TikTok</span>
+                  <input type="text" formControlName="tiktok" class="field-input" [placeholder]="translation.t('cabinet.socialTiktokPh')" />
+                </label>
+              </div>
+
+              <fieldset class="field register-form__before-after">
+                <legend class="field__label">{{ translation.t('cabinet.uploadTitle') }}</legend>
+                <p class="register-form__section-hint">{{ translation.t('cabinet.uploadLead') }}</p>
+
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workTitle') }}</span>
+                  <input
+                    type="text"
+                    formControlName="workTitle"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.workTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <div class="register-form__row">
+                  <div class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoBefore') }}</span>
+                    <label
+                      class="register-photo-drop"
+                      [class.register-photo-drop--filled]="beforePreview()"
+                      [class.register-photo-drop--drag]="beforeDragging()"
+                      (dragover)="onBeforeAfterDragOver('before', $event)"
+                      (dragleave)="onBeforeAfterDragLeave('before')"
+                      (drop)="onBeforeAfterDrop('before', $event)"
+                    >
+                      <input
+                        #beforeInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onBeforeAfterSelected('before', $event)"
+                      />
+                      @if (beforePreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
+                    </label>
+                  </div>
+
+                  <div class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoAfter') }}</span>
+                    <label
+                      class="register-photo-drop"
+                      [class.register-photo-drop--filled]="afterPreview()"
+                      [class.register-photo-drop--drag]="afterDragging()"
+                      (dragover)="onBeforeAfterDragOver('after', $event)"
+                      (dragleave)="onBeforeAfterDragLeave('after')"
+                      (drop)="onBeforeAfterDrop('after', $event)"
+                    >
+                      <input
+                        #afterInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onBeforeAfterSelected('after', $event)"
+                      />
+                      @if (afterPreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
                     </label>
                   </div>
                 </div>
 
-                <!-- Row 2: Role + City -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.registerSectionRole') }} *</span>
-                    <select
-                      formControlName="proRole"
-                      (change)="onProRoleSelect()"
-                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
-                      [class.border-red-400]="fieldInvalid('proRole')"
-                    >
-                      <option value="master">🔨 {{ translation.t('cabinet.proRoles.master') }}</option>
-                      <option value="brigade">👷 {{ translation.t('cabinet.proRoles.brigade') }}</option>
-                      <option value="furniture_maker">🪚 {{ translation.t('cabinet.proRoles.furniture_maker') }}</option>
-                    </select>
-                  </label>
-
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.cityLabel') }} *</span>
-                    <select
-                      formControlName="city"
-                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
-                      [class.border-red-400]="fieldInvalid('city')"
-                    >
-                      @for (city of cities; track city) {
-                        <option [value]="city">{{ cityLabel(city) }}</option>
-                      }
-                    </select>
-                  </label>
-                </div>
-              </section>
-            }
-
-            <!-- Step 2: Contacts -->
-            @if (stepId() === 'contacts') {
-              <section class="space-y-5" aria-labelledby="step-contacts-title">
-                <h3 id="step-contacts-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">2. Контакты</h3>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.emailLabel') }} *</span>
-                    <input
-                      type="email"
-                      formControlName="email"
-                      autocomplete="email"
-                      class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
-                      [class.border-red-400]="fieldInvalid('email')"
-                    />
-                    @if (fieldInvalid('email')) {
-                      <span class="text-xs text-red-600">{{ translation.t('cabinet.emailError') }}</span>
-                    }
-                  </label>
-
-                  <!-- Phone with icon -->
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.phoneLabel') }} *</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('phone')">
-                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-                      </span>
-                      <input type="tel" formControlName="phone" autocomplete="tel" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" placeholder="+995 XXX XXX XXX" />
-                    </div>
-                    @if (fieldInvalid('phone')) {
-                      <span class="text-xs text-red-600">{{ translation.t('cabinet.phoneError') }}</span>
-                    }
-                  </label>
-
-                  <!-- WhatsApp -->
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">WhatsApp</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
-                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M17.5 14.1c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.2-.3.3-.4.1-.1.1-.2.2-.3.1-.1.1-.2 0-.4 0-.2-.7-1.7-1-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.8 2.3.9 2.5c.1.2 1.6 2.5 3.9 3.4 1.4.6 2 .6 2.7.5.8-.1 2.5-1 2.9-2 .3-1 .3-1.9.2-2.1-.1-.2-.3-.3-.6-.4z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.3C8.9 21.5 10.4 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-3-.4-4.3-1.1l-.3-.2-3.1.8.8-3-.2-.3C4.4 15 4 13.5 4 12 4 7.6 7.6 4 12 4s8 3.6 8 8-3.6 8-8 8z"/></svg>
-                      </span>
-                      <input type="text" formControlName="whatsapp" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
-                    </div>
-                  </label>
-
-                  <!-- Telegram -->
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">Telegram</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
-                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M9.9 15.3 9.7 19c.4 0 .6-.2.8-.4l2-1.9 4.1 3c.8.4 1.3.2 1.5-.7l2.7-12.7c.3-1.2-.4-1.7-1.2-1.4L4 10.3c-1.1.4-1.1 1 0 1.3l4.1 1.3 9.6-6.1c.5-.3.9-.1.5.2"/></svg>
-                      </span>
-                      <input type="text" formControlName="telegram" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
-                    </div>
-                  </label>
-
-                  <!-- Facebook -->
-                  <label class="block space-y-1.5 md:col-span-2">
-                    <span class="text-sm font-medium text-slate-600">Facebook</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15">
-                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M13 10V7.5c0-.8.2-1.2 1.1-1.2H16V3h-2.2C11.1 3 10 4.9 10 7.2V10H7v3h3v8h3v-8h2.6l.4-3H13z"/></svg>
-                      </span>
-                      <input type="text" formControlName="facebook" class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
-                    </div>
-                  </label>
-                </div>
-              </section>
-            }
-
-            <!-- Step 3: Documents -->
-            @if (stepId() === 'documents') {
-              <section class="space-y-4" aria-labelledby="step-documents-title">
-                <h3 id="step-documents-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">3. Документы</h3>
-
-                <div
-                  class="flex min-h-[180px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 px-6 py-10 text-center transition"
-                  [class.border-emerald-500]="dragDocuments()"
-                  [class.bg-emerald-50/30]="dragDocuments()"
-                  (dragover)="preventDragDefaults($event); dragDocuments.set(true)"
-                  (dragleave)="dragDocuments.set(false)"
-                  (drop)="onDocumentsDrop($event)"
-                >
-                  <span class="mb-3 text-3xl text-slate-400" aria-hidden="true">📁</span>
-                  <p class="m-0 text-sm font-semibold text-slate-700">Перетащите файлы сюда</p>
-                  <p class="mt-1 text-xs text-slate-500">JPG, PNG, PDF — до 50 MB</p>
-                  <label class="mt-4 cursor-pointer rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-                    Выбрать файлы
-                    <input type="file" multiple accept="image/*,.pdf" class="hidden" (change)="onDocumentsSelected($event)" />
-                  </label>
-                </div>
-
-                @if (documentFiles().length) {
-                  <ul class="m-0 space-y-2 p-0">
-                    @for (file of documentFiles(); track file.name + $index; let i = $index) {
-                      <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-700">
-                        <span class="truncate">{{ file.name }}</span>
-                        <button type="button" class="ml-3 text-xs font-semibold text-red-600 hover:underline" (click)="removeDocument(i)">Удалить</button>
-                      </li>
-                    }
-                  </ul>
-                }
-              </section>
-            }
-
-            <!-- Step 4: Security -->
-            @if (stepId() === 'security') {
-              <section class="space-y-5" aria-labelledby="step-security-title">
-                <h3 id="step-security-title" class="text-sm font-semibold uppercase tracking-wide text-slate-500">4. Безопасность</h3>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.passwordLabel') }} *</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('password')">
-                      <input
-                        [type]="showPassword() ? 'text' : 'password'"
-                        formControlName="password"
-                        autocomplete="new-password"
-                        class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none"
-                      />
-                      <button type="button" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" [attr.aria-label]="translation.t('cabinet.togglePassword')" (click)="togglePassword('password')">
-                        {{ showPassword() ? '🙈' : '👁' }}
-                      </button>
-                    </div>
-                    @if (fieldInvalid('password')) {
-                      <span class="text-xs text-red-600">{{ translation.t('cabinet.passwordErrorMin8') }}</span>
-                    }
-                  </label>
-
-                  <label class="block space-y-1.5">
-                    <span class="text-sm font-medium text-slate-600">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15" [class.border-red-400]="fieldInvalid('confirmPassword') || passwordMismatch()">
-                      <input
-                        [type]="showConfirmPassword() ? 'text' : 'password'"
-                        formControlName="confirmPassword"
-                        autocomplete="new-password"
-                        class="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-slate-800 outline-none"
-                      />
-                      <button type="button" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" (click)="togglePassword('confirm')">
-                        {{ showConfirmPassword() ? '🙈' : '👁' }}
-                      </button>
-                    </div>
-                    @if (passwordMismatch()) {
-                      <span class="text-xs text-red-600">{{ translation.t('cabinet.passwordMismatch') }}</span>
-                    }
-                  </label>
-                </div>
-
-                @if (passwordStrength().level !== 'empty') {
-                  <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
-                    <div class="h-full rounded-full bg-emerald-600 transition-all" [style.width.%]="passwordStrength().percent"></div>
+                @if (registerPreviewWork(); as work) {
+                  <div class="register-form__preview">
+                    <app-before-after [work]="work" [showCaption]="false" />
                   </div>
                 }
+              </fieldset>
 
-                <label class="flex items-start gap-2 text-sm text-slate-600">
-                  <input type="checkbox" formControlName="acceptTerms" class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  <span>
-                    {{ translation.t('cabinet.privacyPrefix') }}
-                    <a href="#" class="font-semibold text-emerald-700" (click)="$event.preventDefault()">{{ translation.t('cabinet.privacyLink') }}</a>
-                  </span>
+              <div class="register-form__row">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
+                  <div class="field-input-wrap">
+                    <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" class="field-input" [class.field-input--error]="fieldInvalid('password')" />
+                    <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">{{ showPassword() ? '🙈' : '👁' }}</button>
+                  </div>
                 </label>
-                @if (fieldInvalid('acceptTerms')) {
-                  <span class="text-xs text-red-600">{{ translation.t('cabinet.termsError') }}</span>
-                }
-              </section>
-            }
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
+                  <div class="field-input-wrap">
+                    <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" class="field-input" [class.field-input--error]="fieldInvalid('confirmPassword') || passwordMismatch()" />
+                    <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('confirm')">{{ showConfirmPassword() ? '🙈' : '👁' }}</button>
+                  </div>
+                  @if (passwordMismatch()) {
+                    <span class="field__error">{{ translation.t('cabinet.passwordMismatch') }}</span>
+                  }
+                </label>
+              </div>
 
-            <!-- Wizard navigation -->
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-5">
-              <button
-                type="button"
-                class="rounded-xl border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white disabled:opacity-40"
-                [disabled]="currentStep() === 0"
-                (click)="prevStep()"
-              >
-                Назад
-              </button>
-
-              @if (currentStep() < wizardSteps.length - 1) {
-                <button
-                  type="button"
-                  class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700"
-                  (click)="nextStep()"
-                >
-                  Далее
-                </button>
-              } @else {
-                <button
-                  type="submit"
-                  class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 disabled:opacity-60"
-                  [disabled]="submitting()"
-                >
-                  {{ submitting() ? translation.t('cabinet.registerSubmitting') : translation.t('cabinet.registerFormTitle') }}
-                </button>
+              @if (passwordStrength().level !== 'empty') {
+                <div class="register-form__strength">
+                  <div class="progress-bar" [style.width.%]="passwordStrength().percent"></div>
+                </div>
               }
-            </div>
-          </form>
 
-          <p class="mt-6 text-center text-sm text-slate-500">
-            {{ translation.t('cabinet.alreadyHaveAccount') }}
-            <button type="button" class="font-semibold text-emerald-700 underline" (click)="toggleSignIn()">
-              {{ translation.t('cabinet.signInLink') }}
-            </button>
-          </p>
+              <label class="register-form__terms">
+                <input type="checkbox" formControlName="acceptTerms" />
+                <span>{{ translation.t('cabinet.acceptTermsLabel') }}</span>
+              </label>
 
-          @if (signInOpen()) {
-            <form [formGroup]="signInForm" (ngSubmit)="signInExisting()" class="mt-4 space-y-3 border-t border-slate-200/80 pt-4">
-              <input type="email" formControlName="email" placeholder="Email" class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15" />
-              <input type="password" formControlName="password" placeholder="Password" class="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15" />
-              @if (signInError()) {
-                <p class="text-sm text-red-600" role="alert">{{ signInError() }}</p>
-              }
-              <button type="submit" class="w-full rounded-xl bg-slate-800 py-2.5 text-sm font-semibold text-white" [disabled]="signInSubmitting()">
-                {{ translation.t('cabinet.signInButton') }}
+              <button type="submit" class="btn-primary" [disabled]="submitting()">
+                {{ submitting() ? translation.t('cabinet.registerSubmitting') : translation.t('cabinet.registerCreateButton') }}
               </button>
             </form>
-          }
+
+            <p class="register-card__signin">
+              {{ translation.t('cabinet.alreadyHaveAccount') }}
+              <button type="button" class="link-accent" (click)="openLogin()">
+                {{ translation.t('cabinet.signInLink') }}
+              </button>
+            </p>
+          </div>
         }
       </div>
     </main>

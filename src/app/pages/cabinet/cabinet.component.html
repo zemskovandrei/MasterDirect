@@ -1,553 +1,534 @@
 <div
   class="catalog-tab-page cabinet-tab-page"
-  [class.cabinet-tab-page--register]="!isLoggedIn()"
-  [ngStyle]="isLoggedIn() ? cabinetBackground() : null"
+  [class.cabinet-tab-page--register]="!hasCabinetSession()"
+  [class.cabinet-tab-page--dashboard]="hasCabinetSession()"
+  [class.cabinet-tab-page--login]="!hasCabinetSession() && authShellMode() === 'login'"
+  [class.cabinet-tab-page--register]="registerBgRole() === 'master'"
+  [class.cabinet-tab-page--brigade]="registerBgRole() === 'brigade' || (hasCabinetSession() && cabinetRole() === 'brigade')"
+  [class.cabinet-tab-page--furniture]="registerBgRole() === 'furniture' || (hasCabinetSession() && cabinetRole() === 'furniture')"
+  [class.cabinet-tab-page--worker]="hasCabinetSession() && cabinetRole() === 'worker'"
 >
-@if (!isLoggedIn()) {
+@if (!hasCabinetSession()) {
   <app-register-page />
 } @else {
-  <section class="page-hero cabinet-hero">
-    <div class="page-hero-inner">
-      <h1>{{ translation.t('cabinet.heroTitle') }}</h1>
-      <p>{{ translation.t('cabinet.heroLead') }}</p>
-    </div>
-  </section>
+  <div
+    class="register-page"
+    [class.register-page--worker]="cabinetRole() === 'worker'"
+    [class.register-page--brigade]="cabinetRole() === 'brigade'"
+    [class.register-page--furniture]="cabinetRole() === 'furniture'"
+  >
+    <div class="register-page__grid">
+      <aside class="register-promo" aria-labelledby="cabinet-hero-title">
+        <div class="register-promo__inner">
+          <p class="register-promo__eyebrow">{{ brandName }}</p>
+          <h1 id="cabinet-hero-title" class="register-promo__title">
+            {{ cabinetDisplayName() }}
+          </h1>
+          <p class="register-promo__lead">{{ translation.t('cabinet.cabinetWelcomeLead') }}</p>
+          <div class="register-promo__accent" aria-hidden="true"></div>
+        </div>
+      </aside>
 
-  <div class="cabinet">
-    <div class="cabinet-inner">
-      @if (store.currentPerformer(); as performer) {
-        <section class="cabinet-panel profile-summary">
-          <div class="summary-head">
-            <div>
-              <span class="profile-badge">{{
-                performer.type === 'brigade'
-                  ? translation.t('cabinet.badgeBrigadier')
-                  : translation.t('cabinet.badgeMaster')
-              }}</span>
-              <h2>{{ performer.name }}</h2>
-              <p>{{ catalogL10n.performerSpecialty(performer) }}</p>
-            </div>
-            <div class="summary-actions">
-              <a
-                [routerLink]="
-                  performer.type === 'brigade'
-                    ? ['/brigades', performer.id]
-                    : ['/masters', performer.id]
-                "
-                class="btn-secondary"
-              >
-                {{ translation.t('cabinet.openCatalog') }}
-              </a>
-              <button type="button" class="btn-text" (click)="signOut()">
-                {{ translation.t('cabinet.signOut') }}
-              </button>
-            </div>
-          </div>
-
-          <section class="social-edit-section">
-            <div class="social-edit-head">
-              <div>
-                <h3>{{ translation.t('cabinet.socialTitle') }}</h3>
-                <p class="social-edit-lead">{{ translation.t('cabinet.socialHint') }}</p>
-              </div>
-              @if (hasSocialLinks(performer.socialLinks)) {
-                <app-social-links
-                  [links]="performer.socialLinks"
-                  variant="light"
-                  [compact]="true"
-                />
-              }
-            </div>
-
-            @if (socialSaveSuccess()) {
-              <p class="upload-ok" role="status">{{ translation.t('cabinet.socialSaved') }}</p>
-            }
-
-            <form class="social-edit-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
-              <div class="register-social-grid">
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.phone') }}</span>
-                  <input
-                    type="text"
-                    formControlName="phone"
-                    [placeholder]="translation.t('cabinet.socialPhonePh')"
-                    autocomplete="tel"
-                    inputmode="tel"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
-                  <input
-                    type="text"
-                    formControlName="whatsapp"
-                    [placeholder]="translation.t('cabinet.socialWhatsappPh')"
-                    autocomplete="off"
-                    inputmode="tel"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.telegram') }}</span>
-                  <input
-                    type="text"
-                    formControlName="telegram"
-                    [placeholder]="translation.t('cabinet.socialTelegramPh')"
-                    autocomplete="off"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.instagram') }}</span>
-                  <input
-                    type="text"
-                    formControlName="instagram"
-                    [placeholder]="translation.t('cabinet.socialInstagramPh')"
-                    autocomplete="off"
-                  />
-                </label>
-
-                <label class="register-field register-field--full">
-                  <span class="register-label">{{ translation.t('social.facebook') }}</span>
-                  <input
-                    type="text"
-                    formControlName="facebook"
-                    [placeholder]="translation.t('cabinet.socialFacebookPh')"
-                    autocomplete="off"
-                  />
-                </label>
-              </div>
-
-              <button type="submit" class="btn-secondary">
-                {{ translation.t('cabinet.socialSave') }}
-              </button>
-            </form>
-          </section>
-
-          <div class="upload-section">
-            <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
-            <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
-            @if (uploadSuccess()) {
-              <p class="upload-ok" role="status">
-                @if (lastUploadResult()?.verificationLink) {
-                  {{ translation.t('cabinet.uploadPending') }}
-                } @else {
-                  {{ translation.t('cabinet.uploadSuccess') }}
-                }
-              </p>
-            }
-            @if (lastUploadResult()?.verificationLink; as link) {
-              <div
-                class="verification-share"
-                role="region"
-                [attr.aria-label]="translation.t('cabinet.shareAria')"
-              >
-                <p class="verification-share-title">{{ translation.t('cabinet.shareTitle') }}</p>
-                <div class="verification-share-row">
-                  <input class="verification-share-input" type="text" readonly [value]="link" />
-                  <button type="button" class="btn-secondary" (click)="copyVerificationLink(link)">
-                    {{ translation.t('cabinet.copy') }}
+      <main class="register-form-side">
+        <div class="register-form-shell">
+          @if (store.currentPerformer(); as performer) {
+            <div class="register-card cabinet-card">
+              <div class="cabinet-card-head">
+                <div class="register-form__photo">
+                  <div class="register-form__photo-box cabinet-card-head__avatar" aria-hidden="true">
+                    {{ profileInitial() }}
+                  </div>
+                  <div>
+                    <span class="cabinet-card-head__badge">{{
+                      performer.type === 'brigade'
+                        ? translation.t('cabinet.badgeBrigadier')
+                        : translation.t('cabinet.badgeMaster')
+                    }}</span>
+                    <p class="cabinet-card-head__name">{{ performer.name }}</p>
+                    <p class="register-card__muted">{{ catalogL10n.performerSpecialty(performer) }}</p>
+                  </div>
+                </div>
+                <div class="cabinet-card-head__actions">
+                  <a
+                    [routerLink]="
+                      performer.type === 'brigade'
+                        ? ['/brigades', performer.id]
+                        : ['/masters', performer.id]
+                    "
+                    class="link-accent"
+                  >
+                    {{ translation.t('cabinet.openCatalog') }}
+                  </a>
+                  <button type="button" class="link-accent" (click)="signOut()">
+                    {{ translation.t('cabinet.signOut') }}
                   </button>
                 </div>
-                @if (lastUploadResult()?.verificationCode; as code) {
-                  <p class="verification-share-code">
-                    {{ translation.t('cabinet.shareCode') }}: <strong>{{ code }}</strong>
-                  </p>
-                }
-                @if (copyFeedback(); as feedback) {
-                  <p class="verification-share-feedback" role="status">{{ feedback }}</p>
-                }
               </div>
-            }
-            <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
-              <div class="upload-form-fields">
-                <label class="work-field">
-                  <span class="work-field-label"
-                    >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
-                  >
+
+              @if (hasSocialLinks(performer.socialLinks)) {
+                <div class="cabinet-card-links">
+                  <app-social-links
+                    [links]="performer.socialLinks"
+                    variant="light"
+                    [compact]="true"
+                  />
+                </div>
+              }
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.socialTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.socialHint') }}</p>
+
+              @if (socialSaveSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.socialSaved') }}
+                </p>
+              }
+
+              <form class="register-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
+                <div class="register-form__row register-form__row--social">
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.phone') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="phone"
+                      [placeholder]="translation.t('cabinet.socialPhonePh')"
+                      autocomplete="tel"
+                      inputmode="tel"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.whatsapp') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="whatsapp"
+                      [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                      autocomplete="off"
+                      inputmode="tel"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.telegram') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="telegram"
+                      [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.instagram') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="instagram"
+                      [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                  <label class="field register-form__row-full">
+                    <span class="field__label">{{ translation.t('social.facebook') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="facebook"
+                      [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                </div>
+                <button type="submit" class="btn-primary">
+                  {{ translation.t('cabinet.socialSave') }}
+                </button>
+              </form>
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.uploadTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.uploadLead') }}</p>
+
+              @if (uploadSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  @if (workVerificationEnabled && lastUploadResult()?.verificationLink) {
+                    {{ translation.t('cabinet.uploadPending') }}
+                  } @else {
+                    {{ translation.t('cabinet.uploadSuccess') }}
+                  }
+                </p>
+              }
+              @if (workVerificationEnabled) {
+                @if (lastUploadResult()?.verificationLink; as link) {
+                  <div class="cabinet-verify" role="region" [attr.aria-label]="translation.t('cabinet.shareAria')">
+                    <p class="field__label">{{ translation.t('cabinet.shareTitle') }}</p>
+                    <div class="cabinet-verify__row">
+                      <input class="field-input" type="text" readonly [value]="link" />
+                      <button type="button" class="btn-signin" (click)="copyVerificationLink(link)">
+                        {{ translation.t('cabinet.copy') }}
+                      </button>
+                    </div>
+                    @if (lastUploadResult()?.verificationCode; as code) {
+                      <p class="register-card__muted">
+                        {{ translation.t('cabinet.shareCode') }}: <strong>{{ code }}</strong>
+                      </p>
+                    }
+                    @if (copyFeedback(); as feedback) {
+                      <p class="cabinet-status" role="status">{{ feedback }}</p>
+                    }
+                  </div>
+                }
+              }
+
+              <form class="register-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workTitle') }} *</span>
                   <input
                     type="text"
+                    class="field-input"
                     formControlName="title"
                     [placeholder]="translation.t('cabinet.workTitlePh')"
                     autocomplete="off"
                   />
                 </label>
 
-                <label class="work-field work-field--full">
-                  <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workDesc') }}</span>
                   <textarea
+                    class="field-input field-textarea"
                     formControlName="description"
-                    rows="4"
+                    rows="3"
                     [placeholder]="translation.t('cabinet.workDescPh')"
                   ></textarea>
                   <span
-                    class="word-counter"
-                    [class.word-counter--over]="
+                    class="cabinet-word-counter"
+                    [class.cabinet-word-counter--over]="
                       countWords(workForm.get('description')?.value ?? '') > maxTextWords
                     "
                   >
                     {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
                   </span>
                   @if (workFieldInvalid('description')) {
-                    <small class="field-error">{{ maxWordsError() }}</small>
+                    <span class="field__error">{{ maxWordsError() }}</span>
                   }
                 </label>
 
-                <label class="work-field work-field--full">
-                  <span class="work-field-label">{{ translation.t('cabinet.clientContact') }}</span>
-                  <input
-                    type="text"
-                    formControlName="clientContact"
-                    [placeholder]="translation.t('cabinet.clientContactPh')"
-                    autocomplete="off"
-                  />
-                  <span class="work-field-hint">{{
-                    translation.t('cabinet.clientContactHint')
-                  }}</span>
-                </label>
-              </div>
-
-              <div class="upload-dropzones">
-                <div class="dropzone-group">
-                  <span class="dropzone-heading"
-                    >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
-                  >
-                  <label
-                    class="dropzone"
-                    [class.dropzone--filled]="beforePreview()"
-                    [class.dropzone--dragging]="beforeDragging()"
-                    (dragover)="onDropzoneDragOver('before', $event)"
-                    (dragleave)="onDropzoneDragLeave('before')"
-                    (drop)="onDropzoneDrop('before', $event)"
-                  >
+                @if (workVerificationEnabled) {
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('cabinet.clientContact') }}</span>
                     <input
-                      #beforeInput
-                      type="file"
-                      class="dropzone-input"
-                      accept="image/*"
-                      (change)="onFileSelected('before', $event)"
+                      type="text"
+                      class="field-input"
+                      formControlName="clientContact"
+                      [placeholder]="translation.t('cabinet.clientContactPh')"
+                      autocomplete="off"
                     />
-                    @if (beforePreview(); as preview) {
-                      <img
-                        [src]="preview"
-                        [alt]="translation.t('cabinet.previewBefore')"
-                        class="dropzone-preview"
+                    <span class="register-card__muted">{{ translation.t('cabinet.clientContactHint') }}</span>
+                  </label>
+                }
+
+                <div class="register-form__row">
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoBefore') }} *</span>
+                    <label
+                      class="cabinet-photo-drop"
+                      [class.cabinet-photo-drop--filled]="beforePreview()"
+                      [class.cabinet-photo-drop--drag]="beforeDragging()"
+                      (dragover)="onDropzoneDragOver('before', $event)"
+                      (dragleave)="onDropzoneDragLeave('before')"
+                      (drop)="onDropzoneDrop('before', $event)"
+                    >
+                      <input
+                        #beforeInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onFileSelected('before', $event)"
                       />
-                      <span class="dropzone-overlay">{{
-                        translation.t('cabinet.replacePhoto')
-                      }}</span>
-                    } @else {
-                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                    }
+                      @if (beforePreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
+                    </label>
+                  </label>
+
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoAfter') }} *</span>
+                    <label
+                      class="cabinet-photo-drop"
+                      [class.cabinet-photo-drop--filled]="afterPreview()"
+                      [class.cabinet-photo-drop--drag]="afterDragging()"
+                      (dragover)="onDropzoneDragOver('after', $event)"
+                      (dragleave)="onDropzoneDragLeave('after')"
+                      (drop)="onDropzoneDrop('after', $event)"
+                    >
+                      <input
+                        #afterInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onFileSelected('after', $event)"
+                      />
+                      @if (afterPreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
+                    </label>
                   </label>
                 </div>
 
-                <div class="dropzone-group">
-                  <span class="dropzone-heading"
-                    >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
-                  >
-                  <label
-                    class="dropzone"
-                    [class.dropzone--filled]="afterPreview()"
-                    [class.dropzone--dragging]="afterDragging()"
-                    (dragover)="onDropzoneDragOver('after', $event)"
-                    (dragleave)="onDropzoneDragLeave('after')"
-                    (drop)="onDropzoneDrop('after', $event)"
-                  >
-                    <input
-                      #afterInput
-                      type="file"
-                      class="dropzone-input"
-                      accept="image/*"
-                      (change)="onFileSelected('after', $event)"
-                    />
-                    @if (afterPreview(); as preview) {
-                      <img
-                        [src]="preview"
-                        [alt]="translation.t('cabinet.previewAfter')"
-                        class="dropzone-preview"
-                      />
-                      <span class="dropzone-overlay">{{
-                        translation.t('cabinet.replacePhoto')
-                      }}</span>
-                    } @else {
-                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                    }
-                  </label>
-                </div>
-              </div>
-
-              <div class="upload-form-actions">
-                <button type="submit" class="btn-primary btn-large upload-submit">
+                <button type="submit" class="btn-primary">
                   {{ translation.t('cabinet.uploadSubmit') }}
                 </button>
-              </div>
-            </form>
-          </div>
+              </form>
 
-          @if (performer.works.length > 0) {
-            <div class="my-works">
-              <h3>{{ myWorksLabel(performer.works.length) }}</h3>
-              <div class="my-works-grid">
-                @for (work of performer.works; track work.id) {
-                  <div class="my-work-item">
-                    <app-before-after [work]="work" layout="compare" />
-                    @if (verificationLink(work); as link) {
-                      <div class="my-work-verify-link">
-                        <span>{{ translation.t('cabinet.clientLink') }}</span>
-                        <button
-                          type="button"
-                          class="btn-secondary btn-small"
-                          (click)="copyVerificationLink(link)"
-                        >
-                          {{ translation.t('cabinet.copyLink') }}
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </section>
-      } @else if (furnitureStore.currentCompany(); as company) {
-        <section class="cabinet-panel profile-summary">
-          <div class="summary-head">
-            <div>
-              <span class="profile-badge profile-badge--furniture">{{
-                translation.t('cabinet.badgeFurniture')
-              }}</span>
-              <h2>{{ company.name }}</h2>
-              <p>{{ furnitureSpecialtyDisplay(company.specialty) }}</p>
-            </div>
-            <div class="summary-actions">
-              <a [routerLink]="['/furniture', company.id]" class="btn-secondary">
-                {{ translation.t('cabinet.openCatalog') }}
-              </a>
-              <button type="button" class="btn-text" (click)="signOut()">
-                {{ translation.t('cabinet.signOut') }}
-              </button>
-            </div>
-          </div>
-
-          <section class="social-edit-section">
-            <div class="social-edit-head">
-              <div>
-                <h3>{{ translation.t('cabinet.socialTitle') }}</h3>
-                <p class="social-edit-lead">{{ translation.t('cabinet.socialHint') }}</p>
-              </div>
-              @if (hasSocialLinks(company.socialLinks)) {
-                <app-social-links [links]="company.socialLinks" variant="light" [compact]="true" />
+              @if (performer.works.length > 0) {
+                <h2 class="register-card__title cabinet-section-title">
+                  {{ myWorksLabel(performer.works.length) }}
+                </h2>
+                <div class="cabinet-works">
+                  @for (work of performer.works; track work.id) {
+                    <div class="cabinet-works__item">
+                      <app-before-after [work]="work" [showCaption]="false" />
+                      @if (workVerificationEnabled) {
+                        @if (verificationLink(work); as workLink) {
+                          <div class="cabinet-works__link">
+                            <span>{{ translation.t('cabinet.clientLink') }}</span>
+                            <button type="button" class="link-accent" (click)="copyVerificationLink(workLink)">
+                              {{ translation.t('cabinet.copyLink') }}
+                            </button>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
+                </div>
               }
             </div>
-
-            @if (socialSaveSuccess()) {
-              <p class="upload-ok" role="status">{{ translation.t('cabinet.socialSaved') }}</p>
-            }
-
-            <form class="social-edit-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
-              <div class="register-social-grid">
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.phone') }}</span>
-                  <input
-                    type="text"
-                    formControlName="phone"
-                    [placeholder]="translation.t('cabinet.socialPhonePh')"
-                    autocomplete="tel"
-                    inputmode="tel"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.whatsapp') }}</span>
-                  <input
-                    type="text"
-                    formControlName="whatsapp"
-                    [placeholder]="translation.t('cabinet.socialWhatsappPh')"
-                    autocomplete="off"
-                    inputmode="tel"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.telegram') }}</span>
-                  <input
-                    type="text"
-                    formControlName="telegram"
-                    [placeholder]="translation.t('cabinet.socialTelegramPh')"
-                    autocomplete="off"
-                  />
-                </label>
-
-                <label class="register-field">
-                  <span class="register-label">{{ translation.t('social.instagram') }}</span>
-                  <input
-                    type="text"
-                    formControlName="instagram"
-                    [placeholder]="translation.t('cabinet.socialInstagramPh')"
-                    autocomplete="off"
-                  />
-                </label>
-
-                <label class="register-field register-field--full">
-                  <span class="register-label">{{ translation.t('social.facebook') }}</span>
-                  <input
-                    type="text"
-                    formControlName="facebook"
-                    [placeholder]="translation.t('cabinet.socialFacebookPh')"
-                    autocomplete="off"
-                  />
-                </label>
+          } @else if (furnitureStore.currentCompany(); as company) {
+            <div class="register-card cabinet-card">
+              <div class="cabinet-card-head">
+                <div class="register-form__photo">
+                  <div class="register-form__photo-box cabinet-card-head__avatar" aria-hidden="true">
+                    {{ profileInitial() }}
+                  </div>
+                  <div>
+                    <span class="cabinet-card-head__badge cabinet-card-head__badge--furniture">{{
+                      translation.t('cabinet.badgeFurniture')
+                    }}</span>
+                    <p class="cabinet-card-head__name">{{ company.name }}</p>
+                    <p class="register-card__muted">{{ furnitureSpecialtyDisplay(company.specialty) }}</p>
+                  </div>
+                </div>
+                <div class="cabinet-card-head__actions">
+                  <a [routerLink]="['/furniture', company.id]" class="link-accent">
+                    {{ translation.t('cabinet.openCatalog') }}
+                  </a>
+                  <button type="button" class="link-accent" (click)="signOut()">
+                    {{ translation.t('cabinet.signOut') }}
+                  </button>
+                </div>
               </div>
 
-              <button type="submit" class="btn-secondary">
-                {{ translation.t('cabinet.socialSave') }}
-              </button>
-            </form>
-          </section>
+              @if (hasSocialLinks(company.socialLinks)) {
+                <div class="cabinet-card-links">
+                  <app-social-links [links]="company.socialLinks" variant="light" [compact]="true" />
+                </div>
+              }
 
-          <div class="upload-section">
-            <h3>{{ translation.t('cabinet.uploadTitle') }}</h3>
-            <p class="upload-lead">{{ translation.t('cabinet.uploadLead') }}</p>
-            @if (uploadSuccess()) {
-              <p class="upload-ok" role="status">{{ translation.t('cabinet.uploadSuccess') }}</p>
-            }
-            <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
-              <div class="upload-form-fields">
-                <label class="work-field">
-                  <span class="work-field-label"
-                    >{{ translation.t('cabinet.workTitle') }} <em>*</em></span
-                  >
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.socialTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.socialHint') }}</p>
+
+              @if (socialSaveSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.socialSaved') }}
+                </p>
+              }
+
+              <form class="register-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
+                <div class="register-form__row register-form__row--social">
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.phone') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="phone"
+                      [placeholder]="translation.t('cabinet.socialPhonePh')"
+                      autocomplete="tel"
+                      inputmode="tel"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.whatsapp') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="whatsapp"
+                      [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                      autocomplete="off"
+                      inputmode="tel"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.telegram') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="telegram"
+                      [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('social.instagram') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="instagram"
+                      [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                  <label class="field register-form__row-full">
+                    <span class="field__label">{{ translation.t('social.facebook') }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      formControlName="facebook"
+                      [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                      autocomplete="off"
+                    />
+                  </label>
+                </div>
+                <button type="submit" class="btn-primary">
+                  {{ translation.t('cabinet.socialSave') }}
+                </button>
+              </form>
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.uploadTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.uploadLead') }}</p>
+
+              @if (uploadSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.uploadSuccess') }}
+                </p>
+              }
+
+              <form class="register-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workTitle') }} *</span>
                   <input
                     type="text"
+                    class="field-input"
                     formControlName="title"
                     [placeholder]="translation.t('cabinet.workTitlePh')"
                     autocomplete="off"
                   />
                 </label>
 
-                <label class="work-field work-field--full">
-                  <span class="work-field-label">{{ translation.t('cabinet.workDesc') }}</span>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workDesc') }}</span>
                   <textarea
+                    class="field-input field-textarea"
                     formControlName="description"
-                    rows="4"
+                    rows="3"
                     [placeholder]="translation.t('cabinet.workDescPh')"
                   ></textarea>
                   <span
-                    class="word-counter"
-                    [class.word-counter--over]="
+                    class="cabinet-word-counter"
+                    [class.cabinet-word-counter--over]="
                       countWords(workForm.get('description')?.value ?? '') > maxTextWords
                     "
                   >
                     {{ wordCountLabel(workForm.get('description')?.value ?? '') }}
                   </span>
                   @if (workFieldInvalid('description')) {
-                    <small class="field-error">{{ maxWordsError() }}</small>
+                    <span class="field__error">{{ maxWordsError() }}</span>
                   }
                 </label>
-              </div>
 
-              <div class="upload-dropzones">
-                <div class="dropzone-group">
-                  <span class="dropzone-heading"
-                    >{{ translation.t('cabinet.photoBefore') }} <em>*</em></span
-                  >
-                  <label
-                    class="dropzone"
-                    [class.dropzone--filled]="beforePreview()"
-                    [class.dropzone--dragging]="beforeDragging()"
-                    (dragover)="onDropzoneDragOver('before', $event)"
-                    (dragleave)="onDropzoneDragLeave('before')"
-                    (drop)="onDropzoneDrop('before', $event)"
-                  >
-                    <input
-                      #beforeInput
-                      type="file"
-                      class="dropzone-input"
-                      accept="image/*"
-                      (change)="onFileSelected('before', $event)"
-                    />
-                    @if (beforePreview(); as preview) {
-                      <img
-                        [src]="preview"
-                        [alt]="translation.t('cabinet.previewBefore')"
-                        class="dropzone-preview"
+                <div class="register-form__row">
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoBefore') }} *</span>
+                    <label
+                      class="cabinet-photo-drop"
+                      [class.cabinet-photo-drop--filled]="beforePreview()"
+                      [class.cabinet-photo-drop--drag]="beforeDragging()"
+                      (dragover)="onDropzoneDragOver('before', $event)"
+                      (dragleave)="onDropzoneDragLeave('before')"
+                      (drop)="onDropzoneDrop('before', $event)"
+                    >
+                      <input
+                        #beforeInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onFileSelected('before', $event)"
                       />
-                      <span class="dropzone-overlay">{{
-                        translation.t('cabinet.replacePhoto')
-                      }}</span>
-                    } @else {
-                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                    }
+                      @if (beforePreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
+                    </label>
+                  </label>
+
+                  <label class="field">
+                    <span class="field__label">{{ translation.t('cabinet.photoAfter') }} *</span>
+                    <label
+                      class="cabinet-photo-drop"
+                      [class.cabinet-photo-drop--filled]="afterPreview()"
+                      [class.cabinet-photo-drop--drag]="afterDragging()"
+                      (dragover)="onDropzoneDragOver('after', $event)"
+                      (dragleave)="onDropzoneDragLeave('after')"
+                      (drop)="onDropzoneDrop('after', $event)"
+                    >
+                      <input
+                        #afterInput
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        (change)="onFileSelected('after', $event)"
+                      />
+                      @if (afterPreview(); as preview) {
+                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                      } @else {
+                        <span>{{ translation.t('cabinet.dropHint') }}</span>
+                      }
+                    </label>
                   </label>
                 </div>
 
-                <div class="dropzone-group">
-                  <span class="dropzone-heading"
-                    >{{ translation.t('cabinet.photoAfter') }} <em>*</em></span
-                  >
-                  <label
-                    class="dropzone"
-                    [class.dropzone--filled]="afterPreview()"
-                    [class.dropzone--dragging]="afterDragging()"
-                    (dragover)="onDropzoneDragOver('after', $event)"
-                    (dragleave)="onDropzoneDragLeave('after')"
-                    (drop)="onDropzoneDrop('after', $event)"
-                  >
-                    <input
-                      #afterInput
-                      type="file"
-                      class="dropzone-input"
-                      accept="image/*"
-                      (change)="onFileSelected('after', $event)"
-                    />
-                    @if (afterPreview(); as preview) {
-                      <img
-                        [src]="preview"
-                        [alt]="translation.t('cabinet.previewAfter')"
-                        class="dropzone-preview"
-                      />
-                      <span class="dropzone-overlay">{{
-                        translation.t('cabinet.replacePhoto')
-                      }}</span>
-                    } @else {
-                      <span class="dropzone-icon" aria-hidden="true">🖼</span>
-                      <span class="dropzone-title">{{ translation.t('cabinet.dropTitle') }}</span>
-                      <span class="dropzone-hint">{{ translation.t('cabinet.dropHint') }}</span>
-                    }
-                  </label>
-                </div>
-              </div>
-
-              <div class="upload-form-actions">
-                <button type="submit" class="btn-primary btn-large upload-submit">
+                <button type="submit" class="btn-primary">
                   {{ translation.t('cabinet.uploadSubmit') }}
                 </button>
-              </div>
-            </form>
-          </div>
+              </form>
 
-          @if (company.works.length > 0) {
-            <div class="my-works">
-              <h3>{{ myWorksLabel(company.works.length) }}</h3>
-              <div class="my-works-grid">
-                @for (work of company.works; track work.id) {
-                  <div class="my-work-item">
-                    <app-before-after [work]="work" layout="compare" />
-                  </div>
-                }
-              </div>
+              @if (company.works.length > 0) {
+                <h2 class="register-card__title cabinet-section-title">
+                  {{ myWorksLabel(company.works.length) }}
+                </h2>
+                <div class="cabinet-works">
+                  @for (work of company.works; track work.id) {
+                    <div class="cabinet-works__item">
+                      <app-before-after [work]="work" [showCaption]="false" />
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
-        </section>
-      }
+        </div>
+      </main>
+    </div>
   </div>
-</div>
 }
 </div>

@@ -1,4 +1,8 @@
-<figure class="before-after" [class.ba-featured]="featured()" [class.ba-split]="layout() === 'split'">
+<figure
+  class="before-after"
+  [class.ba-featured]="featured()"
+  [class.ba-no-caption]="!showCaption()"
+>
   @if (verificationBadge(); as badge) {
     <div class="work-verify-badge" [class]="badge.className" role="status">
       <span class="work-verify-badge-icon" aria-hidden="true">{{ badge.icon }}</span>
@@ -6,93 +10,39 @@
     </div>
   }
 
-  @if (layout() === 'compare') {
-    <div class="ba-compare-card">
-      <div
-        class="ba-compare"
-        [style.--pos-num]="sliderPos()"
-        role="img"
-        [attr.aria-label]="displayTitle() + ': ' + translation.t('beforeAfter.compareLabel')"
-      >
+  <div class="ba-card">
+    <div class="ba-images">
+      <div class="ba-side ba-side-before">
+        <span class="ba-label">{{ translation.t('beforeAfter.before') }}</span>
         <img
-          class="ba-img ba-img-after"
-          [src]="work().afterImage"
-          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.afterAlt')"
+          [src]="work().beforeImage"
+          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
           loading="lazy"
-          draggable="false"
-        />
-
-        <div class="ba-before-layer">
-          <img
-            class="ba-img ba-img-before"
-            [src]="work().beforeImage"
-            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.beforeAlt')"
-            loading="lazy"
-            draggable="false"
-          />
-        </div>
-
-        <div class="ba-compare-labels">
-          <span class="ba-pill ba-pill-before">{{ translation.t('beforeAfter.before') }}</span>
-          <span class="ba-pill ba-pill-after">{{ translation.t('beforeAfter.after') }}</span>
-        </div>
-
-        <div class="ba-handle" aria-hidden="true">
-          <span class="ba-handle-line"></span>
-          <span class="ba-handle-knob">
-            <span class="ba-handle-arrows">⟷</span>
-          </span>
-        </div>
-
-        <input
-          type="range"
-          class="ba-range"
-          min="8"
-          max="92"
-          [value]="sliderPos()"
-          (input)="onSliderInput($event)"
-          [attr.aria-label]="translation.t('beforeAfter.compareAria') + ': ' + displayTitle()"
         />
       </div>
-
-      <p class="ba-hint">
-        <span aria-hidden="true">↔</span>
-        {{ translation.t('beforeAfter.hint') }}
-      </p>
-    </div>
-  } @else {
-    <div class="ba-card">
-      <div class="ba-images">
-        <div class="ba-side ba-side-before">
-          <span class="ba-label">{{ translation.t('beforeAfter.before') }}</span>
-          <img
-            [src]="work().beforeImage"
-            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
-            loading="lazy"
-          />
-        </div>
-        <div class="ba-divider" aria-hidden="true">
-          <span class="ba-arrow">→</span>
-        </div>
-        <div class="ba-side ba-side-after">
-          <span class="ba-label ba-label-after">{{ translation.t('beforeAfter.after') }}</span>
-          <img
-            [src]="work().afterImage"
-            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
-            loading="lazy"
-          />
-        </div>
+      <div class="ba-divider" aria-hidden="true">
+        <span class="ba-arrow">→</span>
+      </div>
+      <div class="ba-side ba-side-after">
+        <span class="ba-label ba-label-after">{{ translation.t('beforeAfter.after') }}</span>
+        <img
+          [src]="work().afterImage"
+          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
+          loading="lazy"
+        />
       </div>
     </div>
+  </div>
+
+  @if (showCaption()) {
+    <figcaption class="ba-caption">
+      <div class="ba-caption-top">
+        <h4>{{ displayTitle() }}</h4>
+        <span class="ba-tag">{{ translation.t('beforeAfter.tag') }}</span>
+      </div>
+      @if (displayDescription(); as desc) {
+        <p>{{ desc }}</p>
+      }
+    </figcaption>
   }
-
-  <figcaption class="ba-caption">
-    <div class="ba-caption-top">
-      <h4>{{ displayTitle() }}</h4>
-      <span class="ba-tag">{{ translation.t('beforeAfter.tag') }}</span>
-    </div>
-    @if (displayDescription(); as desc) {
-      <p>{{ desc }}</p>
-    }
-  </figcaption>
 </figure>

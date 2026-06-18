@@ -87,7 +87,8 @@ export interface AuthSignUpMetadata {
   city?: string;
   specialty?: string;
   description?: string;
-  account_type?: MasterAccountType;
+  account_type?: MasterAccountType | 'furniture';
+  pro_role?: string;
   call_out_fee?: string;
   whatsapp?: string;
   telegram?: string;

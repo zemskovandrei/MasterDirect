@@ -24,7 +24,7 @@
             {{ supabase.workers().length }} {{ translation.t('masters.inCatalog') }}
           </p>
         }
-        @if (adminAuth.isAdmin()) {
+        @if (catalogAdmin.isAdmin()) {
           <div class="catalog-admin-toolbar">
             <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
             <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
@@ -37,10 +37,11 @@
       <div class="performer-grid">
         @for (p of supabase.workers(); track p.id) {
           <article
-            class="performer-card performer-card--worker"
-            [class.performer-card--admin]="adminAuth.isAdmin()"
+            class="performer-card performer-card--worker performer-card--enhanced"
+            [class.performer-card--admin]="catalogAdmin.isAdmin()"
+            [class.performer-card--selected]="selectedPerformerId() === p.id"
           >
-            @if (adminAuth.isAdmin()) {
+            @if (catalogAdmin.isAdmin()) {
               <div class="performer-admin-actions">
                 <button
                   type="button"
@@ -59,32 +60,67 @@
               </div>
             }
 
-            <div class="performer-head">
-              <span class="performer-badge performer-badge-worker">{{
-                translation.t('masters.badge')
-              }}</span>
-              <h3>
-                <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
-              </h3>
-              <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-              <p class="performer-desc">{{ catalogL10n.performerDescription(p) }}</p>
+            <div class="performer-card__header">
+              <div class="performer-card__avatar" aria-hidden="true">
+                {{ p.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="performer-head">
+                <span class="performer-badge performer-badge-worker">{{
+                  translation.t('masters.badge')
+                }}</span>
+                <h3>
+                  <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
+                </h3>
+                <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+              </div>
             </div>
-            @if (p.works[0]) {
-              <app-before-after [work]="p.works[0]" layout="split" />
+
+            @if (catalogL10n.performerDescription(p); as desc) {
+              <p class="performer-desc">{{ desc }}</p>
             }
-            <a [routerLink]="performerLink(p.id)" class="performer-more">
-              {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
-            </a>
-          </article>
-        } @empty {
-          @if (supabase.loaded()) {
-            <div class="catalog-empty-cta">
-              <h3>{{ translation.t('catalog.autoMatchEmpty') }}</h3>
-              <a routerLink="/jobs" fragment="calculator" class="btn-primary catalog-empty-cta__btn">
-                {{ translation.t('catalog.autoMatchCta') }}
-              </a>
+
+            @if (p.works[0]; as work) {
+              <div class="performer-card__media">
+                @if (catalogAdmin.isAdmin()) {
+                  <button
+                    type="button"
+                    class="performer-admin-btn performer-admin-btn--delete performer-admin-work-delete"
+                    (click)="deleteWork(p, work.id, work.title)"
+                  >
+                    🗑 {{ translation.t('admin.catalog.deleteWork') }}
+                  </button>
+                }
+                <app-before-after [work]="work" [showCaption]="false" />
+              </div>
+            }
+
+            <div class="performer-card__footer">
+              @if (selectedPerformerId() === p.id && hasSocialLinks(p.socialLinks)) {
+                <div class="performer-card__contacts">
+                  <p class="performer-card__contacts-title">{{ translation.t('catalog.contactsTitle') }}</p>
+                  <app-social-links [links]="p.socialLinks" variant="card-revealed" />
+                </div>
+              }
+
+              <div class="performer-card__actions">
+                <button
+                  type="button"
+                  class="performer-select-btn"
+                  [class.performer-select-btn--active]="selectedPerformerId() === p.id"
+                  (click)="toggleSelect(p.id)"
+                >
+                  {{
+                    selectedPerformerId() === p.id
+                      ? translation.t('catalog.selected')
+                      : translation.t('catalog.select')
+                  }}
+                </button>
+                <a [routerLink]="performerLink(p.id)" class="performer-more">
+                  {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
+                </a>
+              </div>
             </div>
-          }
+          </article>
         }
       </div>
     </section>
@@ -109,7 +145,7 @@
       >
         ×
       </button>
-      <h2>{{ translation.t('admin.masters.editTitle') }}</h2>
+      <h2>{{ translation.t('admin.catalog.editTitle') }}</h2>
       <p class="performer-edit-dialog__subtitle">{{ performer.name }}</p>
 
       <form class="performer-edit-form" [formGroup]="editForm" (ngSubmit)="saveEditedPerformer()">

@@ -1,4 +1,5 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { WORK_VERIFICATION_ENABLED } from '../../../core/constants/features';
 import { WorkProject } from '../../../core/models/portfolio.models';
 import { CatalogLocalizationService } from '../../../core/services/catalog-localization.service';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -8,8 +9,6 @@ interface VerificationBadge {
   icon: string;
   className: string;
 }
-
-export type BeforeAfterLayout = 'compare' | 'split';
 
 @Component({
   selector: 'app-before-after',
@@ -22,8 +21,8 @@ export class BeforeAfterComponent {
   private readonly catalogL10n = inject(CatalogLocalizationService);
 
   readonly work = input.required<WorkProject>();
-  readonly layout = input<BeforeAfterLayout>('compare');
   readonly featured = input(false);
+  readonly showCaption = input(true);
   readonly titleOverride = input<string | null>(null);
   readonly descriptionOverride = input<string | null>(null);
 
@@ -41,6 +40,9 @@ export class BeforeAfterComponent {
   }
 
   protected readonly verificationBadge = computed((): VerificationBadge | null => {
+    if (!WORK_VERIFICATION_ENABLED) {
+      return null;
+    }
     this.translation.locale();
     const status = this.work().verificationStatus ?? 'not_requested';
     switch (status) {
@@ -66,11 +68,4 @@ export class BeforeAfterComponent {
         return null;
     }
   });
-
-  protected readonly sliderPos = signal(50);
-
-  onSliderInput(event: Event) {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.sliderPos.set(value);
-  }
 }

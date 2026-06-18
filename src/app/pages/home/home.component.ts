@@ -6,6 +6,8 @@ import { FurnitureStoreService } from '../../core/services/furniture-store.servi
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { collectGalleryWorks } from '../../core/utils/gallery-works.util';
 import { homeHeroBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 
@@ -28,7 +30,16 @@ export class HomeComponent implements OnInit {
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly heroBackground = homeHeroBackgroundStyle();
+
+  protected readonly galleryWorks = computed(() =>
+    collectGalleryWorks({
+      workers: this.supabase.galleryWorkers(),
+      brigades: this.supabase.galleryBrigades(),
+      furniture: this.supabase.galleryFurnitureCompanies(),
+    }),
+  );
 
   protected readonly hasGalleryPerformers = computed(
     () =>

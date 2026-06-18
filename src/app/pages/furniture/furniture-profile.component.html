@@ -60,7 +60,7 @@
 
         @if (c.works[0]; as heroWork) {
           <div class="showcase-featured">
-            <app-before-after [work]="heroWork" [featured]="true" layout="compare" />
+            <app-before-after [work]="heroWork" [featured]="true" />
           </div>
         }
 
@@ -73,7 +73,7 @@
             <div class="showcase-grid">
               @for (work of c.works.slice(1); track work.id) {
                 <div class="showcase-grid-item">
-                  <app-before-after [work]="work" layout="compare" />
+                  <app-before-after [work]="work" [showCaption]="false" />
                 </div>
               }
             </div>

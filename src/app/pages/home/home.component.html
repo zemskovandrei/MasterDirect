@@ -93,18 +93,24 @@
       <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
     </div>
 
-    @if (portfolioStore.brigades()[0]; as brigade) {
-      @if (brigade.works[0]; as sample) {
-        <div class="teaser-sample">
-          <app-before-after
-            [work]="sample"
-            layout="compare"
-            [featured]="true"
-            [titleOverride]="translation.t('home.portfolio.sampleTitle')"
-            [descriptionOverride]="translation.t('home.portfolio.sampleDesc')"
-          />
-        </div>
-      }
+    @if (galleryWorks().length > 0) {
+      <div class="works-gallery-grid">
+        @for (item of galleryWorks(); track item.work.id + item.performerRoute) {
+          <article class="works-gallery-card">
+            <app-before-after [work]="item.work" [showCaption]="false" />
+            <div class="works-gallery-card__meta">
+              <a [routerLink]="item.performerRoute" class="works-gallery-card__performer">{{
+                item.performerName
+              }}</a>
+              @if (catalogL10n.workTitle(item.work); as title) {
+                <p class="works-gallery-card__title">{{ title }}</p>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="works-gallery-empty">{{ translation.t('home.portfolio.empty') }}</p>
     }
 
     <div class="teaser-actions">

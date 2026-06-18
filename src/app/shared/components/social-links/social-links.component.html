@@ -1,25 +1,101 @@
 @if (items().length > 0) {
-  <div
-    class="social-links"
-    [class.social-links--compact]="compact()"
-    [class.social-links--light]="variant() === 'light'"
-  >
-    @for (item of items(); track item.key) {
-      <a
-        class="social-link social-link--{{ item.key }}"
-        [href]="item.href"
-        target="_blank"
-        rel="noopener noreferrer"
-        [attr.aria-label]="label(item.key)"
-      >
-        <span class="social-link-icon" aria-hidden="true">{{ icon(item.key) }}</span>
-        <span class="social-link-text">
-          <span class="social-link-label">{{ label(item.key) }}</span>
-          @if (!compact()) {
-            <span class="social-link-value">{{ item.display }}</span>
+  @if (variant() === 'profile-icons') {
+    <div class="social-links social-links--profile-icons" (click)="$event.stopPropagation()">
+      @for (item of items(); track item.key) {
+        <a
+          class="social-profile-icon social-profile-icon--{{ item.key }}"
+          [href]="item.href"
+          [attr.target]="item.key === 'phone' ? null : '_blank'"
+          [attr.rel]="item.key === 'phone' ? null : 'noopener noreferrer'"
+          [attr.title]="item.display"
+          [attr.aria-label]="label(item.key) + ': ' + item.display"
+          (click)="$event.stopPropagation()"
+        >
+          <span class="material-icons" aria-hidden="true">{{ materialIcon(item.key) }}</span>
+        </a>
+      }
+    </div>
+  } @else if (variant() === 'card-revealed') {
+    <div class="social-links social-links--card-revealed" (click)="$event.stopPropagation()">
+      @for (item of items(); track item.key) {
+        <a
+          class="social-contact-row social-contact-row--{{ item.key }}"
+          [href]="item.href"
+          [attr.target]="item.key === 'phone' ? null : '_blank'"
+          [attr.rel]="item.key === 'phone' ? null : 'noopener noreferrer'"
+          [attr.aria-label]="label(item.key)"
+          (click)="$event.stopPropagation()"
+        >
+          <span class="social-contact-row__icon" aria-hidden="true">
+            <span class="material-icons">{{ materialIcon(item.key) }}</span>
+          </span>
+          <span class="social-contact-row__body">
+            <span class="social-contact-row__label">{{ label(item.key) }}</span>
+            <span class="social-contact-row__value">{{ item.display }}</span>
+          </span>
+        </a>
+      }
+    </div>
+  } @else if (variant() === 'card') {
+    <div class="social-links social-links--card" (click)="$event.stopPropagation()">
+      @for (item of items(); track item.key) {
+        @if (item.key === 'phone') {
+          <button
+            type="button"
+            class="social-icon-btn social-icon-btn--phone"
+            [class.social-icon-btn--active]="phoneRevealed()"
+            [attr.aria-label]="label(item.key)"
+            [attr.aria-expanded]="phoneRevealed()"
+            (click)="togglePhone($event)"
+          >
+            <span class="material-icons" aria-hidden="true">phone</span>
+          </button>
+        } @else {
+          <a
+            class="social-icon-btn social-icon-btn--{{ item.key }}"
+            [href]="item.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="label(item.key)"
+            (click)="$event.stopPropagation()"
+          >
+            <span class="material-icons" aria-hidden="true">{{ materialIcon(item.key) }}</span>
+          </a>
+        }
+      }
+      @if (phoneRevealed()) {
+        @for (item of items(); track item.key) {
+          @if (item.key === 'phone') {
+            <a class="social-phone-reveal" [href]="item.href" (click)="$event.stopPropagation()">
+              {{ item.display }}
+            </a>
           }
-        </span>
-      </a>
-    }
-  </div>
+        }
+      }
+    </div>
+  } @else {
+    <div
+      class="social-links"
+      [class.social-links--compact]="compact()"
+      [class.social-links--light]="variant() === 'light'"
+    >
+      @for (item of items(); track item.key) {
+        <a
+          class="social-link social-link--{{ item.key }}"
+          [href]="item.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          [attr.aria-label]="label(item.key)"
+        >
+          <span class="social-link-icon" aria-hidden="true">{{ icon(item.key) }}</span>
+          <span class="social-link-text">
+            <span class="social-link-label">{{ label(item.key) }}</span>
+            @if (!compact()) {
+              <span class="social-link-value">{{ item.display }}</span>
+            }
+          </span>
+        </a>
+      }
+    </div>
+  }
 }

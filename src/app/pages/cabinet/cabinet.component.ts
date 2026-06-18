@@ -1,18 +1,27 @@
-import { Component, ElementRef, effect, inject, computed, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RegisterPageComponent } from '../register/register-page.component';
+import { RegisterPageUiService } from '../register/register-page-ui.service';
 import { AddWorkResult, PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CabinetSessionService } from '../../core/services/cabinet-session.service';
+import { SupabaseService } from '../../core/services/supabase.service';
+import { firstValueFrom } from 'rxjs';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
-import { cabinetTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { APP_BRAND_NAME } from '../../core/constants/brand';
+import { WORK_VERIFICATION_ENABLED } from '../../core/constants/features';
+import {
+  type CabinetTabBackgroundKey,
+} from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-cabinet',
@@ -26,16 +35,27 @@ import { cabinetTabBackgroundStyle } from '../../core/constants/catalog-tab-back
     SocialLinksComponent,
   ],
   templateUrl: './cabinet.component.html',
-  styleUrls: ['../../styles/catalog-pages.css', './cabinet.component.css'],
+  styleUrls: [
+    '../../styles/catalog-pages.css',
+    '../../styles/cabinet-backgrounds.scss',
+    '../register/register-page.component.scss',
+    './cabinet.component.css',
+  ],
 })
 export class CabinetComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly registerUi = inject(RegisterPageUiService);
   protected readonly store = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly auth = inject(AuthService);
+  protected readonly cabinetSession = inject(CabinetSessionService);
+  private readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
 
+  protected readonly brandName = APP_BRAND_NAME;
+  protected readonly workVerificationEnabled = WORK_VERIFICATION_ENABLED;
   protected readonly uploadSuccess = signal(false);
   protected readonly socialSaveSuccess = signal(false);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
@@ -43,18 +63,97 @@ export class CabinetComponent {
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly maxTextWords = MAX_TEXT_WORDS;
   protected readonly countWords = countWords;
-  protected readonly cabinetBackground = computed(() => {
-    const performer = this.store.currentPerformer();
-    if (performer) {
-      return cabinetTabBackgroundStyle(performer.type === 'brigade' ? 'cabinetBrigade' : 'cabinetWorker');
-    }
 
-    if (this.furnitureStore.currentCompany()) {
-      return cabinetTabBackgroundStyle('cabinetFurniture');
-    }
+  protected readonly hasCabinetSession = computed(
+    () =>
+      !!this.store.currentPerformer() ||
+      !!this.furnitureStore.currentCompany(),
+  );
 
-    return cabinetTabBackgroundStyle('cabinetWorker');
+  protected readonly isLoggedIn = computed(
+    () => this.hasCabinetSession() || !!this.auth.user(),
+  );
+
+  private readonly routeFragment = toSignal(this.route.fragment, { initialValue: null });
+
+  protected readonly authPageMode = computed<'login' | 'register' | 'forgot-password' | 'reset-password'>(() => {
+    if (this.auth.passwordRecovery()) {
+      return 'reset-password';
+    }
+    const fragment = this.routeFragment();
+    if (fragment === 'register') {
+      return 'register';
+    }
+    if (fragment === 'forgot-password') {
+      return 'forgot-password';
+    }
+    return 'login';
   });
+
+  protected readonly authShellMode = computed<'login' | 'register'>(() =>
+    this.authPageMode() === 'register' ? 'register' : 'login',
+  );
+
+  protected readonly registerBgRole = computed<'master' | 'brigade' | 'furniture' | null>(() => {
+    if (this.hasCabinetSession() || this.authShellMode() !== 'register') {
+      return null;
+    }
+    const role = this.registerUi.selectedProRole();
+    if (role === 'builder') {
+      return 'brigade';
+    }
+    if (role === 'furniture_maker') {
+      return 'furniture';
+    }
+    return 'master';
+  });
+
+  protected readonly cabinetRole = computed<'worker' | 'brigade' | 'furniture'>(() => {
+    const key = this.cabinetBackgroundKey();
+    if (key === 'cabinetBrigade') {
+      return 'brigade';
+    }
+    if (key === 'cabinetFurniture') {
+      return 'furniture';
+    }
+    return 'worker';
+  });
+
+  protected readonly cabinetDisplayName = computed(() => {
+    const performer = this.store.currentPerformer();
+    if (performer?.name?.trim()) {
+      return performer.name.trim();
+    }
+    const company = this.furnitureStore.currentCompany();
+    if (company?.name?.trim()) {
+      return company.name.trim();
+    }
+    return this.translation.t('cabinet.registerPromoTitle');
+  });
+
+  private cabinetBackgroundKey(): CabinetTabBackgroundKey {
+    if (this.furnitureStore.currentCompany()) {
+      return 'cabinetFurniture';
+    }
+
+    const performer = this.store.currentPerformer();
+    if (performer?.type === 'brigade') {
+      return 'cabinetBrigade';
+    }
+    if (performer?.type === 'worker') {
+      return 'cabinetWorker';
+    }
+
+    const accountType = String(this.auth.user()?.user_metadata?.['account_type'] ?? '');
+    if (accountType === 'brigade') {
+      return 'cabinetBrigade';
+    }
+    if (accountType === 'furniture') {
+      return 'cabinetFurniture';
+    }
+
+    return 'cabinetWorker';
+  }
 
   protected readonly socialForm = this.fb.nonNullable.group({
     phone: [''],
@@ -79,6 +178,10 @@ export class CabinetComponent {
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   constructor() {
+    afterNextRender(() => {
+      void this.cabinetSession.restoreForCurrentUser();
+    });
+
     effect(() => {
       const performer = this.store.currentPerformer();
       const company = this.furnitureStore.currentCompany();
@@ -97,12 +200,11 @@ export class CabinetComponent {
     });
   }
 
-  isLoggedIn(): boolean {
-    return (
-      !!this.auth.user() ||
-      !!this.store.currentPerformer() ||
-      !!this.furnitureStore.currentCompany()
-    );
+  protected profileInitial(): string {
+    const performer = this.store.currentPerformer();
+    const company = this.furnitureStore.currentCompany();
+    const name = performer?.name ?? company?.name ?? '';
+    return name.trim().charAt(0).toUpperCase() || '?';
   }
 
   saveSocialLinks() {
@@ -199,7 +301,7 @@ export class CabinetComponent {
     }
   }
 
-  uploadWork() {
+  async uploadWork() {
     const performer = this.store.currentPerformer();
     const company = this.furnitureStore.currentCompany();
     if (!performer && !company) {
@@ -227,15 +329,32 @@ export class CabinetComponent {
         beforeImage: before,
         afterImage: after,
       });
-      if (work) {
-        this.uploadSuccess.set(true);
-        this.lastUploadResult.set(null);
-        this.workForm.reset();
-        this.beforePreview.set(null);
-        this.afterPreview.set(null);
-        this.resetFileInputs();
-        setTimeout(() => this.uploadSuccess.set(false), 6000);
+      if (!work) {
+        return;
       }
+
+      const ownerId = company.dbId ?? company.id;
+      const saveResult = await firstValueFrom(
+        this.supabase.savePortfolioWork({
+          ownerId,
+          ownerType: 'furniture',
+          work,
+        }),
+      );
+
+      if (saveResult.error) {
+        this.furnitureStore.deleteWork(company.id, work.id);
+        alert(saveResult.error);
+        return;
+      }
+
+      this.uploadSuccess.set(true);
+      this.lastUploadResult.set(null);
+      this.workForm.reset();
+      this.beforePreview.set(null);
+      this.afterPreview.set(null);
+      this.resetFileInputs();
+      setTimeout(() => this.uploadSuccess.set(false), 6000);
       return;
     }
 
@@ -244,18 +363,35 @@ export class CabinetComponent {
       description: v.description,
       beforeImage: before,
       afterImage: after,
-      clientContact: v.clientContact,
+      clientContact: WORK_VERIFICATION_ENABLED ? v.clientContact : '',
     });
 
-    if (result) {
-      this.uploadSuccess.set(true);
-      this.lastUploadResult.set(result);
-      this.workForm.reset();
-      this.beforePreview.set(null);
-      this.afterPreview.set(null);
-      this.resetFileInputs();
-      setTimeout(() => this.uploadSuccess.set(false), 6000);
+    if (!result) {
+      return;
     }
+
+    const ownerType = performer!.type === 'brigade' ? 'brigade' : 'worker';
+    const saveResult = await firstValueFrom(
+      this.supabase.savePortfolioWork({
+        ownerId: performer!.id,
+        ownerType,
+        work: result.work,
+      }),
+    );
+
+    if (saveResult.error) {
+      this.store.deleteWork(performer!.id, result.work.id);
+      alert(saveResult.error);
+      return;
+    }
+
+    this.uploadSuccess.set(true);
+    this.lastUploadResult.set(result);
+    this.workForm.reset();
+    this.beforePreview.set(null);
+    this.afterPreview.set(null);
+    this.resetFileInputs();
+    setTimeout(() => this.uploadSuccess.set(false), 6000);
   }
 
   verificationLink(work: {
@@ -278,6 +414,7 @@ export class CabinetComponent {
   }
 
   signOut() {
+    void this.auth.signOut();
     this.store.signOut();
     this.furnitureStore.signOut();
     this.beforePreview.set(null);

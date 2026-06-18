@@ -298,16 +298,9 @@
                   }
                 </div>
                 <p class="review-card-text">{{ reviewStore.localizeReview(item) }}</p>
-                @if (item.beforeImage && item.afterImage) {
+                @if (reviewPhotosWork(item); as photosWork) {
                   <div class="review-card-photos">
-                    <figure>
-                      <img [src]="item.beforeImage" [alt]="translation.t('reviewsPage.feed.before')" />
-                      <figcaption>{{ translation.t('reviewsPage.feed.before') }}</figcaption>
-                    </figure>
-                    <figure>
-                      <img [src]="item.afterImage" [alt]="translation.t('reviewsPage.feed.after')" />
-                      <figcaption>{{ translation.t('reviewsPage.feed.after') }}</figcaption>
-                    </figure>
+                    <app-before-after [work]="photosWork" [showCaption]="false" />
                   </div>
                 }
               </article>

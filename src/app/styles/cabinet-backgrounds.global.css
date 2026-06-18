@@ -1,0 +1,168 @@
+/* Cabinet auth backgrounds — global (no view encapsulation) */
+
+.register-page {
+  min-height: calc(100dvh - 4.5rem);
+  background-color: #0c1222;
+}
+
+.register-page__grid {
+  display: grid;
+  min-height: inherit;
+  grid-template-columns: 1fr;
+}
+
+.register-promo,
+.register-form-side {
+  transition: background-color 0.35s ease;
+}
+
+.register-promo {
+  color: #fff;
+  min-height: clamp(220px, 36vh, 360px);
+}
+
+@media (min-width: 1024px) {
+  .register-page__grid {
+    grid-template-columns: minmax(280px, 2fr) minmax(320px, 3fr);
+  }
+
+  .register-promo {
+    min-height: calc(100dvh - 4.5rem);
+    position: sticky;
+    top: 4.5rem;
+    align-self: start;
+  }
+}
+
+.register-form-side {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 1rem 2rem;
+  overflow-y: auto;
+}
+
+.register-form-shell {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.cabinet-tab-page--login,
+.register-page--login,
+.cabinet-tab-page--register,
+.register-page--register,
+.cabinet-tab-page--brigade,
+.register-page--brigade,
+.cabinet-tab-page--furniture,
+.register-page--furniture {
+  background-color: #0c1222;
+}
+
+.cabinet-tab-page--worker,
+.register-page--worker {
+  background-color: #0f172a;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.52), rgba(15, 23, 42, 0.65)),
+    url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--login .register-promo,
+.register-page--login .register-promo {
+  background-color: #0c1222;
+  background-image:
+    linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--login .register-form-side,
+.register-page--login .register-form-side {
+  background-color: #f4f7fb;
+  background-image:
+    linear-gradient(180deg, rgba(244, 247, 251, 0.9) 0%, rgba(244, 247, 251, 0.82) 55%, rgba(236, 242, 248, 0.88) 100%),
+    url('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--register .register-promo,
+.register-page--register .register-promo {
+  background-color: #0c1222;
+  background-image:
+    linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--register .register-form-side,
+.register-page--register .register-form-side {
+  background-color: #f4f7fb;
+  background-image:
+    linear-gradient(180deg, rgba(244, 247, 251, 0.9) 0%, rgba(244, 247, 251, 0.82) 55%, rgba(236, 242, 248, 0.88) 100%),
+    url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--brigade .register-promo,
+.register-page--brigade .register-promo {
+  background-color: #0c1222;
+  background-image:
+    linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--brigade .register-form-side,
+.register-page--brigade .register-form-side {
+  background-color: #f4f7fb;
+  background-image:
+    linear-gradient(180deg, rgba(244, 247, 251, 0.9) 0%, rgba(244, 247, 251, 0.82) 55%, rgba(236, 242, 248, 0.88) 100%),
+    url('https://images.unsplash.com/photo-1581094794329-cf1c4f5c8c2e?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--furniture .register-promo,
+.register-page--furniture .register-promo {
+  background-color: #0c1222;
+  background-image:
+    linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--furniture .register-form-side,
+.register-page--furniture .register-form-side {
+  background-color: #f4f7fb;
+  background-image:
+    linear-gradient(180deg, rgba(244, 247, 251, 0.9) 0%, rgba(244, 247, 251, 0.82) 55%, rgba(236, 242, 248, 0.88) 100%),
+    url('https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.cabinet-tab-page--worker .register-promo,
+.register-page--worker .register-promo {
+  background-color: #0c1222;
+  background-image:
+    linear-gradient(180deg, rgba(12, 18, 34, 0.45) 0%, rgba(12, 18, 34, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}

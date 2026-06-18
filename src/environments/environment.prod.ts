@@ -11,6 +11,7 @@ export const environment: Environment = {
     mastersTable: 'specialist',
     brigadesTable: 'brigades',
     furnitureOrdersTable: 'furniture_orders',
+    portfolioWorksTable: 'portfolio_works',
     reviewsTable: 'reviews',
     adminEmails: ['admin@smartbuild.tech'],
   },

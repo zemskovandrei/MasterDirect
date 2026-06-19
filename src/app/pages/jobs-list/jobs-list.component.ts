@@ -1,4 +1,12 @@
-import { Component, Inject, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -7,7 +15,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Job, isCompletedOrderStatus, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
-import { CATALOG_TAB_BACKGROUNDS, calculatorSectionBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import {
+  CATALOG_TAB_BACKGROUNDS,
+  calculatorSectionBackgroundStyle,
+} from '../../core/constants/catalog-tab-backgrounds';
 import { RenovationCalculatorComponent } from '../../shared/components/renovation-calculator/renovation-calculator.component';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
@@ -16,6 +27,7 @@ import { logSupabaseError } from '../../core/utils/supabase-error.util';
   standalone: true,
   imports: [CommonModule, RouterLink, RenovationCalculatorComponent],
   templateUrl: './jobs-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './jobs-list.component.css'],
 })
 export class JobsListComponent implements OnInit {

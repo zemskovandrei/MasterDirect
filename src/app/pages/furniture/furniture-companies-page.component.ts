@@ -1,4 +1,11 @@
-import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -8,7 +15,10 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
-import { saveCatalogSelection, readCatalogSelection } from '../../core/utils/catalog-selection.util';
+import {
+  saveCatalogSelection,
+  readCatalogSelection,
+} from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
@@ -16,6 +26,7 @@ import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-back
   standalone: true,
   imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
   templateUrl: './furniture-companies-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './furniture-companies-page.component.css'],
 })
 export class FurnitureCompaniesPageComponent implements OnInit {

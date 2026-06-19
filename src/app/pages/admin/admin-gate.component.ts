@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AdminLoginModalComponent } from '../../shared/components/admin-login-modal/admin-login-modal.component';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
@@ -19,6 +19,7 @@ import { TranslationService } from '../../core/services/translation.service';
       (loggedIn)="onLoggedIn()"
     />
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .admin-gate {

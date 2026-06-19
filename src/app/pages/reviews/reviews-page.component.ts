@@ -6,10 +6,15 @@ import {
   inject,
   signal,
   viewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ReviewPerformerTypeKey, ReviewSubmission, WorkProject } from '../../core/models/portfolio.models';
+import {
+  ReviewPerformerTypeKey,
+  ReviewSubmission,
+  WorkProject,
+} from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -34,6 +39,7 @@ interface PerformerOption {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent],
   templateUrl: './reviews-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
 })
 export class ReviewsPageComponent {
@@ -108,8 +114,7 @@ export class ReviewsPageComponent {
     }
     return list.filter(
       (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.subtitle.toLowerCase().includes(query),
+        item.name.toLowerCase().includes(query) || item.subtitle.toLowerCase().includes(query),
     );
   });
 
@@ -195,8 +200,8 @@ export class ReviewsPageComponent {
       review: v.review,
       kind,
       rating: kind === 'recommendation' ? 5 : v.rating,
-      beforeImage: kind === 'review' ? this.beforePreview() ?? undefined : undefined,
-      afterImage: kind === 'review' ? this.afterPreview() ?? undefined : undefined,
+      beforeImage: kind === 'review' ? (this.beforePreview() ?? undefined) : undefined,
+      afterImage: kind === 'review' ? (this.afterPreview() ?? undefined) : undefined,
     };
 
     if (this.category() === 'renovation') {
@@ -244,7 +249,13 @@ export class ReviewsPageComponent {
   }
 
   fieldInvalid(
-    field: 'clientName' | 'performerId' | 'performerFreeText' | 'rating' | 'review' | 'recommendConfirm',
+    field:
+      | 'clientName'
+      | 'performerId'
+      | 'performerFreeText'
+      | 'rating'
+      | 'review'
+      | 'recommendConfirm',
   ): boolean {
     const control = this.reviewForm.get(field);
     return !!control && control.invalid && control.touched;
@@ -307,7 +318,9 @@ export class ReviewsPageComponent {
 
   submitButtonLabel(): string {
     return this.translation.t(
-      this.isRecommendationMode() ? 'reviewsPage.form.submitRecommendation' : 'reviewsPage.form.submit',
+      this.isRecommendationMode()
+        ? 'reviewsPage.form.submitRecommendation'
+        : 'reviewsPage.form.submit',
     );
   }
 
@@ -319,13 +332,17 @@ export class ReviewsPageComponent {
 
   reviewTextPlaceholder(): string {
     return this.translation.t(
-      this.isRecommendationMode() ? 'reviewsPage.form.recommendationTextPh' : 'reviewsPage.form.textPh',
+      this.isRecommendationMode()
+        ? 'reviewsPage.form.recommendationTextPh'
+        : 'reviewsPage.form.textPh',
     );
   }
 
   reviewTextError(): string {
     return this.translation.t(
-      this.isRecommendationMode() ? 'reviewsPage.errors.recommendationText' : 'reviewsPage.errors.text',
+      this.isRecommendationMode()
+        ? 'reviewsPage.errors.recommendationText'
+        : 'reviewsPage.errors.text',
     );
   }
 

@@ -1,4 +1,4 @@
-import { Component, computed, input, inject, signal } from '@angular/core';
+import { Component, computed, input, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PerformerSocialLinks, SocialLinkKey } from '../../../core/models/portfolio.models';
 import { buildSocialLinkItems } from '../../../core/utils/social-links.util';
@@ -24,6 +24,7 @@ const MATERIAL_ICONS: Record<Exclude<SocialLinkKey, 'phone'>, string> = {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './social-links.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./social-links.component.css'],
 })
 export class SocialLinksComponent {

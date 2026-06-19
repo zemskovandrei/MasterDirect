@@ -1,4 +1,14 @@
-import { Component, ElementRef, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -19,9 +29,7 @@ import { hasSocialLinks } from '../../core/utils/social-links.util';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 import { APP_BRAND_NAME } from '../../core/constants/brand';
 import { WORK_VERIFICATION_ENABLED } from '../../core/constants/features';
-import {
-  type CabinetTabBackgroundKey,
-} from '../../core/constants/catalog-tab-backgrounds';
+import { type CabinetTabBackgroundKey } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-cabinet',
@@ -35,6 +43,7 @@ import {
     SocialLinksComponent,
   ],
   templateUrl: './cabinet.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: [
     '../../styles/catalog-pages.css',
     '../../styles/cabinet-backgrounds.scss',
@@ -65,18 +74,16 @@ export class CabinetComponent {
   protected readonly countWords = countWords;
 
   protected readonly hasCabinetSession = computed(
-    () =>
-      !!this.store.currentPerformer() ||
-      !!this.furnitureStore.currentCompany(),
+    () => !!this.store.currentPerformer() || !!this.furnitureStore.currentCompany(),
   );
 
-  protected readonly isLoggedIn = computed(
-    () => this.hasCabinetSession() || !!this.auth.user(),
-  );
+  protected readonly isLoggedIn = computed(() => this.hasCabinetSession() || !!this.auth.user());
 
   private readonly routeFragment = toSignal(this.route.fragment, { initialValue: null });
 
-  protected readonly authPageMode = computed<'login' | 'register' | 'forgot-password' | 'reset-password'>(() => {
+  protected readonly authPageMode = computed<
+    'login' | 'register' | 'forgot-password' | 'reset-password'
+  >(() => {
     if (this.auth.passwordRecovery()) {
       return 'reset-password';
     }

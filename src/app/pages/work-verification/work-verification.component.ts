@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   PortfolioStoreService,
@@ -14,6 +14,7 @@ type PageState = 'loading' | 'ready' | 'done' | 'invalid';
   selector: 'app-work-verification',
   standalone: true,
   templateUrl: './work-verification.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./work-verification.component.css'],
 })
 export class WorkVerificationComponent {
@@ -53,9 +54,7 @@ export class WorkVerificationComponent {
   }
 
   thanksMessage(): string {
-    return this.translation
-      .t('verification.thanksLead')
-      .replace('{{title}}', this.workTitle());
+    return this.translation.t('verification.thanksLead').replace('{{title}}', this.workTitle());
   }
 
   verifyLead(): string {

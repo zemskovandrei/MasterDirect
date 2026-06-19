@@ -1,4 +1,11 @@
-import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,14 +18,24 @@ import { SocialLinksComponent } from '../../shared/components/social-links/socia
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
-import { saveCatalogSelection, readCatalogSelection } from '../../core/utils/catalog-selection.util';
+import {
+  saveCatalogSelection,
+  readCatalogSelection,
+} from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 
 @Component({
   selector: 'app-brigades-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, BeforeAfterComponent, SocialLinksComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    ReactiveFormsModule,
+    BeforeAfterComponent,
+    SocialLinksComponent,
+  ],
   templateUrl: './brigades-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './brigades-page.component.css'],
 })
 export class BrigadesPageComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { WORK_VERIFICATION_ENABLED } from '../../../core/constants/features';
 import { WorkProject } from '../../../core/models/portfolio.models';
 import { CatalogLocalizationService } from '../../../core/services/catalog-localization.service';
@@ -14,6 +14,7 @@ interface VerificationBadge {
   selector: 'app-before-after',
   standalone: true,
   templateUrl: './before-after.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./before-after.component.css'],
 })
 export class BeforeAfterComponent {

@@ -6,6 +6,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -38,6 +39,7 @@ const HEADER_THEME_CYCLE: HeaderTheme[] = ['auto', 'light', 'dark'];
     AdminLoginModalComponent,
   ],
   templateUrl: './site-layout.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./site-layout.component.css'],
 })
 export class SiteLayoutComponent {

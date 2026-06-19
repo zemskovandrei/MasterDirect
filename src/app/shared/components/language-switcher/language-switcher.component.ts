@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Locale, TranslationService } from '../../../core/services/translation.service';
 
 interface LanguageOption {
@@ -17,6 +17,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
   selector: 'app-language-switcher',
   standalone: true,
   templateUrl: './language-switcher.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./language-switcher.component.css'],
 })
 export class LanguageSwitcherComponent {

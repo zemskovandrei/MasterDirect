@@ -1,4 +1,12 @@
-import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -32,7 +40,11 @@ import { evaluatePasswordStrength } from './password-strength.util';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { beforeAfterWork } from '../../core/utils/before-after.util';
 import { APP_BRAND_NAME } from '../../core/constants/brand';
-import { authErrorMessageKey, isDuplicateSignupUser, registerErrorMessageKey } from '../../core/utils/auth-error.util';
+import {
+  authErrorMessageKey,
+  isDuplicateSignupUser,
+  registerErrorMessageKey,
+} from '../../core/utils/auth-error.util';
 import { buildFurnitureSlug } from '../../core/utils/furniture-id.util';
 
 /** Roles shown on the registration form. */
@@ -62,6 +74,7 @@ type RegisterFormControls = {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent],
   templateUrl: './register-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './register-page.component.scss',
 })
 export class RegisterPageComponent {
@@ -133,7 +146,9 @@ export class RegisterPageComponent {
 
   private readonly routeFragment = toSignal(this.route.fragment, { initialValue: null });
 
-  protected readonly authMode = computed<'login' | 'register' | 'forgot-password' | 'reset-password'>(() => {
+  protected readonly authMode = computed<
+    'login' | 'register' | 'forgot-password' | 'reset-password'
+  >(() => {
     if (this.auth.passwordRecovery()) {
       return 'reset-password';
     }
@@ -155,7 +170,9 @@ export class RegisterPageComponent {
     if (!before || !after) {
       return null;
     }
-    const title = this.form.controls.workTitle.value.trim() || this.specialtyLabel(this.form.controls.specialty.value);
+    const title =
+      this.form.controls.workTitle.value.trim() ||
+      this.specialtyLabel(this.form.controls.specialty.value);
     return beforeAfterWork('register-preview', before, after, title);
   });
 
@@ -180,9 +197,12 @@ export class RegisterPageComponent {
     { validators: (group) => this.passwordMatchValidator(group) },
   );
 
-  private readonly resetPasswordValue = toSignal(this.resetPasswordForm.controls.password.valueChanges, {
-    initialValue: '',
-  });
+  private readonly resetPasswordValue = toSignal(
+    this.resetPasswordForm.controls.password.valueChanges,
+    {
+      initialValue: '',
+    },
+  );
 
   protected readonly resetPasswordStrength = computed(() =>
     evaluatePasswordStrength(this.resetPasswordValue() ?? ''),
@@ -619,7 +639,8 @@ export class RegisterPageComponent {
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : '';
       const key =
-        message.includes('invalid login credentials') || message.includes('invalid email or password')
+        message.includes('invalid login credentials') ||
+        message.includes('invalid email or password')
           ? 'cabinet.signInErrorInvalidCredentials'
           : 'cabinet.signInError';
       this.signInError.set(this.translation.t(key));
@@ -651,7 +672,11 @@ export class RegisterPageComponent {
     return null;
   }
 
-  private loadBeforeAfterImage(side: 'before' | 'after', file: File, input?: HTMLInputElement): void {
+  private loadBeforeAfterImage(
+    side: 'before' | 'after',
+    file: File,
+    input?: HTMLInputElement,
+  ): void {
     if (!file.type.startsWith('image/')) {
       this.errorMessage.set(this.translation.t('cabinet.alertImageOnly'));
       if (input) {

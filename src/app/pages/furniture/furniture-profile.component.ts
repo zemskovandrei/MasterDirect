@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -12,6 +12,7 @@ import { TranslationService } from '../../core/services/translation.service';
   standalone: true,
   imports: [CommonModule, RouterLink, BeforeAfterComponent],
   templateUrl: './furniture-profile.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./furniture-profile.component.css'],
 })
 export class FurnitureProfileComponent {

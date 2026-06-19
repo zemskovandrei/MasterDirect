@@ -1,4 +1,12 @@
-import { Component, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  PLATFORM_ID,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -38,6 +46,7 @@ import {
   standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './renovation-calculator.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./renovation-calculator.component.css'],
 })
 export class RenovationCalculatorComponent implements OnInit {
@@ -84,7 +93,10 @@ export class RenovationCalculatorComponent implements OnInit {
     { id: 'furniture', labelKey: 'home.calculator.renovationTypes.furniture' },
   ];
 
-  private static readonly NEW_BUILD_RENOVATION_TYPES: CalculatorRenovationType[] = ['capital', 'design'];
+  private static readonly NEW_BUILD_RENOVATION_TYPES: CalculatorRenovationType[] = [
+    'capital',
+    'design',
+  ];
 
   protected get selectedBuildingType(): CalculatorRoomType | null {
     return this.calculatorRoomType();
@@ -317,7 +329,9 @@ export class RenovationCalculatorComponent implements OnInit {
   }
 
   totalSelectedWorkCount(): number {
-    return this.calculatorChecklistSelection().length + this.calculatorChecklistCustomItems().length;
+    return (
+      this.calculatorChecklistSelection().length + this.calculatorChecklistCustomItems().length
+    );
   }
 
   addCustomChecklistItem() {
@@ -367,9 +381,7 @@ export class RenovationCalculatorComponent implements OnInit {
       return;
     }
 
-    this.calculatorChecklistSelection.set(
-      getAllVisibleChecklistItemIds(renovationType, roomType),
-    );
+    this.calculatorChecklistSelection.set(getAllVisibleChecklistItemIds(renovationType, roomType));
   }
 
   selectRecommendedChecklistItems() {

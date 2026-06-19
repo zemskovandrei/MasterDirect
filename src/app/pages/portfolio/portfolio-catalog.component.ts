@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
@@ -12,6 +12,7 @@ import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-back
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './portfolio-catalog.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './portfolio-catalog.component.css'],
 })
 export class PortfolioCatalogComponent {

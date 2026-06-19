@@ -1,4 +1,11 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,6 +31,7 @@ import {
   standalone: true,
   imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
   templateUrl: './performer-profile.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./performer-profile.component.css'],
 })
 export class PerformerProfileComponent {
@@ -84,9 +92,9 @@ export class PerformerProfileComponent {
       return [];
     }
 
-    return this.reviewStore.approvedReviews().filter(
-      (review) => review.performerId === performer.id,
-    );
+    return this.reviewStore
+      .approvedReviews()
+      .filter((review) => review.performerId === performer.id);
   });
 
   protected readonly heroImage = computed(() => {
@@ -94,9 +102,7 @@ export class PerformerProfileComponent {
     return performer?.works[0]?.afterImage ?? null;
   });
 
-  protected readonly typeIcon = computed(() =>
-    this.type() === 'brigade' ? '👷' : '🔧',
-  );
+  protected readonly typeIcon = computed(() => (this.type() === 'brigade' ? '👷' : '🔧'));
 
   constructor() {
     effect(() => {
@@ -167,7 +173,10 @@ export class PerformerProfileComponent {
 
   protected performerRoleLine(p: PerformerProfile): string {
     const roleKey = this.type() === 'brigade' ? 'profile.roleBrigade' : 'profile.roleMaster';
-    const parts = p.specialty.split(',').map((s) => s.trim()).filter(Boolean);
+    const parts = p.specialty
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     const primary = parts[0]
       ? this.catalogL10n.localizeSpecialtyField(parts[0])
       : this.catalogL10n.performerSpecialty(p);
@@ -175,9 +184,15 @@ export class PerformerProfileComponent {
   }
 
   protected performerSkillsLine(p: PerformerProfile): string {
-    const parts = p.specialty.split(',').map((s) => s.trim()).filter(Boolean);
+    const parts = p.specialty
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (parts.length > 1) {
-      return parts.slice(1).map((s) => this.catalogL10n.localizeSpecialtyField(s)).join(', ');
+      return parts
+        .slice(1)
+        .map((s) => this.catalogL10n.localizeSpecialtyField(s))
+        .join(', ');
     }
     const desc = this.catalogL10n.performerDescription(p);
     if (!desc) {

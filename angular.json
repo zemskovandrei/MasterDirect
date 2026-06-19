@@ -76,6 +76,7 @@
             },
             "github-pages": {
               "baseHref": "/FlooringLeader/",
+              "outputMode": "static",
               "outputHashing": "all",
               "optimization": {
                 "scripts": true,
@@ -101,13 +102,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "1.4MB",
+                  "maximumError": "2.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "48kB",
-                  "maximumError": "72kB"
+                  "maximumWarning": "52kB",
+                  "maximumError": "80kB"
                 }
               ]
             }

@@ -1,5 +1,4 @@
 /**
- * GitHub Pages: имя подпапки = имя репозитория.
- * https://zemskovandrei.github.io/FlooringLeader/
+ * GitHub Pages
  */
 export const APP_BASE_HREF_VALUE = '/FlooringLeader/';

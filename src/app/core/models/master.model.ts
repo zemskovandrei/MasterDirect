@@ -1,6 +1,6 @@
-export type MasterAccountType = 'worker' | 'brigade';
+export type MasterAccountType = 'worker' | 'brigade' | 'furniture';
 
-/** Строка таблицы `specialist` (мастера / worker). */
+/** Строка таблицы `specialist` (мастера, бригады, мебельщики). */
 export interface MasterRow {
   id: string;
   full_name: string;
@@ -9,6 +9,7 @@ export interface MasterRow {
   specialty: string | null;
   description: string | null;
   account_type: MasterAccountType | null;
+  slug?: string | null;
   call_out_fee: string | null;
   whatsapp_phone: string | null;
   tg_username: string | null;
@@ -67,18 +68,19 @@ export interface Brigade {
 
 export interface ReviewRow {
   id: string;
-  master_id: string | null;
-  client_name: string;
+  master_id?: string | null;
+  client_name?: string | null;
+  user_name?: string | null;
   review_text: string;
-  rating: number | null;
-  kind: string | null;
-  performer_type: string | null;
-  performer_type_key: string | null;
-  performer_name: string | null;
-  before_image: string | null;
-  after_image: string | null;
-  is_approved: boolean;
-  created_at: string;
+  rating?: number | null;
+  kind?: string | null;
+  performer_type?: string | null;
+  performer_type_key?: string | null;
+  performer_name?: string | null;
+  before_image?: string | null;
+  after_image?: string | null;
+  is_approved?: boolean | null;
+  created_at?: string;
 }
 
 export interface AuthSignUpMetadata {

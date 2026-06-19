@@ -6,17 +6,10 @@ import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
 import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/profile.models';
 import { PerformerProfile, WorkProject } from '../models/portfolio.models';
-import {
-  portfolioWorkRowToProject,
-  portfolioWorkToInsertRow,
-  type PortfolioWorkOwnerType,
-  type PortfolioWorkRow,
-} from '../models/portfolio-work.model';
+import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
   furnitureCompanyToProfile,
-  furnitureOrderRowToProfile,
   masterRowToProfile,
-  brigadeRowToProfile,
   performerToProfile,
   profileToFurnitureCompany,
   profileToPerformer,
@@ -32,12 +25,7 @@ import {
   toFurnitureOrderDbRow,
   toJobklientDbRow,
 } from '../../models/job.model';
-import type {
-  BrigadeRow,
-  FurnitureOrderInsert,
-  FurnitureOrderRow,
-  MasterRow,
-} from '../models/master.model';
+import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
 import { logSupabaseError } from '../utils/supabase-error.util';
@@ -514,68 +502,35 @@ export class SupabaseService {
         facebook: input.facebook?.trim() || null,
       };
 
-      if (input.accountType === 'furniture') {
-        const slug = buildFurnitureSlug(input.fullName);
-        const { error } = await client.from(environment.supabase.furnitureOrdersTable).upsert(
-          {
-            id: input.userId,
-            slug,
-            full_name: input.fullName,
-            client_name: input.fullName,
-            phone: input.phone,
-            client_phone: input.phone,
-            city: input.city,
-            specialty: input.specialty,
-            description: input.description,
-            furniture_type: input.specialty,
-            work_type: 'profile',
-            ...social,
-          },
-          { onConflict: 'id' },
-        );
+      const accountType =
+        input.accountType === 'furniture'
+          ? 'furniture'
+          : input.accountType === 'brigade'
+            ? 'brigade'
+            : 'worker';
 
-        if (error) {
-          logSupabaseError('registerAuthProfile:furniture', error);
-          return { error: error.message };
-        }
-      } else if (input.accountType === 'brigade') {
-        const { error } = await client.from(environment.supabase.brigadesTable).upsert(
-          {
-            id: input.userId,
-            full_name: input.fullName,
-            phone: input.phone,
-            city: input.city,
-            specialty: input.specialty,
-            description: input.description,
-            ...social,
-          },
-          { onConflict: 'id' },
-        );
+      const slug =
+        input.accountType === 'furniture' ? buildFurnitureSlug(input.fullName) : null;
 
-        if (error) {
-          logSupabaseError('registerAuthProfile:brigade', error);
-          return { error: error.message };
-        }
-      } else {
-        const { error } = await client.from(environment.supabase.mastersTable).upsert(
-          {
-            id: input.userId,
-            full_name: input.fullName,
-            phone: input.phone,
-            city: input.city,
-            specialty: input.specialty,
-            description: input.description,
-            account_type: 'worker',
-            is_archive: false,
-            ...social,
-          },
-          { onConflict: 'id' },
-        );
+      const { error } = await client.from(environment.supabase.specialistTable).upsert(
+        {
+          id: input.userId,
+          full_name: input.fullName,
+          phone: input.phone,
+          city: input.city,
+          specialty: input.specialty,
+          description: input.description,
+          account_type: accountType,
+          slug,
+          is_archive: false,
+          ...social,
+        },
+        { onConflict: 'id' },
+      );
 
-        if (error) {
-          logSupabaseError('registerAuthProfile:worker', error);
-          return { error: error.message };
-        }
+      if (error) {
+        logSupabaseError('registerAuthProfile', error);
+        return { error: error.message };
       }
 
       await this.refreshProfilesFromDatabase();
@@ -754,7 +709,7 @@ export class SupabaseService {
       }
 
       const { data, error } = await client
-        .from(environment.supabase.mastersTable)
+        .from(environment.supabase.specialistTable)
         .update({ header_bg: color })
         .eq('id', trimmedId)
         .select('*')
@@ -802,10 +757,8 @@ export class SupabaseService {
       return { data: profile, error: null };
     }
 
-    const masterProfile = this.profilesSignal().find(
-      (item) => item.id === id && item.type !== 'furniture',
-    );
-    if (!masterProfile) {
+    const existingProfile = this.profilesSignal().find((item) => item.id === id);
+    if (!existingProfile) {
       return { data: null, error: 'Profile not found' };
     }
 
@@ -815,34 +768,13 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const patchPayload = {
-        full_name: name,
-        specialty,
-        description,
-      };
-
-      if (masterProfile.type === 'brigade') {
-        const { data: brigadeData, error: brigadeError } = await client
-          .from(environment.supabase.brigadesTable)
-          .update(patchPayload)
-          .eq('id', id)
-          .select('*')
-          .maybeSingle();
-
-        if (brigadeError) {
-          console.error('[SupabaseService] updateProfile (brigades):', brigadeError.message);
-          return { data: null, error: brigadeError.message };
-        }
-
-        if (brigadeData) {
-          await this.refreshProfilesFromDatabase();
-          return { data: brigadeRowToProfile(brigadeData as BrigadeRow), error: null };
-        }
-      }
-
       const { data, error } = await client
-        .from(environment.supabase.mastersTable)
-        .update(patchPayload)
+        .from(environment.supabase.specialistTable)
+        .update({
+          full_name: name,
+          specialty,
+          description,
+        })
         .eq('id', id)
         .select('*')
         .maybeSingle();
@@ -878,15 +810,11 @@ export class SupabaseService {
     const profile = this.profilesSignal().find((item) => item.id === trimmedId);
     const resolvedType = type ?? profile?.type;
 
-    if (resolvedType === 'furniture') {
-      return this.deleteFurnitureOrderRow(trimmedId);
+    if (resolvedType === 'worker') {
+      return this.deleteMasterRow(trimmedId);
     }
 
-    if (resolvedType === 'brigade') {
-      return this.deleteBrigadeRow(trimmedId);
-    }
-
-    return this.deleteMasterRow(trimmedId);
+    return this.deleteSpecialistRow(trimmedId);
   }
 
   private removeProfileFromState(id: string): void {
@@ -1081,7 +1009,7 @@ export class SupabaseService {
       }
 
       const { error } = await client
-        .from(environment.supabase.furnitureOrdersTable)
+        .from(environment.supabase.specialistTable)
         .delete()
         .eq('slug', trimmedSlug);
 
@@ -1137,7 +1065,7 @@ export class SupabaseService {
       console.log('[SupabaseService] deleteFurnitureOrder: DELETE by id', dbId);
 
       const { error } = await client
-        .from(environment.supabase.furnitureOrdersTable)
+        .from(environment.supabase.specialistTable)
         .delete()
         .eq('id', dbId);
 
@@ -1171,7 +1099,7 @@ export class SupabaseService {
       }
 
       const { data, error } = await client
-        .from(environment.supabase.mastersTable)
+        .from(environment.supabase.specialistTable)
         .update({ is_archive: true })
         .eq('id', id)
         .select('id');
@@ -1197,11 +1125,16 @@ export class SupabaseService {
     }
   }
 
-  private async deleteBrigadeRow(id: string): Promise<SupabaseMutationResult<null>> {
+  private async deleteSpecialistRow(id: string): Promise<SupabaseMutationResult<null>> {
     if (this.portfolioStore.deletePerformer(id)) {
       this.removeProfileFromState(id);
       void this.refreshProfilesFromDatabase();
       return { data: null, error: null };
+    }
+
+    const localCompany = this.findLocalFurnitureCompany(id);
+    if (localCompany) {
+      this.removeLocalFurnitureCompany(localCompany);
     }
 
     try {
@@ -1210,33 +1143,22 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const { data: brigadeRows, error: brigadeError } = await client
-        .from(environment.supabase.brigadesTable)
+      const { data, error } = await client
+        .from(environment.supabase.specialistTable)
         .delete()
         .eq('id', id)
         .select('id');
 
-      const { data: masterRows, error: masterError } = await client
-        .from(environment.supabase.mastersTable)
-        .update({ is_archive: true })
-        .eq('id', id)
-        .select('id');
-
-      if (brigadeError) {
-        console.error('Delete error (brigades):', brigadeError);
-      }
-      if (masterError) {
-        console.error('Delete error (masters):', masterError);
+      if (error) {
+        console.error('Delete error (specialist):', error);
+        return { data: null, error: error.message };
       }
 
-      if (brigadeError && masterError) {
-        return { data: null, error: brigadeError.message || masterError.message };
-      }
-
-      const deletedCount = (brigadeRows?.length ?? 0) + (masterRows?.length ?? 0);
-      if (deletedCount === 0) {
-        const message =
-          brigadeError?.message || masterError?.message || 'Brigade not found or access denied';
+      if (!data?.length) {
+        if (localCompany) {
+          return { data: null, error: null };
+        }
+        const message = 'Profile not found or access denied';
         console.error('Delete error:', message);
         return { data: null, error: message };
       }
@@ -1374,16 +1296,26 @@ export class SupabaseService {
       }
 
       const row = toFurnitureOrderDbRow(input);
+      const description = [
+        row.description,
+        `Телефон: ${row.client_phone}`,
+        `Тип: ${row.furniture_type}`,
+        `Работа: ${row.work_type}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+
       const payload = {
-        client_name: row.client_name,
-        client_phone: row.client_phone,
-        furniture_type: row.furniture_type,
-        work_type: row.work_type,
-        description: row.description,
+        title: row.work_type || 'Заявка на мебель',
+        city: input.city?.trim() || '—',
+        category: 'furniture',
+        budget: null,
+        description,
+        status: 'active',
       };
 
       const { data, error } = await client
-        .from(environment.supabase.furnitureOrdersTable)
+        .from(environment.supabase.jobsTable)
         .insert([payload])
         .select('*')
         .single();
@@ -1766,22 +1698,11 @@ export class SupabaseService {
       const remoteProfiles: Profile[] = [];
       const specialistArchiveFilter = 'is_archive.is.null,is_archive.eq.false';
 
-      const [specialistsResult, brigadesResult, furnitureResult] = await Promise.all([
-        client
-          .from(environment.supabase.mastersTable)
-          .select('*')
-          .or(specialistArchiveFilter)
-          .order('created_at', { ascending: false }),
-        client
-          .from(environment.supabase.brigadesTable)
-          .select('*')
-          .order('created_at', { ascending: false }),
-        client
-          .from(environment.supabase.furnitureOrdersTable)
-          .select('*')
-          .or('slug.not.is.null,full_name.not.is.null,client_name.not.is.null')
-          .order('created_at', { ascending: false }),
-      ]);
+      const specialistsResult = await client
+        .from(environment.supabase.specialistTable)
+        .select('*')
+        .or(specialistArchiveFilter)
+        .order('created_at', { ascending: false });
 
       if (specialistsResult.error) {
         logSupabaseError('loadSpecialists', specialistsResult.error);
@@ -1800,50 +1721,14 @@ export class SupabaseService {
         }
       }
 
-      if (brigadesResult.error) {
-        logSupabaseError('loadBrigades', brigadesResult.error);
-      } else {
-        for (const row of (brigadesResult.data ?? []) as BrigadeRow[]) {
-          if (!row?.id) {
-            continue;
-          }
-
-          if (remoteProfiles.some((profile) => profile.id === row.id)) {
-            continue;
-          }
-
-          const profile = brigadeRowToProfile(row);
-          if (!this.isVisibleCatalogProfile(profile)) {
-            continue;
-          }
-
-          remoteProfiles.push(profile);
-        }
-      }
-
-      if (furnitureResult.error) {
-        logSupabaseError('loadFurnitureOrders', furnitureResult.error);
-      } else {
-        for (const row of (furnitureResult.data ?? []) as FurnitureOrderRow[]) {
-          const profile = furnitureOrderRowToProfile(row);
-          if (!profile || !this.isVisibleCatalogProfile(profile)) {
-            continue;
-          }
-
-          remoteProfiles.push(profile);
-        }
-      }
-
       const merged = this.mergeCatalogProfiles(remoteProfiles, localProfiles);
-      const worksMap = await this.fetchPortfolioWorksMap(client);
-      this.portfolioWorksByOwnerSignal.set(worksMap);
-      this.syncPortfolioWorksToStores(worksMap, merged);
+      this.syncPortfolioWorksToStores(new Map(), merged);
 
       console.info('[SupabaseService] catalog loaded', {
         remote: remoteProfiles.length,
         local: localProfiles.length,
         merged: merged.length,
-        works: worksMap.size,
+        works: 0,
       });
 
       this.profilesSignal.set(merged);
@@ -1889,41 +1774,14 @@ export class SupabaseService {
     return Array.from(byId.values());
   }
 
-  private async fetchPortfolioWorksMap(
-    client: SupabaseClient,
-  ): Promise<Map<string, WorkProject[]>> {
-    const worksMap = new Map<string, WorkProject[]>();
-
-    const { data, error } = await client
-      .from(environment.supabase.portfolioWorksTable)
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      logSupabaseError('fetchPortfolioWorks', error);
-      return worksMap;
-    }
-
-    for (const row of (data ?? []) as PortfolioWorkRow[]) {
-      if (!row?.owner_id) {
-        continue;
-      }
-
-      const work = portfolioWorkRowToProject(row);
-      const ownerWorks = worksMap.get(row.owner_id) ?? [];
-      ownerWorks.push(work);
-      worksMap.set(row.owner_id, ownerWorks);
-    }
-
-    return worksMap;
-  }
-
   private syncPortfolioWorksToStores(worksMap: Map<string, WorkProject[]>, profiles: Profile[]): void {
     const performers: PerformerProfile[] = [];
     const companies: FurnitureCompany[] = [];
 
     for (const profile of profiles) {
-      const works = worksMap.get(profile.id) ?? [];
+      const remoteWorks = worksMap.get(profile.id) ?? [];
+      const works =
+        remoteWorks.length > 0 ? remoteWorks : this.resolveLocalWorks(profile.id);
       if (profile.type === 'furniture') {
         companies.push(profileToFurnitureCompany(profile, works));
       } else {
@@ -1945,63 +1803,19 @@ export class SupabaseService {
     ownerType: PortfolioWorkOwnerType;
     work: WorkProject;
   }): Promise<SupabaseMutationResult<WorkProject>> {
-    if (!this.isConfigured()) {
-      return { data: null, error: SUPABASE_NOT_CONFIGURED };
-    }
-
-    const client = await this.resolveClient();
-    if (!client) {
-      return { data: null, error: SUPABASE_NOT_CONFIGURED };
-    }
-
     const work: WorkProject = {
       ...input.work,
       id: input.work.id || crypto.randomUUID(),
     };
 
-    const row = portfolioWorkToInsertRow({
-      ownerId: input.ownerId,
-      ownerType: input.ownerType,
-      work,
-    });
-
-    const { data, error } = await client
-      .from(environment.supabase.portfolioWorksTable)
-      .upsert(row, { onConflict: 'id' })
-      .select('*')
-      .single();
-
-    if (error) {
-      return { data: null, error: error.message };
-    }
-
-    const saved = portfolioWorkRowToProject(data as PortfolioWorkRow);
-    this.upsertWorkInCaches(input.ownerId, saved);
-    return { data: saved, error: null };
+    this.upsertWorkInCaches(input.ownerId, work);
+    return { data: work, error: null };
   }
 
   private async deletePortfolioWorkRow(workId: string): Promise<SupabaseMutationResult<null>> {
     const trimmedId = workId.trim();
     if (!trimmedId) {
       return { data: null, error: 'Missing work id' };
-    }
-
-    if (!this.isConfigured()) {
-      return { data: null, error: SUPABASE_NOT_CONFIGURED };
-    }
-
-    const client = await this.resolveClient();
-    if (!client) {
-      return { data: null, error: SUPABASE_NOT_CONFIGURED };
-    }
-
-    const { error } = await client
-      .from(environment.supabase.portfolioWorksTable)
-      .delete()
-      .eq('id', trimmedId);
-
-    if (error) {
-      return { data: null, error: error.message };
     }
 
     this.removeWorkFromCaches(trimmedId);

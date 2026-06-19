@@ -122,20 +122,26 @@ app.post('/api/furniture_orders', async (req: Request, res: Response) => {
       return;
     }
 
+    const description = [
+      body.description?.trim(),
+      `Заказчик: ${clientName}`,
+      `Телефон: ${clientPhone}`,
+      `Тип: ${furnitureType}`,
+      `Работа: ${workType}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
     const row = {
-      client_name: clientName,
-      client_phone: clientPhone,
-      furniture_type: furnitureType,
-      work_type: workType,
-      city: body.city?.trim() || null,
-      description: body.description?.trim() || null,
+      title: workType || 'Заявка на мебель',
+      city: body.city?.trim() || '—',
+      category: 'furniture',
+      budget: null,
+      description,
+      status: 'active',
     };
 
-    const { data, error } = await supabase
-      .from('furniture_orders')
-      .insert([row])
-      .select('*')
-      .single();
+    const { data, error } = await supabase.from('order').insert([row]).select('*').single();
 
     if (error) {
       console.error('[POST /api/furniture_orders] Supabase error:', error.message);
@@ -188,59 +194,30 @@ app.post('/api/site_reviews', async (req: Request, res: Response) => {
 
 app.get('/api/catalog', async (_req: Request, res: Response) => {
   try {
-    const [mastersResult, brigadesResult, furnitureResult] = await Promise.all([
-      supabase
-        .from('specialist')
-        .select('*')
-        .eq('is_archive', false)
-        .neq('account_type', 'brigade')
-        .order('created_at', { ascending: false }),
-      supabase.from('brigades').select('*').order('created_at', { ascending: false }),
-      supabase
-        .from('furniture_orders')
-        .select('*')
-        .or('slug.not.is.null,full_name.not.is.null')
-        .order('created_at', { ascending: false }),
-    ]);
+    const specialistsResult = await supabase
+      .from('specialist')
+      .select('*')
+      .or('is_archive.is.null,is_archive.eq.false')
+      .order('created_at', { ascending: false });
 
-    if (mastersResult.error) {
-      console.error('[GET /api/catalog] masters error:', mastersResult.error.message);
-      res.status(500).json({ ok: false, error: mastersResult.error.message });
+    if (specialistsResult.error) {
+      console.error('[GET /api/catalog] specialist error:', specialistsResult.error.message);
+      res.status(500).json({ ok: false, error: specialistsResult.error.message });
       return;
     }
 
-    if (brigadesResult.error) {
-      console.error('[GET /api/catalog] brigades error:', brigadesResult.error.message);
-      res.status(500).json({ ok: false, error: brigadesResult.error.message });
-      return;
-    }
-
-    if (furnitureResult.error) {
-      console.error('[GET /api/catalog] furniture error:', furnitureResult.error.message);
-      res.status(500).json({ ok: false, error: furnitureResult.error.message });
-      return;
-    }
-
-    const masters = (mastersResult.data ?? []).filter(
+    const specialists = (specialistsResult.data ?? []).filter(
       (row) =>
         hasVisibleName(row.full_name) ||
         hasVisibleName(row.phone) ||
         hasVisibleName(row.whatsapp_phone),
     );
 
-    const brigades = (brigadesResult.data ?? []).filter(
-      (row) =>
-        hasVisibleName(row.full_name) ||
-        hasVisibleName(row.phone) ||
-        hasVisibleName(row.whatsapp_phone),
+    const masters = specialists.filter(
+      (row) => !row.account_type || row.account_type === 'worker',
     );
-
-    const furniture = (furnitureResult.data ?? []).filter(
-      (row) =>
-        hasVisibleName(row.full_name) ||
-        hasVisibleName(row.phone) ||
-        hasVisibleName(row.whatsapp_phone),
-    );
+    const brigades = specialists.filter((row) => row.account_type === 'brigade');
+    const furniture = specialists.filter((row) => row.account_type === 'furniture');
 
     console.log('[GET /api/catalog] Loaded:', {
       masters: masters.length,

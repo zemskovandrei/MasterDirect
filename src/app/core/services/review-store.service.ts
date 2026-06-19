@@ -183,9 +183,9 @@ export class ReviewStoreService {
     }
 
     const row = {
-      master_id: data.performerId ?? null,
-      client_name: data.name.trim(),
+      user_name: data.name.trim(),
       review_text: data.review.trim(),
+      master_id: data.performerId ?? null,
       rating: data.rating ?? null,
       kind: data.kind ?? 'review',
       performer_type: data.performerType,
@@ -260,16 +260,17 @@ export class ReviewStoreService {
       'Мастер') as ReviewSubmission['performerType'];
     const performerTypeKey = (row.performer_type_key ??
       'master') as ReviewPerformerTypeKey;
+    const clientName = row.client_name?.trim() || row.user_name?.trim() || '';
 
     const submission: ReviewSubmission = {
       id: row.id,
-      name: row.client_name,
+      name: clientName,
       performerType,
       performerTypeKey,
       category: row.performer_name ?? '',
       review: row.review_text,
       status,
-      createdAt: row.created_at,
+      createdAt: row.created_at ?? new Date().toISOString(),
       kind: row.kind === 'recommendation' ? 'recommendation' : 'review',
     };
 

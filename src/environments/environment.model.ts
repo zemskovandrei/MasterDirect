@@ -5,10 +5,7 @@ export interface Environment {
     /** Public anon / publishable key (never use service_role in the browser). */
     anonKey: string;
     jobsTable: string;
-    mastersTable: string;
-    brigadesTable: string;
-    furnitureOrdersTable: string;
-    portfolioWorksTable: string;
+    specialistTable: string;
     reviewsTable: string;
     /** Emails allowed to access admin moderation UI */
     adminEmails: string[];

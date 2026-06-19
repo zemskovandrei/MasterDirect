@@ -38,6 +38,29 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
 }
 
 export function masterRowToProfile(row: MasterRow): Profile {
+  if (row?.account_type === 'furniture') {
+    const name = row?.full_name?.trim() || row?.phone?.trim() || row?.id || '';
+    const slug = row?.slug?.trim() || buildFurnitureSlug(name);
+
+    return {
+      id: row?.id ?? '',
+      type: 'furniture',
+      slug,
+      name,
+      specialty: row?.specialty?.trim() || '',
+      description: row?.description?.trim() || '',
+      city: row?.city ?? null,
+      phone: row?.phone ?? null,
+      whatsapp_phone: resolveWhatsappPhone(row?.whatsapp_phone, row?.whatsapp),
+      tg_username: resolveTgUsername(row?.tg_username, row?.telegram),
+      whatsapp: row?.whatsapp ?? null,
+      telegram: row?.telegram ?? null,
+      instagram: row?.instagram ?? null,
+      facebook: row?.facebook ?? null,
+      header_bg: row?.header_bg ?? null,
+    };
+  }
+
   const accountType = row?.account_type === 'brigade' ? 'brigade' : 'worker';
 
   return {

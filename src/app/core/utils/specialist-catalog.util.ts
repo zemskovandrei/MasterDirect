@@ -1,42 +1,26 @@
-import type { SpecialistAccountType } from '../models/database.models';
-import type { MasterRow } from '../models/master.model';
+import type { Specialist, SpecialistAccountType } from '../models/database.models';
 
-/** Значения колонки `role` (pro_role при регистрации). */
-export const BRIGADE_PRO_ROLES = ['brigade', 'builder', 'company'] as const;
-export const WORKER_PRO_ROLES = ['master'] as const;
-export const FURNITURE_PRO_ROLES = ['furniture_maker'] as const;
+const VALID_ACCOUNT_TYPES: ReadonlySet<SpecialistAccountType> = new Set([
+  'worker',
+  'brigade',
+  'furniture',
+]);
 
 /**
  * Тип карточки в каталоге (мастер / бригада / мебель).
- * Источник истины: `account_type`. Колонка `role` — только fallback.
+ * Источник истины — только колонка `account_type`. Колонка `role` не используется.
  */
 export function catalogAccountTypeFromSpecialistRow(
-  row: Pick<MasterRow, 'account_type' | 'role'>,
+  row: { account_type?: SpecialistAccountType | null },
 ): SpecialistAccountType {
-  const accountType = row.account_type?.trim();
-  if (accountType === 'worker' || accountType === 'brigade' || accountType === 'furniture') {
+  const accountType = row.account_type?.trim() as SpecialistAccountType | undefined;
+  if (accountType && VALID_ACCOUNT_TYPES.has(accountType)) {
     return accountType;
   }
 
-  const role = row.role?.trim().toLowerCase() ?? '';
-  if ((FURNITURE_PRO_ROLES as readonly string[]).includes(role)) {
-    return 'furniture';
-  }
-  if ((BRIGADE_PRO_ROLES as readonly string[]).includes(role)) {
-    return 'brigade';
-  }
   return 'worker';
 }
 
-/** Pro-roles для `.in('role', …)` когда нет колонки `account_type`. */
-export function proRolesForCatalogAccountType(accountType: SpecialistAccountType): string[] {
-  switch (accountType) {
-    case 'brigade':
-      return [...BRIGADE_PRO_ROLES];
-    case 'furniture':
-      return [...FURNITURE_PRO_ROLES];
-    case 'worker':
-    default:
-      return [...WORKER_PRO_ROLES];
-  }
+export function isSpecialistAccountType(value: string | null | undefined): value is SpecialistAccountType {
+  return !!value && VALID_ACCOUNT_TYPES.has(value.trim() as SpecialistAccountType);
 }

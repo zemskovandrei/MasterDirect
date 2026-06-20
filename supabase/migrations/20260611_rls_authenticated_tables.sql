@@ -8,6 +8,26 @@ create index if not exists order_user_id_created_at_idx
   on public."order" (user_id, created_at desc);
 
 -- ─── specialist ─────────────────────────────────────────────────────────────
+alter table public.specialist
+  add column if not exists account_type text;
+
+update public.specialist
+set account_type = 'worker'
+where account_type is null or trim(account_type) = '';
+
+alter table public.specialist
+  drop constraint if exists specialist_account_type_check;
+
+alter table public.specialist
+  add constraint specialist_account_type_check
+  check (account_type in ('worker', 'brigade', 'furniture'));
+
+alter table public.specialist
+  alter column account_type set not null;
+
+create index if not exists specialist_account_type_name_idx
+  on public.specialist (account_type, name);
+
 alter table public.specialist enable row level security;
 
 drop policy if exists "Specialist authenticated read" on public.specialist;

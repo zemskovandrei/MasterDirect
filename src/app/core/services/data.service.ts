@@ -18,8 +18,7 @@ import type {
 } from '../models/database.models';
 import { ORDER_COMPLETED_STATUS, isActiveOrderStatus } from '../models/database.models';
 import { specialistRowToWritePayload, type SpecialistWriteInput } from '../utils/specialist-db.util';
-import { proRolesForCatalogAccountType } from '../utils/specialist-catalog.util';
-import { isSupabaseSchemaColumnError, logSupabaseError } from '../utils/supabase-error.util';
+import { logSupabaseError } from '../utils/supabase-error.util';
 import { SupabaseClientService } from './supabase-client.service';
 
 const NOT_CONFIGURED = 'Supabase не настроен. Укажите url и anonKey в environment.';
@@ -66,6 +65,18 @@ export class DataService {
     return this.requireList<Specialist>(data, error, 'listSpecialists');
   }
 
+  async listSpecialistsByAccountType(accountType: SpecialistAccountType): Promise<Specialist[]> {
+    const client = await this.requireClient();
+
+    const { data, error } = await client
+      .from(this.specialistTable)
+      .select('*')
+      .eq('account_type', accountType)
+      .order('name', { ascending: true });
+
+    return this.requireList<Specialist>(data, error, 'listSpecialistsByAccountType');
+  }
+
   async upsertSpecialist(row: SpecialistInsert): Promise<Specialist> {
     const client = await this.requireClient();
 
@@ -108,27 +119,12 @@ export class DataService {
       .select('*', { count: 'exact', head: true })
       .eq('account_type', accountType);
 
-    if (!error) {
-      return count ?? 0;
-    }
-
-    if (!isSupabaseSchemaColumnError(error)) {
+    if (error) {
       logSupabaseError('countSpecialistsByAccountType', error);
       throw toDataServiceError(error, 'countSpecialistsByAccountType');
     }
 
-    const roles = proRolesForCatalogAccountType(accountType);
-    const { count: roleCount, error: roleError } = await client
-      .from(this.specialistTable)
-      .select('*', { count: 'exact', head: true })
-      .in('role', roles);
-
-    if (roleError) {
-      logSupabaseError('countSpecialistsByAccountType.fallback', roleError);
-      throw toDataServiceError(roleError, 'countSpecialistsByAccountType');
-    }
-
-    return roleCount ?? 0;
+    return count ?? 0;
   }
 
   async countWorkers(): Promise<number> {

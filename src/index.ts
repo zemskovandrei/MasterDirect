@@ -214,9 +214,7 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
         hasVisibleName(row.whatsapp_phone),
     );
 
-    const masters = specialists.filter(
-      (row) => !row.account_type || row.account_type === 'worker',
-    );
+    const masters = specialists.filter((row) => row.account_type === 'worker');
     const brigades = specialists.filter((row) => row.account_type === 'brigade');
     const furniture = specialists.filter((row) => row.account_type === 'furniture');
 

@@ -1,39 +1,18 @@
 <div class="catalog-tab-page" [ngStyle]="pageBackground">
-<section class="page-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translation.t('masters.title') }}</h1>
-    <p>{{ translation.t('masters.subtitle') }}</p>
-    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('masters.cta') }}</a>
-  </div>
-</section>
-
 <section class="catalog">
   <div class="catalog-inner">
     <section class="catalog-group catalog-group--worker" id="workers">
-      <header class="catalog-group-header">
-        <div class="catalog-group-label">
-          <span class="catalog-group-icon" aria-hidden="true">🔧</span>
-          <span class="performer-badge performer-badge-worker">{{
-            translation.t('masters.badge')
-          }}</span>
+      @if (catalogAdmin.isAdmin()) {
+        <div class="catalog-admin-toolbar catalog-admin-toolbar--page">
+          <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
+          <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
+            {{ translation.t('admin.logout') }}
+          </button>
         </div>
-        <h2>{{ translation.t('masters.listTitle') }}</h2>
-        <p class="catalog-group-lead">{{ translation.t('masters.listLead') }}</p>
-        @if (supabase.workers().length > 0) {
-          <p class="catalog-group-count">
-            {{ supabase.workers().length }} {{ translation.t('masters.inCatalog') }}
-          </p>
-        }
-        @if (catalogAdmin.isAdmin()) {
-          <div class="catalog-admin-toolbar">
-            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
-            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
-              {{ translation.t('admin.logout') }}
-            </button>
-          </div>
-        }
-      </header>
+      }
 
+      <div class="catalog-group-body">
+      <p class="catalog-page-tagline">{{ translation.t('masters.listLead') }}</p>
       <div class="performer-grid">
         @for (p of supabase.workers(); track p.id) {
           <article
@@ -72,6 +51,9 @@
                   <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
                 </h3>
                 <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+                @if (catalogL10n.performerSpecialtyTagline(p); as tagline) {
+                  <p class="performer-specialty-tagline">{{ tagline }}</p>
+                }
               </div>
             </div>
 
@@ -122,6 +104,7 @@
             </div>
           </article>
         }
+      </div>
       </div>
     </section>
   </div>

@@ -14,6 +14,7 @@ import type { FurnitureCompany } from '../../core/models/furniture.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
 import {
   saveCatalogSelection,
@@ -34,6 +35,7 @@ export class FurnitureCompaniesPageComponent implements OnInit {
   protected readonly supabase = inject(SupabaseService);
   protected readonly catalogAdmin = inject(CatalogAdminService);
   protected readonly translation = inject(TranslationService);
+  protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly hasSocialLinks = hasSocialLinks;
 
   protected readonly pageBackground = catalogTabBackgroundStyle('furniture');

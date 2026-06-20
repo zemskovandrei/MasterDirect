@@ -117,6 +117,14 @@
       "company": "Company",
       "customer": "Client"
     },
+    "proRoleDescriptions": {
+      "builder": "Leads a crew and manages full apartment or house renovation.",
+      "master": "Handles specific trades: finishing, electrical, plumbing and more.",
+      "brigade": "A team for comprehensive renovation with single-point responsibility.",
+      "furniture_maker": "Builds and installs custom furniture to your measurements.",
+      "company": "Construction or furniture company with a portfolio of projects.",
+      "customer": "Looking for a contractor for renovation or custom furniture."
+    },
     "experience": {
       "exp_0_1": "Less than 1 year",
       "exp_1_3": "1–3 years",
@@ -277,8 +285,18 @@
     "registerSubmitting": "Saving profile…",
     "registerStepError": "Please complete the required fields on this step",
     "registerSuccess": "Profile created and added to the catalog!",
+    "registerSuccessEmailConfirmation": "Account created. Confirm your email using the link we sent, then sign in to your cabinet.",
     "registerError": "Could not save the profile. Check your connection and Supabase settings.",
     "registerErrorEmailExists": "An account with this email already exists. Sign in or use a different email.",
+    "registerErrorEmailNotConfirmed": "Confirm your email using the link we sent, then sign in again.",
+    "deleteAccountSummary": "Delete previous registration",
+    "deleteAccountLead": "If your email is already taken, enter that email and password — your account will be removed so you can register again.",
+    "deleteAccountHint": "Or delete your previous registration:",
+    "deleteAccountButton": "Delete account and clear form",
+    "deleteAccountSubmitting": "Deleting…",
+    "deleteAccountSuccess": "Account deleted. Fill in the form and register again.",
+    "deleteAccountError": "Could not delete the account.",
+    "deleteAccountRpcMissing": "Account deletion is not set up in Supabase. Run supabase/migrations/20260623_delete_current_user.sql in the SQL Editor.",
     "registerNote": "Your profile appears in the catalog immediately — you can upload before/after photos.",
     "badgeBrigadier": "Team lead",
     "badgeMaster": "Master",
@@ -330,6 +348,19 @@
       "kitchenInstall": "Kitchen and built-in appliance installation",
       "cabinetMaking": "Custom cabinet furniture (wardrobes, closets)",
       "commercialInstall": "Retail and commercial equipment installation"
+    },
+    "specialtyDescriptions": {
+      "tiler": "Tile and porcelain installation for bathrooms, kitchens and public areas.",
+      "electrician": "Wiring, panels, lighting and code-compliant electrical work.",
+      "plumber": "Plumbing, underfloor heating, drainage and water supply lines.",
+      "painter": "Putty, painting, decorative finishes and final surface coatings.",
+      "drywall": "Partitions, ceilings, niches and drywall structures.",
+      "turnkey": "End-to-end renovation: estimate, timeline, quality control and handover.",
+      "renovation_turnkey": "Full apartment and house renovation — from demolition to finishing.",
+      "furnitureAssembly": "Assembly, mounting and adjustment of furniture and hardware.",
+      "kitchenInstall": "Kitchen units, countertops, backsplashes and built-in appliances.",
+      "cabinetMaking": "Wardrobes, closets and custom cabinet furniture to your size.",
+      "commercialInstall": "Installation of retail, office and commercial equipment."
     }
   },
   "verification": {

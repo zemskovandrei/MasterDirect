@@ -3,6 +3,8 @@ import { isPlatformBrowser } from '@angular/common';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
 import type { AuthSignUpMetadata } from '../models/master.model';
 import { isDuplicateSignupUser } from '../utils/auth-error.util';
+import type { AuthErrorMessageKey } from '../utils/auth-error.util';
+import { authErrorMessageKey } from '../utils/auth-error.util';
 import { SupabaseService } from './supabase.service';
 
 export interface AuthResult {
@@ -70,7 +72,7 @@ export class AuthService {
   ): Promise<AuthResult> {
     const normalizedEmail = email.trim().toLowerCase();
     const signUpResult = await this.signUpRequest(normalizedEmail, password, metadata);
-    if (signUpResult.error || signUpResult.session || !signUpResult.user) {
+    if (signUpResult.error || !signUpResult.user) {
       return signUpResult;
     }
 
@@ -78,7 +80,13 @@ export class AuthService {
       return signUpResult;
     }
 
-    return this.signIn(normalizedEmail, password);
+    // Сессия есть — регистрация без подтверждения email.
+    if (signUpResult.session) {
+      return signUpResult;
+    }
+
+    // Подтверждение email включено в Supabase — профиль создаёт триггер в БД.
+    return signUpResult;
   }
 
   private async signUpRequest(
@@ -115,6 +123,14 @@ export class AuthService {
         },
       },
     });
+
+    if (error) {
+      console.error('[AuthService] signUp failed', {
+        status: (error as AuthError & { status?: number }).status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     if (data.user) {
       this.userSignal.set(data.user);
@@ -164,6 +180,33 @@ export class AuthService {
     this.userSignal.set(null);
     this.sessionSignal.set(null);
     this.passwordRecoverySignal.set(false);
+  }
+
+  /** Вход по паролю → удаление профиля и учётной записи в Supabase. */
+  async deleteAccountWithPassword(
+    email: string,
+    password: string,
+  ): Promise<{ error: string | null; errorKey?: AuthErrorMessageKey; userId?: string }> {
+    const signInResult = await this.signIn(email.trim().toLowerCase(), password);
+    if (signInResult.error || !signInResult.user) {
+      return { error: null, errorKey: authErrorMessageKey(signInResult.error) };
+    }
+
+    const userId = signInResult.user.id;
+    const client = await this.supabase.getClient();
+    if (!client) {
+      await this.signOut();
+      return { error: 'Supabase is not configured' };
+    }
+
+    const { error } = await client.rpc('delete_current_user');
+    await this.signOut();
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { error: null, userId };
   }
 
   async resetPasswordForEmail(email: string): Promise<{ error: AuthError | null }> {
@@ -222,6 +265,9 @@ export class AuthService {
       this.userSignal.set(session?.user ?? null);
       if (event === 'PASSWORD_RECOVERY') {
         this.passwordRecoverySignal.set(true);
+      }
+      if (event === 'SIGNED_IN' && session?.user) {
+        void this.supabase.syncAuthProfileFromUser(session.user);
       }
     });
 

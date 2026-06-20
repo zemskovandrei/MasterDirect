@@ -300,7 +300,14 @@ select.field-input {
 }
 
 .register-form__section-hint {
-  margin: 0 0 0.75rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.6875rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.register-form__field-hint {
+  margin: 0.35rem 0 0;
   font-size: 0.6875rem;
   color: #64748b;
   line-height: 1.45;
@@ -432,6 +439,46 @@ select.field-input {
   font-weight: 600;
   color: var(--register-accent-dark);
   cursor: pointer;
+}
+
+.register-delete-account {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.register-delete-account__summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--register-navy);
+}
+
+.register-delete-account__form {
+  margin-top: 0.85rem;
+}
+
+.register-delete-account__btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.register-delete-account__btn:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.14);
+}
+
+.register-delete-account__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 480px) {

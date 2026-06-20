@@ -1,128 +1,116 @@
 <div class="catalog-tab-page" [ngStyle]="pageBackground">
-<section class="page-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translation.t('brigades.title') }}</h1>
-    <p>{{ translation.t('brigades.subtitle') }}</p>
-    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('brigades.cta') }}</a>
-  </div>
-</section>
-
-<section class="catalog">
-  <div class="catalog-inner">
-    <section class="catalog-group catalog-group--brigade brigade-picker" id="brigade-section">
-      <header class="catalog-group-header">
-        <div class="catalog-group-label">
-          <span class="catalog-group-icon" aria-hidden="true">👷</span>
-          <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
-        </div>
-        <h2>{{ translation.t('brigades.pickTitle') }}</h2>
-        <p class="catalog-group-lead">{{ translation.t('brigades.pickLead') }}</p>
-        @if (supabase.brigades().length > 0) {
-          <p class="catalog-group-count">
-            {{ supabase.brigades().length }} {{ translation.t('brigades.inCatalog') }}
-          </p>
-        }
+  <section class="catalog">
+    <div class="catalog-inner">
+      <section class="catalog-group catalog-group--brigade" id="brigade-section">
         @if (catalogAdmin.isAdmin()) {
-          <div class="catalog-admin-toolbar">
+          <div class="catalog-admin-toolbar catalog-admin-toolbar--page">
             <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
             <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
               {{ translation.t('admin.logout') }}
             </button>
           </div>
         }
-      </header>
 
-      <div class="performer-grid">
-        @for (p of supabase.brigades(); track p.id) {
-          <article
-            class="performer-card performer-card--brigade performer-card--enhanced"
-            [class.performer-card--admin]="catalogAdmin.isAdmin()"
-            [class.performer-card--selected]="selectedBrigadeId() === p.id"
-          >
-            @if (catalogAdmin.isAdmin()) {
-              <div class="performer-admin-actions">
-                <button
-                  type="button"
-                  class="performer-admin-btn performer-admin-btn--edit"
-                  (click)="openEditPerformer(p)"
-                >
-                  ✏️ {{ translation.t('admin.masters.edit') }}
-                </button>
-                <button
-                  type="button"
-                  class="performer-admin-btn performer-admin-btn--delete"
-                  (click)="deletePerformer(p)"
-                >
-                  ❌ {{ translation.t('admin.masters.delete') }}
-                </button>
-              </div>
-            }
-
-            @if (selectedBrigadeId() === p.id) {
-              <span class="performer-selected-mark" aria-hidden="true">✓</span>
-            }
-            <div class="performer-card__header">
-              <div class="performer-card__avatar" aria-hidden="true">
-                {{ p.name.charAt(0).toUpperCase() }}
-              </div>
-              <div class="performer-head">
-                <span class="performer-badge">{{ translation.t('brigades.badge') }}</span>
-                <h3>{{ p.name }}</h3>
-                <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
-              </div>
-            </div>
-
-            @if (catalogL10n.performerDescription(p); as desc) {
-              <p class="performer-desc">{{ desc }}</p>
-            }
-
-            @if (p.works[0]; as work) {
-              <div class="performer-card__media">
-                @if (catalogAdmin.isAdmin()) {
+        <div class="catalog-group-body">
+        <p class="catalog-page-tagline">{{ translation.t('brigades.listLead') }}</p>
+        <div class="performer-grid">
+          @for (p of supabase.brigades(); track p.id) {
+            <article
+              class="performer-card performer-card--brigade performer-card--enhanced"
+              [class.performer-card--admin]="catalogAdmin.isAdmin()"
+              [class.performer-card--selected]="selectedBrigadeId() === p.id"
+            >
+              @if (catalogAdmin.isAdmin()) {
+                <div class="performer-admin-actions">
                   <button
                     type="button"
-                    class="performer-admin-btn performer-admin-btn--delete performer-admin-work-delete"
-                    (click)="deleteWork(p, work.id, work.title)"
+                    class="performer-admin-btn performer-admin-btn--edit"
+                    (click)="openEditPerformer(p)"
                   >
-                    🗑 {{ translation.t('admin.catalog.deleteWork') }}
+                    ✏️ {{ translation.t('admin.masters.edit') }}
                   </button>
-                }
-                <app-before-after [work]="work" [showCaption]="false" />
-              </div>
-            }
-
-            <div class="performer-card__footer">
-              @if (selectedBrigadeId() === p.id && hasSocialLinks(p.socialLinks)) {
-                <div class="performer-card__contacts">
-                  <p class="performer-card__contacts-title">{{ translation.t('catalog.contactsTitle') }}</p>
-                  <app-social-links [links]="p.socialLinks" variant="card-revealed" />
+                  <button
+                    type="button"
+                    class="performer-admin-btn performer-admin-btn--delete"
+                    (click)="deletePerformer(p)"
+                  >
+                    ❌ {{ translation.t('admin.masters.delete') }}
+                  </button>
                 </div>
               }
 
-              <div class="performer-card__actions">
-                <button
-                  type="button"
-                  class="performer-select-btn"
-                  [class.performer-select-btn--active]="selectedBrigadeId() === p.id"
-                  (click)="selectBrigade(p.id)"
-                >
-                  {{
-                    selectedBrigadeId() === p.id
-                      ? translation.t('catalog.selected')
-                      : translation.t('catalog.select')
-                  }}
-                </button>
-                <a [routerLink]="performerLink(p.id)" class="performer-more">
-                  {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
-                </a>
+              <div class="performer-card__header">
+                <div class="performer-card__avatar" aria-hidden="true">
+                  {{ p.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="performer-head">
+                  <span class="performer-badge performer-badge-brigade">{{
+                    translation.t('brigades.badge')
+                  }}</span>
+                  <h3>
+                    <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
+                  </h3>
+                  <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
+                  @if (catalogL10n.performerSpecialtyTagline(p); as tagline) {
+                    <p class="performer-specialty-tagline">{{ tagline }}</p>
+                  }
+                </div>
               </div>
-            </div>
-          </article>
-        }
-      </div>
-    </section>
-  </div>
-</section>
+
+              @if (catalogL10n.performerDescription(p); as desc) {
+                <p class="performer-desc">{{ desc }}</p>
+              }
+
+              @if (p.works[0]; as work) {
+                <div class="performer-card__media">
+                  @if (catalogAdmin.isAdmin()) {
+                    <button
+                      type="button"
+                      class="performer-admin-btn performer-admin-btn--delete performer-admin-work-delete"
+                      (click)="deleteWork(p, work.id, work.title)"
+                    >
+                      🗑 {{ translation.t('admin.catalog.deleteWork') }}
+                    </button>
+                  }
+                  <app-before-after [work]="work" [showCaption]="false" />
+                </div>
+              }
+
+              <div class="performer-card__footer">
+                @if (selectedBrigadeId() === p.id && hasSocialLinks(p.socialLinks)) {
+                  <div class="performer-card__contacts">
+                    <p class="performer-card__contacts-title">
+                      {{ translation.t('catalog.contactsTitle') }}
+                    </p>
+                    <app-social-links [links]="p.socialLinks" variant="card-revealed" />
+                  </div>
+                }
+
+                <div class="performer-card__actions">
+                  <button
+                    type="button"
+                    class="performer-select-btn"
+                    [class.performer-select-btn--active]="selectedBrigadeId() === p.id"
+                    (click)="selectBrigade(p.id)"
+                  >
+                    {{
+                      selectedBrigadeId() === p.id
+                        ? translation.t('catalog.selected')
+                        : translation.t('catalog.select')
+                    }}
+                  </button>
+                  <a [routerLink]="performerLink(p.id)" class="performer-more">
+                    {{ translation.t('brigades.allWorks') }} ({{ p.works.length }}) →
+                  </a>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+        </div>
+      </section>
+    </div>
+  </section>
 </div>
 
 @if (editingPerformer(); as performer) {

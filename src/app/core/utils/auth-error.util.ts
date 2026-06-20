@@ -10,6 +10,7 @@ export type AuthErrorMessageKey =
 
 export type RegisterErrorMessageKey =
   | 'cabinet.registerErrorEmailExists'
+  | 'cabinet.registerErrorEmailNotConfirmed'
   | 'cabinet.registerError';
 
 /** Supabase returns an empty identities array when the email is already taken. */
@@ -31,6 +32,10 @@ export function registerErrorMessageKey(
 
   const code = String(error.code ?? '').toLowerCase();
   const message = String(error.message ?? '').toLowerCase();
+
+  if (code === 'email_not_confirmed' || message.includes('email not confirmed')) {
+    return 'cabinet.registerErrorEmailNotConfirmed';
+  }
 
   if (
     code === 'user_already_exists' ||

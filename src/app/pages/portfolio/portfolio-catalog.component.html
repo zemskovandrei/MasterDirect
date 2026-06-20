@@ -1,34 +1,40 @@
 <div class="catalog-tab-page" [ngStyle]="pageBackground">
-<section class="page-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translation.t('portfolio.hub.title') }}</h1>
-    <p>{{ translation.t('portfolio.hub.subtitle') }}</p>
-    <a routerLink="/cabinet" class="btn-primary">{{ translation.t('portfolio.hub.cta') }}</a>
-  </div>
-</section>
-
 <section class="catalog">
   <div class="catalog-inner">
+    <header class="catalog-hub-intro">
+      <p class="catalog-hub-intro__eyebrow">{{ translation.t('portfolio.hub.eyebrow') }}</p>
+      <p class="catalog-hub-intro__lead">{{ translation.t('portfolio.hub.subtitle') }}</p>
+    </header>
+
     <nav class="catalog-jump" id="catalog-tabs" [attr.aria-label]="translation.t('portfolio.jump.tabsAria')">
       <a routerLink="/brigades" class="catalog-jump-link catalog-jump-link--brigade">
         <span class="catalog-jump-icon" aria-hidden="true">👷</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.brigades') }}</strong>
-          <small>{{ store.brigades().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
+          <span class="catalog-jump-desc">{{ translation.t('portfolio.jump.brigadesLead') }}</span>
+          <small class="catalog-jump-count">
+            {{ supabase.brigades().length }} {{ translation.t('portfolio.jump.inCatalog') }}
+          </small>
         </span>
       </a>
       <a routerLink="/masters" class="catalog-jump-link catalog-jump-link--worker">
         <span class="catalog-jump-icon" aria-hidden="true">🔧</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.workers') }}</strong>
-          <small>{{ store.workers().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
+          <span class="catalog-jump-desc">{{ translation.t('portfolio.jump.workersLead') }}</span>
+          <small class="catalog-jump-count">
+            {{ supabase.workers().length }} {{ translation.t('portfolio.jump.inCatalog') }}
+          </small>
         </span>
       </a>
       <a routerLink="/furniture" class="catalog-jump-link catalog-jump-link--furniture">
         <span class="catalog-jump-icon" aria-hidden="true">🪑</span>
         <span class="catalog-jump-text">
           <strong>{{ translation.t('portfolio.jump.furniture') }}</strong>
-          <small>{{ furnitureStore.published().length }} {{ translation.t('portfolio.jump.inCatalog') }}</small>
+          <span class="catalog-jump-desc">{{ translation.t('portfolio.jump.furnitureLead') }}</span>
+          <small class="catalog-jump-count">
+            {{ supabase.furnitureCompanies().length }} {{ translation.t('portfolio.jump.inCatalog') }}
+          </small>
         </span>
       </a>
     </nav>

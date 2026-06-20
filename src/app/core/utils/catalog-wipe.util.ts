@@ -1,5 +1,5 @@
 /** Одноразовая полная очистка каталога (бригады, мастера, мебель, отзывы, сессия). */
-export const CATALOG_WIPE_VERSION = 'smartbuild-catalog-wipe-v3';
+export const CATALOG_WIPE_VERSION = 'smartbuild-catalog-wipe-v5';
 
 /** Одноразовая очистка только каталога мастеров. */
 export const MASTERS_WIPE_VERSION = 'smartbuild-masters-wipe-v1';
@@ -33,6 +33,13 @@ export function wipeCatalogStorage(): void {
   for (const key of KEYS_TO_REMOVE) {
     localStorage.removeItem(key);
   }
+
+  for (const key of Object.keys(localStorage)) {
+    if (key.includes('-auth-token')) {
+      localStorage.removeItem(key);
+    }
+  }
+
   localStorage.setItem(CATALOG_WIPE_VERSION, '1');
 }
 

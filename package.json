@@ -8,6 +8,7 @@
     "build:pages": "ng build --configuration=github-pages",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "purge:registrations": "node scripts/purge-registrations-by-email.mjs",
     "serve:ssr:pro-remont": "node dist/pro-remont/server/server.mjs"
   },
   "private": true,
@@ -30,6 +31,8 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@supabase/supabase-js": "^2.108.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -39,8 +42,9 @@
     "@angular/cli": "^22.0.3",
     "@angular/compiler-cli": "^22.0.2",
     "@tailwindcss/postcss": "^4.3.1",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
-    "@types/node": "^20.17.19",
+    "@types/node": "^22.19.0",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",

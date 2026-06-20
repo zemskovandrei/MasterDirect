@@ -30,6 +30,7 @@ export class ModerationComponent {
   });
 
   constructor() {
+    // Модерация отключена: is_approved в site_reviews нет, очередь pending будет пустой.
     if (isPlatformBrowser(this.platformId) && this.adminAuth.isAdmin()) {
       void this.reviewStore.loadPendingReviews();
     }
@@ -61,6 +62,7 @@ export class ModerationComponent {
     this.loginError.set(false);
   }
 
+  /** Модерация отключена — кнопка меняет только локальный статус в сессии. */
   approveReview(reviewId: string) {
     void this.reviewStore.approveReview(reviewId);
   }

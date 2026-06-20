@@ -13,6 +13,26 @@ export class CatalogLocalizationService {
     return this.localizeSpecialtyField(performer.specialty);
   }
 
+  performerSpecialtyTagline(performer: PerformerProfile): string {
+    if (performer.isDemo) {
+      const desc = this.t(`seeds.performers.${performer.id}.description`, '');
+      if (desc) {
+        return desc;
+      }
+    }
+
+    return this.specialtyFieldTagline(performer.specialty);
+  }
+
+  specialtyFieldTagline(value: string): string {
+    const key = this.primarySpecialtyKey(value);
+    if (!key) {
+      return '';
+    }
+
+    return this.t(`cabinet.specialtyDescriptions.${key}`, '');
+  }
+
   performerDescription(performer: PerformerProfile): string {
     if (performer.isDemo) {
       return this.t(`seeds.performers.${performer.id}.description`, performer.description);
@@ -36,6 +56,10 @@ export class CatalogLocalizationService {
 
   specialtyLabel(optionKey: string): string {
     return this.t(`cabinet.specialties.${optionKey}`, optionKey);
+  }
+
+  specialtyDescription(optionKey: string): string {
+    return this.t(`cabinet.specialtyDescriptions.${optionKey}`, '');
   }
 
   localizeSpecialtyField(value: string): string {
@@ -74,6 +98,22 @@ export class CatalogLocalizationService {
       'Монтаж торгового и коммерческого оборудования': 'commercialInstall',
     };
     return map[label] ?? null;
+  }
+
+  private primarySpecialtyKey(value: string): string | null {
+    const first = value.split(',')[0]?.trim();
+    if (!first) {
+      return null;
+    }
+
+    if (/^[a-z][a-zA-Z0-9_]*$/.test(first)) {
+      const label = this.t(`cabinet.specialties.${first}`, '');
+      if (label && label !== `cabinet.specialties.${first}`) {
+        return first;
+      }
+    }
+
+    return this.specialtyKeyFromLabel(first);
   }
 
   private t(key: string, fallback: string): string {

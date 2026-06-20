@@ -46,6 +46,7 @@ import {
   registerErrorMessageKey,
 } from '../../core/utils/auth-error.util';
 import { buildFurnitureSlug } from '../../core/utils/furniture-id.util';
+import { wipeCatalogStorage } from '../../core/utils/catalog-wipe.util';
 
 /** Roles shown on the registration form. */
 export const REGISTRATION_ROLES: ProRole[] = ['builder', 'master', 'furniture_maker'];
@@ -98,6 +99,9 @@ export class RegisterPageComponent {
   protected readonly showConfirmPassword = signal(false);
   protected readonly submitting = signal(false);
   protected readonly status = signal<'idle' | 'success' | 'error'>('idle');
+  protected readonly successMessageKey = signal<
+    'cabinet.registerSuccess' | 'cabinet.registerSuccessEmailConfirmation'
+  >('cabinet.registerSuccess');
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly signInSubmitting = signal(false);
   protected readonly signInError = signal<string | null>(null);
@@ -180,6 +184,16 @@ export class RegisterPageComponent {
     this.registerUi.selectedProRole.set(this.form.controls.proRole.value);
   }
 
+  protected readonly deleteAccountSubmitting = signal(false);
+  protected readonly deleteAccountError = signal<string | null>(null);
+  protected readonly deleteAccountSuccess = signal<string | null>(null);
+  protected readonly showDeleteAccountPanel = signal(false);
+
+  protected readonly deleteAccountForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
+
   protected readonly signInForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
@@ -226,6 +240,16 @@ export class RegisterPageComponent {
 
   protected specialtyLabel(key: SpecialtyKey): string {
     return this.translation.t(`cabinet.specialties.${key}`);
+  }
+
+  protected specialtyDescription(key: SpecialtyKey): string {
+    const value = this.translation.t(`cabinet.specialtyDescriptions.${key}`);
+    return value !== `cabinet.specialtyDescriptions.${key}` ? value : '';
+  }
+
+  protected proRoleDescription(role: ProRole): string {
+    const value = this.translation.t(`cabinet.proRoleDescriptions.${role}`);
+    return value !== `cabinet.proRoleDescriptions.${role}` ? value : '';
   }
 
   protected fieldInvalid(field: keyof RegisterFormControls): boolean {
@@ -442,7 +466,10 @@ export class RegisterPageComponent {
     const displayName = `${v.firstName.trim()} ${v.lastName.trim()}`;
     const roleLabel = this.translation.t(`cabinet.proRoles.${proRole}`);
     const specialtyLabel = this.specialtyLabel(v.specialty);
-    const description = `${roleLabel}. ${specialtyLabel}. ${displayName}. ${this.translation.t('cabinet.defaultDescriptionSuffix')}`;
+    const specialtyDesc = this.specialtyDescription(v.specialty);
+    const description =
+      specialtyDesc ||
+      `${roleLabel}. ${specialtyLabel}. ${displayName}. ${this.translation.t('cabinet.defaultDescriptionSuffix')}`;
 
     const socialLinks = {
       phone: v.phone.trim(),
@@ -480,14 +507,22 @@ export class RegisterPageComponent {
         await this.auth.signOut();
         this.status.set('error');
         this.errorMessage.set(this.translation.t('cabinet.registerErrorEmailExists'));
+        this.openDeleteAccountPanel(this.form.controls.email.value);
         return;
       }
 
-      if (authResult.error || !authResult.user || !authResult.session) {
+      if (authResult.error || !authResult.user) {
         const key = registerErrorMessageKey(authResult.error, authResult.user);
         await this.auth.signOut();
         this.status.set('error');
         this.errorMessage.set(this.translation.t(key));
+        return;
+      }
+
+      if (!authResult.session) {
+        this.successMessageKey.set('cabinet.registerSuccessEmailConfirmation');
+        this.status.set('success');
+        this.resetForm();
         return;
       }
 
@@ -597,6 +632,7 @@ export class RegisterPageComponent {
 
       await firstValueFrom(this.supabase.loadProfiles());
       await this.cabinetSession.restoreForCurrentUser();
+      this.successMessageKey.set('cabinet.registerSuccess');
       this.resetForm();
       void this.router.navigate(['/cabinet'], { replaceUrl: true });
     } catch (error) {
@@ -646,6 +682,72 @@ export class RegisterPageComponent {
       this.signInError.set(this.translation.t(key));
     } finally {
       this.signInSubmitting.set(false);
+    }
+  }
+
+  openDeleteAccountPanel(email = ''): void {
+    const normalized = email.trim().toLowerCase();
+    if (normalized) {
+      this.deleteAccountForm.patchValue({ email: normalized });
+    }
+    this.showDeleteAccountPanel.set(true);
+    this.deleteAccountError.set(null);
+    this.deleteAccountSuccess.set(null);
+  }
+
+  deleteAccountFieldInvalid(field: 'email' | 'password'): boolean {
+    const control = this.deleteAccountForm.get(field);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  async deleteAccountAndReset(): Promise<void> {
+    this.deleteAccountForm.markAllAsTouched();
+    if (this.deleteAccountForm.invalid || this.deleteAccountSubmitting()) {
+      return;
+    }
+
+    const { email, password } = this.deleteAccountForm.getRawValue();
+    this.deleteAccountSubmitting.set(true);
+    this.deleteAccountError.set(null);
+    this.deleteAccountSuccess.set(null);
+
+    try {
+      const result = await this.auth.deleteAccountWithPassword(email, password);
+      if (result.errorKey) {
+        this.deleteAccountError.set(this.translation.t(result.errorKey));
+        return;
+      }
+      if (result.error) {
+        const rpcMissing =
+          result.error.includes('delete_current_user') ||
+          result.error.includes('Could not find the function');
+        this.deleteAccountError.set(
+          rpcMissing
+            ? this.translation.t('cabinet.deleteAccountRpcMissing')
+            : result.error,
+        );
+        return;
+      }
+
+      if (result.userId) {
+        this.store.deletePerformer(result.userId);
+        this.furnitureStore.removeCompanyIfExists(result.userId);
+      }
+      wipeCatalogStorage();
+
+      this.resetForm();
+      this.signInForm.reset();
+      this.deleteAccountForm.reset();
+      this.status.set('idle');
+      this.errorMessage.set(null);
+      this.deleteAccountSuccess.set(this.translation.t('cabinet.deleteAccountSuccess'));
+      this.showDeleteAccountPanel.set(false);
+    } catch (error) {
+      this.deleteAccountError.set(
+        error instanceof Error ? error.message : this.translation.t('cabinet.deleteAccountError'),
+      );
+    } finally {
+      this.deleteAccountSubmitting.set(false);
     }
   }
 

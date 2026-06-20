@@ -500,6 +500,8 @@ export class SupabaseService {
         telegram: input.telegram?.trim() || null,
         instagram: input.instagram?.trim() || null,
         facebook: input.facebook?.trim() || null,
+        whatsapp_phone: input.whatsapp?.trim() || null,
+        tg_username: input.telegram?.trim() || null,
       };
 
       const accountType =

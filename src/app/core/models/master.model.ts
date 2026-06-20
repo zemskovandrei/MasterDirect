@@ -79,6 +79,7 @@ export interface ReviewRow {
   performer_name?: string | null;
   before_image?: string | null;
   after_image?: string | null;
+  /** Есть только после миграции `20260624_site_reviews_is_approved.sql`. */
   is_approved?: boolean | null;
   created_at?: string;
 }

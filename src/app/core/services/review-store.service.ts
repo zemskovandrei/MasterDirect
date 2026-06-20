@@ -11,6 +11,11 @@ import { TranslationService } from './translation.service';
 import { SupabaseService } from './supabase.service';
 import { logSupabaseError } from '../utils/supabase-error.util';
 
+/**
+ * Отзывы из `site_reviews`. Модерация через колонку `is_approved` отключена:
+ * колонки в БД нет, запросы с `.eq('is_approved', …)` и `.update({ is_approved })` не используются.
+ * Чтобы включить модерацию — выполните `supabase/migrations/20260624_site_reviews_is_approved.sql`.
+ */
 @Injectable({ providedIn: 'root' })
 export class ReviewStoreService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -105,10 +110,10 @@ export class ReviewStoreService {
         return;
       }
 
+      // Без колонки is_approved загружаем все строки; фильтр — только на клиенте.
       const { data, error } = await client
         .from(environment.supabase.reviewsTable)
         .select('*')
-        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -116,7 +121,10 @@ export class ReviewStoreService {
         return;
       }
 
-      const approved = (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'approved')) ?? [];
+      const approved =
+        (data as ReviewRow[] | null)
+          ?.filter((row) => this.isRowApproved(row))
+          .map((row) => this.mapRow(row, 'approved')) ?? [];
       this.reviewsSignal.update((current) => {
         const pending = current.filter((review) => review.status === 'pending');
         return [...pending, ...approved];
@@ -139,10 +147,10 @@ export class ReviewStoreService {
         return;
       }
 
+      // Модерация отключена: без is_approved в БД очередь на модерацию всегда пуста.
       const { data, error } = await client
         .from(environment.supabase.reviewsTable)
         .select('*')
-        .eq('is_approved', false)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -150,7 +158,10 @@ export class ReviewStoreService {
         return;
       }
 
-      const pending = (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'pending')) ?? [];
+      const pending =
+        (data as ReviewRow[] | null)
+          ?.filter((row) => !this.isRowApproved(row))
+          .map((row) => this.mapRow(row, 'pending')) ?? [];
       this.reviewsSignal.update((current) => {
         const approved = current.filter((review) => review.status === 'approved');
         return [...pending, ...approved];
@@ -193,7 +204,7 @@ export class ReviewStoreService {
       performer_name: data.category,
       before_image: data.beforeImage ?? null,
       after_image: data.afterImage ?? null,
-      is_approved: false,
+      // is_approved не передаём — колонки в site_reviews нет; отзыв сразу публикуется.
     };
 
     const { data: inserted, error } = await client
@@ -207,29 +218,15 @@ export class ReviewStoreService {
       return null;
     }
 
-    const submission = this.mapRow(inserted as ReviewRow, 'pending');
+    const submission = this.mapRow(inserted as ReviewRow, 'approved');
     this.reviewsSignal.update((list) => [submission, ...list]);
     return submission;
   }
 
+  /** Модерация отключена: только локальный статус; в БД is_approved не обновляется. */
   async approveReview(id: string): Promise<void> {
     const review = this.reviewsSignal().find((item) => item.id === id);
     if (!review || review.status === 'approved') {
-      return;
-    }
-
-    const client = await this.supabase.getClient();
-    if (!client) {
-      return;
-    }
-
-    const { error } = await client
-      .from(environment.supabase.reviewsTable)
-      .update({ is_approved: true })
-      .eq('id', id);
-
-    if (error) {
-      logSupabaseError('approveReview', error);
       return;
     }
 
@@ -253,6 +250,11 @@ export class ReviewStoreService {
     }
 
     this.reviewsSignal.update((list) => list.filter((review) => review.id !== id));
+  }
+
+  private isRowApproved(row: ReviewRow): boolean {
+    // Пока нет is_approved в site_reviews — все строки из БД считаем опубликованными.
+    return row.is_approved !== false;
   }
 
   private mapRow(row: ReviewRow, status: ReviewSubmission['status']): ReviewSubmission {

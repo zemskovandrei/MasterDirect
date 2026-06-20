@@ -332,8 +332,9 @@
   },
   "portfolio": {
     "hub": {
+      "eyebrow": "Performer catalog",
       "title": "Catalog",
-      "subtitle": "Teams, masters and furniture companies — before/after work and client reviews.",
+      "subtitle": "Choose a team, master or furniture company — browse real before/after work and client reviews.",
       "cta": "Publish your work",
       "reviewsEyebrow": "Reviews",
       "reviewsTitle": "What clients say",
@@ -341,8 +342,11 @@
     },
     "jump": {
       "brigades": "Teams",
+      "brigadesLead": "Full apartment and house renovation — from rough work to turnkey handover.",
       "workers": "Masters",
+      "workersLead": "Tiling, electrical, plumbing and finishing — focused specialists for each task.",
       "furniture": "Furniture companies",
+      "furnitureLead": "Custom kitchens, wardrobes and built-in furniture with photos of real projects.",
       "smeta": "Estimate",
       "smetaHint": "after choosing a team",
       "furnitureHint": "kitchens, wardrobes, built-in furniture",
@@ -356,20 +360,12 @@
     "contactsTitle": "Contacts"
   },
   "brigades": {
-    "title": "Teams",
-    "subtitle": "Crews for full renovation of apartments, houses and individual rooms.",
-    "cta": "Publish a team",
-    "pickTitle": "Choose a team",
-    "pickLead": "Click Select to view contacts and reach out to the team.",
+    "listTitle": "Teams catalog",
+    "listLead": "Construction crews for turnkey renovation — with project photos and direct contact.",
     "inCatalog": "teams in catalog",
     "badge": "Team",
     "allWorks": "All work",
     "empty": "No published teams yet.",
-    "emptyCta": {
-      "title": "Is your team ready for new projects?",
-      "desc": "The platform is launching in Georgia! Register your construction crew or company now. The first 20 construction teams get lifetime PRO status and search priority — completely free.",
-      "btn": "List your team"
-    },
     "estimateFor": "Estimate request for team «{{name}}»"
   },
   "masters": {
@@ -377,7 +373,7 @@
     "subtitle": "Specialists for individual tasks: tiling, electrical, plumbing, finishing.",
     "cta": "Publish profile",
     "listTitle": "Masters catalog",
-    "listLead": "Pick a master by specialty and view before/after work.",
+    "listLead": "Trusted specialists for specific trades — pick by skill and browse portfolios.",
     "inCatalog": "masters in catalog",
     "badge": "Master",
     "allWorks": "All work",
@@ -393,7 +389,7 @@
     "subtitle": "Kitchens, wardrobes, closets and custom built-in furniture.",
     "cta": "Publish company",
     "listTitle": "Company catalog",
-    "listLead": "Furniture workshops with real projects and before/after photos.",
+    "listLead": "Furniture workshops with real projects — kitchens, wardrobes and custom built-ins.",
     "inCatalog": "companies in catalog",
     "badge": "Furniture",
     "allWorks": "All projects",

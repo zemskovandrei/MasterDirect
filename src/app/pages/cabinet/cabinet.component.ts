@@ -185,8 +185,11 @@ export class CabinetComponent {
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   constructor() {
-    afterNextRender(() => {
-      void this.cabinetSession.restoreForCurrentUser();
+    afterNextRender(async () => {
+      await this.auth.ensureInitialized();
+      if (this.auth.session()) {
+        await this.cabinetSession.restoreForCurrentUser();
+      }
     });
 
     effect(() => {

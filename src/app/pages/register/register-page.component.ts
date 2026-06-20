@@ -42,14 +42,31 @@ import { beforeAfterWork } from '../../core/utils/before-after.util';
 import { APP_BRAND_NAME } from '../../core/constants/brand';
 import {
   authErrorMessageKey,
+  isAuthEmailRateLimitError,
   isDuplicateSignupUser,
   registerErrorMessageKey,
+  type RegisterErrorMessageKey,
 } from '../../core/utils/auth-error.util';
 import { buildFurnitureSlug } from '../../core/utils/furniture-id.util';
 import { wipeCatalogStorage } from '../../core/utils/catalog-wipe.util';
 
 /** Roles shown on the registration form. */
 export const REGISTRATION_ROLES: ProRole[] = ['builder', 'master', 'furniture_maker'];
+
+/** SQL для Supabase — убирает signup 500 (триггер на auth.users). */
+export const SIGNUP_FIX_SQL = `do $$
+declare trigger_row record;
+begin
+  for trigger_row in
+    select t.tgname as trigger_name
+    from pg_trigger t
+    join pg_class c on c.oid = t.tgrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'auth' and c.relname = 'users' and not t.tgisinternal
+  loop
+    execute format('drop trigger if exists %I on auth.users', trigger_row.trigger_name);
+  end loop;
+end $$;`;
 
 type RegisterFormControls = {
   firstName: string;
@@ -92,6 +109,7 @@ export class RegisterPageComponent {
 
   protected readonly brandName = APP_BRAND_NAME;
   protected readonly registrationRoles = REGISTRATION_ROLES;
+  protected readonly signupFixSql = SIGNUP_FIX_SQL;
   protected readonly cities = CITY_IDS;
   protected readonly specialties = SPECIALTY_KEYS;
 
@@ -103,8 +121,12 @@ export class RegisterPageComponent {
     'cabinet.registerSuccess' | 'cabinet.registerSuccessEmailConfirmation'
   >('cabinet.registerSuccess');
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessageKey = signal<RegisterErrorMessageKey | null>(null);
   protected readonly signInSubmitting = signal(false);
   protected readonly signInError = signal<string | null>(null);
+  protected readonly signInErrorKey = signal<string | null>(null);
+  protected readonly resendEmailSubmitting = signal(false);
+  protected readonly resendEmailMessage = signal<string | null>(null);
   protected readonly forgotPasswordSubmitting = signal(false);
   protected readonly forgotPasswordMessage = signal<string | null>(null);
   protected readonly forgotPasswordError = signal<string | null>(null);
@@ -482,31 +504,60 @@ export class RegisterPageComponent {
     this.submitting.set(true);
     this.status.set('idle');
     this.errorMessage.set(null);
+    this.errorMessageKey.set(null);
+
+    const profileType =
+      accountType === 'furniture'
+        ? 'furniture'
+        : accountType === 'brigade'
+          ? 'brigade'
+          : 'worker';
 
     try {
-      const authResult = await this.auth.signUp(v.email, v.password, {
-        full_name: displayName,
-        phone: v.phone.trim(),
-        city: v.city,
-        specialty: v.specialty,
-        description,
-        pro_role: proRole,
-        account_type:
-          accountType === 'furniture'
-            ? 'furniture'
-            : accountType
-              ? (accountType as MasterAccountType)
-              : undefined,
-        whatsapp: socialLinks.whatsapp,
-        telegram: socialLinks.telegram,
-        instagram: socialLinks.instagram,
-        facebook: socialLinks.facebook,
-      });
+      const authResult = await this.auth.register(
+        v.email,
+        v.password,
+        {
+          full_name: displayName,
+          first_name: v.firstName.trim(),
+          last_name: v.lastName.trim(),
+          phone: v.phone.trim(),
+          city: v.city,
+          specialty: v.specialty,
+          description,
+          pro_role: proRole,
+          account_type:
+            accountType === 'furniture'
+              ? 'furniture'
+              : accountType
+                ? (accountType as MasterAccountType)
+                : undefined,
+          whatsapp: socialLinks.whatsapp,
+          telegram: socialLinks.telegram,
+          instagram: socialLinks.instagram,
+          facebook: socialLinks.facebook,
+        },
+        {
+          accountType: profileType,
+          fullName: displayName,
+          firstName: v.firstName.trim(),
+          lastName: v.lastName.trim(),
+          phone: v.phone.trim(),
+          city: v.city,
+          specialty: v.specialty,
+          proRole,
+          whatsapp: socialLinks.whatsapp,
+          telegram: socialLinks.telegram,
+          instagram: socialLinks.instagram,
+          facebook: socialLinks.facebook,
+        },
+      );
 
       if (isDuplicateSignupUser(authResult.user)) {
         await this.auth.signOut();
         this.status.set('error');
         this.errorMessage.set(this.translation.t('cabinet.registerErrorEmailExists'));
+        this.errorMessageKey.set('cabinet.registerErrorEmailExists');
         this.openDeleteAccountPanel(this.form.controls.email.value);
         return;
       }
@@ -515,7 +566,14 @@ export class RegisterPageComponent {
         const key = registerErrorMessageKey(authResult.error, authResult.user);
         await this.auth.signOut();
         this.status.set('error');
-        this.errorMessage.set(this.translation.t(key));
+        this.errorMessageKey.set(key);
+        const detail = authResult.error?.message?.trim();
+        const base = this.translation.t(key);
+        if (detail) {
+          this.errorMessage.set(`${base}\n${detail}`);
+        } else {
+          this.errorMessage.set(base);
+        }
         return;
       }
 
@@ -526,31 +584,11 @@ export class RegisterPageComponent {
         return;
       }
 
-      const profileType =
-        accountType === 'furniture'
-          ? 'furniture'
-          : accountType === 'brigade'
-            ? 'brigade'
-            : 'worker';
-
-      const profileError = await this.supabase.registerAuthProfile({
-        userId: authResult.user.id,
-        accountType: profileType,
-        fullName: displayName,
-        phone: v.phone.trim(),
-        city: v.city,
-        specialty: v.specialty,
-        description,
-        whatsapp: socialLinks.whatsapp,
-        telegram: socialLinks.telegram,
-        instagram: socialLinks.instagram,
-        facebook: socialLinks.facebook,
-      });
-
-      if (profileError.error) {
+      if (authResult.profileError) {
         await this.auth.signOut();
         this.status.set('error');
-        this.errorMessage.set(profileError.error);
+        this.errorMessageKey.set('cabinet.registerError');
+        this.errorMessage.set(authResult.profileError);
         return;
       }
 
@@ -637,6 +675,7 @@ export class RegisterPageComponent {
       void this.router.navigate(['/cabinet'], { replaceUrl: true });
     } catch (error) {
       this.status.set('error');
+      this.errorMessageKey.set('cabinet.registerError');
       this.errorMessage.set(
         error instanceof Error ? error.message : this.translation.t('cabinet.registerError'),
       );
@@ -654,11 +693,15 @@ export class RegisterPageComponent {
     const { email, password } = this.signInForm.getRawValue();
     this.signInSubmitting.set(true);
     this.signInError.set(null);
+    this.signInErrorKey.set(null);
+    this.resendEmailMessage.set(null);
 
     try {
+      await this.auth.ensureInitialized();
       const result = await this.auth.signIn(email, password);
       if (result.error || !result.user) {
         const key = authErrorMessageKey(result.error);
+        this.signInErrorKey.set(key);
         this.signInError.set(this.translation.t(key));
         return;
       }
@@ -666,6 +709,7 @@ export class RegisterPageComponent {
       await firstValueFrom(this.supabase.loadProfiles());
       const restored = await this.cabinetSession.restoreForCurrentUser();
       if (!restored) {
+        this.signInErrorKey.set('cabinet.signInError');
         this.signInError.set(this.translation.t('cabinet.signInError'));
         await this.auth.signOut();
         return;
@@ -679,9 +723,36 @@ export class RegisterPageComponent {
         message.includes('invalid email or password')
           ? 'cabinet.signInErrorInvalidCredentials'
           : 'cabinet.signInError';
+      this.signInErrorKey.set(key);
       this.signInError.set(this.translation.t(key));
     } finally {
       this.signInSubmitting.set(false);
+    }
+  }
+
+  async resendConfirmationEmail(): Promise<void> {
+    const email = this.signInForm.controls.email.value.trim();
+    if (!email) {
+      this.resendEmailMessage.set(this.translation.t('cabinet.resendConfirmationNeedEmail'));
+      return;
+    }
+
+    this.resendEmailSubmitting.set(true);
+    this.resendEmailMessage.set(null);
+
+    try {
+      const { error } = await this.auth.resendSignUpConfirmation(email);
+      if (error) {
+        const key = isAuthEmailRateLimitError(error)
+          ? 'cabinet.signInErrorRateLimit'
+          : 'cabinet.resendConfirmationError';
+        this.signInErrorKey.set(key);
+        this.resendEmailMessage.set(this.translation.t(key));
+        return;
+      }
+      this.resendEmailMessage.set(this.translation.t('cabinet.resendConfirmationSuccess'));
+    } finally {
+      this.resendEmailSubmitting.set(false);
     }
   }
 

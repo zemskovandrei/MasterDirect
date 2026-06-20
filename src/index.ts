@@ -197,8 +197,7 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
     const specialistsResult = await supabase
       .from('specialist')
       .select('*')
-      .or('is_archive.is.null,is_archive.eq.false')
-      .order('created_at', { ascending: false });
+      .order('name', { ascending: true });
 
     if (specialistsResult.error) {
       console.error('[GET /api/catalog] specialist error:', specialistsResult.error.message);
@@ -208,6 +207,8 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
 
     const specialists = (specialistsResult.data ?? []).filter(
       (row) =>
+        hasVisibleName(row.name) ||
+        hasVisibleName(row.surname) ||
         hasVisibleName(row.full_name) ||
         hasVisibleName(row.phone) ||
         hasVisibleName(row.whatsapp_phone),

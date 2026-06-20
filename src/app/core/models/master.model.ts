@@ -1,25 +1,31 @@
 export type MasterAccountType = 'worker' | 'brigade' | 'furniture';
 
-/** Строка таблицы `specialist` (мастера, бригады, мебельщики). */
+/** Строка таблицы `specialist` (реальная схема Supabase). */
 export interface MasterRow {
   id: string;
-  full_name: string;
-  phone: string | null;
-  city: string | null;
-  specialty: string | null;
-  description: string | null;
-  account_type: MasterAccountType | null;
-  slug?: string | null;
-  call_out_fee: string | null;
-  whatsapp_phone: string | null;
-  tg_username: string | null;
-  whatsapp: string | null;
-  telegram: string | null;
-  instagram: string | null;
-  facebook: string | null;
-  header_bg?: string | null;
-  is_archive?: boolean | null;
+  name: string;
+  surname: string;
+  phone: string;
+  skills?: string[] | null;
+  city?: string | null;
+  is_verified?: boolean | null;
   created_at?: string;
+  whatsapp_phone?: string | null;
+  tg_username?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+  role?: string | null;
+  is_archive?: boolean | null;
+  slug?: string | null;
+  account_type?: MasterAccountType | null;
+  /** Устаревшие поля — только для обратной совместимости при чтении. */
+  full_name?: string | null;
+  specialty?: string | null;
+  description?: string | null;
+  call_out_fee?: string | null;
+  whatsapp?: string | null;
+  telegram?: string | null;
+  header_bg?: string | null;
 }
 
 /** Строка таблицы `brigades`. */
@@ -79,13 +85,15 @@ export interface ReviewRow {
   performer_name?: string | null;
   before_image?: string | null;
   after_image?: string | null;
-  /** Есть только после миграции `20260624_site_reviews_is_approved.sql`. */
+  /** Колонка `is_approved` в `site_reviews`. */
   is_approved?: boolean | null;
   created_at?: string;
 }
 
 export interface AuthSignUpMetadata {
   full_name: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string;
   city?: string;
   specialty?: string;

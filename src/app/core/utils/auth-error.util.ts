@@ -11,7 +11,26 @@ export type AuthErrorMessageKey =
 export type RegisterErrorMessageKey =
   | 'cabinet.registerErrorEmailExists'
   | 'cabinet.registerErrorEmailNotConfirmed'
+  | 'cabinet.registerErrorDatabase'
+  | 'cabinet.registerErrorRateLimit'
   | 'cabinet.registerError';
+
+/** Лимит писем Supabase (signup / resend / reset). */
+export function isAuthEmailRateLimitError(error: AuthError | null | undefined): boolean {
+  if (!error) {
+    return false;
+  }
+  const code = String(error.code ?? '').toLowerCase();
+  const message = String(error.message ?? '').toLowerCase();
+  const status = Number((error as AuthError & { status?: number }).status ?? 0);
+  return (
+    status === 429 ||
+    code === 'over_email_send_rate_limit' ||
+    code === 'over_request_rate_limit' ||
+    message.includes('rate limit') ||
+    message.includes('too many requests')
+  );
+}
 
 /** Supabase returns an empty identities array when the email is already taken. */
 export function isDuplicateSignupUser(user: User | null | undefined): boolean {
@@ -47,6 +66,24 @@ export function registerErrorMessageKey(
     return 'cabinet.registerErrorEmailExists';
   }
 
+  if (isAuthEmailRateLimitError(error)) {
+    return 'cabinet.registerErrorRateLimit';
+  }
+
+  if (
+    code === 'unexpected_failure' ||
+    message.includes('database error saving new user') ||
+    message.includes('database error') ||
+    message.includes('handle_new_auth_user')
+  ) {
+    return 'cabinet.registerErrorDatabase';
+  }
+
+  const status = Number((error as AuthError & { status?: number }).status ?? 0);
+  if (status >= 500) {
+    return 'cabinet.registerErrorDatabase';
+  }
+
   return 'cabinet.registerError';
 }
 
@@ -74,7 +111,7 @@ export function authErrorMessageKey(error: AuthError | null | undefined): AuthEr
     return 'cabinet.signInErrorUserBanned';
   }
 
-  if (message.includes('rate limit') || code === 'over_email_send_rate_limit') {
+  if (isAuthEmailRateLimitError(error)) {
     return 'cabinet.signInErrorRateLimit';
   }
 

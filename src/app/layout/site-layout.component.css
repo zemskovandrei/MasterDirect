@@ -221,6 +221,93 @@
     gap: 0.35rem;
     width: 100%;
   }
+
+  /* Боковая панель всегда тёмная — не наследуем светлый --header-text-color */
+  .site-layout .nav.nav-open {
+    color: rgba(255, 255, 255, 0.94);
+  }
+
+  .site-layout .nav.nav-open .nav-mobile-intro {
+    display: block;
+    margin: 0 0 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(0, 229, 168, 0.85);
+  }
+
+  .site-layout .nav.nav-open .nav-link-item {
+    display: block;
+    width: 100%;
+    padding: 0.95rem 0;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-decoration: none;
+  }
+
+  .site-layout .nav.nav-open .nav-link-item:hover,
+  .site-layout .nav.nav-open .nav-link-item:focus-visible {
+    color: #67e8f9 !important;
+  }
+
+  .site-layout .nav.nav-open .nav-link-item.active {
+    color: #00e5a8 !important;
+  }
+
+  .site-layout .nav.nav-open .nav-link-title {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .site-layout .nav.nav-open .nav-link-desc {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  .site-layout .nav.nav-open .nav-link-item.active .nav-link-desc {
+    color: rgba(0, 229, 168, 0.75);
+  }
+
+  .site-layout .nav.nav-open .nav-auth-mobile .header-auth-link {
+    color: rgba(255, 255, 255, 0.92) !important;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .site-layout .nav.nav-open .nav-auth-mobile .header-auth-link--register {
+    margin-top: 0.5rem;
+    color: #041018 !important;
+    font-weight: 700;
+    border: none;
+    background: linear-gradient(135deg, #00c4e0 0%, #00e5a8 100%);
+    box-shadow: 0 8px 22px rgba(0, 229, 168, 0.28);
+  }
+
+  .site-layout .nav.nav-open .nav-auth-mobile .header-auth-link--register:hover,
+  .site-layout .nav.nav-open .nav-auth-mobile .header-auth-link--register:focus-visible {
+    color: #041018 !important;
+    transform: translateY(-1px);
+  }
+
+  .site-layout .nav.nav-open .nav-auth-mobile {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.nav-mobile-intro,
+.nav-link-desc {
+  display: none;
 }
 
 .header-theme-toggle {

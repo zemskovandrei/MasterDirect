@@ -19,7 +19,12 @@
       "cabinet": "Dashboard",
       "moderation": "Moderation",
       "estimate": "Estimate",
-      "jobs": "Jobs"
+      "jobs": "Jobs",
+      "menuIntro": "Site navigation",
+      "featuresDesc": "Why choose FlooringLeader",
+      "catalogDesc": "Masters, teams, and furniture makers",
+      "jobsBoardDesc": "Open renovation jobs",
+      "worksGalleryDesc": "Before and after project photos"
     },
     "actions": {
       "openMenu": "Open menu",

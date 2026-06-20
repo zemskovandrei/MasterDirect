@@ -12,9 +12,7 @@ import { SupabaseService } from './supabase.service';
 import { logSupabaseError } from '../utils/supabase-error.util';
 
 /**
- * Отзывы из `site_reviews`. Модерация через колонку `is_approved` отключена:
- * колонки в БД нет, запросы с `.eq('is_approved', …)` и `.update({ is_approved })` не используются.
- * Чтобы включить модерацию — выполните `supabase/migrations/20260624_site_reviews_is_approved.sql`.
+ * Отзывы из `site_reviews` (колонки: id, created_at, user_name, review_text).
  */
 @Injectable({ providedIn: 'root' })
 export class ReviewStoreService {
@@ -110,7 +108,6 @@ export class ReviewStoreService {
         return;
       }
 
-      // Без колонки is_approved загружаем все строки; фильтр — только на клиенте.
       const { data, error } = await client
         .from(environment.supabase.reviewsTable)
         .select('*')
@@ -122,9 +119,7 @@ export class ReviewStoreService {
       }
 
       const approved =
-        (data as ReviewRow[] | null)
-          ?.filter((row) => this.isRowApproved(row))
-          .map((row) => this.mapRow(row, 'approved')) ?? [];
+        (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'approved')) ?? [];
       this.reviewsSignal.update((current) => {
         const pending = current.filter((review) => review.status === 'pending');
         return [...pending, ...approved];
@@ -139,36 +134,12 @@ export class ReviewStoreService {
       return;
     }
 
-    this.loadingSignal.set(true);
-
-    try {
-      const client = await this.supabase.getClient();
-      if (!client) {
-        return;
-      }
-
-      // Модерация отключена: без is_approved в БД очередь на модерацию всегда пуста.
-      const { data, error } = await client
-        .from(environment.supabase.reviewsTable)
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logSupabaseError('loadPendingReviews', error);
-        return;
-      }
-
-      const pending =
-        (data as ReviewRow[] | null)
-          ?.filter((row) => !this.isRowApproved(row))
-          .map((row) => this.mapRow(row, 'pending')) ?? [];
-      this.reviewsSignal.update((current) => {
-        const approved = current.filter((review) => review.status === 'approved');
-        return [...pending, ...approved];
-      });
-    } finally {
-      this.loadingSignal.set(false);
-    }
+    // В схеме без is_approved модерация только локально (после addReview).
+    this.reviewsSignal.update((current) => {
+      const approved = current.filter((review) => review.status === 'approved');
+      const pending = current.filter((review) => review.status === 'pending');
+      return [...pending, ...approved];
+    });
   }
 
   async addReview(data: {
@@ -183,10 +154,6 @@ export class ReviewStoreService {
     afterImage?: string;
     kind?: ReviewSubmission['kind'];
   }): Promise<ReviewSubmission | null> {
-    const performerTypeKey: ReviewPerformerTypeKey =
-      data.performerTypeKey ??
-      this.resolvePerformerTypeKey({ performerType: data.performerType } as ReviewSubmission);
-
     const client = await this.supabase.getClient();
     if (!client) {
       logSupabaseError('addReview', new Error('Supabase is not configured'));
@@ -196,15 +163,6 @@ export class ReviewStoreService {
     const row = {
       user_name: data.name.trim(),
       review_text: data.review.trim(),
-      master_id: data.performerId ?? null,
-      rating: data.rating ?? null,
-      kind: data.kind ?? 'review',
-      performer_type: data.performerType,
-      performer_type_key: performerTypeKey,
-      performer_name: data.category,
-      before_image: data.beforeImage ?? null,
-      after_image: data.afterImage ?? null,
-      // is_approved не передаём — колонки в site_reviews нет; отзыв сразу публикуется.
     };
 
     const { data: inserted, error } = await client
@@ -218,18 +176,18 @@ export class ReviewStoreService {
       return null;
     }
 
-    const submission = this.mapRow(inserted as ReviewRow, 'approved');
+    const submission = this.mapRow(inserted as ReviewRow, 'pending');
     this.reviewsSignal.update((list) => [submission, ...list]);
     return submission;
   }
 
-  /** Модерация отключена: только локальный статус; в БД is_approved не обновляется. */
   async approveReview(id: string): Promise<void> {
     const review = this.reviewsSignal().find((item) => item.id === id);
     if (!review || review.status === 'approved') {
       return;
     }
 
+    // Без колонки is_approved — публикуем только в UI (строка уже в site_reviews).
     this.reviewsSignal.update((list) =>
       list.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
@@ -250,11 +208,6 @@ export class ReviewStoreService {
     }
 
     this.reviewsSignal.update((list) => list.filter((review) => review.id !== id));
-  }
-
-  private isRowApproved(row: ReviewRow): boolean {
-    // Пока нет is_approved в site_reviews — все строки из БД считаем опубликованными.
-    return row.is_approved !== false;
   }
 
   private mapRow(row: ReviewRow, status: ReviewSubmission['status']): ReviewSubmission {

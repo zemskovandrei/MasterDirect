@@ -19,7 +19,12 @@
       "cabinet": "Кабинет",
       "moderation": "Модерация",
       "estimate": "Смета",
-      "jobs": "Заказы"
+      "jobs": "Заказы",
+      "menuIntro": "Навигация по сервису",
+      "featuresDesc": "Почему выбирают FlooringLeader",
+      "catalogDesc": "Мастера, бригады и мебельные компании",
+      "jobsBoardDesc": "Актуальные заказы на ремонт",
+      "worksGalleryDesc": "Фото работ до и после"
     },
     "actions": {
       "openMenu": "Открыть меню",

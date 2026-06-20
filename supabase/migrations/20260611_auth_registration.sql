@@ -1,2 +1,0 @@
--- Устарело: используйте 20260620_specialist_unified.sql
--- Регистрация исполнителей только в public.specialist

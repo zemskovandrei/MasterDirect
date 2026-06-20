@@ -376,7 +376,9 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--profile-slate);
-  line-height: 1.35;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .showcase-cta {

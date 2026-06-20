@@ -23,13 +23,16 @@ import {
   isCompletedOrderStatus,
   mapJobklientRowsToJobs,
   toFurnitureOrderDbRow,
-  toJobklientDbRow,
 } from '../../models/job.model';
 import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
-import { logSupabaseError } from '../utils/supabase-error.util';
+import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint } from '../utils/supabase-error.util';
+import { specialistRowToWritePayload, profilePatchToSpecialistRow } from '../utils/specialist-db.util';
 import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
+import { mapJobklientInsertToOrderInsert, mapOrderRowsToJobs } from '../utils/order-db.util';
+import { DataService } from './data.service';
+import { SupabaseClientService } from './supabase-client.service';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
@@ -66,10 +69,13 @@ export interface RegisterAuthProfileInput {
   userId: string;
   accountType: 'worker' | 'brigade' | 'furniture';
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   phone: string;
   city: string;
   specialty: string;
   description: string;
+  proRole?: string;
   whatsapp?: string;
   telegram?: string;
   instagram?: string;
@@ -81,9 +87,9 @@ export class SupabaseService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly portfolioStore = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
+  private readonly supabaseClientService = inject(SupabaseClientService);
+  private readonly dataService = inject(DataService);
 
-  private supabaseClient: SupabaseClient | null = null;
-  private clientPromise: Promise<SupabaseClient | null> | null = null;
   private jobsFetchPromise: Promise<Job[]> | null = null;
   private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
   private profilesRefreshPromise: Promise<Profile[]> | null = null;
@@ -183,8 +189,6 @@ export class SupabaseService {
   }
 
   async loadJobsForAuthenticatedMaster(force = false): Promise<Job[]> {
-    console.log('[SUPABASE SERVICE] Запуск loadJobsForAuthenticatedMaster');
-
     if (!isPlatformBrowser(this.platformId)) {
       return [];
     }
@@ -197,47 +201,8 @@ export class SupabaseService {
     this.jobsErrorSignal.set(null);
 
     try {
-      const client = await this.resolveClient();
-      if (!client) {
-        console.error('[SUPABASE SERVICE] Supabase client not configured');
-        return [];
-      }
-
-      let query = client
-        .from(environment.supabase.jobsTable)
-        .select('*')
-        .neq('status', 'completed')
-        .order('created_at', { ascending: false });
-
-      try {
-        const authStorageKey = Object.keys(localStorage).find((key) => key.includes('-auth-token'));
-        const sessionStr = authStorageKey ? localStorage.getItem(authStorageKey) : null;
-
-        if (sessionStr) {
-          const session = JSON.parse(sessionStr) as { user?: { id?: string } };
-          const userId = session?.user?.id;
-          if (userId) {
-            console.log('[SUPABASE SERVICE] Найдена локальная сессия пользователя:', userId);
-          }
-        } else {
-          console.log('[SUPABASE SERVICE] Локальная сессия не найдена. Работаем в режиме гостя.');
-        }
-      } catch {
-        console.log('[SUPABASE SERVICE] Не удалось разобрать локальную сессию, идем как гость.');
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('[SUPABASE SERVICE] Ошибка при чтении таблицы order:', error);
-        logSupabaseError('loadJobsForAuthenticatedMaster', error);
-        return [];
-      }
-
-      const rows = (data ?? []).filter(
-        (row) => !isCompletedOrderStatus((row as { status?: string | null }).status),
-      );
-      const jobs = this.filterPublicJobs(mapJobklientRowsToJobs(rows));
+      const orders = await this.dataService.listActiveOrders();
+      const jobs = this.filterPublicJobs(mapOrderRowsToJobs(orders));
       this.activeJobsSignal.set(jobs);
       this.jobsErrorSignal.set(null);
 
@@ -247,13 +212,15 @@ export class SupabaseService {
         this.invalidateJobsCache();
       }
 
-      console.log('[SUPABASE SERVICE] Успешно загружено активных заказов:', jobs.length);
       return jobs;
     } catch (error) {
-      console.error('[SUPABASE SERVICE] Критическая ошибка при загрузке:', error);
       logSupabaseError('loadJobsForAuthenticatedMaster', error);
       this.activeJobsSignal.set([]);
-      this.jobsErrorSignal.set(null);
+      this.jobsErrorSignal.set(
+        isSupabaseNetworkError(error)
+          ? supabaseNetworkErrorHint(environment.supabase.url)
+          : supabaseErrorMessage(error) || null,
+      );
       return [];
     } finally {
       this.jobsLoadingSignal.set(false);
@@ -261,7 +228,11 @@ export class SupabaseService {
   }
 
   getClient(): Promise<SupabaseClient | null> {
-    return this.resolveClient();
+    return this.supabaseClientService.getClient();
+  }
+
+  private resolveClient(): Promise<SupabaseClient | null> {
+    return this.supabaseClientService.getClient();
   }
 
   async loadActiveJobs(force = false): Promise<Job[]> {
@@ -495,44 +466,46 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const social = {
-        whatsapp: input.whatsapp?.trim() || null,
-        telegram: input.telegram?.trim() || null,
-        instagram: input.instagram?.trim() || null,
-        facebook: input.facebook?.trim() || null,
-        whatsapp_phone: input.whatsapp?.trim() || null,
-        tg_username: input.telegram?.trim() || null,
-      };
-
-      const accountType =
-        input.accountType === 'furniture'
-          ? 'furniture'
-          : input.accountType === 'brigade'
-            ? 'brigade'
-            : 'worker';
-
       const slug =
-        input.accountType === 'furniture' ? buildFurnitureSlug(input.fullName) : null;
+        input.accountType === 'furniture'
+          ? `${buildFurnitureSlug(input.fullName)}-${input.userId.replace(/-/g, '').slice(0, 8)}`
+          : null;
 
-      const { error } = await client.from(environment.supabase.specialistTable).upsert(
-        {
-          id: input.userId,
-          full_name: input.fullName,
-          phone: input.phone,
-          city: input.city,
-          specialty: input.specialty,
-          description: input.description,
-          account_type: accountType,
-          slug,
-          is_archive: false,
-          ...social,
-        },
-        { onConflict: 'id' },
-      );
+      const payload = specialistRowToWritePayload({
+        userId: input.userId,
+        fullName: input.fullName,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        city: input.city,
+        specialty: input.specialty,
+        proRole: input.proRole,
+        accountType: input.accountType,
+        slug,
+        whatsapp: input.whatsapp,
+        telegram: input.telegram,
+        instagram: input.instagram,
+        facebook: input.facebook,
+      });
 
-      if (error) {
-        logSupabaseError('registerAuthProfile', error);
-        return { error: error.message };
+      const { data: existing } = await client
+        .from(environment.supabase.specialistTable)
+        .select('id')
+        .eq('id', input.userId)
+        .maybeSingle();
+
+      const result = existing
+        ? await client
+            .from(environment.supabase.specialistTable)
+            .update(payload)
+            .eq('id', input.userId)
+        : await client
+            .from(environment.supabase.specialistTable)
+            .upsert(payload, { onConflict: 'id' });
+
+      if (result.error) {
+        logSupabaseError('registerAuthProfile', result.error);
+        return { error: supabaseErrorMessage(result.error) || 'Profile registration failed' };
       }
 
       await this.refreshProfilesFromDatabase();
@@ -563,10 +536,13 @@ export class SupabaseService {
       userId: user.id,
       accountType,
       fullName,
+      firstName: String(meta['first_name'] ?? '').trim() || undefined,
+      lastName: String(meta['last_name'] ?? '').trim() || undefined,
       phone: String(meta['phone'] ?? '').trim(),
       city: String(meta['city'] ?? '').trim(),
       specialty: String(meta['specialty'] ?? '').trim(),
       description: String(meta['description'] ?? fullName).trim(),
+      proRole: proRole || undefined,
       whatsapp: String(meta['whatsapp'] ?? ''),
       telegram: String(meta['telegram'] ?? ''),
       instagram: String(meta['instagram'] ?? ''),
@@ -772,11 +748,7 @@ export class SupabaseService {
 
       const { data, error } = await client
         .from(environment.supabase.specialistTable)
-        .update({
-          full_name: name,
-          specialty,
-          description,
-        })
+        .update(profilePatchToSpecialistRow({ name, specialty, city: patch.city, phone: patch.phone, whatsapp: patch.whatsapp, telegram: patch.telegram, instagram: patch.instagram, facebook: patch.facebook }))
         .eq('id', id)
         .select('*')
         .maybeSingle();
@@ -1102,18 +1074,18 @@ export class SupabaseService {
 
       const { data, error } = await client
         .from(environment.supabase.specialistTable)
-        .update({ is_archive: true })
+        .delete()
         .eq('id', id)
         .select('id');
 
       if (error) {
-        console.error('Archive error:', error);
+        console.error('Delete error (master):', error);
         return { data: null, error: error.message };
       }
 
       if (!data?.length) {
         const message = 'Master not found or access denied';
-        console.error('Archive error:', message);
+        console.error('Delete error:', message);
         return { data: null, error: message };
       }
 
@@ -1121,8 +1093,8 @@ export class SupabaseService {
       await this.refreshProfilesFromDatabase();
       return { data: null, error: null };
     } catch (err) {
-      console.error('Archive error:', err);
-      const message = err instanceof Error ? err.message : 'Archive failed';
+      console.error('Delete error (master):', err);
+      const message = err instanceof Error ? err.message : 'Delete failed';
       return { data: null, error: message };
     }
   }
@@ -1175,39 +1147,8 @@ export class SupabaseService {
     }
   }
 
-  get clientInstance(): SupabaseClient | null {
-    return this.supabaseClient;
-  }
-
-  private get supabase(): SupabaseClient {
-    if (!this.supabaseClient) {
-      throw new Error(SUPABASE_NOT_CONFIGURED);
-    }
-
-    return this.supabaseClient;
-  }
-
   isConfigured(): boolean {
-    const { url, anonKey } = environment.supabase;
-    if (!url?.trim() || !anonKey?.trim()) {
-      return false;
-    }
-
-    if (url.includes('YOUR_SUPABASE') || anonKey.includes('YOUR_SUPABASE')) {
-      return false;
-    }
-
-    if (/localhost|127\.0\.0\.1/i.test(url)) {
-      return false;
-    }
-
-    const hasSupabaseHost = /^https:\/\/[a-z0-9]+\.supabase\.co\/?$/i.test(url.trim());
-    const hasPublicKey =
-      anonKey.startsWith('eyJ') ||
-      anonKey.startsWith('sb_publishable_') ||
-      anonKey.startsWith('sb_');
-
-    return hasSupabaseHost && hasPublicKey && anonKey.length > 20;
+    return this.supabaseClientService.isConfigured();
   }
 
   private async insertJobklientJobRow(input: JobklientJobInsert): Promise<JobklientInsertResult> {
@@ -1216,31 +1157,11 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const client = await this.resolveClient();
-      if (!client) {
-        return { data: null, error: SUPABASE_NOT_CONFIGURED };
-      }
-
-      const row = toJobklientDbRow(input);
-
-      const { data, error } = await client
-        .from(environment.supabase.jobsTable)
-        .insert([row])
-        .select('*')
-        .single();
-
-      if (error) {
-        logSupabaseError('insertJobklientJob', error);
-        console.error('[SupabaseService] insertJobklientJob payload:', row);
-        return {
-          data: null,
-          error: error.message,
-          supabaseError: error,
-        };
-      }
+      const row = mapJobklientInsertToOrderInsert(input);
+      const order = await this.dataService.insertOrder(row);
 
       this.invalidateJobsCache();
-      return { data: (data as Record<string, unknown> | null) ?? null, error: null };
+      return { data: order as unknown as Record<string, unknown>, error: null };
     } catch (err) {
       logSupabaseError('insertJobklientJob', err);
       const message = err instanceof Error ? err.message : 'Insert failed';
@@ -1365,7 +1286,11 @@ export class SupabaseService {
         logSupabaseError('loadActiveJobs', err);
         if (showLoading || this.activeJobsSignal().length === 0) {
           this.activeJobsSignal.set([]);
-          this.jobsErrorSignal.set(err instanceof Error ? err.message : 'Failed to load jobs');
+          this.jobsErrorSignal.set(
+            isSupabaseNetworkError(err)
+              ? supabaseNetworkErrorHint(environment.supabase.url)
+              : supabaseErrorMessage(err) || 'Failed to load jobs',
+          );
         }
         throw err;
       } finally {
@@ -1489,49 +1414,21 @@ export class SupabaseService {
     return Math.trunc(parsed);
   }
 
-  /** Хардкод-дебаг: пометка заказа выполненным в таблице `order`. */
-  private async completeOrderRow(id: any): Promise<any> {
-    console.log('!!! ХАРДКОД ДЕБАГ ЗАПУЩЕН !!!');
-    console.log('Пришедший ID:', id, 'Тип данных:', typeof id);
-
-    if (!id) {
-      console.error('Ошибка: ID вообще пустой или undefined!');
-      throw new Error('Order id is missing before calling Supabase');
+  /** Пометка заказа выполненным через DataService. */
+  private async completeOrderRow(id: number): Promise<JobklientMutationResult> {
+    if (!Number.isFinite(id) || id <= 0) {
+      return { error: 'Invalid order id' };
     }
 
     try {
-      const targetId = Number(id);
-      console.log('Отправляем запрос в Supabase для ID как number:', targetId);
-
-      const client = await this.resolveClient();
-      if (!client) {
-        throw new Error(SUPABASE_NOT_CONFIGURED);
-      }
-
-      const { data, error, count } = await client
-        .from('order')
-        .update({ status: 'completed' })
-        .eq('id', targetId)
-        .select();
-
-      console.log('ОТВЕТ БАЗЫ НАПРЯМУЮ:', { data, error, count });
-
-      if (error) {
-        console.error('Supabase вернул ошибку выполнения SQL:', error);
-        throw error;
-      }
-
-      if (!data || data.length === 0) {
-        console.warn('Внимание: Запрос прошел, но ни одна строка не обновилась! (data пустой)');
-      } else {
-        this.removeJobFromLocalState(String(targetId));
-        this.invalidateJobsCache();
-      }
-
-      return data;
+      await this.dataService.completeOrder(id);
+      this.removeJobFromLocalState(String(id));
+      this.invalidateJobsCache();
+      return { error: null };
     } catch (err) {
-      console.error('Перехвачено исключение внутри try-catch метода:', err);
-      throw err;
+      logSupabaseError('completeOrderRow', err);
+      const message = err instanceof Error ? err.message : 'Complete failed';
+      return { error: message };
     }
   }
 
@@ -1616,46 +1513,6 @@ export class SupabaseService {
     );
   }
 
-  private resolveClient(): Promise<SupabaseClient | null> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return Promise.resolve(null);
-    }
-
-    if (!this.isConfigured()) {
-      logSupabaseError('resolveClient', new Error(SUPABASE_NOT_CONFIGURED));
-      return Promise.resolve(null);
-    }
-
-    if (this.supabaseClient) {
-      return Promise.resolve(this.supabaseClient);
-    }
-
-    if (!this.clientPromise) {
-      const { url, anonKey } = environment.supabase;
-      this.clientPromise = import('@supabase/supabase-js')
-        .then(({ createClient }) => {
-          this.supabaseClient = createClient(url, anonKey, {
-            auth: {
-              persistSession: true,
-              autoRefreshToken: true,
-            },
-            global: {
-              // Нативный fetch браузера — без лишних заголовков Angular HttpClient.
-              fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
-            },
-          });
-          return this.supabaseClient;
-        })
-        .catch((err) => {
-          logSupabaseError('createClient', err);
-          this.clientPromise = null;
-          return null;
-        });
-    }
-
-    return this.clientPromise;
-  }
-
   setCatalogCityFilter(city: string | null, enabled = false): void {
     this.catalogCityFilterSignal.set(city?.trim() || null);
     this.catalogCityFilterEnabledSignal.set(enabled);
@@ -1698,13 +1555,11 @@ export class SupabaseService {
       }
 
       const remoteProfiles: Profile[] = [];
-      const specialistArchiveFilter = 'is_archive.is.null,is_archive.eq.false';
 
       const specialistsResult = await client
         .from(environment.supabase.specialistTable)
         .select('*')
-        .or(specialistArchiveFilter)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (specialistsResult.error) {
         logSupabaseError('loadSpecialists', specialistsResult.error);

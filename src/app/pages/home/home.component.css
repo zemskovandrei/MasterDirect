@@ -212,6 +212,8 @@ section.hero-section {
   font-weight: 700;
   color: var(--color-accent-dark, #0099b3);
   text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .works-gallery-card__performer:hover {
@@ -223,6 +225,8 @@ section.hero-section {
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--color-text-muted, #64748b);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .works-gallery-empty {

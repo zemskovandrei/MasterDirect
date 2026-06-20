@@ -46,7 +46,7 @@ const email = (process.argv[2] ?? process.env.PURGE_EMAIL ?? 'admin@smartbuild.t
 
 const url =
   process.env.SUPABASE_URL?.trim() ||
-  'https://zrlggaimupenmgnrevts.supabase.co';
+  'https://xixafoznxsupsxotdjqx.supabase.co';
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
 
 if (!email || !email.includes('@')) {

@@ -5,7 +5,16 @@ import type { AuthSignUpMetadata } from '../models/master.model';
 import { isDuplicateSignupUser } from '../utils/auth-error.util';
 import type { AuthErrorMessageKey } from '../utils/auth-error.util';
 import { authErrorMessageKey } from '../utils/auth-error.util';
+import { logSupabaseError, supabaseErrorMessage } from '../utils/supabase-error.util';
+import { DataServiceError } from '../errors/data-service.error';
 import { SupabaseService } from './supabase.service';
+import { DataService } from './data.service';
+import type { SpecialistAccountType } from '../models/database.models';
+import {
+  buildAuthRedirectUrl,
+  hasAuthCallbackInUrl,
+  stripAuthParamsFromUrl,
+} from '../utils/auth-redirect.util';
 
 export interface AuthResult {
   user: User | null;
@@ -13,10 +22,32 @@ export interface AuthResult {
   error: AuthError | null;
 }
 
+/** Данные профиля `specialist` после auth.signUp (Confirm email выключен). */
+export interface RegisterProfilePayload {
+  accountType: SpecialistAccountType;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  phone: string;
+  city: string;
+  specialty: string;
+  proRole?: string;
+  whatsapp?: string;
+  telegram?: string;
+  instagram?: string;
+  facebook?: string;
+}
+
+export interface RegisterResult extends AuthResult {
+  profileSaved: boolean;
+  profileError: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly supabase = inject(SupabaseService);
+  private readonly data = inject(DataService);
 
   private readonly userSignal = signal<User | null>(null);
   private readonly sessionSignal = signal<Session | null>(null);
@@ -28,6 +59,9 @@ export class AuthService {
   readonly session = this.sessionSignal.asReadonly();
   readonly ready = this.readySignal.asReadonly();
   readonly passwordRecovery = this.passwordRecoverySignal.asReadonly();
+  private readonly emailConfirmationPendingSignal = signal(false);
+
+  readonly emailConfirmationPending = this.emailConfirmationPendingSignal.asReadonly();
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -80,13 +114,62 @@ export class AuthService {
       return signUpResult;
     }
 
-    // Сессия есть — регистрация без подтверждения email.
-    if (signUpResult.session) {
-      return signUpResult;
+    return signUpResult;
+  }
+
+  /**
+   * Регистрация: auth.signUp + запись в `specialist`.
+   * При выключенном Confirm email Supabase возвращает session сразу — профиль сохраняется в том же шаге.
+   */
+  async register(
+    email: string,
+    password: string,
+    metadata: AuthSignUpMetadata,
+    profile: RegisterProfilePayload,
+  ): Promise<RegisterResult> {
+    const authResult = await this.signUp(email, password, metadata);
+
+    if (authResult.error || !authResult.user || isDuplicateSignupUser(authResult.user)) {
+      return { ...authResult, profileSaved: false, profileError: null };
     }
 
-    // Подтверждение email включено в Supabase — профиль создаёт триггер в БД.
-    return signUpResult;
+    if (!authResult.session) {
+      return { ...authResult, profileSaved: false, profileError: null };
+    }
+
+    try {
+      await this.data.upsertSpecialistFromRegistration({
+        userId: authResult.user.id,
+        fullName: profile.fullName,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: profile.phone,
+        city: profile.city,
+        specialty: profile.specialty,
+        proRole: profile.proRole,
+        accountType: profile.accountType,
+        whatsapp: profile.whatsapp,
+        telegram: profile.telegram,
+        instagram: profile.instagram,
+        facebook: profile.facebook,
+      });
+
+      return { ...authResult, profileSaved: true, profileError: null };
+    } catch (err) {
+      await this.signOut();
+      const profileError =
+        err instanceof DataServiceError
+          ? err.message
+          : supabaseErrorMessage(err) || 'Profile registration failed';
+
+      return {
+        ...authResult,
+        user: null,
+        session: null,
+        profileSaved: false,
+        profileError,
+      };
+    }
   }
 
   private async signUpRequest(
@@ -103,33 +186,19 @@ export class AuthService {
       };
     }
 
+    const userMetadata = this.buildSignUpMetadata(metadata);
+
     const { data, error } = await client.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          full_name: metadata.full_name,
-          phone: metadata.phone ?? null,
-          city: metadata.city ?? null,
-          specialty: metadata.specialty ?? null,
-          description: metadata.description ?? null,
-          account_type: metadata.account_type ?? null,
-          pro_role: metadata.pro_role ?? null,
-          call_out_fee: metadata.call_out_fee ?? null,
-          whatsapp: metadata.whatsapp ?? null,
-          telegram: metadata.telegram ?? null,
-          instagram: metadata.instagram ?? null,
-          facebook: metadata.facebook ?? null,
-        },
+        emailRedirectTo: this.authRedirectUrl(),
+        data: userMetadata,
       },
     });
 
     if (error) {
-      console.error('[AuthService] signUp failed', {
-        status: (error as AuthError & { status?: number }).status,
-        code: error.code,
-        message: error.message,
-      });
+      logSupabaseError('AuthService.signUp', error);
     }
 
     if (data.user) {
@@ -147,6 +216,8 @@ export class AuthService {
   }
 
   async signIn(email: string, password: string): Promise<AuthResult> {
+    await this.ensureInitialized();
+
     const client = await this.supabase.getClient();
     if (!client) {
       return {
@@ -217,9 +288,7 @@ export class AuthService {
       };
     }
 
-    const redirectTo = isPlatformBrowser(this.platformId)
-      ? `${window.location.origin}/cabinet`
-      : undefined;
+    const redirectTo = this.authRedirectUrl();
 
     const { error } = await client.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo,
@@ -249,11 +318,40 @@ export class AuthService {
     this.passwordRecoverySignal.set(false);
   }
 
+  async resendSignUpConfirmation(email: string): Promise<{ error: AuthError | null }> {
+    await this.ensureInitialized();
+
+    const client = await this.supabase.getClient();
+    if (!client) {
+      return {
+        error: { name: 'AuthError', message: 'Supabase is not configured' } as AuthError,
+      };
+    }
+
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email: email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: this.authRedirectUrl(),
+      },
+    });
+
+    if (error) {
+      logSupabaseError('AuthService.resendSignUpConfirmation', error);
+    }
+
+    return { error };
+  }
+
   private async bootstrapAuth(): Promise<void> {
     const client = await this.supabase.getClient();
     if (!client) {
       this.readySignal.set(true);
       return;
+    }
+
+    if (isPlatformBrowser(this.platformId)) {
+      await this.consumeAuthCallback(client);
     }
 
     const { data } = await client.auth.getSession();
@@ -267,6 +365,7 @@ export class AuthService {
         this.passwordRecoverySignal.set(true);
       }
       if (event === 'SIGNED_IN' && session?.user) {
+        this.emailConfirmationPendingSignal.set(false);
         void this.supabase.syncAuthProfileFromUser(session.user);
       }
     });
@@ -278,8 +377,92 @@ export class AuthService {
     this.readySignal.set(true);
   }
 
+  private async consumeAuthCallback(client: Awaited<ReturnType<SupabaseService['getClient']>>): Promise<void> {
+    if (!client || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const href = window.location.href;
+    if (!hasAuthCallbackInUrl(href)) {
+      return;
+    }
+
+    const url = new URL(href);
+    const code = url.searchParams.get('code');
+    const errorDescription = url.searchParams.get('error_description');
+
+    if (errorDescription) {
+      logSupabaseError('AuthService.authCallback', new Error(errorDescription));
+      window.history.replaceState({}, '', stripAuthParamsFromUrl(href));
+      return;
+    }
+
+    if (code) {
+      const { data, error } = await client.auth.exchangeCodeForSession(code);
+      if (error) {
+        logSupabaseError('AuthService.exchangeCodeForSession', error);
+      } else if (data.session) {
+        this.sessionSignal.set(data.session);
+        this.userSignal.set(data.session.user ?? null);
+        this.emailConfirmationPendingSignal.set(false);
+        void this.supabase.syncAuthProfileFromUser(data.session.user);
+      }
+      window.history.replaceState({}, '', stripAuthParamsFromUrl(href));
+      return;
+    }
+
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      logSupabaseError('AuthService.authCallback.getSession', error);
+    } else if (data.session) {
+      this.sessionSignal.set(data.session);
+      this.userSignal.set(data.session.user ?? null);
+      this.emailConfirmationPendingSignal.set(false);
+      void this.supabase.syncAuthProfileFromUser(data.session.user);
+    }
+
+    if (window.location.hash.includes('access_token')) {
+      window.history.replaceState({}, '', stripAuthParamsFromUrl(href));
+    }
+  }
+
+  private authRedirectUrl(): string | undefined {
+    if (!isPlatformBrowser(this.platformId)) {
+      return undefined;
+    }
+    return buildAuthRedirectUrl(window.location.origin);
+  }
+
   private isRecoveryUrlHash(hash: string): boolean {
     const normalized = hash.replace(/^#/, '').toLowerCase();
     return normalized.includes('type=recovery');
+  }
+
+  /** Ограничиваем размер metadata — длинные строки иногда ломают триггер в БД. */
+  private buildSignUpMetadata(metadata: AuthSignUpMetadata): Record<string, string | null> {
+    const clip = (value: string | null | undefined, max: number): string | null => {
+      const text = value?.trim();
+      if (!text) {
+        return null;
+      }
+      return text.length > max ? text.slice(0, max) : text;
+    };
+
+    return {
+      full_name: clip(metadata.full_name, 120) ?? 'Профиль',
+      first_name: clip(metadata.first_name, 64),
+      last_name: clip(metadata.last_name, 64),
+      phone: clip(metadata.phone, 32),
+      city: clip(metadata.city, 64),
+      specialty: clip(metadata.specialty, 64),
+      description: clip(metadata.description, 500),
+      account_type: clip(metadata.account_type ?? null, 32),
+      pro_role: clip(metadata.pro_role, 32),
+      call_out_fee: clip(metadata.call_out_fee, 32),
+      whatsapp: clip(metadata.whatsapp, 64),
+      telegram: clip(metadata.telegram, 64),
+      instagram: clip(metadata.instagram, 128),
+      facebook: clip(metadata.facebook, 128),
+    };
   }
 }

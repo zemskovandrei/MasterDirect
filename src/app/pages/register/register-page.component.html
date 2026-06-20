@@ -168,6 +168,23 @@
             @if (signInError()) {
               <p class="register-alert register-alert--error" role="alert">{{ signInError() }}</p>
             }
+            @if (signInErrorKey() === 'cabinet.signInErrorRateLimit') {
+              <p class="register-card__muted">{{ translation.t('cabinet.registerErrorRateLimitHint') }}</p>
+            }
+            @if (signInErrorKey() === 'cabinet.signInErrorEmailNotConfirmed') {
+              <p class="register-card__muted">{{ translation.t('cabinet.signInEmailNotConfirmedHint') }}</p>
+              <button
+                type="button"
+                class="link-accent register-resend-confirm"
+                [disabled]="resendEmailSubmitting()"
+                (click)="resendConfirmationEmail()"
+              >
+                {{ resendEmailSubmitting() ? translation.t('cabinet.resendConfirmationSubmitting') : translation.t('cabinet.resendConfirmation') }}
+              </button>
+            }
+            @if (resendEmailMessage()) {
+              <p class="register-alert register-alert--ok" role="status">{{ resendEmailMessage() }}</p>
+            }
 
             <form class="register-form" [formGroup]="signInForm" (ngSubmit)="signInExisting()" novalidate>
               <label class="field">
@@ -230,7 +247,17 @@
 
             @if (status() === 'error' && errorMessage()) {
               <p class="register-alert register-alert--error" role="alert">{{ errorMessage() }}</p>
-              @if (errorMessage() === translation.t('cabinet.registerErrorEmailExists')) {
+              @if (errorMessageKey() === 'cabinet.registerErrorDatabase') {
+                <div class="register-sql-fix">
+                  <p class="register-card__muted">{{ translation.t('cabinet.registerErrorDatabaseSteps') }}</p>
+                  <pre class="register-sql-fix__code">{{ signupFixSql }}</pre>
+                  <p class="register-card__muted">{{ translation.t('cabinet.registerErrorDatabaseHint') }}</p>
+                </div>
+              }
+              @if (errorMessageKey() === 'cabinet.registerErrorRateLimit') {
+                <p class="register-card__muted">{{ translation.t('cabinet.registerErrorRateLimitHint') }}</p>
+              }
+              @if (errorMessageKey() === 'cabinet.registerErrorEmailExists') {
                 <p class="register-card__muted">
                   {{ translation.t('cabinet.deleteAccountHint') }}
                   <button type="button" class="link-accent" (click)="openDeleteAccountPanel(form.controls.email.value)">

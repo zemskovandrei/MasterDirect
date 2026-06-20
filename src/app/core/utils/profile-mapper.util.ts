@@ -5,6 +5,11 @@ import { PerformerProfile, PerformerSocialLinks } from '../models/portfolio.mode
 
 import { normalizeCallOutFee } from './call-out-fee.util';
 import { buildFurnitureSlug, isUuid, normalizeUuid } from './furniture-id.util';
+import {
+  displayNameFromSpecialistRow,
+  specialtyFromSpecialistRow,
+} from './specialist-db.util';
+import { catalogAccountTypeFromSpecialistRow } from './specialist-catalog.util';
 
 function resolveWhatsappPhone(
   whatsapp_phone?: string | null,
@@ -38,17 +43,20 @@ function buildSocialLinks(profile: Profile): PerformerSocialLinks | undefined {
 }
 
 export function masterRowToProfile(row: MasterRow): Profile {
+  const displayName = displayNameFromSpecialistRow(row);
+  const specialty = specialtyFromSpecialistRow(row);
+  const description = row.description?.trim() || '';
+
   if (row?.account_type === 'furniture') {
-    const name = row?.full_name?.trim() || row?.phone?.trim() || row?.id || '';
-    const slug = row?.slug?.trim() || buildFurnitureSlug(name);
+    const slug = row?.slug?.trim() || buildFurnitureSlug(displayName);
 
     return {
       id: row?.id ?? '',
       type: 'furniture',
       slug,
-      name,
-      specialty: row?.specialty?.trim() || '',
-      description: row?.description?.trim() || '',
+      name: displayName,
+      specialty,
+      description,
       city: row?.city ?? null,
       phone: row?.phone ?? null,
       whatsapp_phone: resolveWhatsappPhone(row?.whatsapp_phone, row?.whatsapp),
@@ -61,14 +69,14 @@ export function masterRowToProfile(row: MasterRow): Profile {
     };
   }
 
-  const accountType = row?.account_type === 'brigade' ? 'brigade' : 'worker';
+  const accountType = catalogAccountTypeFromSpecialistRow(row);
 
   return {
     id: row?.id ?? '',
     type: accountType,
-    name: row?.full_name?.trim() || row?.phone?.trim() || row?.id || '',
-    specialty: row?.specialty?.trim() || '',
-    description: row?.description?.trim() || '',
+    name: displayName,
+    specialty,
+    description,
     city: row?.city ?? null,
     call_out_fee: row?.call_out_fee ?? null,
     phone: row?.phone ?? null,

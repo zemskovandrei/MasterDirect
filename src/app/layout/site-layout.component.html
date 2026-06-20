@@ -24,45 +24,56 @@
 
       <div class="header-menu">
         <nav class="nav" id="main-nav" [class.nav-open]="mobileMenuOpen()">
+          @if (mobileMenuOpen()) {
+            <p class="nav-mobile-intro">{{ translation.t('app.nav.menuIntro') }}</p>
+          }
           <ul>
             <li>
               <a
                 routerLink="/"
                 fragment="features"
+                class="nav-link-item"
                 [class.active]="isNavFeaturesActive()"
                 (click)="onNavClick()"
               >
-                {{ translation.t('app.nav.features') }}
+                <span class="nav-link-title">{{ translation.t('app.nav.features') }}</span>
+                <span class="nav-link-desc">{{ translation.t('app.nav.featuresDesc') }}</span>
               </a>
             </li>
             <li>
               <a
                 routerLink="/portfolio"
+                class="nav-link-item"
                 [class.active]="isNavCatalogActive()"
                 (click)="onNavClick()"
               >
-                {{ translation.t('app.nav.catalog') }}
+                <span class="nav-link-title">{{ translation.t('app.nav.catalog') }}</span>
+                <span class="nav-link-desc">{{ translation.t('app.nav.catalogDesc') }}</span>
               </a>
             </li>
             <li>
               <a
                 routerLink="/jobs"
+                class="nav-link-item"
                 routerLinkActive="active"
                 (click)="onNavClick()"
                 (mouseenter)="prefetchJobs()"
                 (focus)="prefetchJobs()"
               >
-                {{ translation.t('app.nav.jobsBoard') }}
+                <span class="nav-link-title">{{ translation.t('app.nav.jobsBoard') }}</span>
+                <span class="nav-link-desc">{{ translation.t('app.nav.jobsBoardDesc') }}</span>
               </a>
             </li>
             <li>
               <a
                 routerLink="/"
                 fragment="catalog"
+                class="nav-link-item"
                 [class.active]="isNavGalleryActive()"
                 (click)="onNavClick()"
               >
-                {{ translation.t('app.nav.worksGallery') }}
+                <span class="nav-link-title">{{ translation.t('app.nav.worksGallery') }}</span>
+                <span class="nav-link-desc">{{ translation.t('app.nav.worksGalleryDesc') }}</span>
               </a>
             </li>
             @if (mobileMenuOpen()) {

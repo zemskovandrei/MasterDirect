@@ -56,6 +56,10 @@
   justify-content: center;
 }
 
+.nav li:last-child {
+  margin-left: auto;
+}
+
 .nav a {
   color: #ffffff;
   text-decoration: none;

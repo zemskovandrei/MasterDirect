@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+<<<<<<< HEAD
 import { AdminAuthService } from '../core/services/admin-auth.service';
 import { APP_BRAND_NAME } from '../core/constants/brand';
 import { AuthService } from '../core/services/auth.service';
@@ -26,6 +27,9 @@ type HeaderTheme = 'auto' | 'light' | 'dark';
 
 const HEADER_THEME_KEY = 'headerTheme';
 const HEADER_THEME_CYCLE: HeaderTheme[] = ['auto', 'light', 'dark'];
+=======
+import { TranslationService } from '../core/services/translation.service';
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
 
 @Component({
   selector: 'app-site-layout',
@@ -45,6 +49,7 @@ const HEADER_THEME_CYCLE: HeaderTheme[] = ['auto', 'light', 'dark'];
 export class SiteLayoutComponent {
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
+<<<<<<< HEAD
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
   private readonly portfolioStore = inject(PortfolioStoreService);
@@ -52,6 +57,9 @@ export class SiteLayoutComponent {
   private readonly cabinetSession = inject(CabinetSessionService);
   protected readonly translation = inject(TranslationService);
   protected readonly adminAuth = inject(AdminAuthService);
+=======
+  protected readonly translationService = inject(TranslationService);
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
 
   headerTheme: HeaderTheme = 'auto';
 
@@ -114,6 +122,10 @@ export class SiteLayoutComponent {
         error: (err) => logSupabaseError('SiteLayout.loadProfiles', err),
       });
     });
+  }
+
+  protected setLanguage(language: string) {
+    this.translationService.setLanguage(language as any);
   }
 
   @HostListener('document:keydown.escape')

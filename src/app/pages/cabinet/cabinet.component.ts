@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+<<<<<<< HEAD
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RegisterPageComponent } from '../register/register-page.component';
@@ -21,6 +22,16 @@ import { AuthService } from '../../core/services/auth.service';
 import { CabinetSessionService } from '../../core/services/cabinet-session.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { firstValueFrom } from 'rxjs';
+=======
+import { Router, RouterLink } from '@angular/router';
+import {
+  PerformerType,
+  SUBSCRIPTION_PLANS,
+} from '../../core/models/portfolio.models';
+import { TranslationService } from '../../core/services/translation.service';
+import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
+import { ReviewStoreService } from '../../core/services/review-store.service';
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -56,12 +67,18 @@ export class CabinetComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly registerUi = inject(RegisterPageUiService);
   protected readonly store = inject(PortfolioStoreService);
+<<<<<<< HEAD
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly auth = inject(AuthService);
   protected readonly cabinetSession = inject(CabinetSessionService);
   private readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
+=======
+  protected readonly reviewStore = inject(ReviewStoreService);
+  protected readonly translationService = inject(TranslationService);
+  protected readonly plans = SUBSCRIPTION_PLANS;
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
 
   protected readonly brandName = APP_BRAND_NAME;
   protected readonly workVerificationEnabled = WORK_VERIFICATION_ENABLED;
@@ -281,10 +298,15 @@ export class CabinetComponent {
     }
 
     if (file.size > 800_000) {
+<<<<<<< HEAD
       alert(this.translation.t('cabinet.alertFileTooLarge'));
       if (input) {
         input.value = '';
       }
+=======
+      alert(this.translationService.translate('cabinet.errors.largeFile'));
+      input.value = '';
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
       return;
     }
 
@@ -326,7 +348,11 @@ export class CabinetComponent {
     const before = this.beforePreview();
     const after = this.afterPreview();
     if (!before || !after) {
+<<<<<<< HEAD
       alert(this.translation.t('cabinet.alertBothPhotos'));
+=======
+      alert(this.translationService.translate('cabinet.errors.missingPhotos'));
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
       return;
     }
 

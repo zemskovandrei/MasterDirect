@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <section class="hero-section" aria-labelledby="home-hero-title" [ngStyle]="heroBackground">
   <div class="hero-section__overlay" aria-hidden="true"></div>
   <div class="hero-section__inner">
@@ -21,10 +22,59 @@
       <span>{{ translation.t('home.hero.tags.3') }}</span>
       <span>{{ translation.t('home.hero.tags.4') }}</span>
       <span>{{ translation.t('home.hero.tags.5') }}</span>
+=======
+<!-- Hero section: главный экран с слайдером, заголовком и CTA -->
+<section class="hero-slider">
+  <div class="slider-container">
+    <div class="slide" [ngStyle]="slideBackgroundStyle()">
+      <img class="slide-image" [src]="currentSlide()" alt="Интерьер после ремонта" />
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <h2>{{ translationService.translate('hero.title') }}</h2>
+        <p>{{ translationService.translate('hero.description') }}</p>
+        <div class="hero-actions">
+          <a class="btn-primary btn-large" routerLink="/" fragment="estimate">{{ translationService.translate('button.getEstimate') }}</a>
+          <a class="btn-secondary btn-large" routerLink="/portfolio">{{ translationService.translate('button.viewPortfolio') }}</a>
+        </div>
+        <div class="hero-tags" aria-label="{{ translationService.translate('hero.tags') }}">
+          @for (tag of heroTags; track tag) {
+            <span>{{ translationService.translate(tag) }}</span>
+          }
+        </div>
+        <div class="hero-benefits">
+          @for (benefit of heroBenefits; track benefit) {
+            <span>{{ translationService.translate(benefit) }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Слайды управления: кнопки навигации и индикаторы -->
+    <button type="button" class="slider-btn slider-btn-prev" (click)="prevSlide()" aria-label="Предыдущий слайд">
+      &#10094;
+    </button>
+    <button type="button" class="slider-btn slider-btn-next" (click)="nextSlide()" aria-label="Следующий слайд">
+      &#10095;
+    </button>
+
+    <div class="slider-dots">
+      @for (dot of sliderDots; track dot; let i = $index) {
+        <span
+          class="dot"
+          [class.active]="currentSlideIndex() === i"
+          (click)="goToSlide(i)"
+          role="button"
+          aria-label="Слайд {{ i + 1 }}"
+          tabindex="0"
+          (keydown.enter)="goToSlide(i)"
+        ></span>
+      }
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
     </div>
   </div>
 </section>
 
+<<<<<<< HEAD
 <section class="features-block" id="features">
   <div class="features">
     <div class="features-container">
@@ -57,11 +107,47 @@
           <h3>{{ translation.t('home.features.cards.4.title') }}</h3>
           <p>{{ translation.t('home.features.cards.4.desc') }}</p>
         </a>
+=======
+<!-- Блок преимуществ: быстрые фичи и выгоды работы с сервисом -->
+<section class="features" id="features">
+  <div class="features-container">
+    <div class="section-header">
+      <span class="section-eyebrow">{{ translationService.translate('section.advantages') }}</span>
+      <h2>{{ translationService.translate('section.advantages.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.advantages.subtitle') }}</p>
+    </div>
+    <div class="features-grid">
+      <a routerLink="/portfolio" class="feature-card feature-card-link">
+        <div class="feature-icon">✓</div>
+        <h3>{{ translationService.translate('feature.reviews.title') }}</h3>
+        <p>{{ translationService.translate('feature.reviews.description') }}</p>
+      </a>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>{{ translationService.translate('feature.team.title') }}</h3>
+        <p>{{ translationService.translate('feature.team.description') }}</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>{{ translationService.translate('feature.specialists.title') }}</h3>
+        <p>{{ translationService.translate('feature.specialists.description') }}</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>{{ translationService.translate('feature.beforeAfter.title') }}</h3>
+        <p>{{ translationService.translate('feature.beforeAfter.description') }}</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>{{ translationService.translate('feature.turnkey.title') }}</h3>
+        <p>{{ translationService.translate('feature.turnkey.description') }}</p>
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
       </div>
     </div>
   </div>
 </section>
 
+<<<<<<< HEAD
 <section class="services-block" id="services">
   <div class="services">
     <div class="services-container">
@@ -82,15 +168,46 @@
           </article>
         }
       </div>
+=======
+<!-- Блок услуг: список предлагаемых сервисов с ссылкой на форму сметы -->
+<section class="services" id="services">
+  <div class="services-container">
+    <div class="section-header">
+      <span class="section-eyebrow">{{ translationService.translate('section.services') }}</span>
+      <h2>{{ translationService.translate('section.services.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.services.subtitle') }}</p>
+    </div>
+    <div class="services-grid">
+      @for (service of services; track service.titleKey) {
+        <article class="service-card">
+          <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
+          <h3>{{ translationService.translate(service.titleKey) }}</h3>
+          <p>{{ translationService.translate(service.descriptionKey) }}</p>
+          <a class="service-link" routerLink="/" fragment="estimate">{{ translationService.translate('button.orderQuote') }}</a>
+        </article>
+      }
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
     </div>
   </div>
 </section>
 
+<<<<<<< HEAD
 <section class="portfolio-teaser" id="catalog">
   <div class="portfolio-container">
     <div class="section-header">
       <h2>{{ translation.t('home.portfolio.title') }}</h2>
       <p class="section-subtitle">{{ translation.t('home.portfolio.subtitle') }}</p>
+=======
+<!-- Промо-портфолио: тизер каталога, пример работы и статистика -->
+<section class="portfolio-teaser" id="portfolio">
+  <div class="portfolio-container">
+    <div class="section-header">
+      <span class="section-eyebrow">{{ translationService.translate('section.portfolio') }}</span>
+      <h2>{{ translationService.translate('section.portfolio.title') }}</h2>
+      <p class="section-subtitle">
+        {{ translationService.translate('section.portfolio.description') }}
+      </p>
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
     </div>
 
     @if (galleryWorks().length > 0) {
@@ -114,6 +231,7 @@
     }
 
     <div class="teaser-actions">
+<<<<<<< HEAD
       <a routerLink="/cabinet" class="btn-secondary btn-large">{{
         translation.t('home.portfolio.actions.place')
       }}</a>
@@ -140,6 +258,77 @@
           </div>
         }
       </div>
+=======
+      <a routerLink="/portfolio" class="btn-primary btn-large">{{ translationService.translate('button.viewPortfolio') }}</a>
+      <a routerLink="/cabinet" class="btn-secondary btn-large">{{ translationService.translate('button.publishWorks') }}</a>
+    </div>
+
+    <div class="teaser-stats">
+      <div class="stat">
+        <strong>{{ portfolioStore.brigades().length }}</strong>
+        <span>{{ translationService.translate('portfolio.stats.brigades') }}</span>
+      </div>
+      <div class="stat">
+        <strong>{{ portfolioStore.workers().length }}</strong>
+        <span>{{ translationService.translate('portfolio.stats.workers') }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Блок заявки на смету: форма связи с клиентом и состояние отправки -->
+<section class="estimate" id="estimate">
+  <div class="estimate-container">
+    <div class="section-header">
+      <span class="section-eyebrow">{{ translationService.translate('section.estimate') }}</span>
+      <h2>{{ translationService.translate('section.estimate.title') }}</h2>
+      <p class="section-subtitle">{{ translationService.translate('section.estimate.subtitle') }}</p>
+    </div>
+
+    @if (formSubmitted()) {
+      <div class="estimate-success" id="estimate-success" role="status">
+        <div class="estimate-success-icon">✓</div>
+        <h3>{{ translationService.translate('form.success.title') }}</h3>
+        <p>{{ translationService.translate('form.success.message') }}</p>
+        <button type="button" class="btn-secondary" (click)="resetEstimateForm()">
+          {{ translationService.translate('button.registerAnother') }}
+        </button>
+      </div>
+    } @else {
+      <form class="estimate-form" [formGroup]="estimateForm" (ngSubmit)="submitEstimate()">
+        <div class="form-row">
+          <label class="form-field">
+            <span>{{ translationService.translate('form.name.label') }}</span>
+            <input type="text" formControlName="name" placeholder="{{ translationService.translate('form.name.placeholder') }}" autocomplete="name" />
+            @if (isInvalid('name')) {
+              <small class="form-error">{{ translationService.translate('form.error.name') }}</small>
+            }
+          </label>
+          <label class="form-field">
+            <span>{{ translationService.translate('form.phone.label') }}</span>
+            <input type="tel" formControlName="phone" placeholder="{{ translationService.translate('form.phone.placeholder') }}" autocomplete="tel" />
+            @if (isInvalid('phone')) {
+              <small class="form-error">{{ translationService.translate('form.error.phone') }}</small>
+            }
+          </label>
+        </div>
+        <label class="form-field">
+          <span>{{ translationService.translate('form.email.label') }}</span>
+          <input type="email" formControlName="email" placeholder="{{ translationService.translate('form.email.placeholder') }}" autocomplete="email" />
+          @if (isInvalid('email')) {
+            <small class="form-error">{{ translationService.translate('form.error.email') }}</small>
+          }
+        </label>
+        <label class="form-field">
+          <span>{{ translationService.translate('form.message.label') }}</span>
+          <textarea formControlName="message" rows="4" placeholder="{{ translationService.translate('form.message.placeholder') }}"></textarea>
+        </label>
+        <button type="submit" class="btn-primary btn-large estimate-submit">{{ translationService.translate('form.submit') }}</button>
+        <p class="form-note">{{ translationService.translate('form.note') }}</p>
+      </form>
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
     }
   </div>
 </section>
+
+<!-- Конец главной страницы -->

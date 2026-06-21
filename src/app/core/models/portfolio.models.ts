@@ -1,5 +1,6 @@
 export type PerformerType = 'brigade' | 'worker';
 
+<<<<<<< HEAD
 /** Тип аккаунта при регистрации в кабинете. */
 export type AccountType = 'worker' | 'brigade' | 'furniture';
 
@@ -14,6 +15,14 @@ export interface PerformerSocialLinks {
   telegram?: string;
   instagram?: string;
   facebook?: string;
+=======
+export interface SubscriptionPlan {
+  type: PerformerType;
+  priceUsd: number;
+  titleKey: string;
+  descriptionKey: string;
+  featureKeys: string[];
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q
 }
 
 export interface WorkProject {
@@ -90,3 +99,32 @@ export interface ReviewNotification {
   link: string;
   createdAt: string;
 }
+<<<<<<< HEAD
+=======
+
+export const SUBSCRIPTION_PLANS: Record<PerformerType, SubscriptionPlan> = {
+  worker: {
+    type: 'worker',
+    priceUsd: 5,
+    titleKey: 'cabinet.plan.worker.title',
+    descriptionKey: 'cabinet.plan.worker.description',
+    featureKeys: [
+      'cabinet.plan.feature.profile',
+      'cabinet.plan.feature.uploadWorks',
+      'cabinet.plan.feature.editPortfolio',
+    ],
+  },
+  brigade: {
+    type: 'brigade',
+    priceUsd: 15,
+    titleKey: 'cabinet.plan.brigade.title',
+    descriptionKey: 'cabinet.plan.brigade.description',
+    featureKeys: [
+      'cabinet.plan.feature.companyProfile',
+      'cabinet.plan.feature.uploadWorks',
+      'cabinet.plan.feature.unlimited',
+      'cabinet.plan.feature.priority',
+    ],
+  },
+};
+>>>>>>> copilot/vscode-mpyhbjc8-zg6q

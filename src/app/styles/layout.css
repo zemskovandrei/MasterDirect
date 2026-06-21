@@ -1,6 +1,5 @@
 /* Глобальные переменные дизайна */
 :root {
-<<<<<<< HEAD
   --primary: #2563eb;
   --primary-dark: #1d4ed8;
   --secondary: #64748b;
@@ -21,13 +20,6 @@
 /* Общие настройки секций */
 section:not(.hero-section):not(.features-block):not(.services-block):not(.portfolio-teaser) {
   padding: 100px 0;
-=======
-  --page-gutter: clamp(1rem, 4vw, 2rem);
-  --content-max: 1400px;
-  --content-medium: 1080px;
-  --content-narrow: 760px;
-  --section-space: clamp(3.5rem, 8vw, 5.5rem);
->>>>>>> copilot/vscode-mpyhbjc8-zg6q
 }
 
 .container {

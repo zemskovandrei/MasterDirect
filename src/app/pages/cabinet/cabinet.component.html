@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <div
   class="catalog-tab-page cabinet-tab-page"
   [class.cabinet-tab-page--register]="!hasCabinetSession()"
@@ -27,204 +26,9 @@
           </h1>
           <p class="register-promo__lead">{{ translation.t('cabinet.cabinetWelcomeLead') }}</p>
           <div class="register-promo__accent" aria-hidden="true"></div>
-=======
-<section class="page-hero cabinet-hero">
-  <div class="page-hero-inner">
-    <h1>{{ translationService.translate('cabinet.hero.title') }}</h1>
-    <p>
-      {{ translationService.translate('cabinet.hero.description') }}
-    </p>
-  </div>
-</section>
-
-<div class="cabinet">
-  <div class="cabinet-inner">
-    <div class="demo-banner" role="note">
-      <span aria-hidden="true">ℹ️</span>
-      <span>
-        <strong>{{ translationService.translate('cabinet.demo.title') }}</strong>
-        {{ translationService.translate('cabinet.demo.description') }}
-      </span>
-    </div>
-
-    @if (!store.currentPerformer()) {
-      <section class="register-panel">
-        <header class="register-header">
-          <span class="section-eyebrow">{{ translationService.translate('cabinet.register.title') }}</span>
-          <h2>{{ translationService.translate('cabinet.register.title') }}</h2>
-          <p class="register-lead">
-            {{ translationService.translate('cabinet.register.description') }}
-          </p>
-        </header>
-
-        <ol class="register-steps" aria-label="{{ translationService.translate('cabinet.step1') }}">
-          <li class="register-step register-step--active">
-            <span class="register-step-num">1</span>
-            <span class="register-step-text">{{ translationService.translate('cabinet.step1') }}</span>
-          </li>
-          <li class="register-step">
-            <span class="register-step-num">2</span>
-            <span class="register-step-text">{{ translationService.translate('cabinet.step2') }}</span>
-          </li>
-          <li class="register-step">
-            <span class="register-step-num">3</span>
-            <span class="register-step-text">{{ translationService.translate('cabinet.step3') }}</span>
-          </li>
-        </ol>
-
-        <div class="register-layout">
-          <div class="register-block register-block--plans">
-            <h3 class="register-block-title">
-              <span class="register-block-icon" aria-hidden="true">①</span>
-              {{ translationService.translate('cabinet.accountType') }}
-            </h3>
-
-            <div class="plan-cards">
-              <button
-                type="button"
-                class="plan-card"
-                [class.selected]="selectedPlan() === 'worker'"
-                (click)="selectPlan('worker')"
-              >
-                @if (selectedPlan() === 'worker') {
-                  <span class="plan-check" aria-hidden="true">✓</span>
-                }
-                <span class="plan-icon" aria-hidden="true">{{ planIcon('worker') }}</span>
-                <div class="plan-price-row">
-                  <span class="plan-price">$5</span>
-                  <span class="plan-period">/ месяц</span>
-                </div>
-                <h4>{{ translationService.translate(plans.worker.titleKey) }}</h4>
-                <p class="plan-tagline">{{ translationService.translate(plans.worker.descriptionKey) }}</p>
-                <ul class="plan-features">
-                  <li *ngFor="let key of plans.worker.featureKeys">{{ translationService.translate(key) }}</li>
-                </ul>
-              </button>
-
-              <button
-                type="button"
-                class="plan-card plan-card--brigade"
-                [class.selected]="selectedPlan() === 'brigade'"
-                (click)="selectPlan('brigade')"
-              >
-                @if (selectedPlan() === 'brigade') {
-                  <span class="plan-check" aria-hidden="true">✓</span>
-                }
-                <span class="plan-badge-popular">{{ translationService.translate('cabinet.plan.popular') }}</span>
-                <span class="plan-icon" aria-hidden="true">{{ planIcon('brigade') }}</span>
-                <div class="plan-price-row">
-                  <span class="plan-price">$15</span>
-                  <span class="plan-period">/ месяц</span>
-                </div>
-                <h4>{{ translationService.translate(plans.brigade.titleKey) }}</h4>
-                <p class="plan-tagline">{{ translationService.translate(plans.brigade.descriptionKey) }}</p>
-                <ul class="plan-features">
-                  <li *ngFor="let key of plans.brigade.featureKeys">{{ translationService.translate(key) }}</li>
-                </ul>
-              </button>
-            </div>
-          </div>
-
-          <div class="register-block register-block--form">
-            <h3 class="register-block-title">
-              <span class="register-block-icon" aria-hidden="true">②</span>
-              {{ translationService.translate('cabinet.profileData.title') }}
-            </h3>
-
-            <form class="register-form" [formGroup]="registerForm" (ngSubmit)="register()">
-              <label class="register-field" [class.register-field--error]="registerFieldInvalid('name')">
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">👤</span>
-                  {{ translationService.translate('cabinet.profileData.name.label') }}
-                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
-                </span>
-                <input
-                  type="text"
-                  formControlName="name"
-                  placeholder="{{ translationService.translate('cabinet.profileData.name.placeholder') }}"
-                  autocomplete="name"
-                />
-                @if (registerFieldInvalid('name')) {
-                  <small class="field-error">{{ translationService.translate('cabinet.profileData.name.error') }}</small>
-                }
-              </label>
-
-              <label class="register-field" [class.register-field--error]="registerFieldInvalid('specialty')">
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">🛠</span>
-                  {{ translationService.translate('cabinet.profileData.specialty.label') }}
-                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
-                </span>
-                <input
-                  type="text"
-                  formControlName="specialty"
-                  placeholder="{{ translationService.translate('cabinet.profileData.specialty.placeholder') }}"
-                />
-                @if (registerFieldInvalid('specialty')) {
-                  <small class="field-error">{{ translationService.translate('cabinet.profileData.specialty.error') }}</small>
-                }
-              </label>
-
-              <label
-                class="register-field"
-                [class.register-field--error]="registerFieldInvalid('description')"
-              >
-                <span class="register-label">
-                  <span class="field-icon" aria-hidden="true">📝</span>
-                  {{ translationService.translate('cabinet.profileData.about.label') }}
-                  <em>{{ translationService.translate('cabinet.profileData.required') }}</em>
-                </span>
-                <textarea
-                  formControlName="description"
-                  rows="4"
-                  placeholder="{{ translationService.translate('cabinet.profileData.about.placeholder') }}"
-                ></textarea>
-                @if (registerFieldInvalid('description')) {
-                  <small class="field-error">{{ translationService.translate('cabinet.profileData.about.error') }}</small>
-                }
-              </label>
-
-              <div class="register-summary">
-                <span class="register-summary-label">{{ translationService.translate('cabinet.summary.label') }}</span>
-                <span class="register-summary-value">
-                  {{ translationService.translate(plans[selectedPlan()].titleKey) }} — ${{ planPrice(selectedPlan()) }}/мес
-                </span>
-              </div>
-
-              <button type="submit" class="btn-primary btn-large register-submit">
-                {{ translationService.translate('button.createProfile') }}
-              </button>
-              <p class="register-note">
-                {{ translationService.translate('cabinet.register.description') }}
-              </p>
-            </form>
-          </div>
-        </div>
-      </section>
-    } @else {
-      @if (store.currentPerformer(); as performer) {
-        <div class="cabinet-tabs">
-          <button
-            type="button"
-            class="tab-button"
-            [class.tab-button--active]="activeSection() === 'profile'"
-            (click)="setSection('profile')"
-          >
-            {{ translationService.translate('cabinet.tabs.profile') }}
-          </button>
-          <button
-            type="button"
-            class="tab-button"
-            [class.tab-button--active]="activeSection() === 'moderation'"
-            (click)="setSection('moderation')"
-          >
-            {{ translationService.translate('cabinet.tabs.moderation') }}
-          </button>
->>>>>>> copilot/vscode-mpyhbjc8-zg6q
         </div>
       </aside>
 
-<<<<<<< HEAD
       <main class="register-form-side">
         <div class="register-form-shell">
           @if (store.currentPerformer(); as performer) {
@@ -340,90 +144,8 @@
                 <button type="submit" class="btn-primary">
                   {{ translation.t('cabinet.socialSave') }}
                 </button>
-=======
-        @if (notifications().length > 0) {
-          <section class="notification-panel">
-            <div class="notification-panel-header">
-              <strong>{{ translationService.translate('cabinet.notifications.title') }}</strong>
-              <span>{{ translationService.translate('cabinet.notifications.subtitle') }}</span>
-            </div>
-            <ul class="notification-list">
-              <li *ngFor="let note of notifications()">
-                <a [routerLink]="note.link" class="notification-link">{{ note.message }}</a>
-                <time>{{ note.createdAt | date:'short' }}</time>
-              </li>
-            </ul>
-          </section>
-        }
-
-        @if (activeSection() === 'profile') {
-          <section class="cabinet-panel profile-summary">
-            <div class="summary-head">
-              <div>
-                <span class="profile-badge">{{ translationService.translate(performer.type === 'brigade' ? 'performer.brigade' : 'performer.worker') }}</span>
-                <h2>{{ performer.name }}</h2>
-                <p>{{ performer.specialty }}</p>
-              </div>
-              <div class="summary-actions">
-                <a [routerLink]="['/portfolio', performer.type, performer.id]" class="btn-secondary">
-                  {{ translationService.translate('cabinet.profile.openCatalog') }}
-                </a>
-                <button type="button" class="btn-text" (click)="signOut()">{{ translationService.translate('button.signOut') }}</button>
-              </div>
-            </div>
-
-            @if (!performer.subscribed) {
-            <div class="subscribe-box">
-              <h3>{{ translationService.translate('cabinet.subscribe.title') }}</h3>
-              <p>
-                {{ translationService.translate('cabinet.subscribe.label') }} <strong>${{ planPrice(performer.type) }} / {{ translationService.translate('cabinet.subscribe.period') }}</strong>
-                ({{ translationService.translate(plans[performer.type].titleKey) }})
-              </p>
-              <ul>
-                <li *ngFor="let feature of plans[performer.type].featureKeys">{{ translationService.translate(feature) }}</li>
-              </ul>
-              <button type="button" class="btn-primary btn-large" (click)="subscribe()">
-                {{ translationService.translate('cabinet.subscribe.action') }} ${{ planPrice(performer.type) }}
-              </button>
-            </div>
-          } @else {
-            <p class="subscribed-badge">{{ translationService.translate('cabinet.subscribe.active') }}</p>
-
-            <div class="upload-section">
-              <h3>{{ translationService.translate('cabinet.upload.title') }}</h3>
-              @if (uploadSuccess()) {
-                <p class="upload-ok" role="status">{{ translationService.translate('cabinet.upload.success') }}</p>
-              }
-              <form class="upload-form" [formGroup]="workForm" (ngSubmit)="uploadWork()">
-                <label class="form-field-light">
-                  <span>{{ translationService.translate('cabinet.upload.workTitle.label') }}</span>
-                  <input type="text" formControlName="title" placeholder="{{ translationService.translate('cabinet.upload.workTitle.placeholder') }}" />
-                </label>
-                <label class="form-field-light">
-                  <span>{{ translationService.translate('cabinet.upload.description.label') }}</span>
-                  <textarea formControlName="description" rows="2"></textarea>
-                </label>
-                <div class="upload-files">
-                  <label class="file-field">
-                    <span>{{ translationService.translate('cabinet.upload.before.label') }}</span>
-                    <input type="file" accept="image/*" (change)="onFileSelected('before', $event)" />
-                    @if (beforePreview()) {
-                      <img [src]="beforePreview()!" alt="{{ translationService.translate('cabinet.upload.before.alt') }}" class="file-preview" />
-                    }
-                  </label>
-                  <label class="file-field">
-                    <span>{{ translationService.translate('cabinet.upload.after.label') }}</span>
-                    <input type="file" accept="image/*" (change)="onFileSelected('after', $event)" />
-                    @if (afterPreview()) {
-                      <img [src]="afterPreview()!" alt="{{ translationService.translate('cabinet.upload.after.alt') }}" class="file-preview" />
-                    }
-                  </label>
-                </div>
-                <button type="submit" class="btn-primary">{{ translationService.translate('cabinet.upload.submit') }}</button>
->>>>>>> copilot/vscode-mpyhbjc8-zg6q
               </form>
 
-<<<<<<< HEAD
               <h2 class="register-card__title cabinet-section-title">
                 {{ translation.t('cabinet.uploadTitle') }}
               </h2>
@@ -569,12 +291,6 @@
                   {{ myWorksLabel(performer.works.length) }}
                 </h2>
                 <div class="cabinet-works">
-=======
-            @if (performer.works.length > 0) {
-              <div class="my-works">
-                <h3>{{ translationService.translate('cabinet.myWorks.title') }} ({{ performer.works.length }})</h3>
-                <div class="my-works-grid">
->>>>>>> copilot/vscode-mpyhbjc8-zg6q
                   @for (work of performer.works; track work.id) {
                     <div class="cabinet-works__item">
                       <app-before-after [work]="work" [showCaption]="false" />
@@ -591,7 +307,6 @@
                     </div>
                   }
                 </div>
-<<<<<<< HEAD
               }
             </div>
           } @else if (furnitureStore.currentCompany(); as company) {
@@ -814,51 +529,6 @@
         </div>
       </main>
     </div>
-=======
-              </div>
-            }
-          }
-        </section>
-      }
-        @if (activeSection() === 'moderation') {
-          <section class="review-moderation review-moderation--private">
-            <div class="section-header">
-              <span class="section-eyebrow">{{ translationService.translate('cabinet.moderation.eyebrow') }}</span>
-              <h2>{{ translationService.translate('cabinet.moderation.title') }}</h2>
-              <p class="section-subtitle">
-                {{ translationService.translate('cabinet.moderation.subtitle') }}
-              </p>
-            </div>
-
-            @if (reviewStore.pendingReviews().length > 0) {
-              <div class="reviews-table">
-                @for (review of reviewStore.pendingReviews(); track review.id) {
-                  <article class="review-card">
-                    <div class="review-card-meta">
-                      <strong>{{ review.name }}</strong>
-                      <span>{{ review.performerType }} / {{ review.category }}</span>
-                      <time>{{ review.createdAt | date:'short' }}</time>
-                    </div>
-                    <p>{{ review.review }}</p>
-                    <div class="review-actions">
-                      <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
-                        {{ translationService.translate('cabinet.review.reject') }}
-                      </button>
-                      <button type="button" class="btn-primary" (click)="approveReview(review.id)">
-                        {{ translationService.translate('cabinet.review.approve') }}
-                      </button>
-                    </div>
-                  </article>
-                }
-              </div>
-            } @else {
-              <p class="review-empty">{{ translationService.translate('cabinet.moderation.empty') }}</p>
-            }
-          </section>
-        }
-      }
-    }
->>>>>>> copilot/vscode-mpyhbjc8-zg6q
   </div>
 }
 </div>

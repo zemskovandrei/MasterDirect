@@ -13,19 +13,18 @@ import { firstValueFrom } from 'rxjs';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { Job, isCompletedOrderStatus, jobPhoneHref, jobTelegramHref } from '../../models/job.model';
+import { Job, isCompletedOrderStatus, jobPhoneHref, jobScopeItemCount, jobTelegramHref, resolveJobPhotoForJob } from '../../models/job.model';
 import { TranslationService } from '../../core/services/translation.service';
 import {
-  CATALOG_TAB_BACKGROUNDS,
-  calculatorSectionBackgroundStyle,
+  catalogTabBackgroundStyle,
 } from '../../core/constants/catalog-tab-backgrounds';
-import { RenovationCalculatorComponent } from '../../shared/components/renovation-calculator/renovation-calculator.component';
+import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, RenovationCalculatorComponent],
+  imports: [CommonModule, RouterLink, CatalogOrderCalculatorSectionComponent],
   templateUrl: './jobs-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './jobs-list.component.css'],
@@ -36,15 +35,7 @@ export class JobsListComponent implements OnInit {
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
 
-  protected readonly showcaseBackground = {
-    backgroundColor: '#080808',
-    backgroundImage: `linear-gradient(90deg, rgba(8, 8, 8, 0.12) 0%, rgba(8, 8, 8, 0.78) 46%, rgba(8, 8, 8, 0.97) 100%), url('${CATALOG_TAB_BACKGROUNDS.jobs}')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'left center',
-    backgroundRepeat: 'no-repeat',
-  };
-
-  protected readonly calculatorBackground = calculatorSectionBackgroundStyle();
+  protected readonly pageBackground = catalogTabBackgroundStyle('jobs');
 
   private readonly showcaseFallbackImages = [
     'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800',
@@ -60,6 +51,7 @@ export class JobsListComponent implements OnInit {
 
   protected readonly adminActionJobId = signal<string | null>(null);
   protected readonly adminActionError = signal<string | null>(null);
+  protected readonly photoPreview = signal<{ src: string; title: string } | null>(null);
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -81,12 +73,7 @@ export class JobsListComponent implements OnInit {
     }
 
     try {
-      if (this.adminAuth.isAdmin()) {
-        await this.supabase.loadActiveJobs(force);
-        return;
-      }
-
-      await this.supabase.loadJobsForAuthenticatedMaster(force);
+      await this.supabase.loadActiveJobs(force);
     } catch (err) {
       logSupabaseError('JobsList.loadJobs', err);
     }
@@ -214,13 +201,60 @@ export class JobsListComponent implements OnInit {
     return !!(this.phoneHref(order) || this.telegramHref(order));
   }
 
+  protected jobOrderPhotoSrc(order: Job): string | null {
+    return resolveJobPhotoForJob(order);
+  }
+
+  protected jobHasPhoto(order: Job): boolean {
+    return !!this.jobOrderPhotoSrc(order);
+  }
+
   protected jobCardImage(order: Job, index: number): string {
-    const link = order.details.photoLink?.trim();
-    if (link && /^https?:\/\//i.test(link) && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(link)) {
-      return link;
+    const resolved = this.jobOrderPhotoSrc(order);
+    if (resolved) {
+      return resolved;
     }
 
     return this.showcaseFallbackImages[index % this.showcaseFallbackImages.length];
+  }
+
+  protected jobCardMeta(order: Job): string {
+    const parts: string[] = [];
+
+    if (order.details.areaSqm != null) {
+      parts.push(`${order.details.areaSqm} m²`);
+    }
+
+    if (order.city?.trim()) {
+      parts.push(order.city.trim());
+    }
+
+    if (order.category?.trim()) {
+      parts.push(order.category.trim());
+    }
+
+    return parts.join(' · ');
+  }
+
+  protected jobScopeCount(order: Job): number {
+    return jobScopeItemCount(order.details.scopeSections);
+  }
+
+  protected scopeItemsLabel(count: number): string {
+    return this.translation.t('jobs.scopeItems').replace('{{count}}', String(count));
+  }
+
+  protected openPhotoPreview(order: Job): void {
+    const src = this.jobOrderPhotoSrc(order);
+    if (!src) {
+      return;
+    }
+
+    this.photoPreview.set({ src, title: order.title });
+  }
+
+  protected closePhotoPreview(): void {
+    this.photoPreview.set(null);
   }
 
   trackByJobId(_index: number, order: Job): string {

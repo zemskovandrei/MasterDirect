@@ -192,6 +192,7 @@
   background-attachment: scroll;
 }
 
+.catalog-tab-page .catalog-calculator-section section.renovation-calculator,
 .catalog-tab-page .jobs-calculator-section section.renovation-calculator {
   background: transparent;
 }

@@ -21,11 +21,13 @@ import { AuthService } from '../../core/services/auth.service';
 import { CabinetSessionService } from '../../core/services/cabinet-session.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { firstValueFrom } from 'rxjs';
+import { compressWorkImageFile } from '../../core/utils/compress-image.util';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { hasSocialLinks } from '../../core/utils/social-links.util';
+import { normalizeUuid } from '../../core/utils/furniture-id.util';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 import { APP_BRAND_NAME } from '../../core/constants/brand';
 import { WORK_VERIFICATION_ENABLED } from '../../core/constants/features';
@@ -67,6 +69,7 @@ export class CabinetComponent {
   protected readonly workVerificationEnabled = WORK_VERIFICATION_ENABLED;
   protected readonly uploadSuccess = signal(false);
   protected readonly socialSaveSuccess = signal(false);
+  protected readonly socialSaveError = signal<string | null>(null);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
   protected readonly copyFeedback = signal<string | null>(null);
   protected readonly hasSocialLinks = hasSocialLinks;
@@ -217,18 +220,26 @@ export class CabinetComponent {
     return name.trim().charAt(0).toUpperCase() || '?';
   }
 
-  saveSocialLinks() {
+  async saveSocialLinks() {
     const v = this.socialForm.getRawValue();
     const performer = this.store.currentPerformer();
-    if (performer) {
-      this.store.updateSocialLinks(performer.id, v);
-    } else {
-      const company = this.furnitureStore.currentCompany();
-      if (!company) {
-        return;
-      }
-      this.furnitureStore.updateSocialLinks(company.id, v);
+    const company = this.furnitureStore.currentCompany();
+    const profileId =
+      normalizeUuid(this.auth.user()?.id) ??
+      normalizeUuid(company?.dbId) ??
+      performer?.id ??
+      company?.id;
+    if (!profileId) {
+      return;
     }
+
+    this.socialSaveError.set(null);
+    const result = await firstValueFrom(this.supabase.updateSocialLinks(profileId, v));
+    if (result.error) {
+      this.socialSaveError.set(result.error);
+      return;
+    }
+
     this.socialSaveSuccess.set(true);
     setTimeout(() => this.socialSaveSuccess.set(false), 4000);
   }
@@ -239,7 +250,7 @@ export class CabinetComponent {
     if (!file) {
       return;
     }
-    this.loadWorkImage(side, file, input);
+    void this.loadWorkImage(side, file, input);
   }
 
   onDropzoneDragOver(side: 'before' | 'after', event: DragEvent) {
@@ -268,10 +279,10 @@ export class CabinetComponent {
     }
     const input =
       side === 'before' ? this.beforeInput()?.nativeElement : this.afterInput()?.nativeElement;
-    this.loadWorkImage(side, file, input);
+    void this.loadWorkImage(side, file, input);
   }
 
-  private loadWorkImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
+  private async loadWorkImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
     if (!file.type.startsWith('image/')) {
       alert(this.translation.t('cabinet.alertImageOnly'));
       if (input) {
@@ -280,7 +291,7 @@ export class CabinetComponent {
       return;
     }
 
-    if (file.size > 800_000) {
+    if (file.size > 15 * 1024 * 1024) {
       alert(this.translation.t('cabinet.alertFileTooLarge'));
       if (input) {
         input.value = '';
@@ -288,16 +299,19 @@ export class CabinetComponent {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    try {
+      const dataUrl = await compressWorkImageFile(file);
       if (side === 'before') {
         this.beforePreview.set(dataUrl);
       } else {
         this.afterPreview.set(dataUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      alert(this.translation.t('cabinet.alertImageCompressFailed'));
+      if (input) {
+        input.value = '';
+      }
+    }
   }
 
   private resetFileInputs() {

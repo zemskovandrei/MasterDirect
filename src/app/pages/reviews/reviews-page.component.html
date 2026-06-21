@@ -11,6 +11,9 @@
         @if (submitSuccess()) {
           <p class="review-form-success" role="status">{{ submitSuccessMessage() }}</p>
         }
+        @if (submitError()) {
+          <p class="review-form-error" role="alert">{{ submitError() }}</p>
+        }
 
         <form class="review-form" [formGroup]="reviewForm" (ngSubmit)="submitReview()">
           <fieldset class="form-mode-tabs" [attr.aria-label]="translation.t('reviewsPage.form.modeAria')">
@@ -20,6 +23,7 @@
                 type="button"
                 class="form-mode-tab"
                 [class.form-mode-tab--active]="formMode() === mode"
+                [class.form-mode-tab--feedback]="mode === 'siteFeedback'"
                 (click)="selectFormMode(mode)"
               >
                 {{ formModeLabel(mode) }}
@@ -27,6 +31,7 @@
             }
           </fieldset>
 
+          @if (!isSiteFeedbackMode()) {
           <fieldset class="category-tabs" [attr.aria-label]="translation.t('reviewsPage.form.categoryAria')">
             <legend class="sr-only">{{ translation.t('reviewsPage.form.categoryAria') }}</legend>
             @for (cat of categories; track cat) {
@@ -40,15 +45,25 @@
               </button>
             }
           </fieldset>
+          }
 
           <label class="review-field" [class.review-field--error]="fieldInvalid('clientName')">
             <span class="review-label"
-              >{{ translation.t('reviewsPage.form.clientName') }} <em>*</em></span
+              >{{
+                isSiteFeedbackMode()
+                  ? translation.t('reviewsPage.form.feedbackName')
+                  : translation.t('reviewsPage.form.clientName')
+              }}
+              <em>*</em></span
             >
             <input
               type="text"
               formControlName="clientName"
-              [placeholder]="translation.t('reviewsPage.form.clientNamePh')"
+              [placeholder]="
+                isSiteFeedbackMode()
+                  ? translation.t('reviewsPage.form.feedbackNamePh')
+                  : translation.t('reviewsPage.form.clientNamePh')
+              "
               autocomplete="name"
             />
             @if (fieldInvalid('clientName')) {
@@ -56,6 +71,7 @@
             }
           </label>
 
+          @if (!isSiteFeedbackMode()) {
           @if (category() === 'renovation') {
             <label
               class="review-field"
@@ -147,6 +163,8 @@
             </div>
           }
 
+          }
+
           <label class="review-field" [class.review-field--error]="fieldInvalid('review')">
             <span class="review-label">{{ reviewTextLabel() }} <em>*</em></span>
             <textarea
@@ -186,7 +204,7 @@
             </label>
           }
 
-          @if (!isRecommendationMode()) {
+          @if (!isRecommendationMode() && !isSiteFeedbackMode()) {
           <details class="review-photos-details">
             <summary>{{ translation.t('reviewsPage.form.photos') }}</summary>
             <p class="review-photos-hint">{{ translation.t('reviewsPage.form.photosHint') }}</p>
@@ -254,7 +272,11 @@
           <button type="submit" class="btn-primary btn-large review-submit">
             {{ submitButtonLabel() }}
           </button>
-          <p class="review-form-note">{{ translation.t('reviewsPage.form.note') }}</p>
+          <p class="review-form-note">{{
+            isSiteFeedbackMode()
+              ? translation.t('reviewsPage.form.siteFeedbackNote')
+              : translation.t('reviewsPage.form.note')
+          }}</p>
         </form>
       </section>
 
@@ -276,13 +298,16 @@
                     <span
                       class="review-card-kind"
                       [class.review-card-kind--recommendation]="reviewStore.isRecommendation(item)"
+                      [class.review-card-kind--feedback]="reviewStore.isSiteFeedback(item)"
                     >
                       {{ reviewStore.submissionKindLabel(item) }}
                     </span>
                     <strong>{{ item.name }}</strong>
+                    @if (!reviewStore.isSiteFeedback(item)) {
                     <span class="review-card-target">
                       {{ reviewStore.performerTypeLabel(item) }} · {{ item.category }}
                     </span>
+                    }
                   </div>
                   @if (item.rating && !reviewStore.isRecommendation(item)) {
                     <span class="review-card-stars" [attr.aria-label]="ratingDisplay(item)">{{
@@ -304,4 +329,6 @@
     </div>
   </div>
   </section>
+
+  <app-catalog-order-calculator-section />
 </div>

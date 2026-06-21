@@ -7,6 +7,7 @@ import type {
   ListActiveOrdersOptions,
   Order,
   OrderInsert,
+  OrderFileInsert,
   OrderUpdate,
   SiteReview,
   SiteReviewInsert,
@@ -151,7 +152,7 @@ export class DataService {
 
     let query = client
       .from(this.orderTable)
-      .select('*')
+      .select('*, order_files(file_path)')
       .neq('status', ORDER_COMPLETED_STATUS)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -160,7 +161,21 @@ export class DataService {
       query = query.eq('user_id', options.userId);
     }
 
-    const { data, error } = await query;
+    let { data, error } = await query;
+
+    if (error?.message?.includes('order_files')) {
+      logSupabaseError('listActiveOrders.embed', error);
+      let fallbackQuery = client
+        .from(this.orderTable)
+        .select('*')
+        .neq('status', ORDER_COMPLETED_STATUS)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (options.userId) {
+        fallbackQuery = fallbackQuery.eq('user_id', options.userId);
+      }
+      ({ data, error } = await fallbackQuery);
+    }
 
     const rows = this.requireList<Order>(data, error, 'listActiveOrders');
     return rows.filter((row) => isActiveOrderStatus(row.status));
@@ -172,6 +187,17 @@ export class DataService {
     const { data, error } = await client.from(this.orderTable).insert(row).select('*').single();
 
     return this.requireSingle<Order>(data, error, 'insertOrder');
+  }
+
+  async insertOrderFile(row: OrderFileInsert): Promise<void> {
+    const client = await this.requireClient();
+
+    const { error } = await client.from('order_files').insert(row);
+
+    if (error) {
+      logSupabaseError('insertOrderFile', error);
+      throw toDataServiceError(error, 'insertOrderFile');
+    }
   }
 
   async updateOrder(id: number, patch: OrderUpdate): Promise<Order> {
@@ -281,7 +307,7 @@ export class DataService {
     }
 
     if (data == null) {
-      throw new DataServiceError(`${scope}: empty response`);
+      throw new DataServiceError('Profile not found');
     }
 
     return data;

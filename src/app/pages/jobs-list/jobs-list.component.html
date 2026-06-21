@@ -1,5 +1,5 @@
-<div class="catalog-tab-page jobs-page">
-  <section class="jobs-showcase" [ngStyle]="showcaseBackground">
+<div class="catalog-tab-page jobs-page" [ngStyle]="pageBackground">
+  <section class="jobs-showcase">
     <div class="jobs-showcase__inner">
       <h1 class="jobs-showcase__title">{{ translation.t('jobs.title') }}</h1>
       <p class="jobs-showcase__lead">{{ translation.t('jobs.lead') }}</p>
@@ -51,27 +51,55 @@
         <div class="jobs-showcase__gallery jobs-orders-grid">
           @for (order of jobs(); track trackByJobId($index, order)) {
             @if (!isOrderCompleted(order)) {
-            <article class="jobs-glass-card">
-              <div class="jobs-glass-card__media">
-                <img
-                  [src]="jobCardImage(order, $index)"
-                  [alt]="order.title"
-                  loading="lazy"
-                />
-              </div>
+            <article class="jobs-glass-card jobs-glass-card--compact">
               <div class="jobs-glass-card__body">
-                <h2 class="jobs-glass-card__title">{{ order.title }}</h2>
+                <div class="jobs-glass-card__head">
+                  <h2 class="jobs-glass-card__title">{{ order.title }}</h2>
+                  @if (jobCardMeta(order)) {
+                    <p class="jobs-glass-card__meta">{{ jobCardMeta(order) }}</p>
+                  }
+                  <p class="jobs-glass-card__budget">
+                    {{ formatOrderBudget(order) }}
+                  </p>
+                </div>
 
-                @if (order.description) {
-                  <p class="jobs-glass-card__description">{{ order.description }}</p>
+                @if (order.details.scopeSections.length > 0) {
+                  <div class="jobs-glass-card__scope">
+                    <p class="jobs-glass-card__scope-label">
+                      {{ translation.t('jobs.scopeToggle') }}
+                      <span>{{ scopeItemsLabel(jobScopeCount(order)) }}</span>
+                    </p>
+                    <div class="jobs-glass-card__scope-scroll" tabindex="0">
+                      @for (section of order.details.scopeSections; track section.title + $index) {
+                        @if (section.title) {
+                          <p class="jobs-glass-card__scope-section-title">{{ section.title }}</p>
+                        }
+                        <ul class="jobs-glass-card__scope-list">
+                          @for (item of section.items; track item) {
+                            <li>{{ item }}</li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  </div>
+                } @else if (order.details.summary) {
+                  <div class="jobs-glass-card__scope">
+                    <p class="jobs-glass-card__scope-label">{{ translation.t('jobs.fields.estimate') }}</p>
+                    <div class="jobs-glass-card__scope-scroll jobs-glass-card__scope-scroll--plain">
+                      {{ order.details.summary }}
+                    </div>
+                  </div>
                 }
 
-                <p class="jobs-glass-card__budget">
-                  {{ translation.t('jobs.budgetLabel') }}: {{ formatOrderBudget(order) }}
-                </p>
-
-                @if (order.city) {
-                  <p class="jobs-glass-card__city">{{ order.city }}</p>
+                @if (jobHasPhoto(order)) {
+                  <button
+                    type="button"
+                    class="jobs-glass-card__photo-btn"
+                    (click)="openPhotoPreview(order)"
+                  >
+                    <span class="jobs-glass-card__photo-btn-icon" aria-hidden="true">📷</span>
+                    {{ translation.t('jobs.viewPhoto') }}
+                  </button>
                 }
 
                 <div class="jobs-glass-card__actions">
@@ -130,9 +158,36 @@
     </div>
   </section>
 
-  <section id="calculator" class="jobs-calculator-section" [ngStyle]="calculatorBackground">
-    <div class="jobs-calculator-section__inner">
-      <app-renovation-calculator />
-    </div>
-  </section>
+  <app-catalog-order-calculator-section />
 </div>
+
+@if (photoPreview(); as preview) {
+  <div
+    class="jobs-photo-lightbox"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="preview.title"
+    (click)="closePhotoPreview()"
+  >
+    <div class="jobs-photo-lightbox__dialog" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="jobs-photo-lightbox__close"
+        (click)="closePhotoPreview()"
+        [attr.aria-label]="translation.t('jobs.closePhoto')"
+      >
+        ×
+      </button>
+      <p class="jobs-photo-lightbox__title">{{ preview.title }}</p>
+      <img class="jobs-photo-lightbox__image" [src]="preview.src" [alt]="preview.title" />
+      <a
+        class="jobs-photo-lightbox__open"
+        [href]="preview.src"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ translation.t('jobs.openPhoto') }}
+      </a>
+    </div>
+  </div>
+}

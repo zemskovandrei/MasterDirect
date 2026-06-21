@@ -11,6 +11,9 @@ import { TranslationService } from './translation.service';
 import { SupabaseService } from './supabase.service';
 import { logSupabaseError } from '../utils/supabase-error.util';
 
+/** Маркер в `review_text` для предложений по улучшению сайта (без отдельной колонки в БД). */
+export const SITE_FEEDBACK_TEXT_PREFIX = '【site-feedback】';
+
 /**
  * Отзывы из `site_reviews` (колонки: id, created_at, user_name, review_text).
  */
@@ -72,8 +75,15 @@ export class ReviewStoreService {
     return review.kind === 'recommendation';
   }
 
+  isSiteFeedback(review: ReviewSubmission): boolean {
+    return review.kind === 'siteFeedback';
+  }
+
   submissionKindLabel(review: ReviewSubmission): string {
     this.translation.locale();
+    if (this.isSiteFeedback(review)) {
+      return this.translation.t('reviewsPage.kind.siteFeedback');
+    }
     return this.isRecommendation(review)
       ? this.translation.t('reviewsPage.kind.recommendation')
       : this.translation.t('reviewsPage.kind.review');
@@ -91,6 +101,9 @@ export class ReviewStoreService {
     }
     if (review.performerType === 'Ремонт') {
       return 'renovation';
+    }
+    if (review.performerType === 'Сайт') {
+      return 'site';
     }
     return 'master';
   }
@@ -160,9 +173,15 @@ export class ReviewStoreService {
       return null;
     }
 
+    const trimmedText = data.review.trim();
+    const reviewText =
+      data.kind === 'siteFeedback'
+        ? `${SITE_FEEDBACK_TEXT_PREFIX}\n${trimmedText}`
+        : trimmedText;
+
     const row = {
       user_name: data.name.trim(),
-      review_text: data.review.trim(),
+      review_text: reviewText,
     };
 
     const { data: inserted, error } = await client
@@ -176,8 +195,9 @@ export class ReviewStoreService {
       return null;
     }
 
-    const submission = this.mapRow(inserted as ReviewRow, 'pending');
+    const submission = this.mapRow(inserted as ReviewRow, 'pending', data);
     this.reviewsSignal.update((list) => [submission, ...list]);
+    this.addSubmissionNotification(submission);
     return submission;
   }
 
@@ -210,53 +230,103 @@ export class ReviewStoreService {
     this.reviewsSignal.update((list) => list.filter((review) => review.id !== id));
   }
 
-  private mapRow(row: ReviewRow, status: ReviewSubmission['status']): ReviewSubmission {
-    const performerType = (row.performer_type ??
-      'Мастер') as ReviewSubmission['performerType'];
-    const performerTypeKey = (row.performer_type_key ??
-      'master') as ReviewPerformerTypeKey;
+  private mapRow(
+    row: ReviewRow,
+    status: ReviewSubmission['status'],
+    source?: {
+      performerType?: ReviewSubmission['performerType'];
+      performerTypeKey?: ReviewPerformerTypeKey;
+      category?: string;
+      performerId?: string;
+      rating?: number;
+      beforeImage?: string;
+      afterImage?: string;
+      kind?: ReviewSubmission['kind'];
+    },
+  ): ReviewSubmission {
+    const decoded = this.decodeReviewText(row.review_text);
+    const performerType = (source?.performerType ??
+      row.performer_type ??
+      (decoded.kind === 'siteFeedback' ? 'Сайт' : 'Мастер')) as ReviewSubmission['performerType'];
+    const performerTypeKey = (source?.performerTypeKey ??
+      row.performer_type_key ??
+      (decoded.kind === 'siteFeedback' ? 'site' : 'master')) as ReviewPerformerTypeKey;
     const clientName = row.client_name?.trim() || row.user_name?.trim() || '';
+    const kind =
+      source?.kind ??
+      (row.kind === 'recommendation'
+        ? 'recommendation'
+        : row.kind === 'siteFeedback'
+          ? 'siteFeedback'
+          : decoded.kind);
 
     const submission: ReviewSubmission = {
       id: row.id,
       name: clientName,
       performerType,
       performerTypeKey,
-      category: row.performer_name ?? '',
-      review: row.review_text,
+      category:
+        source?.category ??
+        row.performer_name ??
+        (kind === 'siteFeedback'
+          ? this.translation.t('reviewsPage.siteFeedback.categoryLabel')
+          : ''),
+      review: decoded.text,
       status,
       createdAt: row.created_at ?? new Date().toISOString(),
-      kind: row.kind === 'recommendation' ? 'recommendation' : 'review',
+      kind,
     };
 
     if (row.master_id) {
       submission.performerId = row.master_id;
+    } else if (source?.performerId) {
+      submission.performerId = source.performerId;
     }
-    if (row.rating) {
-      submission.rating = row.rating;
+    const rating = source?.rating ?? row.rating;
+    if (rating) {
+      submission.rating = rating;
     }
-    if (row.before_image) {
-      submission.beforeImage = row.before_image;
+    const beforeImage = source?.beforeImage ?? row.before_image;
+    if (beforeImage) {
+      submission.beforeImage = beforeImage;
     }
-    if (row.after_image) {
-      submission.afterImage = row.after_image;
+    const afterImage = source?.afterImage ?? row.after_image;
+    if (afterImage) {
+      submission.afterImage = afterImage;
     }
 
     return submission;
   }
 
-  private addPublicationNotification(review: ReviewSubmission): void {
-    const kindLabel = this.isRecommendation(review)
-      ? this.translation.t('reviewsPage.kind.recommendation')
-      : this.translation.t('reviewsPage.kind.review');
+  private decodeReviewText(raw: string): { text: string; kind?: ReviewSubmission['kind'] } {
+    const value = raw?.trim() ?? '';
+    if (value.startsWith(SITE_FEEDBACK_TEXT_PREFIX)) {
+      return {
+        kind: 'siteFeedback',
+        text: value.slice(SITE_FEEDBACK_TEXT_PREFIX.length).trim(),
+      };
+    }
+    return { text: value };
+  }
+
+  private addSubmissionNotification(review: ReviewSubmission): void {
+    const kindLabel = this.submissionKindLabel(review);
+    const target =
+      review.kind === 'siteFeedback'
+        ? this.translation.t('reviewsPage.siteFeedback.notificationTarget')
+        : review.category;
     const notification: ReviewNotification = {
       id: `notification-${Date.now()}`,
       reviewId: review.id,
-      message: `${kindLabel}: "${review.category}" — ${review.name}.`,
+      message: `${kindLabel}: "${target}" — ${review.name}.`,
       link: '/reviews',
       createdAt: new Date().toISOString(),
     };
 
     this.notificationsSignal.update((list) => [notification, ...list]);
+  }
+
+  private addPublicationNotification(review: ReviewSubmission): void {
+    this.addSubmissionNotification(review);
   }
 }

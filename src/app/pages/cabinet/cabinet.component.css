@@ -3125,6 +3125,13 @@
   color: #047857;
 }
 
+.cabinet-status--error {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgb(239 68 68 / 0.1);
+  color: #b91c1c;
+}
+
 .cabinet-verify {
   margin-top: 0.5rem;
 }

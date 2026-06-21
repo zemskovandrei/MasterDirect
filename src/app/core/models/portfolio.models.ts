@@ -61,12 +61,12 @@ export interface CabinetSession {
   performerId: string;
 }
 
-export type ReviewPerformerTypeKey = 'brigade' | 'master' | 'furniture' | 'renovation';
+export type ReviewPerformerTypeKey = 'brigade' | 'master' | 'furniture' | 'renovation' | 'site';
 
 export interface ReviewSubmission {
   id: string;
   name: string;
-  performerType: 'Мастер' | 'Бригада' | 'Мебель' | 'Ремонт';
+  performerType: 'Мастер' | 'Бригада' | 'Мебель' | 'Ремонт' | 'Сайт';
   performerTypeKey?: ReviewPerformerTypeKey;
   performerId?: string;
   category: string;
@@ -79,8 +79,8 @@ export interface ReviewSubmission {
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   isDemo?: boolean;
-  /** Client submission type: detailed review or short recommendation */
-  kind?: 'review' | 'recommendation';
+  /** Client submission type: review, recommendation, or site improvement feedback */
+  kind?: 'review' | 'recommendation' | 'siteFeedback';
 }
 
 export interface ReviewNotification {

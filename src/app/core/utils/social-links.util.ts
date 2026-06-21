@@ -85,8 +85,22 @@ function whatsappHref(value: string): string {
 
 function telegramHref(value: string): string {
   const trimmed = value.trim();
-  const fromUrl = trimmed.match(/(?:t\.me|telegram\.me)\/([A-Za-z0-9_]+)/i)?.[1];
-  const username = (fromUrl ?? trimmed.replace(/^@/, '')).replace(/^https?:\/\//, '');
+  if (!trimmed) {
+    return '';
+  }
+
+  if (/^https?:\/\/(?:t\.me|telegram\.me)\//i.test(trimmed)) {
+    return trimmed.split(/[?#]/)[0]?.replace(/\/$/, '') ?? trimmed;
+  }
+
+  const fromPath = trimmed
+    .replace(/^https?:\/\//i, '')
+    .match(/^(?:t\.me|telegram\.me)\/([^\s/?#]+)/i)?.[1];
+  if (fromPath) {
+    return `https://t.me/${fromPath}`;
+  }
+
+  const username = trimmed.replace(/^@/, '');
   if (!username) {
     return '';
   }
@@ -118,6 +132,24 @@ function facebookHref(value: string): string {
 export function hasSocialLinks(links?: PerformerSocialLinks | null): boolean {
   const normalized = normalizeSocialLinks(links);
   return Object.values(normalized).some(Boolean);
+}
+
+/** DB/remote values win; local store fills missing fields. */
+export function mergeSocialLinks(
+  primary?: PerformerSocialLinks | null,
+  fallback?: PerformerSocialLinks | null,
+): PerformerSocialLinks | undefined {
+  const preferred = normalizeSocialLinks(primary);
+  const backup = normalizeSocialLinks(fallback);
+  const merged: PerformerSocialLinks = {
+    phone: preferred.phone || backup.phone,
+    whatsapp: preferred.whatsapp || backup.whatsapp,
+    telegram: preferred.telegram || backup.telegram,
+    instagram: preferred.instagram || backup.instagram,
+    facebook: preferred.facebook || backup.facebook,
+  };
+
+  return Object.values(merged).some(Boolean) ? merged : undefined;
 }
 
 export function buildSocialLinkItems(links?: PerformerSocialLinks | null): SocialLinkItem[] {

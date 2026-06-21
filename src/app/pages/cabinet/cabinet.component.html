@@ -85,6 +85,11 @@
                   {{ translation.t('cabinet.socialSaved') }}
                 </p>
               }
+              @if (socialSaveError(); as error) {
+                <p class="cabinet-status cabinet-status--error" role="alert">
+                  {{ error }}
+                </p>
+              }
 
               <form class="register-form" [formGroup]="socialForm" (ngSubmit)="saveSocialLinks()">
                 <div class="register-form__row register-form__row--social">
@@ -348,6 +353,11 @@
               @if (socialSaveSuccess()) {
                 <p class="cabinet-status cabinet-status--ok" role="status">
                   {{ translation.t('cabinet.socialSaved') }}
+                </p>
+              }
+              @if (socialSaveError(); as error) {
+                <p class="cabinet-status cabinet-status--error" role="alert">
+                  {{ error }}
                 </p>
               }
 

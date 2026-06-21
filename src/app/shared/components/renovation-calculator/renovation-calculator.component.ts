@@ -4,6 +4,7 @@ import {
   PLATFORM_ID,
   computed,
   inject,
+  input,
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -21,9 +22,14 @@ import {
 } from '../../../core/models/calculator.models';
 import { PerformerProfile } from '../../../core/models/portfolio.models';
 import { buildJobklientJobInsert, JobDescriptionLabels } from '../../../models/job.model';
+import { calculatorStepBackgroundStyle } from '../../../core/constants/catalog-tab-backgrounds';
 import { TranslationService } from '../../../core/services/translation.service';
 import { isPaidCallOutFee } from '../../../core/utils/call-out-fee.util';
-import { redirectToExecutor } from '../../../core/utils/executor-messenger.util';
+import {
+  buildTelegramUrl,
+  buildWhatsAppUrl,
+  redirectToExecutor,
+} from '../../../core/utils/executor-messenger.util';
 import {
   buildChecklistPhaseGroups,
   buildChecklistScopeSummary,
@@ -48,6 +54,9 @@ import {
   templateUrl: './renovation-calculator.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./renovation-calculator.component.css'],
+  host: {
+    '[class.renovation-calculator-host--light]': 'theme() === "light"',
+  },
 })
 export class RenovationCalculatorComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
@@ -56,6 +65,19 @@ export class RenovationCalculatorComponent implements OnInit {
   protected readonly calculatorLeadStore = inject(CalculatorLeadStoreService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly translation = inject(TranslationService);
+
+  /** `light` — светлая карточка на фото-фоне (страница заказов). */
+  readonly theme = input<'dark' | 'light'>('dark');
+
+  protected readonly lightStepBackground = computed(() => {
+    if (this.theme() !== 'light') {
+      return {};
+    }
+
+    return calculatorStepBackgroundStyle(this.calculatorStep(), {
+      submitted: this.calculatorSubmitted(),
+    });
+  });
 
   protected readonly calculatorStep = signal(1);
   protected readonly calculatorSubmitted = signal(false);
@@ -332,6 +354,24 @@ export class RenovationCalculatorComponent implements OnInit {
     return (
       this.calculatorChecklistSelection().length + this.calculatorChecklistCustomItems().length
     );
+  }
+
+  protected checklistScopeCountLabel(): string {
+    return this.translation
+      .t('home.calculator.checklistScopeCount')
+      .replace('{{count}}', String(this.totalSelectedWorkCount()));
+  }
+
+  protected checklistSearchResultsLabel(): string {
+    return this.translation
+      .t('home.calculator.checklistSearchResults')
+      .replace('{{count}}', String(this.calculatorChecklistSearchResultsCount()));
+  }
+
+  protected contactsDirectedLabel(): string {
+    return this.translation
+      .t('home.calculator.contactsDirected')
+      .replace('{{names}}', this.calculatorSelectedPerformerNames().join(', '));
   }
 
   addCustomChecklistItem() {
@@ -668,7 +708,22 @@ export class RenovationCalculatorComponent implements OnInit {
     void this.supabase.loadActiveJobs(true);
     this.calculatorSubmitting.set(false);
     this.calculatorSubmitted.set(true);
-    alert(this.translation.t('home.calculator.successTitle'));
+  }
+
+  protected executorMessengerHref(
+    messenger: 'whatsapp' | 'telegram',
+    executor: CalculatorPerformerCard,
+  ): string | null {
+    const orderDetails = this.calculatorLastOrderDetails();
+    if (!orderDetails) {
+      return null;
+    }
+
+    if (messenger === 'whatsapp') {
+      return buildWhatsAppUrl(executor.whatsapp_phone ?? '', orderDetails);
+    }
+
+    return buildTelegramUrl(executor.tg_username ?? '', orderDetails);
   }
 
   protected openExecutorMessenger(

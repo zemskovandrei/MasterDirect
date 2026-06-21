@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { logSupabaseError } from '../utils/supabase-error.util';
+import { purgeLegacySupabaseAuthStorage, supabaseProjectRefFromUrl } from '../utils/supabase-auth-storage.util';
 
 const NOT_CONFIGURED = 'Supabase не настроен. Укажите url и anonKey в environment.';
 
@@ -55,6 +56,7 @@ export class SupabaseClientService {
       const { url, anonKey } = environment.supabase;
       this.clientPromise = import('@supabase/supabase-js')
         .then(({ createClient }) => {
+          purgeLegacySupabaseAuthStorage(supabaseProjectRefFromUrl(url));
           this.supabaseClient = createClient(url, anonKey, {
             auth: {
               persistSession: true,

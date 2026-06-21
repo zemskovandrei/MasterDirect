@@ -25,6 +25,10 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { TranslationService } from '../../core/services/translation.service';
+import {
+  compressAvatarImageFile,
+  compressWorkImageFile,
+} from '../../core/utils/compress-image.util';
 import type { PerformerType, WorkProject } from '../../core/models/portfolio.models';
 import type { MasterAccountType } from '../../core/models/master.model';
 import {
@@ -300,12 +304,20 @@ export class RegisterPageComponent {
     this.showConfirmPassword.update((v) => !v);
   }
 
-  protected openLogin(): void {
+  protected openLogin(email = ''): void {
+    const normalized = email.trim().toLowerCase();
+    if (normalized) {
+      this.signInForm.controls.email.setValue(normalized);
+    }
     this.signInError.set(null);
     this.forgotPasswordMessage.set(null);
     this.forgotPasswordError.set(null);
     this.auth.clearPasswordRecovery();
     void this.router.navigate([], { fragment: 'login', replaceUrl: true });
+  }
+
+  protected openLoginWithCurrentEmail(): void {
+    this.openLogin(this.form.controls.email.value);
   }
 
   protected openRegister(): void {
@@ -413,7 +425,7 @@ export class RegisterPageComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      this.setProfileFile(file);
+      void this.setProfileFile(file);
     }
   }
 
@@ -422,7 +434,7 @@ export class RegisterPageComponent {
     this.dragProfile.set(false);
     const file = event.dataTransfer?.files?.[0];
     if (file?.type.startsWith('image/')) {
-      this.setProfileFile(file);
+      void this.setProfileFile(file);
     }
   }
 
@@ -432,7 +444,7 @@ export class RegisterPageComponent {
     if (!file) {
       return;
     }
-    this.loadBeforeAfterImage(side, file, input);
+    void     void this.loadBeforeAfterImage(side, file, input);
   }
 
   protected onBeforeAfterDragOver(side: 'before' | 'after', event: DragEvent): void {
@@ -558,7 +570,6 @@ export class RegisterPageComponent {
         this.status.set('error');
         this.errorMessage.set(this.translation.t('cabinet.registerErrorEmailExists'));
         this.errorMessageKey.set('cabinet.registerErrorEmailExists');
-        this.openDeleteAccountPanel(this.form.controls.email.value);
         return;
       }
 
@@ -845,11 +856,11 @@ export class RegisterPageComponent {
     return null;
   }
 
-  private loadBeforeAfterImage(
+  private async loadBeforeAfterImage(
     side: 'before' | 'after',
     file: File,
     input?: HTMLInputElement,
-  ): void {
+  ): Promise<void> {
     if (!file.type.startsWith('image/')) {
       this.errorMessage.set(this.translation.t('cabinet.alertImageOnly'));
       if (input) {
@@ -858,7 +869,7 @@ export class RegisterPageComponent {
       return;
     }
 
-    if (file.size > 800_000) {
+    if (file.size > 15 * 1024 * 1024) {
       this.errorMessage.set(this.translation.t('cabinet.alertFileTooLarge'));
       if (input) {
         input.value = '';
@@ -866,24 +877,36 @@ export class RegisterPageComponent {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result);
+    try {
+      const dataUrl = await compressWorkImageFile(file);
       if (side === 'before') {
         this.beforePreview.set(dataUrl);
       } else {
         this.afterPreview.set(dataUrl);
       }
       this.errorMessage.set(null);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      this.errorMessage.set(this.translation.t('cabinet.alertImageCompressFailed'));
+      if (input) {
+        input.value = '';
+      }
+    }
   }
 
-  private setProfileFile(file: File): void {
+  private async setProfileFile(file: File): Promise<void> {
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
     this.profileFile.set(file);
-    const reader = new FileReader();
-    reader.onload = () => this.profilePreview.set(String(reader.result));
-    reader.readAsDataURL(file);
+
+    try {
+      const dataUrl = await compressAvatarImageFile(file);
+      this.profilePreview.set(dataUrl);
+    } catch {
+      this.profilePreview.set(null);
+      this.errorMessage.set(this.translation.t('cabinet.alertImageCompressFailed'));
+    }
   }
 
   private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {

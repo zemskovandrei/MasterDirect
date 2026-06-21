@@ -1,4 +1,12 @@
-<section class="renovation-calculator" id="calculator">
+<section
+  class="renovation-calculator"
+  [class.renovation-calculator--light]="theme() === 'light'"
+  [ngStyle]="lightStepBackground()"
+  [attr.data-calculator-step]="
+    theme() === 'light' ? (calculatorSubmitted() ? 'success' : calculatorStep()) : null
+  "
+  id="calculator"
+>
   <div class="renovation-calculator__container">
     <div class="section-header renovation-calculator__header">
       <h2>{{ translation.t('home.calculator.title') }}</h2>
@@ -255,22 +263,14 @@
                     </div>
                     @if (calculatorChecklistSearchQuery().trim()) {
                       <p class="quiz-checklist-search__meta">
-                        {{
-                          translation
-                            .t('home.calculator.checklistSearchResults')
-                            .replace('{{count
-                        }}', calculatorChecklistSearchResultsCount() + '') }}
+                        {{ checklistSearchResultsLabel() }}
                       </p>
                     }
                     </label>
 
                     <div class="quiz-checklist-toolbar">
                       <p class="quiz-scope-count">
-                        {{
-                          translation
-                            .t('home.calculator.checklistScopeCount')
-                            .replace('{{count
-                        }}', totalSelectedWorkCount() + '') }}
+                        {{ checklistScopeCountLabel() }}
                       </p>
                       <div class="quiz-checklist-actions">
                         <button
@@ -307,11 +307,7 @@
                     }
                   } @else {
                     <p class="quiz-scope-count">
-                      {{
-                        translation
-                          .t('home.calculator.checklistScopeCount')
-                          .replace('{{count
-                      }}', totalSelectedWorkCount() + '') }}
+                      {{ checklistScopeCountLabel() }}
                     </p>
                   }
 
@@ -458,11 +454,7 @@
 
                 @if (calculatorHasSelectedPerformers()) {
                   <p class="quiz-step__lead quiz-step__lead--directed">
-                    {{
-                      translation
-                        .t('home.calculator.contactsDirected')
-                        .replace('{{names
-                    }}', calculatorSelectedPerformerNames().join(', ')) }}
+                    {{ contactsDirectedLabel() }}
                   </p>
                 } @else {
                   <p class="quiz-step__lead">{{ translation.t('home.calculator.contactsLead') }}</p>
@@ -567,33 +559,54 @@
           <p>{{ translation.t('home.calculator.successText') }}</p>
 
           @if (calculatorSubmittedExecutors().length > 0) {
-            <p class="quiz-success__contact-lead">
-              {{ translation.t('home.calculator.successContactLead') }}
-            </p>
-            <div class="quiz-success__executors">
-              @for (executor of calculatorSubmittedExecutors(); track executor.id) {
-                <div class="quiz-success__executor">
-                  <strong class="quiz-success__executor-name">{{ executor.name }}</strong>
-                  <div class="quiz-success__messenger-actions">
-                    <button
-                      type="button"
-                      class="quiz-messenger-btn quiz-messenger-btn--whatsapp"
-                      [disabled]="!executorHasMessenger(executor, 'whatsapp')"
-                      (click)="openExecutorMessenger('whatsapp', executor)"
-                    >
-                      {{ translation.t('home.calculator.messengerWhatsApp') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="quiz-messenger-btn quiz-messenger-btn--telegram"
-                      [disabled]="!executorHasMessenger(executor, 'telegram')"
-                      (click)="openExecutorMessenger('telegram', executor)"
-                    >
-                      {{ translation.t('home.calculator.messengerTelegram') }}
-                    </button>
+            <div class="quiz-success__contact-box">
+              <p class="quiz-success__contact-lead">
+                {{ translation.t('home.calculator.successContactLead') }}
+              </p>
+              <p class="quiz-success__contact-hint">
+                {{ translation.t('home.calculator.successContactHint') }}
+              </p>
+              <div class="quiz-success__executors">
+                @for (executor of calculatorSubmittedExecutors(); track executor.id) {
+                  <div class="quiz-success__executor">
+                    <strong class="quiz-success__executor-name">{{ executor.name }}</strong>
+                    <div class="quiz-success__messenger-actions">
+                      @if (executorMessengerHref('whatsapp', executor); as whatsappUrl) {
+                        <a
+                          class="quiz-messenger-btn quiz-messenger-btn--whatsapp"
+                          [href]="whatsappUrl"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span class="quiz-messenger-btn__icon" aria-hidden="true">💬</span>
+                          {{ translation.t('home.calculator.messengerWhatsApp') }}
+                          <span class="quiz-messenger-btn__arrow" aria-hidden="true">↗</span>
+                        </a>
+                      } @else {
+                        <span class="quiz-messenger-btn quiz-messenger-btn--missing">
+                          {{ translation.t('home.calculator.messengerUnavailableWhatsApp') }}
+                        </span>
+                      }
+                      @if (executorMessengerHref('telegram', executor); as telegramUrl) {
+                        <a
+                          class="quiz-messenger-btn quiz-messenger-btn--telegram"
+                          [href]="telegramUrl"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span class="quiz-messenger-btn__icon" aria-hidden="true">✈️</span>
+                          {{ translation.t('home.calculator.messengerTelegram') }}
+                          <span class="quiz-messenger-btn__arrow" aria-hidden="true">↗</span>
+                        </a>
+                      } @else {
+                        <span class="quiz-messenger-btn quiz-messenger-btn--missing">
+                          {{ translation.t('home.calculator.messengerUnavailableTelegram') }}
+                        </span>
+                      }
+                    </div>
                   </div>
-                </div>
-              }
+                }
+              </div>
             </div>
           }
 

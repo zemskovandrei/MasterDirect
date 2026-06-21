@@ -5,7 +5,7 @@ import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
 import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/profile.models';
-import { PerformerProfile, WorkProject } from '../models/portfolio.models';
+import { PerformerProfile, PerformerSocialLinks, WorkProject } from '../models/portfolio.models';
 import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
   furnitureCompanyToProfile,
@@ -22,13 +22,16 @@ import {
   JobklientJobInsert,
   isCompletedOrderStatus,
   mapJobklientRowsToJobs,
+  resolveJobPhotoForJob,
   toFurnitureOrderDbRow,
 } from '../../models/job.model';
 import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
-import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint } from '../utils/supabase-error.util';
+import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint, formatStorageUploadError, isStorageBucketMissingError, isRlsPolicyError, formatSupabaseMutationError } from '../utils/supabase-error.util';
+import { compressWorkImageFile } from '../utils/compress-image.util';
 import { specialistRowToWritePayload, profilePatchToSpecialistRow } from '../utils/specialist-db.util';
+import { mergeSocialLinks } from '../utils/social-links.util';
 import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
 import { mapJobklientInsertToOrderInsert, mapOrderRowsToJobs } from '../utils/order-db.util';
 import { DataService } from './data.service';
@@ -37,9 +40,10 @@ import { SupabaseClientService } from './supabase-client.service';
 const SUPABASE_NOT_CONFIGURED =
   'Supabase не настроен. Укажите url и anonKey в src/environments/environment.ts';
 
-const JOBS_CACHE_KEY = 'smartbuild.jobs.v6';
+const JOBS_CACHE_KEY = 'smartbuild.jobs.v10';
 const JOBS_CACHE_TTL_MS = 2 * 60 * 1000;
-const JOBS_LIST_COLUMNS = 'id,created_at,title,budget,description,category,city,status';
+const JOBS_LIST_COLUMNS =
+  'id,created_at,title,budget,description,category,city,status,client_name,client_phone,order_files(file_path)';
 const JOBS_ACTIVE_STATUS = 'active';
 const ORDER_COMPLETED_STATUS = 'completed';
 const ORDER_FILES_BUCKET = 'orders-files';
@@ -76,6 +80,7 @@ export interface RegisterAuthProfileInput {
   specialty: string;
   description: string;
   proRole?: string;
+  slug?: string | null;
   whatsapp?: string;
   telegram?: string;
   instagram?: string;
@@ -293,19 +298,22 @@ export class SupabaseService {
       return { data: null, error: 'Browser only' };
     }
 
-    const uploadResult = await this.uploadOrderFile(file);
-    if (uploadResult.error) {
-      logSupabaseError('insertOrder.upload', uploadResult.error);
+    const fileRefResult = await this.resolveOrderFileRef(file);
+    if (fileRefResult.error) {
+      logSupabaseError('insertOrder.upload', fileRefResult.error);
       return {
         data: null,
-        error: uploadResult.error,
-        supabaseError: uploadResult.error,
+        error: fileRefResult.error,
+        supabaseError: fileRefResult.error,
       };
     }
 
-    const fileRef = uploadResult.publicUrl ?? uploadResult.path;
     const clientPhone = input.client_phone?.trim() || input.phone.trim();
-    const description = [input.description?.trim(), fileRef ? `Фото объекта: ${fileRef}` : '']
+    const description = [
+      input.description?.trim(),
+      fileRefResult.fileRef ? `Фото объекта: ${fileRefResult.fileRef}` : '',
+      fileRefResult.attachmentNote,
+    ]
       .filter(Boolean)
       .join('\n');
 
@@ -313,9 +321,47 @@ export class SupabaseService {
       ...input,
       client_phone: clientPhone,
       phone: clientPhone,
-      file: fileRef,
+      file: fileRefResult.fileRef,
       description,
     });
+  }
+
+  private async resolveOrderFileRef(file: File): Promise<{
+    fileRef: string;
+    attachmentNote: string;
+    error: string | null;
+  }> {
+    const uploadResult = await this.uploadOrderFile(file);
+    if (!uploadResult.error) {
+      return {
+        fileRef: uploadResult.publicUrl ?? uploadResult.path,
+        attachmentNote: '',
+        error: null,
+      };
+    }
+
+    const storageBlocked =
+      isStorageBucketMissingError(uploadResult.error) || isRlsPolicyError(uploadResult.error);
+
+    if (!storageBlocked) {
+      return { fileRef: '', attachmentNote: '', error: uploadResult.error };
+    }
+
+    if (file.type.startsWith('image/')) {
+      try {
+        const dataUrl = await compressWorkImageFile(file);
+        return { fileRef: dataUrl, attachmentNote: '', error: null };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Не удалось обработать фото';
+        return { fileRef: '', attachmentNote: '', error: message };
+      }
+    }
+
+    return {
+      fileRef: '',
+      attachmentNote: `Вложение «${file.name}» не сохранено в Storage (настройте bucket и политики orders-files).`,
+      error: null,
+    };
   }
 
   insertFurnitureOrder(input: FurnitureOrderInsert): Observable<FurnitureOrderInsertResult> {
@@ -550,6 +596,115 @@ export class SupabaseService {
     });
   }
 
+  /** UUID строки в `specialist` (auth.users.id), не slug мебельной компании. */
+  private async resolveSpecialistDbId(id: string): Promise<string | null> {
+    const trimmed = id.trim();
+    if (isUuid(trimmed)) {
+      return trimmed;
+    }
+
+    const company = this.furnitureStore
+      .companies()
+      .find((item) => item.id === trimmed || item.slug === trimmed);
+    const dbId = normalizeUuid(company?.dbId);
+    if (dbId) {
+      return dbId;
+    }
+
+    const client = await this.resolveClient();
+    if (!client) {
+      return null;
+    }
+
+    const { data } = await client.auth.getSession();
+    return normalizeUuid(data.session?.user?.id) || null;
+  }
+
+  private buildRegisterInputFromLocalState(userId: string): RegisterAuthProfileInput | null {
+    const performer = this.portfolioStore.performers().find((item) => item.id === userId);
+    if (performer) {
+      const links = performer.socialLinks ?? {};
+      return {
+        userId,
+        accountType: performer.type === 'brigade' ? 'brigade' : 'worker',
+        fullName: performer.name,
+        phone: links.phone?.trim() || '-',
+        city: '',
+        specialty: performer.specialty,
+        description: performer.description,
+        proRole: performer.type === 'brigade' ? 'builder' : 'master',
+        whatsapp: links.whatsapp,
+        telegram: links.telegram,
+        instagram: links.instagram,
+        facebook: links.facebook,
+      };
+    }
+
+    const company = this.furnitureStore
+      .companies()
+      .find((item) => item.dbId === userId || item.id === userId);
+    if (company) {
+      const links = company.socialLinks ?? {};
+      const slugBase = company.slug ?? buildFurnitureSlug(company.name);
+      return {
+        userId,
+        accountType: 'furniture',
+        fullName: company.name,
+        phone: links.phone?.trim() || '-',
+        city: company.city ?? '',
+        specialty: company.specialty,
+        description: company.description,
+        proRole: 'furniture_maker',
+        slug: `${slugBase}-${userId.replace(/-/g, '').slice(0, 8)}`,
+        whatsapp: links.whatsapp,
+        telegram: links.telegram,
+        instagram: links.instagram,
+        facebook: links.facebook,
+      };
+    }
+
+    return null;
+  }
+
+  /** Создаёт строку в `specialist`, если пользователь есть в auth, но профиля ещё нет. */
+  private async ensureSpecialistRow(dbId: string): Promise<{ error: string | null }> {
+    const client = await this.resolveClient();
+    if (!client) {
+      return { error: this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED };
+    }
+
+    const { data: existing, error: readError } = await client
+      .from(environment.supabase.specialistTable)
+      .select('id')
+      .eq('id', dbId)
+      .maybeSingle();
+
+    if (readError) {
+      logSupabaseError('ensureSpecialistRow.read', readError);
+      return { error: supabaseErrorMessage(readError) || readError.message };
+    }
+
+    if (existing) {
+      return { error: null };
+    }
+
+    const { data: sessionData } = await client.auth.getSession();
+    const user = sessionData.session?.user;
+    if (user?.id === dbId) {
+      const sync = await this.syncAuthProfileFromUser(user);
+      if (!sync.error) {
+        return { error: null };
+      }
+    }
+
+    const localInput = this.buildRegisterInputFromLocalState(dbId);
+    if (localInput) {
+      return this.registerAuthProfile(localInput);
+    }
+
+    return { error: 'Profile not found' };
+  }
+
   private resolveRegisterAccountType(
     proRole: string,
     accountTypeRaw: string,
@@ -572,6 +727,14 @@ export class SupabaseService {
     }
 
     return from(this.updateProfileRow(id, patch));
+  }
+
+  updateSocialLinks(id: string, links: PerformerSocialLinks): Observable<SupabaseMutationResult> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.updateSocialLinksRow(id, links));
   }
 
   deleteProfile(id: string, type?: ProfileType): Observable<SupabaseMutationResult<null>> {
@@ -686,10 +849,20 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
+      const dbId = await this.resolveSpecialistDbId(trimmedId);
+      if (!dbId) {
+        return { data: null, error: 'Profile not found' };
+      }
+
+      const ensure = await this.ensureSpecialistRow(dbId);
+      if (ensure.error) {
+        return { data: null, error: ensure.error };
+      }
+
       const { data, error } = await client
         .from(environment.supabase.specialistTable)
         .update({ header_bg: color })
-        .eq('id', trimmedId)
+        .eq('id', dbId)
         .select('*')
         .maybeSingle();
 
@@ -707,6 +880,78 @@ export class SupabaseService {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Update failed';
       console.error('[SupabaseService] updateMasterHeaderBg:', err);
+      return { data: null, error: message };
+    }
+  }
+
+  private async updateSocialLinksRow(
+    id: string,
+    links: PerformerSocialLinks,
+  ): Promise<SupabaseMutationResult> {
+    const trimmedId = id.trim();
+    if (!trimmedId) {
+      return { data: null, error: 'Missing profile id' };
+    }
+
+    const dbId = await this.resolveSpecialistDbId(trimmedId);
+    if (!dbId) {
+      return { data: null, error: 'Profile not found' };
+    }
+
+    const performer = this.portfolioStore.performers().find(
+      (item) => item.id === trimmedId || item.id === dbId,
+    );
+    if (performer) {
+      this.portfolioStore.updateSocialLinks(performer.id, links);
+    }
+
+    const company = this.furnitureStore
+      .companies()
+      .find((item) => item.id === trimmedId || item.dbId === trimmedId || item.dbId === dbId);
+    if (company) {
+      this.furnitureStore.updateSocialLinks(company.id, links);
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED };
+      }
+
+      const ensure = await this.ensureSpecialistRow(dbId);
+      if (ensure.error) {
+        return { data: null, error: ensure.error };
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.specialistTable)
+        .update(
+          profilePatchToSpecialistRow({
+            phone: links.phone,
+            whatsapp: links.whatsapp,
+            telegram: links.telegram,
+            instagram: links.instagram,
+            facebook: links.facebook,
+          }),
+        )
+        .eq('id', dbId)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        console.error('[SupabaseService] updateSocialLinks:', error.message);
+        return { data: null, error: formatSupabaseMutationError(error) };
+      }
+
+      if (!data) {
+        return { data: null, error: 'Profile not found' };
+      }
+
+      await this.refreshProfilesFromDatabase();
+      return { data: masterRowToProfile(data as MasterRow), error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      console.error('[SupabaseService] updateSocialLinks:', err);
       return { data: null, error: message };
     }
   }
@@ -740,16 +985,26 @@ export class SupabaseService {
       return { data: null, error: 'Profile not found' };
     }
 
+    const dbId = await this.resolveSpecialistDbId(id);
+    if (!dbId) {
+      return { data: null, error: 'Profile not found' };
+    }
+
     try {
       const client = await this.resolveClient();
       if (!client) {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
+      const ensure = await this.ensureSpecialistRow(dbId);
+      if (ensure.error) {
+        return { data: null, error: ensure.error };
+      }
+
       const { data, error } = await client
         .from(environment.supabase.specialistTable)
         .update(profilePatchToSpecialistRow({ name, specialty, city: patch.city, phone: patch.phone, whatsapp: patch.whatsapp, telegram: patch.telegram, instagram: patch.instagram, facebook: patch.facebook }))
-        .eq('id', id)
+        .eq('id', dbId)
         .select('*')
         .maybeSingle();
 
@@ -1157,15 +1412,44 @@ export class SupabaseService {
         return { data: null, error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const row = mapJobklientInsertToOrderInsert(input);
+      const userId = await this.resolveCurrentUserId();
+      const row = mapJobklientInsertToOrderInsert(input, userId);
       const order = await this.dataService.insertOrder(row);
+
+      await this.attachOrderFileRecord(order.id, input.file);
 
       this.invalidateJobsCache();
       return { data: order as unknown as Record<string, unknown>, error: null };
     } catch (err) {
       logSupabaseError('insertJobklientJob', err);
-      const message = err instanceof Error ? err.message : 'Insert failed';
+      const message = formatSupabaseMutationError(err);
       return { data: null, error: message, supabaseError: err };
+    }
+  }
+
+  private async resolveCurrentUserId(): Promise<string | null> {
+    const client = await this.resolveClient();
+    if (!client) {
+      return null;
+    }
+
+    const { data } = await client.auth.getSession();
+    return data.session?.user?.id ?? null;
+  }
+
+  private async attachOrderFileRecord(orderId: number, fileRef?: string | null): Promise<void> {
+    const path = fileRef?.trim();
+    if (!path || path.startsWith('data:')) {
+      return;
+    }
+
+    try {
+      await this.dataService.insertOrderFile({
+        order_id: orderId,
+        file_path: path,
+      });
+    } catch (err) {
+      logSupabaseError('attachOrderFileRecord', err);
     }
   }
 
@@ -1193,7 +1477,7 @@ export class SupabaseService {
 
       if (error) {
         logSupabaseError('uploadOrderFile', error);
-        return { path: '', publicUrl: null, error: error.message };
+        return { path: '', publicUrl: null, error: formatStorageUploadError(error, ORDER_FILES_BUCKET) };
       }
 
       const { data } = client.storage.from(ORDER_FILES_BUCKET).getPublicUrl(path);
@@ -1304,7 +1588,9 @@ export class SupabaseService {
 
   private readJobsCache(): { at: number; jobs: Job[] } | null {
     if (this.memoryJobsCache) {
-      const jobs = this.filterPublicJobs(this.memoryJobsCache.jobs);
+      const jobs = this.filterPublicJobs(this.memoryJobsCache.jobs).map((job) =>
+        this.hydrateJobPhoto(job),
+      );
       if (jobs.length === 0) {
         return null;
       }
@@ -1336,6 +1622,7 @@ export class SupabaseService {
           ...job,
           createdAt: job.createdAt ? new Date(job.createdAt) : null,
         }))
+        .map((job) => this.hydrateJobPhoto(job))
         .filter((job) => !isCompletedOrderStatus(job.status));
 
       if (jobs.length === 0) {
@@ -1394,6 +1681,21 @@ export class SupabaseService {
 
   private filterPublicJobs(jobs: Job[]): Job[] {
     return jobs.filter((job) => !isCompletedOrderStatus(job.status));
+  }
+
+  private hydrateJobPhoto(job: Job): Job {
+    const resolved = resolveJobPhotoForJob(job);
+    if (!resolved) {
+      return job;
+    }
+
+    return {
+      ...job,
+      details: {
+        ...job.details,
+        photoLink: resolved,
+      },
+    };
   }
 
   private parseOrderId(value: string | number | null | undefined): number | null {
@@ -1490,18 +1792,29 @@ export class SupabaseService {
       throw new Error(SUPABASE_NOT_CONFIGURED);
     }
 
-    let query = client
-      .from(environment.supabase.jobsTable)
-      .select(JOBS_LIST_COLUMNS)
-      .neq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const buildQuery = (columns: string) => {
+      let query = client
+        .from(environment.supabase.jobsTable)
+        .select(columns)
+        .neq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    if (filters?.city) {
-      query = query.eq('city', filters.city);
+      if (filters?.city) {
+        query = query.eq('city', filters.city);
+      }
+
+      return query;
+    };
+
+    let { data, error } = await buildQuery(JOBS_LIST_COLUMNS);
+
+    if (error?.message?.includes('order_files')) {
+      logSupabaseError('fetchJobklientRows.embed', error);
+      ({ data, error } = await buildQuery(
+        'id,created_at,title,budget,description,category,city,status,client_name,client_phone',
+      ));
     }
-
-    const { data, error } = await query;
 
     if (error) {
       logSupabaseError('fetchJobklientRows', error);
@@ -1579,7 +1892,7 @@ export class SupabaseService {
       }
 
       const merged = this.mergeCatalogProfiles(remoteProfiles, localProfiles);
-      this.syncPortfolioWorksToStores(new Map(), merged);
+      this.syncPortfolioWorksToStores(this.buildWorksMapFromLocalStores(), merged);
 
       console.info('[SupabaseService] catalog loaded', {
         remote: remoteProfiles.length,
@@ -1606,7 +1919,10 @@ export class SupabaseService {
     return !!(
       profile.name?.trim() ||
       profile.phone?.trim() ||
-      profile.whatsapp_phone?.trim()
+      profile.whatsapp_phone?.trim() ||
+      profile.tg_username?.trim() ||
+      profile.whatsapp?.trim() ||
+      profile.telegram?.trim()
     );
   }
 
@@ -1629,6 +1945,24 @@ export class SupabaseService {
     }
 
     return Array.from(byId.values());
+  }
+
+  private buildWorksMapFromLocalStores(): Map<string, WorkProject[]> {
+    const map = new Map(this.portfolioWorksByOwnerSignal());
+
+    for (const performer of this.portfolioStore.performers()) {
+      if (performer.works.length > 0) {
+        map.set(performer.id, performer.works);
+      }
+    }
+
+    for (const company of this.furnitureStore.companies()) {
+      if (company.works.length > 0) {
+        map.set(company.dbId ?? company.id, company.works);
+      }
+    }
+
+    return map;
   }
 
   private syncPortfolioWorksToStores(worksMap: Map<string, WorkProject[]>, profiles: Profile[]): void {
@@ -1784,7 +2118,11 @@ export class SupabaseService {
             .performers()
             .find((item) => item.id === profile.id && item.type === profile.type);
     const works = dbWorks ?? local?.works ?? [];
-    return profileToPerformer(profile, works);
+    const performer = profileToPerformer(profile, works);
+    return {
+      ...performer,
+      socialLinks: mergeSocialLinks(performer.socialLinks, local?.socialLinks),
+    };
   }
 
   private toFurnitureCompany(profile: Profile): FurnitureCompany {
@@ -1798,6 +2136,10 @@ export class SupabaseService {
           (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
       );
     const works = dbWorks ?? local?.works ?? [];
-    return profileToFurnitureCompany(profile, works);
+    const company = profileToFurnitureCompany(profile, works);
+    return {
+      ...company,
+      socialLinks: mergeSocialLinks(company.socialLinks, local?.socialLinks),
+    };
   }
 }

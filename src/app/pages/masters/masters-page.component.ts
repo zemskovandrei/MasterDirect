@@ -22,6 +22,7 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -33,6 +34,7 @@ import { firstValueFrom } from 'rxjs';
     ReactiveFormsModule,
     BeforeAfterComponent,
     SocialLinksComponent,
+    CatalogOrderCalculatorSectionComponent,
   ],
   templateUrl: './masters-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

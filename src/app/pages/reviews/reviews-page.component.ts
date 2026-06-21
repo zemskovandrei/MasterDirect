@@ -22,11 +22,13 @@ import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 import { beforeAfterWork } from '../../core/utils/before-after.util';
+import { compressWorkImageFile } from '../../core/utils/compress-image.util';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
-export type ReviewFormMode = 'review' | 'recommendation';
+export type ReviewFormMode = 'review' | 'recommendation' | 'siteFeedback';
 
 interface PerformerOption {
   id: string;
@@ -37,7 +39,7 @@ interface PerformerOption {
 @Component({
   selector: 'app-reviews-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent],
+  imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent, CatalogOrderCalculatorSectionComponent],
   templateUrl: './reviews-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
@@ -57,6 +59,7 @@ export class ReviewsPageComponent {
   protected readonly performerQuery = signal('');
   protected readonly performerMenuOpen = signal(false);
   protected readonly submitSuccess = signal(false);
+  protected readonly submitError = signal<string | null>(null);
   protected readonly hoverRating = signal(0);
 
   protected readonly beforePreview = signal<string | null>(null);
@@ -79,7 +82,7 @@ export class ReviewsPageComponent {
     recommendConfirm: [false],
   });
 
-  protected readonly formModes: ReviewFormMode[] = ['review', 'recommendation'];
+  protected readonly formModes: ReviewFormMode[] = ['review', 'recommendation', 'siteFeedback'];
 
   protected readonly performerOptions = computed<PerformerOption[]>(() => {
     switch (this.category()) {
@@ -154,6 +157,10 @@ export class ReviewsPageComponent {
     return this.formMode() === 'recommendation';
   }
 
+  isSiteFeedbackMode(): boolean {
+    return this.formMode() === 'siteFeedback';
+  }
+
   setRating(value: number) {
     this.reviewForm.patchValue({ rating: value });
     this.reviewForm.get('rating')?.markAsTouched();
@@ -176,6 +183,38 @@ export class ReviewsPageComponent {
   }
 
   async submitReview() {
+    this.submitError.set(null);
+
+    if (this.isSiteFeedbackMode()) {
+      const reviewControl = this.reviewForm.get('review');
+      if (!reviewControl?.value?.trim()) {
+        reviewControl?.setErrors({ required: true });
+      }
+
+      if (this.reviewForm.get('clientName')?.invalid || reviewControl?.invalid) {
+        this.reviewForm.markAllAsTouched();
+        return;
+      }
+
+      const v = this.reviewForm.getRawValue();
+      const created = await this.reviewStore.addReview({
+        name: v.clientName,
+        performerType: 'Сайт',
+        performerTypeKey: 'site',
+        category: this.translation.t('reviewsPage.siteFeedback.categoryLabel'),
+        review: v.review,
+        kind: 'siteFeedback',
+      });
+
+      if (!created) {
+        this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
+        return;
+      }
+
+      this.finishSubmitSuccess();
+      return;
+    }
+
     if (this.category() === 'renovation') {
       const freeText = this.reviewForm.get('performerFreeText')?.value.trim() ?? '';
       if (!freeText) {
@@ -211,6 +250,7 @@ export class ReviewsPageComponent {
         category: performerName,
       });
       if (!created) {
+        this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
         return;
       }
     } else {
@@ -227,10 +267,15 @@ export class ReviewsPageComponent {
         performerId: performer.id,
       });
       if (!created) {
+        this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
         return;
       }
     }
 
+    this.finishSubmitSuccess();
+  }
+
+  private finishSubmitSuccess(): void {
     this.submitSuccess.set(true);
     this.reviewForm.reset({
       clientName: '',
@@ -298,17 +343,26 @@ export class ReviewsPageComponent {
   }
 
   dynamicTitle(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.siteFeedback.title');
+    }
     const prefix = this.isRecommendationMode() ? 'recommendationTitles' : 'titles';
     return this.translation.t(`reviewsPage.${prefix}.${this.category()}`);
   }
 
   dynamicSubtitle(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.siteFeedback.subtitle');
+    }
     return this.translation.t(
       this.isRecommendationMode() ? 'reviewsPage.recommendationSubtitle' : 'reviewsPage.subtitle',
     );
   }
 
   submitSuccessMessage(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.form.siteFeedbackSuccess');
+    }
     return this.translation.t(
       this.isRecommendationMode()
         ? 'reviewsPage.form.recommendationSuccess'
@@ -317,6 +371,9 @@ export class ReviewsPageComponent {
   }
 
   submitButtonLabel(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.form.submitSiteFeedback');
+    }
     return this.translation.t(
       this.isRecommendationMode()
         ? 'reviewsPage.form.submitRecommendation'
@@ -325,12 +382,18 @@ export class ReviewsPageComponent {
   }
 
   reviewTextLabel(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.form.siteFeedbackText');
+    }
     return this.translation.t(
       this.isRecommendationMode() ? 'reviewsPage.form.recommendationText' : 'reviewsPage.form.text',
     );
   }
 
   reviewTextPlaceholder(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.form.siteFeedbackTextPh');
+    }
     return this.translation.t(
       this.isRecommendationMode()
         ? 'reviewsPage.form.recommendationTextPh'
@@ -339,6 +402,9 @@ export class ReviewsPageComponent {
   }
 
   reviewTextError(): string {
+    if (this.isSiteFeedbackMode()) {
+      return this.translation.t('reviewsPage.errors.siteFeedbackText');
+    }
     return this.translation.t(
       this.isRecommendationMode()
         ? 'reviewsPage.errors.recommendationText'
@@ -360,7 +426,17 @@ export class ReviewsPageComponent {
     const ratingControl = this.reviewForm.get('rating');
     const confirmControl = this.reviewForm.get('recommendConfirm');
 
-    if (this.isRecommendationMode()) {
+    if (this.isSiteFeedbackMode()) {
+      reviewControl?.setValidators([
+        Validators.required,
+        Validators.minLength(10),
+        maxWordsValidator(),
+      ]);
+      ratingControl?.clearValidators();
+      ratingControl?.setValue(0);
+      confirmControl?.clearValidators();
+      confirmControl?.setValue(false);
+    } else if (this.isRecommendationMode()) {
       reviewControl?.setValidators([
         Validators.required,
         Validators.minLength(10),
@@ -410,7 +486,7 @@ export class ReviewsPageComponent {
     if (!file) {
       return;
     }
-    this.loadImage(side, file, input);
+    void this.loadImage(side, file, input);
   }
 
   onDropzoneDragOver(side: 'before' | 'after', event: DragEvent) {
@@ -439,10 +515,10 @@ export class ReviewsPageComponent {
     }
     const input =
       side === 'before' ? this.beforeInput()?.nativeElement : this.afterInput()?.nativeElement;
-    this.loadImage(side, file, input);
+    void this.loadImage(side, file, input);
   }
 
-  private loadImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
+  private async loadImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
     if (!file.type.startsWith('image/')) {
       alert(this.translation.t('reviewsPage.errors.imageOnly'));
       if (input) {
@@ -451,7 +527,7 @@ export class ReviewsPageComponent {
       return;
     }
 
-    if (file.size > 800_000) {
+    if (file.size > 15 * 1024 * 1024) {
       alert(this.translation.t('reviewsPage.errors.fileTooLarge'));
       if (input) {
         input.value = '';
@@ -459,16 +535,19 @@ export class ReviewsPageComponent {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    try {
+      const dataUrl = await compressWorkImageFile(file);
       if (side === 'before') {
         this.beforePreview.set(dataUrl);
       } else {
         this.afterPreview.set(dataUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      alert(this.translation.t('cabinet.alertImageCompressFailed'));
+      if (input) {
+        input.value = '';
+      }
+    }
   }
 
   private resetFileInputs() {

@@ -62,6 +62,50 @@ export function supabaseNetworkErrorHint(projectUrl: string): string {
   return `Не удаётся подключиться к Supabase (${host}). Проверьте интернет и DNS, URL проекта в environment.ts и статус проекта в Supabase Dashboard (Settings → API).`;
 }
 
+/** Storage: bucket не создан в Supabase Dashboard. */
+export function isStorageBucketMissingError(error: unknown): boolean {
+  const text = supabaseErrorMessage(error).toLowerCase();
+  return text.includes('bucket not found') || text.includes('bucket does not exist');
+}
+
+/** PostgREST / Storage: insert заблокирован RLS. */
+export function isRlsPolicyError(error: unknown): boolean {
+  if (error && typeof error === 'object') {
+    const code = String((error as { code?: unknown }).code ?? '');
+    if (code === '42501') {
+      return true;
+    }
+  }
+  const text = supabaseErrorMessage(error).toLowerCase();
+  return (
+    text.includes('row-level security') ||
+    text.includes('violates row-level security policy') ||
+    text.includes('new row violates')
+  );
+}
+
+export function rlsPolicyHint(): string {
+  return 'Нет прав на запись в Supabase. В SQL Editor выполните миграцию supabase/migrations/20260621_fix_rls_policies.sql';
+}
+
+export function formatSupabaseMutationError(error: unknown): string {
+  if (isRlsPolicyError(error)) {
+    return rlsPolicyHint();
+  }
+  return supabaseErrorMessage(error) || 'Операция не выполнена';
+}
+
+export function storageBucketMissingHint(bucketId: string): string {
+  return `Хранилище «${bucketId}» не найдено. В Supabase откройте SQL Editor и выполните миграцию supabase/migrations/20260621_storage_orders_files.sql (или создайте bucket вручную в Storage).`;
+}
+
+export function formatStorageUploadError(error: unknown, bucketId: string): string {
+  if (isStorageBucketMissingError(error)) {
+    return storageBucketMissingHint(bucketId);
+  }
+  return supabaseErrorMessage(error) || 'Не удалось загрузить файл';
+}
+
 /** PostgREST / Postgres: колонка или поле отсутствует в схеме. */
 export function isSupabaseSchemaColumnError(error: unknown): boolean {
   const text = supabaseErrorMessage(error).toLowerCase();

@@ -258,6 +258,15 @@
                 <p class="register-card__muted">{{ translation.t('cabinet.registerErrorRateLimitHint') }}</p>
               }
               @if (errorMessageKey() === 'cabinet.registerErrorEmailExists') {
+                <p class="register-card__muted">{{ translation.t('cabinet.registerErrorEmailExistsHint') }}</p>
+                <div class="register-error-actions">
+                  <button type="button" class="btn-signin" (click)="openLoginWithCurrentEmail()">
+                    {{ translation.t('cabinet.registerErrorEmailExistsSignIn') }}
+                  </button>
+                  <button type="button" class="link-accent" (click)="openForgotPassword()">
+                    {{ translation.t('cabinet.forgotPasswordLink') }}
+                  </button>
+                </div>
                 <p class="register-card__muted">
                   {{ translation.t('cabinet.deleteAccountHint') }}
                   <button type="button" class="link-accent" (click)="openDeleteAccountPanel(form.controls.email.value)">

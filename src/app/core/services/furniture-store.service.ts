@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { FurnitureCompany, FurnitureSession } from '../models/furniture.models';
 import { PerformerSocialLinks, WorkProject } from '../models/portfolio.models';
-import { normalizeSocialLinks } from '../utils/social-links.util';
+import { mergeSocialLinks, normalizeSocialLinks } from '../utils/social-links.util';
 import { isUuid } from '../utils/furniture-id.util';
 import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
 
@@ -106,6 +106,7 @@ export class FurnitureStoreService {
       const merged: FurnitureCompany = {
         ...company,
         works: existing.works.length > 0 ? existing.works : company.works,
+        socialLinks: mergeSocialLinks(company.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];
     });
@@ -140,7 +141,11 @@ export class FurnitureStoreService {
     const merged = remote.map((company) => {
       const local = existing.find((item) => item.id === company.id || item.dbId === company.dbId);
       const works = company.works.length > 0 ? company.works : (local?.works ?? []);
-      return { ...company, works };
+      return {
+        ...company,
+        works,
+        socialLinks: mergeSocialLinks(company.socialLinks, local?.socialLinks),
+      };
     });
     this.companiesSignal.set(merged);
     this.persist();
@@ -284,14 +289,20 @@ export class FurnitureStoreService {
     }
   }
 
-  private persist(): void {
+  private persist(): boolean {
     if (!isPlatformBrowser(this.platformId)) {
-      return;
+      return true;
     }
 
-    const companies = this.companiesSignal().filter((c) => !c.isDemo);
-    localStorage.setItem(FURNITURE_KEY, JSON.stringify(companies));
-    this.persistSession();
+    try {
+      const companies = this.companiesSignal().filter((c) => !c.isDemo);
+      localStorage.setItem(FURNITURE_KEY, JSON.stringify(companies));
+      this.persistSession();
+      return true;
+    } catch (error) {
+      console.warn('Не удалось сохранить мебельный каталог в браузере (лимит localStorage).', error);
+      return false;
+    }
   }
 
   private persistSession(): void {

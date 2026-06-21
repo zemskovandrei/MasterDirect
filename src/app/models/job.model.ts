@@ -1,6 +1,7 @@
 import type { FurnitureOrderInsert } from '../core/models/master.model';
+import { environment } from '../../environments/environment';
 
-/** Строка таблицы заказов в Supabase (`order`). */
+const ORDER_FILES_BUCKET = 'orders-files';
 export interface JobklientJobRow {
   id?: number | string | null;
   title?: string | null;
@@ -18,6 +19,7 @@ export interface JobklientJobRow {
   status?: string | null;
   is_active?: boolean | null;
   active?: boolean | null;
+  order_files?: Array<{ file_path?: string | null }> | null;
 }
 
 /**
@@ -193,6 +195,11 @@ export interface JobContactInfo {
   display: string;
 }
 
+export interface JobScopeSection {
+  title: string;
+  items: string[];
+}
+
 export interface JobDetails {
   areaSqm: number | null;
   customerName: string | null;
@@ -200,6 +207,7 @@ export interface JobDetails {
   directedTo: string | null;
   photoLink: string | null;
   summary: string;
+  scopeSections: JobScopeSection[];
 }
 
 /** Нормализованная модель заказа для UI. */
@@ -313,7 +321,7 @@ export function resolveJobStatus(row: JobklientJobRow): string {
 }
 
 const DESCRIPTION_FIELD_PATTERNS: Array<{
-  key: keyof Omit<JobDetails, 'summary' | 'areaSqm'>;
+  key: keyof Omit<JobDetails, 'summary' | 'areaSqm' | 'scopeSections'>;
   patterns: RegExp[];
 }> = [
   {
@@ -330,7 +338,9 @@ const DESCRIPTION_FIELD_PATTERNS: Array<{
   },
   {
     key: 'photoLink',
-    patterns: [/^(?:Фото|Photo|Photos?):\s*(.+)$/iu],
+    patterns: [
+      /^(?:📷\s*)?(?:Фото(?:\s+объекта)?|Photo|Photos?):\s*(.+)$/iu,
+    ],
   },
 ];
 
@@ -367,8 +377,134 @@ export function parseJobContact(raw: string): JobContactInfo {
   return { phone: null, telegram: display.replace(/^@/, ''), display };
 }
 
+const JOB_SCOPE_START =
+  /^(?:📋\s*)?(?:Состав работ|Work scope|Scope of work):\s*(.*)$/iu;
+
+const JOB_SCOPE_END =
+  /^(?:📷\s*)?(?:Фото(?:\s+объекта)?|Photo|Photos?):|(?:Направлено|Directed to|Sent to):|(?:Выезд(?: на замер)?|Site visit|Call.?out):|Согласие на платный выезд|I agree to a paid site visit/iu;
+
+const JOB_SCOPE_BULLET = /^[•\-–—*]\s*(.+)$/u;
+
+/** Пункты чек-листа из блока «Состав работ» в описании заказа. */
+export function parseJobScopeSections(description: string): JobScopeSection[] {
+  const lines = description.split('\n').map((line) => line.trim());
+
+  let startIndex = -1;
+  for (let index = 0; index < lines.length; index += 1) {
+    if (JOB_SCOPE_START.test(lines[index])) {
+      startIndex = index;
+      break;
+    }
+  }
+
+  if (startIndex < 0) {
+    return [];
+  }
+
+  const sections: JobScopeSection[] = [];
+  let current: JobScopeSection = { title: '', items: [] };
+
+  const headerMatch = lines[startIndex].match(JOB_SCOPE_START);
+  const inlineItem = headerMatch?.[1]?.trim();
+  if (inlineItem) {
+    current.items.push(inlineItem);
+  }
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line) {
+      continue;
+    }
+
+    if (JOB_SCOPE_END.test(line)) {
+      break;
+    }
+
+    if (/^(?:Заказчик|Customer|Клиент|Client|Контакт|Contact|Площадь|Area):/iu.test(line)) {
+      break;
+    }
+
+    const bulletMatch = line.match(JOB_SCOPE_BULLET);
+    if (bulletMatch?.[1]) {
+      current.items.push(bulletMatch[1].trim());
+      continue;
+    }
+
+    if (/^(.{2,100}):$/.test(line) && !line.includes('://')) {
+      if (current.title || current.items.length > 0) {
+        sections.push(current);
+      }
+      current = { title: line.slice(0, -1).trim(), items: [] };
+      continue;
+    }
+
+    current.items.push(line);
+  }
+
+  if (current.title || current.items.length > 0) {
+    sections.push(current);
+  }
+
+  return sections.filter((section) => section.items.length > 0);
+}
+
+export function jobScopeItemCount(sections: JobScopeSection[]): number {
+  return sections.reduce((total, section) => total + section.items.length, 0);
+}
+
+function isJobScopeBlockLine(line: string): boolean {
+  return JOB_SCOPE_START.test(line) || JOB_SCOPE_END.test(line);
+}
+
+function stripJobScopeBlock(description: string): string {
+  const lines = description.split('\n');
+  let startIndex = -1;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    if (JOB_SCOPE_START.test(lines[index].trim())) {
+      startIndex = index;
+      break;
+    }
+  }
+
+  if (startIndex < 0) {
+    return description;
+  }
+
+  const kept: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    if (index < startIndex) {
+      kept.push(lines[index]);
+      continue;
+    }
+
+    if (index === startIndex) {
+      continue;
+    }
+
+    const trimmed = lines[index].trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    if (JOB_SCOPE_END.test(trimmed)) {
+      kept.push(...lines.slice(index));
+      break;
+    }
+
+    if (/^(?:Заказчик|Customer|Клиент|Client|Контакт|Contact|Площадь|Area):/iu.test(trimmed)) {
+      kept.push(...lines.slice(index));
+      break;
+    }
+  }
+
+  return kept.join('\n').trim();
+}
+
 export function parseJobDetails(description: string): JobDetails {
-  const lines = description
+  const scopeSections = parseJobScopeSections(description);
+  const normalizedDescription = stripJobScopeBlock(description);
+  const lines = normalizedDescription
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
@@ -380,6 +516,7 @@ export function parseJobDetails(description: string): JobDetails {
     directedTo: null,
     photoLink: null,
     summary: '',
+    scopeSections,
   };
 
   const summaryLines: string[] = [];
@@ -427,7 +564,7 @@ export function parseJobDetails(description: string): JobDetails {
     details.areaSqm != null;
 
   if (!details.summary && !hasStructuredFields) {
-    details.summary = description.trim();
+    details.summary = normalizedDescription.trim();
   }
 
   return details;
@@ -448,6 +585,101 @@ export function jobTelegramHref(contact: JobContactInfo | null): string | null {
 
   const username = contact.telegram.replace(/^@/, '');
   return username ? `https://t.me/${username}` : null;
+}
+
+/** Публичный URL файла в bucket `orders-files` по относительному пути. */
+function orderFileStoragePublicUrl(path: string): string {
+  const base = environment.supabase.url.replace(/\/$/, '');
+  const objectPath = path
+    .replace(/^\/+/, '')
+    .replace(new RegExp(`^${ORDER_FILES_BUCKET}/`), '');
+  return `${base}/storage/v1/object/public/${ORDER_FILES_BUCKET}/${objectPath}`;
+}
+
+/** Извлекает сырое значение ссылки на фото из текста описания заказа. */
+export function extractPhotoLinkRaw(text: string): string | null {
+  if (!text?.trim()) {
+    return null;
+  }
+
+  const patterns = [
+    /(?:^|\n)\s*(?:📷\s*)?(?:Фото(?:\s+объекта)?|Photo|Photos?):\s*(.+?)\s*(?:\n|$)/giu,
+    /(?:^|\n)\s*📷\s*(.+?)\s*(?:\n|$)/giu,
+  ];
+
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0;
+    const match = pattern.exec(text);
+    const value = match?.[1]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+/** Лучший URL/data URL для показа фото заказа. */
+export function resolveJobPhotoForJob(job: Job): string | null {
+  const candidates = [job.details?.photoLink, extractPhotoLinkRaw(job.description)].filter(
+    (value): value is string => !!value?.trim(),
+  );
+
+  for (const candidate of candidates) {
+    const resolved = resolveJobPhotoSrc(candidate);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+}
+
+/** URL/data URL для превью фото заказа на доске. */
+export function resolveJobPhotoSrc(photoLink?: string | null): string | null {
+  const link = photoLink?.trim();
+  if (!link) {
+    return null;
+  }
+
+  if (/^data:image\//i.test(link)) {
+    return link;
+  }
+
+  if (/^https?:\/\//i.test(link)) {
+    if (/storage\/v1\/object\/(?:public|sign)\//i.test(link)) {
+      return link;
+    }
+    if (/\.(jpe?g|png|webp|gif|bmp|svg|avif|heic)(\?|#|$)/i.test(link)) {
+      return link;
+    }
+    if (/supabase\.co/i.test(link)) {
+      return link;
+    }
+    return null;
+  }
+
+  if (!/[\s<>]/.test(link)) {
+    return orderFileStoragePublicUrl(link);
+  }
+
+  return null;
+}
+
+function firstOrderFilePath(row: JobklientJobRow): string | null {
+  const files = row.order_files;
+  if (!files?.length) {
+    return null;
+  }
+
+  for (const item of files) {
+    const path = item?.file_path?.trim();
+    if (path) {
+      return path;
+    }
+  }
+
+  return null;
 }
 
 export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, index: number): Job | null {
@@ -472,8 +704,20 @@ export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, in
       details.contact = parseJobContact(row.client_phone.trim());
     }
 
-    if (row.file?.trim() && !details.photoLink) {
-      details.photoLink = row.file.trim();
+    const photoCandidates = [
+      details.photoLink,
+      extractPhotoLinkRaw(description),
+      row.file?.trim(),
+      firstOrderFilePath(row),
+    ].filter((value): value is string => !!value?.trim());
+
+    details.photoLink = null;
+    for (const candidate of photoCandidates) {
+      const resolved = resolveJobPhotoSrc(candidate);
+      if (resolved) {
+        details.photoLink = resolved;
+        break;
+      }
     }
 
     return {

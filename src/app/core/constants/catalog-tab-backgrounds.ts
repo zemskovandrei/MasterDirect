@@ -6,13 +6,13 @@ export const CATALOG_TAB_BACKGROUNDS = {
   furniture:
     'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1200',
   jobs:
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
+    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1920',
   reviews:
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200',
   catalogHub:
     'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
   calculator:
-    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1920',
   cabinetWorker:
     'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920',
   cabinetBrigade:
@@ -51,7 +51,53 @@ export const HOME_HERO_BACKGROUND =
 
 export type CatalogTabBackgroundKey = keyof typeof CATALOG_TAB_BACKGROUNDS;
 
-export type CabinetTabBackgroundKey = 'cabinetWorker' | 'cabinetBrigade' | 'cabinetFurniture';
+/** Фото фона для каждого шага калькулятора «Оставить заказ». */
+export const CALCULATOR_STEP_BACKGROUNDS = {
+  /** 1 — тип помещения */
+  1: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1920',
+  /** 2 — тип ремонта */
+  2: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1920',
+  /** 3 — площадь */
+  3: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1920',
+  /** 4 — чек-лист работ */
+  4: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
+  /** 5 — выбор исполнителей */
+  5: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920',
+  /** 6 — контакты */
+  6: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920',
+  /** заявка отправлена */
+  success: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
+} as const;
+
+const CALCULATOR_STEP_POSITION: Record<keyof typeof CALCULATOR_STEP_BACKGROUNDS, string> = {
+  1: 'center center',
+  2: 'center 30%',
+  3: 'center center',
+  4: 'center 40%',
+  5: 'center top',
+  6: 'center 55%',
+  success: 'center center',
+};
+
+/** Светлый оверлей + фото для текущего шага калькулятора. */
+export function calculatorStepBackgroundStyle(
+  step: number,
+  options?: { submitted?: boolean },
+): Record<string, string> {
+  const stepKey = options?.submitted
+    ? 'success'
+    : (Math.min(6, Math.max(1, Math.trunc(step))) as 1 | 2 | 3 | 4 | 5 | 6);
+  const photoUrl = CALCULATOR_STEP_BACKGROUNDS[stepKey];
+  const position = CALCULATOR_STEP_POSITION[stepKey];
+
+  return {
+    backgroundColor: '#e8eef4',
+    backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 250, 252, 0.62) 50%, rgba(236, 242, 248, 0.72) 100%), url('${photoUrl}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: position,
+    backgroundRepeat: 'no-repeat',
+  };
+}
 
 export function homeHeroBackgroundStyle(): Record<string, string> {
   return {
@@ -77,18 +123,7 @@ export function catalogTabBackgroundStyle(
   };
 }
 
-/** Светлый оверлей поверх фото — для секции «Оставить заказ» с белой формой. */
-export function calculatorSectionBackgroundStyle(): Record<string, string> {
-  const photoUrl = CATALOG_TAB_BACKGROUNDS.calculator;
-  return {
-    backgroundColor: '#f1f5f9',
-    backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.93) 0%, rgba(248, 250, 252, 0.88) 55%, rgba(241, 245, 249, 0.9) 100%), url('${photoUrl}')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'scroll',
-  };
-}
+export type CabinetTabBackgroundKey = 'cabinetWorker' | 'cabinetBrigade' | 'cabinetFurniture';
 
 export function cabinetPageSurfaceStyle(): Record<string, string> {
   return {

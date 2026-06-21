@@ -463,15 +463,34 @@ section.renovation-calculator {
 
 .quiz-success__contact-lead {
   margin: 0.5rem 0 0;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.quiz-success__contact-box {
+  width: 100%;
+  max-width: 560px;
+  margin: 0.75rem auto 0;
+  padding: 1rem 1.15rem;
+  border-radius: 16px;
+  border: 1px solid rgba(77, 238, 234, 0.35);
+  background: rgba(15, 23, 42, 0.42);
+  text-align: left;
+}
+
+.quiz-success__contact-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .quiz-success__executors {
   display: grid;
   gap: 0.85rem;
   width: 100%;
-  max-width: 520px;
-  margin: 0.75rem auto 0;
+  margin: 1rem 0 0;
 }
 
 .quiz-success__executor {
@@ -493,17 +512,39 @@ section.renovation-calculator {
 }
 
 .quiz-messenger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.45rem 0.9rem;
+  padding: 0.65rem 1.1rem;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.quiz-messenger-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.quiz-messenger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.quiz-messenger-btn__arrow {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.quiz-messenger-btn--missing {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: default;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.85rem;
 }
 
 .quiz-messenger-btn--whatsapp {
@@ -1015,4 +1056,416 @@ section.renovation-calculator {
   .quiz-performer-card {
     flex: 0 0 168px;
   }
+}
+
+/* ——— Light theme (страница заказов / «Оставить заказ») ——— */
+.renovation-calculator--light {
+  padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 1.5rem) clamp(2.5rem, 6vw, 3.5rem);
+  border-radius: 24px;
+  overflow: hidden;
+  transition: background-color 0.45s ease;
+}
+
+.renovation-calculator--light .renovation-calculator__header {
+  text-align: center;
+}
+
+.renovation-calculator--light .renovation-calculator__header h2 {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+.renovation-calculator--light .renovation-calculator__header .section-subtitle {
+  color: #64748b;
+  text-shadow: none;
+}
+
+.renovation-calculator--light .quiz-card {
+  margin-top: 2.5rem;
+  padding: clamp(1.75rem, 3.5vw, 2.75rem);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow:
+    0 12px 40px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.renovation-calculator--light .quiz-step__title {
+  color: #0f172a;
+  font-size: clamp(1.25rem, 2.8vw, 1.55rem);
+}
+
+.renovation-calculator--light .quiz-step__lead,
+.renovation-calculator--light .quiz-step__hint,
+.renovation-calculator--light .quiz-step__empty {
+  color: #64748b;
+}
+
+.renovation-calculator--light .quiz-step__lead--directed {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.renovation-calculator--light .quiz-back {
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-back:hover {
+  color: #0f766e;
+}
+
+.renovation-calculator--light .quiz-progress__dot {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.renovation-calculator--light .quiz-progress__dot--active {
+  background: rgba(0, 229, 168, 0.45);
+}
+
+.renovation-calculator--light .quiz-progress__dot--current {
+  background: #00e5a8;
+  box-shadow: 0 0 10px rgba(0, 229, 168, 0.35);
+}
+
+.renovation-calculator--light .quiz-options {
+  gap: 1.15rem;
+}
+
+.renovation-calculator--light .quiz-option {
+  min-height: 72px;
+  padding: 1.25rem 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #0f172a;
+  font-size: clamp(1rem, 2vw, 1.08rem);
+  font-weight: 700;
+  box-shadow:
+    0 4px 16px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.renovation-calculator--light .quiz-option:hover {
+  border-color: rgba(0, 229, 168, 0.45);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.renovation-calculator--light .quiz-option--selected {
+  border-color: rgba(0, 229, 168, 0.75);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 168, 0.25),
+    0 12px 32px rgba(0, 229, 168, 0.14);
+}
+
+.renovation-calculator--light .quiz-field {
+  max-width: 420px;
+  gap: 0.45rem;
+}
+
+.renovation-calculator--light .quiz-field span {
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.renovation-calculator--light .quiz-field input,
+.renovation-calculator--light .quiz-field select {
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #0f172a;
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.renovation-calculator--light .quiz-field input::placeholder {
+  color: #94a3b8;
+}
+
+.renovation-calculator--light .quiz-field input:focus,
+.renovation-calculator--light .quiz-field select:focus {
+  border-color: rgba(0, 229, 168, 0.6);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    0 0 0 3px rgba(0, 229, 168, 0.16),
+    0 6px 18px rgba(0, 229, 168, 0.1);
+}
+
+.renovation-calculator--light .quiz-field-error {
+  color: #dc2626;
+}
+
+.renovation-calculator--light .quiz-continue-btn,
+.renovation-calculator--light .quiz-submit-btn {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(0, 229, 168, 0.92), rgba(45, 212, 191, 0.88));
+  color: #0f172a;
+  box-shadow:
+    0 10px 28px rgba(0, 229, 168, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.renovation-calculator--light .quiz-submit-btn--ghost {
+  background: rgba(255, 255, 255, 0.55);
+  color: #334155;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.renovation-calculator--light .quiz-checkbox {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(255, 255, 255, 0.42);
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-step__notice {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(254, 243, 199, 0.95);
+  color: #92400e;
+}
+
+.renovation-calculator--light .quiz-scope-hero {
+  border-color: rgba(0, 229, 168, 0.28);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.renovation-calculator--light .quiz-scope-hero__badge {
+  background: rgba(0, 229, 168, 0.18);
+  color: #047857;
+}
+
+.renovation-calculator--light .quiz-scope-hero__text {
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-scope-steps__item {
+  background: rgba(255, 255, 255, 0.5);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.renovation-calculator--light .quiz-scope-steps__item--done {
+  color: #047857;
+  border-color: rgba(0, 229, 168, 0.4);
+}
+
+.renovation-calculator--light .quiz-scope-steps__item--next {
+  color: #0f172a;
+  background: rgba(0, 229, 168, 0.16);
+  border-color: rgba(0, 229, 168, 0.45);
+}
+
+.renovation-calculator--light .quiz-scope-steps__arrow {
+  color: #94a3b8;
+}
+
+.renovation-calculator--light .quiz-scope-count {
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-scope-line {
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-scope-line::before {
+  color: #059669;
+}
+
+.renovation-calculator--light .quiz-scope-line--disabled::before {
+  color: #94a3b8;
+}
+
+.renovation-calculator--light .quiz-scope-reminder {
+  border-color: rgba(14, 165, 233, 0.28);
+  background: rgba(255, 255, 255, 0.55);
+  color: #0c4a6e;
+}
+
+.renovation-calculator--light .quiz-scope-reminder p {
+  color: #0c4a6e;
+}
+
+.renovation-calculator--light .quiz-checklist-search__label,
+.renovation-calculator--light .quiz-checklist-extra__title,
+.renovation-calculator--light .quiz-checklist-extra__hint,
+.renovation-calculator--light .quiz-checklist-extra__custom-hint,
+.renovation-calculator--light .quiz-checklist-main-title,
+.renovation-calculator--light .quiz-checklist-extra__custom-label {
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-checklist-search__input,
+.renovation-calculator--light .quiz-checklist-custom__input {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.42);
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-checklist-search__clear,
+.renovation-calculator--light .quiz-checklist-custom__add,
+.renovation-calculator--light .quiz-checklist-action {
+  border-color: rgba(0, 229, 168, 0.35);
+  background: rgba(255, 255, 255, 0.55);
+  color: #0f766e;
+}
+
+.renovation-calculator--light .quiz-checklist-search__meta,
+.renovation-calculator--light .quiz-checklist-search-empty {
+  color: #64748b;
+}
+
+.renovation-calculator--light .quiz-checklist-extra {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.renovation-calculator--light .quiz-checklist-extra__item {
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-checklist-custom__item {
+  background: rgba(255, 255, 255, 0.5);
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-checklist-custom__remove {
+  color: #dc2626;
+}
+
+.renovation-calculator--light .quiz-estimate-group {
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.renovation-calculator--light .quiz-estimate-group__title,
+.renovation-calculator--light .quiz-checklist-phase .quiz-estimate-group__title {
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-estimate-line,
+.renovation-calculator--light .quiz-estimate-line__label,
+.renovation-calculator--light .quiz-estimate-line__toggle {
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-estimate-note {
+  color: #64748b;
+}
+
+.renovation-calculator--light .quiz-estimate-chip {
+  background: rgba(0, 229, 168, 0.14);
+  color: #047857;
+}
+
+.renovation-calculator--light .quiz-performer-card {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 16px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.renovation-calculator--light .quiz-performer-card--selected {
+  border-color: rgba(0, 229, 168, 0.75);
+  box-shadow: 0 0 0 1px rgba(0, 229, 168, 0.2);
+}
+
+.renovation-calculator--light .quiz-performer-card__avatar {
+  background: rgba(0, 229, 168, 0.16);
+  color: #047857;
+}
+
+.renovation-calculator--light .quiz-performer-card__body strong {
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-performer-card__body span {
+  color: #64748b;
+}
+
+.renovation-calculator--light .quiz-performer-card__fee {
+  color: #b45309 !important;
+}
+
+.renovation-calculator--light .quiz-performer-card__select {
+  border-color: rgba(0, 229, 168, 0.35);
+  background: rgba(255, 255, 255, 0.55);
+  color: #334155;
+}
+
+.renovation-calculator--light .quiz-performer-card__select:hover,
+.renovation-calculator--light .quiz-performer-card__select--active {
+  border-color: #00e5a8;
+  background: rgba(0, 229, 168, 0.14);
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-contact-form {
+  gap: 1.15rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.renovation-calculator--light .quiz-field--file .quiz-field__file-input {
+  border: 1px dashed rgba(14, 165, 233, 0.35);
+  background: rgba(255, 255, 255, 0.38);
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-field__file-name {
+  color: #0369a1;
+}
+
+.renovation-calculator--light .quiz-success h3 {
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-success p,
+.renovation-calculator--light .quiz-success__contact-lead,
+.renovation-calculator--light .quiz-success__contact-hint {
+  color: #475569;
+}
+
+.renovation-calculator--light .quiz-success__contact-box {
+  border-color: rgba(0, 229, 168, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.renovation-calculator--light .quiz-success__contact-lead {
+  color: #0f172a;
+}
+
+.renovation-calculator--light .quiz-messenger-btn--missing {
+  background: rgba(15, 23, 42, 0.06);
+  color: #64748b;
+}
+
+.renovation-calculator--light .quiz-success__icon {
+  background: #00e5a8;
+  color: #042f2e;
+}
+
+.renovation-calculator--light .quiz-success__executor {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.renovation-calculator--light .quiz-success__executor-name {
+  color: #0f172a;
 }

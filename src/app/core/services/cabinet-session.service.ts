@@ -65,6 +65,44 @@ export class CabinetSessionService {
     return this.applyProfileSession(profile);
   }
 
+  private async persistLocalProfileToDatabase(user: User): Promise<void> {
+    const sync = await this.supabase.syncAuthProfileFromUser(user);
+    if (!sync.error) {
+      return;
+    }
+
+    const meta = user.user_metadata ?? {};
+    const fullName = String(meta['full_name'] ?? user.email?.split('@')[0] ?? 'Профиль').trim();
+    const specialty = String(meta['specialty'] ?? 'electrician').trim();
+    const phone = String(meta['phone'] ?? '').trim();
+    const proRole = String(meta['pro_role'] ?? '');
+    const accountTypeRaw = String(meta['account_type'] ?? '');
+    const accountType = this.resolveAccountType(proRole, accountTypeRaw);
+
+    if (!accountType) {
+      return;
+    }
+
+    await this.supabase.registerAuthProfile({
+      userId: user.id,
+      accountType: accountType === 'furniture' ? 'furniture' : accountType,
+      fullName,
+      phone: phone || '-',
+      city: String(meta['city'] ?? '').trim(),
+      specialty,
+      description: String(meta['description'] ?? fullName).trim(),
+      proRole: proRole || undefined,
+      whatsapp: String(meta['whatsapp'] ?? '').trim() || undefined,
+      telegram: String(meta['telegram'] ?? '').trim() || undefined,
+      instagram: String(meta['instagram'] ?? '').trim() || undefined,
+      facebook: String(meta['facebook'] ?? '').trim() || undefined,
+      slug:
+        accountType === 'furniture'
+          ? `${buildFurnitureSlug(fullName)}-${user.id.replace(/-/g, '').slice(0, 8)}`
+          : undefined,
+    });
+  }
+
   private applyProfileSession(profile: Profile): boolean {
     if (profile.type === 'furniture') {
       const local = this.furnitureStore
@@ -123,6 +161,7 @@ export class CabinetSessionService {
         slug,
       });
       this.portfolioStore.signOut();
+      void this.persistLocalProfileToDatabase(user);
       return true;
     }
 
@@ -135,6 +174,7 @@ export class CabinetSessionService {
         socialLinks,
       });
       this.furnitureStore.signOut();
+      void this.persistLocalProfileToDatabase(user);
       return true;
     }
 

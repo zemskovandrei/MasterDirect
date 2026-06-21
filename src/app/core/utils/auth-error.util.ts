@@ -32,6 +32,41 @@ export function isAuthEmailRateLimitError(error: AuthError | null | undefined): 
   );
 }
 
+/** Нет активной сессии — нормально для гостя, не логировать как ошибку. */
+export function isAuthSessionMissingError(error: AuthError | null | undefined): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const code = String(error.code ?? '').toLowerCase();
+  const message = String(error.message ?? '').toLowerCase();
+
+  return code === 'session_not_found' || message.includes('auth session missing');
+}
+
+/** JWT/сессия недействительны (403/401, пользователь удалён, смена проекта Supabase). */
+export function isInvalidAuthSessionError(error: AuthError | null | undefined): boolean {
+  if (!error || isAuthSessionMissingError(error)) {
+    return false;
+  }
+
+  const code = String(error.code ?? '').toLowerCase();
+  const message = String(error.message ?? '').toLowerCase();
+  const status = Number((error as AuthError & { status?: number }).status ?? 0);
+
+  return (
+    status === 401 ||
+    status === 403 ||
+    code === 'user_not_found' ||
+    code === 'bad_jwt' ||
+    code === 'invalid_jwt' ||
+    message.includes('does not exist') ||
+    message.includes('invalid claim') ||
+    message.includes('jwt expired') ||
+    message.includes('invalid token')
+  );
+}
+
 /** Supabase returns an empty identities array when the email is already taken. */
 export function isDuplicateSignupUser(user: User | null | undefined): boolean {
   return !!user && (!user.identities || user.identities.length === 0);

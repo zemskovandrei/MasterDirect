@@ -3,7 +3,6 @@
     "before": "Before",
     "after": "After",
     "tag": "Before / After",
-    "hint": "Drag the slider to compare",
     "compareAria": "Compare before and after",
     "compareLabel": "before and after comparison",
     "afterAlt": "after renovation",
@@ -25,7 +24,6 @@
     "worksEmptyLead": "The performer will add before/after projects soon.",
     "worksEyebrow": "Transformation",
     "worksTitle": "Before and after renovation",
-    "worksLead": "Drag the slider on the photo to compare the site before and after handover.",
     "moreProjects": "More projects",
     "ctaBrigade": "Like the result? Pick a team from the catalog.",
     "ctaMaster": "Like the result? Pick a master from the catalog.",
@@ -297,6 +295,8 @@
     "registerErrorDatabaseSteps": "Supabase Dashboard → SQL Editor → paste and Run:",
     "registerErrorDatabaseHint": "After Run, refresh the page and sign up again. The app will create your profile.",
     "registerErrorEmailExists": "An account with this email already exists. Sign in or use a different email.",
+    "registerErrorEmailExistsHint": "You may have registered before. Sign in with this email — your catalog profile will be created automatically.",
+    "registerErrorEmailExistsSignIn": "Sign in with this email",
     "registerErrorEmailNotConfirmed": "Confirm your email using the link we sent, then sign in again.",
     "registerErrorRateLimit": "Supabase temporarily blocked sending emails (rate limit). Wait about an hour. If the account already exists, sign in with your password or open the latest email.",
     "registerErrorRateLimitHint": "For development: Supabase → Authentication → Providers → Email → turn off «Confirm email».",
@@ -345,7 +345,8 @@
     "previewBefore": "Preview: before renovation",
     "previewAfter": "Preview: after renovation",
     "alertImageOnly": "Please select an image file.",
-    "alertFileTooLarge": "File is too large. Choose a photo up to 800 KB (server limit in production).",
+    "alertFileTooLarge": "File is too large (maximum 15 MB).",
+    "alertImageCompressFailed": "Could not compress the image. Try another photo.",
     "alertBothPhotos": "Upload both photos: before and after.",
     "specialties": {
       "tiler": "Tiler",
@@ -437,13 +438,21 @@
     },
     "subtitle": "Your review will help other users find reliable specialists.",
     "recommendationSubtitle": "Recommend a specialist you trust — it's quicker than a full review.",
+    "siteFeedback": {
+      "title": "What should we improve on the site?",
+      "subtitle": "Tell us what to add, fix, or simplify — we read every message.",
+      "categoryLabel": "Site suggestion",
+      "notificationTarget": "Site improvement"
+    },
     "kind": {
       "review": "Review",
-      "recommendation": "Recommendation"
+      "recommendation": "Recommendation",
+      "siteFeedback": "Site feedback"
     },
     "formModes": {
       "review": "Leave a review",
-      "recommendation": "Recommend"
+      "recommendation": "Recommend",
+      "siteFeedback": "Improve the site"
     },
     "recommendationTitles": {
       "brigade": "Which brigade do you recommend?",
@@ -463,10 +472,13 @@
       "lead": "Pick a category and performer, rate the work and describe the outcome.",
       "success": "Thank you! Your review was sent for moderation.",
       "recommendationSuccess": "Thank you! Your recommendation was sent for moderation.",
+      "siteFeedbackSuccess": "Thank you! Your suggestion was sent to the site team.",
       "modeAria": "Publication type",
       "categoryAria": "Performer category",
       "clientName": "Your name",
       "clientNamePh": "How to present you in the review",
+      "feedbackName": "Your name",
+      "feedbackNamePh": "Name or “Anonymous”",
       "performer": "Performer",
       "performerPh": {
         "brigade": "Team name or foreman's name…",
@@ -481,6 +493,8 @@
       "textPh": "Describe timing, quality, communication and the final result…",
       "recommendationText": "Why you recommend them",
       "recommendationTextPh": "Briefly: what you liked, who this specialist is best for…",
+      "siteFeedbackText": "Your suggestion",
+      "siteFeedbackTextPh": "e.g. add a city filter, faster photo upload, calculator hints…",
       "recommendConfirm": "I recommend this specialist to other clients",
       "photos": "Work photos (optional)",
       "photosHint": "You may attach a before/after pair to make the review more convincing.",
@@ -489,7 +503,9 @@
       "dropTitle": "Drag a photo or click to upload",
       "submit": "Submit review",
       "submitRecommendation": "Submit recommendation",
-      "note": "Reviews are checked by an administrator before publication."
+      "submitSiteFeedback": "Send suggestion",
+      "note": "Reviews are checked by an administrator before publication.",
+      "siteFeedbackNote": "Your message is saved and sent to the site team for review."
     },
     "errors": {
       "clientName": "Enter your name (at least 2 characters).",
@@ -497,14 +513,16 @@
       "rating": "Rate from 1 to 5 stars.",
       "text": "Write a review (at least 20 characters).",
       "recommendationText": "Explain why you recommend them (at least 10 characters).",
+      "siteFeedbackText": "Describe your suggestion (at least 10 characters).",
       "recommendConfirm": "Please confirm that you recommend this specialist.",
+      "submitFailed": "Could not submit. Check your connection and try again.",
       "imageOnly": "Please choose an image file.",
       "fileTooLarge": "File is too large (max 800 KB)."
     },
     "feed": {
       "eyebrow": "Published",
-      "title": "Reviews and recommendations",
-      "lead": "Real client reviews and recommendations.",
+      "title": "Reviews, recommendations & ideas",
+      "lead": "Specialist reviews and suggestions to improve the site.",
       "empty": "No publications yet. Be the first!",
       "before": "Before",
       "after": "After"

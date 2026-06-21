@@ -25,7 +25,10 @@ export function mapJobklientInsertToOrderInsert(
 }
 
 /** Преобразует строку `order` из Supabase в UI-модель `Job`. */
-export function mapOrderRowToJob(row: Order, index: number): Job | null {
+export function mapOrderRowToJob(
+  row: Order & { order_files?: Array<{ file_path?: string | null }> | null },
+  index: number,
+): Job | null {
   const legacyRow: JobklientJobRow = {
     id: row.id,
     title: row.title,
@@ -38,12 +41,15 @@ export function mapOrderRowToJob(row: Order, index: number): Job | null {
     description: row.description,
     status: row.status,
     created_at: row.created_at,
+    order_files: row.order_files ?? null,
   };
 
   return mapJobklientRowToJob(legacyRow, index);
 }
 
-export function mapOrderRowsToJobs(rows: Order[]): Job[] {
+export function mapOrderRowsToJobs(
+  rows: Array<Order & { order_files?: Array<{ file_path?: string | null }> | null }>,
+): Job[] {
   return rows
     .map((row, index) => mapOrderRowToJob(row, index))
     .filter((job): job is Job => job != null);

@@ -92,7 +92,7 @@
 
 .form-mode-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin: 0;
   padding: 0.35rem;
@@ -118,6 +118,19 @@
   background: #ffffff;
   color: #0b1f3f;
   box-shadow: 0 4px 14px rgba(12, 18, 34, 0.08);
+}
+
+.form-mode-tab--feedback.form-mode-tab--active {
+  color: #0f766e;
+}
+
+.review-form-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  font-size: 0.92rem;
 }
 
 .review-field--checkbox {
@@ -154,6 +167,11 @@
 .review-card-kind--recommendation {
   background: rgba(0, 229, 168, 0.14);
   color: #047857;
+}
+
+.review-card-kind--feedback {
+  background: rgba(14, 165, 233, 0.14);
+  color: #0369a1;
 }
 
 .review-card-kind--pending {

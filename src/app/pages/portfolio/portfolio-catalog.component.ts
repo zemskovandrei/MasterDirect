@@ -5,11 +5,12 @@ import { ReviewStoreService } from '../../core/services/review-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 @Component({
   selector: 'app-portfolio-catalog',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CatalogOrderCalculatorSectionComponent],
   templateUrl: './portfolio-catalog.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './portfolio-catalog.component.css'],

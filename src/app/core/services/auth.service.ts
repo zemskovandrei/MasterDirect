@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
 import type { AuthSignUpMetadata } from '../models/master.model';
-import { isDuplicateSignupUser } from '../utils/auth-error.util';
+import { isDuplicateSignupUser, isInvalidAuthSessionError } from '../utils/auth-error.util';
 import type { AuthErrorMessageKey } from '../utils/auth-error.util';
 import { authErrorMessageKey } from '../utils/auth-error.util';
 import { logSupabaseError, supabaseErrorMessage } from '../utils/supabase-error.util';
@@ -86,17 +86,31 @@ export class AuthService {
 
     const client = await this.supabase.getClient();
     if (!client) {
-      return null;
-    }
-
-    const { data, error } = await client.auth.getUser();
-    if (error || !data.user) {
       this.userSignal.set(null);
       return null;
     }
 
-    this.userSignal.set(data.user);
-    return data.user;
+    const user = await this.fetchAuthUser(client);
+    this.userSignal.set(user);
+    return user;
+  }
+
+  private async fetchAuthUser(client: NonNullable<Awaited<ReturnType<SupabaseService['getClient']>>>): Promise<User | null> {
+    try {
+      const { data, error } = await client.auth.getUser();
+      if (error || !data.user) {
+        if (error && isInvalidAuthSessionError(error)) {
+          await this.signOut();
+        }
+        console.warn('Пользователь не авторизован');
+        return null;
+      }
+
+      return data.user;
+    } catch (e) {
+      logSupabaseError('AuthService.getUser', e);
+      return null;
+    }
   }
 
   async signUp(
@@ -357,6 +371,18 @@ export class AuthService {
     const { data } = await client.auth.getSession();
     this.sessionSignal.set(data.session ?? null);
     this.userSignal.set(data.session?.user ?? null);
+
+    if (data.session) {
+      const user = await this.fetchAuthUser(client);
+      if (user) {
+        this.userSignal.set(user);
+        this.sessionSignal.set(data.session);
+        void this.supabase.syncAuthProfileFromUser(user);
+      } else {
+        this.userSignal.set(null);
+        this.sessionSignal.set(null);
+      }
+    }
 
     client.auth.onAuthStateChange((event, session) => {
       this.sessionSignal.set(session);

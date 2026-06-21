@@ -8,7 +8,7 @@ import {
   WorkProject,
   WorkVerificationStatus,
 } from '../models/portfolio.models';
-import { normalizeSocialLinks } from '../utils/social-links.util';
+import { mergeSocialLinks, normalizeSocialLinks } from '../utils/social-links.util';
 import { normalizeCallOutFee } from '../utils/call-out-fee.util';
 import {
   buildVerificationUrl,
@@ -213,6 +213,7 @@ export class PortfolioStoreService {
       const merged: PerformerProfile = {
         ...performer,
         works: existing.works.length > 0 ? existing.works : performer.works,
+        socialLinks: mergeSocialLinks(performer.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];
     });
@@ -224,7 +225,11 @@ export class PortfolioStoreService {
     const merged = remote.map((performer) => {
       const local = existing.find((item) => item.id === performer.id);
       const works = performer.works.length > 0 ? performer.works : (local?.works ?? []);
-      return { ...performer, works };
+      return {
+        ...performer,
+        works,
+        socialLinks: mergeSocialLinks(performer.socialLinks, local?.socialLinks),
+      };
     });
 
     this.performersSignal.set(merged);
@@ -458,14 +463,20 @@ export class PortfolioStoreService {
     }
   }
 
-  private persist(): void {
+  private persist(): boolean {
     if (!isPlatformBrowser(this.platformId)) {
-      return;
+      return true;
     }
 
-    const performers = this.performersSignal().filter((p) => !p.isDemo);
-    localStorage.setItem(PERFORMERS_KEY, JSON.stringify(performers));
-    this.persistSession();
+    try {
+      const performers = this.performersSignal().filter((p) => !p.isDemo);
+      localStorage.setItem(PERFORMERS_KEY, JSON.stringify(performers));
+      this.persistSession();
+      return true;
+    } catch (error) {
+      console.warn('Не удалось сохранить портфолио в браузере (лимит localStorage).', error);
+      return false;
+    }
   }
 
   private normalizeWork(work: WorkProject): WorkProject {

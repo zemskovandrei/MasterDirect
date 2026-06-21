@@ -66,6 +66,17 @@
             </li>
             <li>
               <a
+                routerLink="/reviews"
+                class="nav-link-item"
+                routerLinkActive="active"
+                (click)="onNavClick()"
+              >
+                <span class="nav-link-title">{{ translation.t('app.nav.reviews') }}</span>
+                <span class="nav-link-desc">{{ translation.t('app.nav.reviewsDesc') }}</span>
+              </a>
+            </li>
+            <li>
+              <a
                 routerLink="/"
                 fragment="catalog"
                 class="nav-link-item"
@@ -185,6 +196,9 @@
             <a routerLink="/jobs" (mouseenter)="prefetchJobs()" (focus)="prefetchJobs()">{{
               translation.t('jobs.title')
             }}</a>
+          </li>
+          <li>
+            <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
           </li>
           <li>
             <a routerLink="/" fragment="catalog">{{ translation.t('app.nav.worksGallery') }}</a>

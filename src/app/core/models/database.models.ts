@@ -66,6 +66,16 @@ export type OrderInsert = Omit<Order, 'id' | 'created_at'>;
 /** Частичное обновление заказа. */
 export type OrderUpdate = Partial<Omit<Order, 'id' | 'created_at'>>;
 
+/** Строка таблицы `order_files` (вложения к заявке). */
+export interface OrderFile {
+  id: string;
+  order_id: number;
+  file_path: string;
+  created_at: string;
+}
+
+export type OrderFileInsert = Pick<OrderFile, 'order_id' | 'file_path'>;
+
 export interface ListActiveOrdersOptions {
   limit?: number;
   /** Если задан — только заказы этого специалиста. */

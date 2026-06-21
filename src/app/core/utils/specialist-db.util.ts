@@ -57,18 +57,21 @@ export function specialtyFromSkills(skills: string[] | null | undefined): string
   return skills.map((item) => item.trim()).filter(Boolean).join(', ');
 }
 
+/** Отображаемое имя: `name` или «Мастер», затем `surname`. */
+export function formatSpecialistFullName(
+  specialist: { name?: string | null; surname?: string | null },
+  fallbackName = 'Мастер',
+): string {
+  return `${specialist.name?.trim() || fallbackName} ${specialist.surname?.trim() || ''}`.trim();
+}
+
 export function displayNameFromSpecialistRow(row: MasterRow): string {
   const legacy = row.full_name?.trim();
   if (legacy) {
     return legacy;
   }
 
-  const name = row.name?.trim() ?? '';
-  const surname = row.surname?.trim();
-  if (name && surname && surname !== '-') {
-    return `${name} ${surname}`.trim();
-  }
-  return name || row.phone?.trim() || row.id || '';
+  return formatSpecialistFullName(row);
 }
 
 export function specialtyFromSpecialistRow(row: MasterRow): string {

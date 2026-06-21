@@ -21,11 +21,12 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 @Component({
   selector: 'app-furniture-companies-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
+  imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent, CatalogOrderCalculatorSectionComponent],
   templateUrl: './furniture-companies-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './furniture-companies-page.component.css'],

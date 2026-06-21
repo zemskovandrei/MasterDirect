@@ -1,8 +1,14 @@
-<div class="register-page"
-  [class.register-page--login]="authMode() === 'login' || authMode() === 'forgot-password' || authMode() === 'reset-password'"
+<div
+  class="register-page"
+  [class.register-page--login]="
+    authMode() === 'login' || authMode() === 'forgot-password' || authMode() === 'reset-password'
+  "
   [class.register-page--register]="authMode() === 'register' && selectedProRole() === 'master'"
   [class.register-page--brigade]="authMode() === 'register' && selectedProRole() === 'builder'"
-  [class.register-page--furniture]="authMode() === 'register' && selectedProRole() === 'furniture_maker'">
+  [class.register-page--furniture]="
+    authMode() === 'register' && selectedProRole() === 'furniture_maker'
+  "
+>
   <div class="register-page__grid">
     <aside class="register-promo" aria-labelledby="register-hero-title">
       <div class="register-promo__inner">
@@ -47,7 +53,9 @@
       <div class="register-form-shell">
         @if (status() === 'success') {
           <div class="register-card" role="status">
-            <h2 class="register-card__title">{{ translation.t('cabinet.registerSuccessTitle') }}</h2>
+            <h2 class="register-card__title">
+              {{ translation.t('cabinet.registerSuccessTitle') }}
+            </h2>
             <p class="register-card__muted">{{ translation.t(successMessageKey()) }}</p>
           </div>
         } @else if (authMode() === 'forgot-password') {
@@ -58,13 +66,22 @@
             <p class="register-card__muted">{{ translation.t('cabinet.forgotPasswordHint') }}</p>
 
             @if (forgotPasswordError()) {
-              <p class="register-alert register-alert--error" role="alert">{{ forgotPasswordError() }}</p>
+              <p class="register-alert register-alert--error" role="alert">
+                {{ forgotPasswordError() }}
+              </p>
             }
             @if (forgotPasswordMessage()) {
-              <p class="register-alert register-alert--ok" role="status">{{ forgotPasswordMessage() }}</p>
+              <p class="register-alert register-alert--ok" role="status">
+                {{ forgotPasswordMessage() }}
+              </p>
             }
 
-            <form class="register-form" [formGroup]="forgotPasswordForm" (ngSubmit)="requestPasswordReset()" novalidate>
+            <form
+              class="register-form"
+              [formGroup]="forgotPasswordForm"
+              (ngSubmit)="requestPasswordReset()"
+              novalidate
+            >
               <label class="field">
                 <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
                 <input
@@ -102,10 +119,17 @@
             <p class="register-card__muted">{{ translation.t('cabinet.resetPasswordHint') }}</p>
 
             @if (resetPasswordError()) {
-              <p class="register-alert register-alert--error" role="alert">{{ resetPasswordError() }}</p>
+              <p class="register-alert register-alert--error" role="alert">
+                {{ resetPasswordError() }}
+              </p>
             }
 
-            <form class="register-form" [formGroup]="resetPasswordForm" (ngSubmit)="submitNewPassword()" novalidate>
+            <form
+              class="register-form"
+              [formGroup]="resetPasswordForm"
+              (ngSubmit)="submitNewPassword()"
+              novalidate
+            >
               <label class="field">
                 <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
                 <div class="field-input-wrap">
@@ -116,7 +140,11 @@
                     class="field-input"
                     [class.field-input--error]="resetPasswordFieldInvalid('password')"
                   />
-                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">
+                  <button
+                    type="button"
+                    class="field-input-wrap__toggle"
+                    (click)="togglePassword('password')"
+                  >
                     {{ showPassword() ? '🙈' : '👁' }}
                   </button>
                 </div>
@@ -126,16 +154,24 @@
               </label>
 
               <label class="field">
-                <span class="field__label">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
+                <span class="field__label"
+                  >{{ translation.t('cabinet.confirmPasswordLabel') }} *</span
+                >
                 <div class="field-input-wrap">
                   <input
                     [type]="showConfirmPassword() ? 'text' : 'password'"
                     formControlName="confirmPassword"
                     autocomplete="new-password"
                     class="field-input"
-                    [class.field-input--error]="resetPasswordFieldInvalid('confirmPassword') || resetPasswordMismatch()"
+                    [class.field-input--error]="
+                      resetPasswordFieldInvalid('confirmPassword') || resetPasswordMismatch()
+                    "
                   />
-                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('confirm')">
+                  <button
+                    type="button"
+                    class="field-input-wrap__toggle"
+                    (click)="togglePassword('confirm')"
+                  >
                     {{ showConfirmPassword() ? '🙈' : '👁' }}
                   </button>
                 </div>
@@ -169,24 +205,39 @@
               <p class="register-alert register-alert--error" role="alert">{{ signInError() }}</p>
             }
             @if (signInErrorKey() === 'cabinet.signInErrorRateLimit') {
-              <p class="register-card__muted">{{ translation.t('cabinet.registerErrorRateLimitHint') }}</p>
+              <p class="register-card__muted">
+                {{ translation.t('cabinet.registerErrorRateLimitHint') }}
+              </p>
             }
             @if (signInErrorKey() === 'cabinet.signInErrorEmailNotConfirmed') {
-              <p class="register-card__muted">{{ translation.t('cabinet.signInEmailNotConfirmedHint') }}</p>
+              <p class="register-card__muted">
+                {{ translation.t('cabinet.signInEmailNotConfirmedHint') }}
+              </p>
               <button
                 type="button"
                 class="link-accent register-resend-confirm"
                 [disabled]="resendEmailSubmitting()"
                 (click)="resendConfirmationEmail()"
               >
-                {{ resendEmailSubmitting() ? translation.t('cabinet.resendConfirmationSubmitting') : translation.t('cabinet.resendConfirmation') }}
+                {{
+                  resendEmailSubmitting()
+                    ? translation.t('cabinet.resendConfirmationSubmitting')
+                    : translation.t('cabinet.resendConfirmation')
+                }}
               </button>
             }
             @if (resendEmailMessage()) {
-              <p class="register-alert register-alert--ok" role="status">{{ resendEmailMessage() }}</p>
+              <p class="register-alert register-alert--ok" role="status">
+                {{ resendEmailMessage() }}
+              </p>
             }
 
-            <form class="register-form" [formGroup]="signInForm" (ngSubmit)="signInExisting()" novalidate>
+            <form
+              class="register-form"
+              [formGroup]="signInForm"
+              (ngSubmit)="signInExisting()"
+              novalidate
+            >
               <label class="field">
                 <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
                 <input
@@ -211,14 +262,22 @@
                     class="field-input"
                     [class.field-input--error]="signInFieldInvalid('password')"
                   />
-                  <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">
+                  <button
+                    type="button"
+                    class="field-input-wrap__toggle"
+                    (click)="togglePassword('password')"
+                  >
                     {{ showPassword() ? '🙈' : '👁' }}
                   </button>
                 </div>
                 @if (signInFieldInvalid('password')) {
                   <span class="field__error">{{ translation.t('cabinet.passwordError') }}</span>
                 }
-                <button type="button" class="register-form__forgot-link" (click)="openForgotPassword()">
+                <button
+                  type="button"
+                  class="register-form__forgot-link"
+                  (click)="openForgotPassword()"
+                >
                   {{ translation.t('cabinet.forgotPasswordLink') }}
                 </button>
               </label>
@@ -249,16 +308,24 @@
               <p class="register-alert register-alert--error" role="alert">{{ errorMessage() }}</p>
               @if (errorMessageKey() === 'cabinet.registerErrorDatabase') {
                 <div class="register-sql-fix">
-                  <p class="register-card__muted">{{ translation.t('cabinet.registerErrorDatabaseSteps') }}</p>
+                  <p class="register-card__muted">
+                    {{ translation.t('cabinet.registerErrorDatabaseSteps') }}
+                  </p>
                   <pre class="register-sql-fix__code">{{ signupFixSql }}</pre>
-                  <p class="register-card__muted">{{ translation.t('cabinet.registerErrorDatabaseHint') }}</p>
+                  <p class="register-card__muted">
+                    {{ translation.t('cabinet.registerErrorDatabaseHint') }}
+                  </p>
                 </div>
               }
               @if (errorMessageKey() === 'cabinet.registerErrorRateLimit') {
-                <p class="register-card__muted">{{ translation.t('cabinet.registerErrorRateLimitHint') }}</p>
+                <p class="register-card__muted">
+                  {{ translation.t('cabinet.registerErrorRateLimitHint') }}
+                </p>
               }
               @if (errorMessageKey() === 'cabinet.registerErrorEmailExists') {
-                <p class="register-card__muted">{{ translation.t('cabinet.registerErrorEmailExistsHint') }}</p>
+                <p class="register-card__muted">
+                  {{ translation.t('cabinet.registerErrorEmailExistsHint') }}
+                </p>
                 <div class="register-error-actions">
                   <button type="button" class="btn-signin" (click)="openLoginWithCurrentEmail()">
                     {{ translation.t('cabinet.registerErrorEmailExistsSignIn') }}
@@ -269,7 +336,11 @@
                 </div>
                 <p class="register-card__muted">
                   {{ translation.t('cabinet.deleteAccountHint') }}
-                  <button type="button" class="link-accent" (click)="openDeleteAccountPanel(form.controls.email.value)">
+                  <button
+                    type="button"
+                    class="link-accent"
+                    (click)="openDeleteAccountPanel(form.controls.email.value)"
+                  >
                     {{ translation.t('cabinet.deleteAccountSummary') }}
                   </button>
                 </p>
@@ -286,28 +357,49 @@
                   (drop)="onProfileDrop($event)"
                 >
                   @if (profilePreview()) {
-                    <img [src]="profilePreview()!" alt="" class="h-full w-full rounded-lg object-cover" />
+                    <img
+                      [src]="profilePreview()!"
+                      alt=""
+                      class="h-full w-full rounded-lg object-cover"
+                    />
                   } @else {
                     <span class="text-lg opacity-40" aria-hidden="true">👤</span>
                   }
                 </div>
                 <label class="register-form__photo-link">
                   {{ translation.t('cabinet.registerPhotoLabel') }}
-                  <input type="file" accept="image/*" class="hidden" (change)="onProfileSelected($event)" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    (change)="onProfileSelected($event)"
+                  />
                 </label>
               </div>
 
               <div class="register-form__row">
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.firstNameLabel') }} *</span>
-                  <input type="text" formControlName="firstName" autocomplete="given-name" class="field-input" [class.field-input--error]="fieldInvalid('firstName')" />
+                  <input
+                    type="text"
+                    formControlName="firstName"
+                    autocomplete="given-name"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('firstName')"
+                  />
                   @if (fieldInvalid('firstName')) {
                     <span class="field__error">{{ translation.t('cabinet.firstNameError') }}</span>
                   }
                 </label>
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.lastNameLabel') }} *</span>
-                  <input type="text" formControlName="lastName" autocomplete="family-name" class="field-input" [class.field-input--error]="fieldInvalid('lastName')" />
+                  <input
+                    type="text"
+                    formControlName="lastName"
+                    autocomplete="family-name"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('lastName')"
+                  />
                   @if (fieldInvalid('lastName')) {
                     <span class="field__error">{{ translation.t('cabinet.lastNameError') }}</span>
                   }
@@ -317,14 +409,26 @@
               <div class="register-form__row">
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.phoneLabel') }} *</span>
-                  <input type="tel" formControlName="phone" autocomplete="tel" class="field-input" [class.field-input--error]="fieldInvalid('phone')" />
+                  <input
+                    type="tel"
+                    formControlName="phone"
+                    autocomplete="tel"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('phone')"
+                  />
                   @if (fieldInvalid('phone')) {
                     <span class="field__error">{{ translation.t('cabinet.phoneError') }}</span>
                   }
                 </label>
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
-                  <input type="email" formControlName="email" autocomplete="email" class="field-input" [class.field-input--error]="fieldInvalid('email')" />
+                  <input
+                    type="email"
+                    formControlName="email"
+                    autocomplete="email"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('email')"
+                  />
                   @if (fieldInvalid('email')) {
                     <span class="field__error">{{ translation.t('cabinet.emailError') }}</span>
                   }
@@ -332,11 +436,18 @@
               </div>
 
               <fieldset class="field">
-                <legend class="field__label">{{ translation.t('cabinet.registerSectionRole') }}</legend>
+                <legend class="field__label">
+                  {{ translation.t('cabinet.registerSectionRole') }}
+                </legend>
                 <div class="register-form__roles">
                   @for (role of registrationRoles; track role) {
                     <label class="role-option">
-                      <input type="radio" formControlName="proRole" [value]="role" (change)="onRoleChange()" />
+                      <input
+                        type="radio"
+                        formControlName="proRole"
+                        [value]="role"
+                        (change)="onRoleChange()"
+                      />
                       <span>{{ translation.t('cabinet.proRoles.' + role) }}</span>
                     </label>
                   }
@@ -349,7 +460,11 @@
               <div class="register-form__row">
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.specialtyLabel') }} *</span>
-                  <select formControlName="specialty" class="field-input" [class.field-input--error]="fieldInvalid('specialty')">
+                  <select
+                    formControlName="specialty"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('specialty')"
+                  >
                     @for (key of specialties; track key) {
                       <option [value]="key">{{ specialtyLabel(key) }}</option>
                     }
@@ -360,7 +475,11 @@
                 </label>
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.cityLabel') }} *</span>
-                  <select formControlName="city" class="field-input" [class.field-input--error]="fieldInvalid('city')">
+                  <select
+                    formControlName="city"
+                    class="field-input"
+                    [class.field-input--error]="fieldInvalid('city')"
+                  >
                     @for (city of cities; track city) {
                       <option [value]="city">{{ cityLabel(city) }}</option>
                     }
@@ -371,23 +490,48 @@
               <div class="register-form__row register-form__row--social">
                 <label class="field">
                   <span class="field__label">Telegram</span>
-                  <input type="text" formControlName="telegram" class="field-input" [placeholder]="translation.t('cabinet.socialTelegramPh')" />
+                  <input
+                    type="text"
+                    formControlName="telegram"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.socialTelegramPh')"
+                  />
                 </label>
                 <label class="field">
                   <span class="field__label">WhatsApp</span>
-                  <input type="text" formControlName="whatsapp" class="field-input" [placeholder]="translation.t('cabinet.socialWhatsappPh')" />
+                  <input
+                    type="text"
+                    formControlName="whatsapp"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.socialWhatsappPh')"
+                  />
                 </label>
                 <label class="field">
                   <span class="field__label">Instagram</span>
-                  <input type="text" formControlName="instagram" class="field-input" [placeholder]="translation.t('cabinet.socialInstagramPh')" />
+                  <input
+                    type="text"
+                    formControlName="instagram"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.socialInstagramPh')"
+                  />
                 </label>
                 <label class="field">
                   <span class="field__label">Facebook</span>
-                  <input type="text" formControlName="facebook" class="field-input" [placeholder]="translation.t('cabinet.socialFacebookPh')" />
+                  <input
+                    type="text"
+                    formControlName="facebook"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.socialFacebookPh')"
+                  />
                 </label>
                 <label class="field register-form__row-full">
                   <span class="field__label">TikTok</span>
-                  <input type="text" formControlName="tiktok" class="field-input" [placeholder]="translation.t('cabinet.socialTiktokPh')" />
+                  <input
+                    type="text"
+                    formControlName="tiktok"
+                    class="field-input"
+                    [placeholder]="translation.t('cabinet.socialTiktokPh')"
+                  />
                 </label>
               </div>
 
@@ -469,18 +613,48 @@
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
                   <div class="field-input-wrap">
-                    <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" class="field-input" [class.field-input--error]="fieldInvalid('password')" />
-                    <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('password')">{{ showPassword() ? '🙈' : '👁' }}</button>
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      formControlName="password"
+                      autocomplete="new-password"
+                      class="field-input"
+                      [class.field-input--error]="fieldInvalid('password')"
+                    />
+                    <button
+                      type="button"
+                      class="field-input-wrap__toggle"
+                      (click)="togglePassword('password')"
+                    >
+                      {{ showPassword() ? '🙈' : '👁' }}
+                    </button>
                   </div>
                 </label>
                 <label class="field">
-                  <span class="field__label">{{ translation.t('cabinet.confirmPasswordLabel') }} *</span>
+                  <span class="field__label"
+                    >{{ translation.t('cabinet.confirmPasswordLabel') }} *</span
+                  >
                   <div class="field-input-wrap">
-                    <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" class="field-input" [class.field-input--error]="fieldInvalid('confirmPassword') || passwordMismatch()" />
-                    <button type="button" class="field-input-wrap__toggle" (click)="togglePassword('confirm')">{{ showConfirmPassword() ? '🙈' : '👁' }}</button>
+                    <input
+                      [type]="showConfirmPassword() ? 'text' : 'password'"
+                      formControlName="confirmPassword"
+                      autocomplete="new-password"
+                      class="field-input"
+                      [class.field-input--error]="
+                        fieldInvalid('confirmPassword') || passwordMismatch()
+                      "
+                    />
+                    <button
+                      type="button"
+                      class="field-input-wrap__toggle"
+                      (click)="togglePassword('confirm')"
+                    >
+                      {{ showConfirmPassword() ? '🙈' : '👁' }}
+                    </button>
                   </div>
                   @if (passwordMismatch()) {
-                    <span class="field__error">{{ translation.t('cabinet.passwordMismatch') }}</span>
+                    <span class="field__error">{{
+                      translation.t('cabinet.passwordMismatch')
+                    }}</span>
                   }
                 </label>
               </div>
@@ -497,7 +671,11 @@
               </label>
 
               <button type="submit" class="btn-primary" [disabled]="submitting()">
-                {{ submitting() ? translation.t('cabinet.registerSubmitting') : translation.t('cabinet.registerCreateButton') }}
+                {{
+                  submitting()
+                    ? translation.t('cabinet.registerSubmitting')
+                    : translation.t('cabinet.registerCreateButton')
+                }}
               </button>
             </form>
 
@@ -511,7 +689,9 @@
         }
 
         @if (deleteAccountSuccess()) {
-          <p class="register-alert register-alert--ok" role="status">{{ deleteAccountSuccess() }}</p>
+          <p class="register-alert register-alert--ok" role="status">
+            {{ deleteAccountSuccess() }}
+          </p>
         }
 
         <details class="register-delete-account" [open]="showDeleteAccountPanel()">
@@ -520,7 +700,9 @@
           </summary>
           <p class="register-card__muted">{{ translation.t('cabinet.deleteAccountLead') }}</p>
           @if (deleteAccountError()) {
-            <p class="register-alert register-alert--error" role="alert">{{ deleteAccountError() }}</p>
+            <p class="register-alert register-alert--error" role="alert">
+              {{ deleteAccountError() }}
+            </p>
           }
           <form
             class="register-form register-delete-account__form"
@@ -548,7 +730,11 @@
                 [class.field-input--error]="deleteAccountFieldInvalid('password')"
               />
             </label>
-            <button type="submit" class="register-delete-account__btn" [disabled]="deleteAccountSubmitting()">
+            <button
+              type="submit"
+              class="register-delete-account__btn"
+              [disabled]="deleteAccountSubmitting()"
+            >
               {{
                 deleteAccountSubmitting()
                   ? translation.t('cabinet.deleteAccountSubmitting')

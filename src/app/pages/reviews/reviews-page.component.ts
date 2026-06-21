@@ -24,7 +24,10 @@ import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/
 import { beforeAfterWork } from '../../core/utils/before-after.util';
 import { compressWorkImageFile } from '../../core/utils/compress-image.util';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
-import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import {
+  reviewsHeroVisualStyle,
+  reviewsPageBackgroundStyle,
+} from '../../core/constants/catalog-tab-backgrounds';
 import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
@@ -52,7 +55,43 @@ export class ReviewsPageComponent {
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
 
-  protected readonly pageBackground = catalogTabBackgroundStyle('reviews');
+  protected readonly pageBackground = computed(() =>
+    reviewsPageBackgroundStyle(this.formMode(), this.category()),
+  );
+
+  protected readonly heroVisualStyle = computed(() =>
+    reviewsHeroVisualStyle(this.formMode(), this.category()),
+  );
+
+  protected readonly pageAccentClass = computed(() => {
+    const mode = this.formMode();
+    const cat = this.category();
+    return `reviews-page--mode-${mode}${mode !== 'siteFeedback' ? ` reviews-page--cat-${cat}` : ''}`;
+  });
+
+  protected readonly formModeIcon = (mode: ReviewFormMode): string => {
+    switch (mode) {
+      case 'review':
+        return '✍️';
+      case 'recommendation':
+        return '🙌';
+      case 'siteFeedback':
+        return '💡';
+    }
+  };
+
+  protected readonly categoryIcon = (cat: ReviewCategoryKey): string => {
+    switch (cat) {
+      case 'brigade':
+        return '🏗️';
+      case 'master':
+        return '🔧';
+      case 'furniture':
+        return '🪑';
+      case 'renovation':
+        return '🏠';
+    }
+  };
 
   protected readonly category = signal<ReviewCategoryKey>('brigade');
   protected readonly formMode = signal<ReviewFormMode>('review');

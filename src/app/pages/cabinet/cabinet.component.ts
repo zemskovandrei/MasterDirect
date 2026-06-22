@@ -54,6 +54,7 @@ import { type CabinetTabBackgroundKey } from '../../core/constants/catalog-tab-b
   ],
 })
 export class CabinetComponent {
+  private static readonly premiumUnlockThreshold = 5;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly registerUi = inject(RegisterPageUiService);
@@ -72,6 +73,7 @@ export class CabinetComponent {
   protected readonly socialSaveError = signal<string | null>(null);
   protected readonly lastUploadResult = signal<AddWorkResult | null>(null);
   protected readonly copyFeedback = signal<string | null>(null);
+  protected readonly completedOrdersCount = signal<number | null>(null);
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly maxTextWords = MAX_TEXT_WORDS;
   protected readonly countWords = countWords;
@@ -81,6 +83,10 @@ export class CabinetComponent {
   );
 
   protected readonly isLoggedIn = computed(() => this.hasCabinetSession() || !!this.auth.user());
+
+  protected readonly premiumAccessUnlocked = computed(
+    () => (this.completedOrdersCount() ?? 0) >= CabinetComponent.premiumUnlockThreshold,
+  );
 
   private readonly routeFragment = toSignal(this.route.fragment, { initialValue: null });
 
@@ -192,6 +198,15 @@ export class CabinetComponent {
       await this.auth.ensureInitialized();
       if (this.auth.session()) {
         await this.cabinetSession.restoreForCurrentUser();
+        await this.refreshPremiumAccess();
+      }
+    });
+
+    effect(() => {
+      if (this.hasCabinetSession()) {
+        void this.refreshPremiumAccess();
+      } else {
+        this.completedOrdersCount.set(null);
       }
     });
 
@@ -218,6 +233,21 @@ export class CabinetComponent {
     const company = this.furnitureStore.currentCompany();
     const name = performer?.name ?? company?.name ?? '';
     return name.trim().charAt(0).toUpperCase() || '?';
+  }
+
+  private async refreshPremiumAccess(): Promise<void> {
+    const userId = this.auth.user()?.id;
+    if (!userId) {
+      this.completedOrdersCount.set(null);
+      return;
+    }
+
+    try {
+      const count = await this.supabase.countCompletedOrdersForUser(userId);
+      this.completedOrdersCount.set(count);
+    } catch {
+      this.completedOrdersCount.set(0);
+    }
   }
 
   async saveSocialLinks() {
@@ -441,6 +471,7 @@ export class CabinetComponent {
     void this.auth.signOut();
     this.store.signOut();
     this.furnitureStore.signOut();
+    this.completedOrdersCount.set(null);
     this.beforePreview.set(null);
     this.afterPreview.set(null);
     this.resetFileInputs();

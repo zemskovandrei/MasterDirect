@@ -98,6 +98,7 @@ export class SupabaseService {
   private jobsFetchPromise: Promise<Job[]> | null = null;
   private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
   private profilesRefreshPromise: Promise<Profile[]> | null = null;
+    private profilesInitialized = false;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly portfolioWorksByOwnerSignal = signal<Map<string, WorkProject[]>>(new Map());
@@ -159,19 +160,22 @@ export class SupabaseService {
   readonly galleryWorkers = computed(() =>
     this.profilesSignal()
       .filter((profile) => profile.type === 'worker')
-      .map((profile) => this.toPerformer(profile)),
+      .map((profile) => this.toPerformer(profile))
+      .filter((performer) => performer.works.length > 0),
   );
 
   readonly galleryBrigades = computed(() =>
     this.profilesSignal()
       .filter((profile) => profile.type === 'brigade')
-      .map((profile) => this.toPerformer(profile)),
+      .map((profile) => this.toPerformer(profile))
+      .filter((performer) => performer.works.length > 0),
   );
 
   readonly galleryFurnitureCompanies = computed(() =>
     this.profilesSignal()
       .filter((profile) => profile.type === 'furniture')
-      .map((profile) => this.toFurnitureCompany(profile)),
+      .map((profile) => this.toFurnitureCompany(profile))
+      .filter((company) => company.works.length > 0),
   );
 
   constructor() {
@@ -438,6 +442,17 @@ export class SupabaseService {
         return of([]);
       }),
     );
+  }
+
+  ensureProfilesLoaded(): Observable<Profile[]> {
+    if (this.profilesInitialized && this.loadedSignal()) {
+      return of(this.profilesSignal());
+    }
+    if (!isPlatformBrowser(this.platformId)) {
+      return of([]);
+    }
+    this.profilesInitialized = true;
+    return this.loadProfiles();
   }
 
   getProfilesByType(type: ProfileType): Observable<Profile[]> {
@@ -827,6 +842,14 @@ export class SupabaseService {
         });
       }),
     );
+  }
+
+  async countCompletedOrdersForUser(userId: string): Promise<number> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return 0;
+    }
+
+    return this.dataService.countCompletedOrdersByUser(userId);
   }
 
   async updateMasterHeaderBg(
@@ -1723,7 +1746,33 @@ export class SupabaseService {
     }
 
     try {
-      await this.dataService.completeOrder(id);
+      const currentOrder = await this.dataService.getOrderById(id);
+      if (isCompletedOrderStatus(currentOrder.status)) {
+        this.removeJobFromLocalState(String(id));
+        this.invalidateJobsCache();
+        return { error: null };
+      }
+
+      const completedOrder = await this.dataService.completeOrder(id);
+
+      if (completedOrder.user_id) {
+        const client = await this.resolveClient();
+        if (!client) {
+          return { error: SUPABASE_NOT_CONFIGURED };
+        }
+
+        const { error: incrementError } = await client.rpc('increment_orders_count', {
+          row_id: completedOrder.user_id,
+        });
+
+        if (incrementError) {
+          logSupabaseError('increment_orders_count', incrementError);
+          return {
+            error: incrementError.message || 'Failed to increment completed orders count',
+          };
+        }
+      }
+
       this.removeJobFromLocalState(String(id));
       this.invalidateJobsCache();
       return { error: null };
@@ -1980,13 +2029,8 @@ export class SupabaseService {
       }
     }
 
-    if (performers.length > 0) {
-      this.portfolioStore.replacePerformersFromRemote(performers);
-    }
-
-    if (companies.length > 0) {
-      this.furnitureStore.replaceCompaniesFromRemote(companies);
-    }
+    this.portfolioStore.replacePerformersFromRemote(performers);
+    this.furnitureStore.replaceCompaniesFromRemote(companies);
   }
 
   private async savePortfolioWorkRow(input: {

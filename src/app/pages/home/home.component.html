@@ -124,24 +124,18 @@
       }}</a>
     </div>
 
-    @if (hasGalleryPerformers()) {
+    @if (supabase.brigades().length > 0 || supabase.workers().length > 0) {
       <div class="teaser-stats">
-        @if (portfolioStore.brigades().length > 0) {
+        @if (supabase.brigades().length > 0) {
           <div class="stat">
-            <strong>{{ portfolioStore.brigades().length }}</strong>
+            <strong>{{ supabase.brigades().length }}</strong>
             <span>{{ translation.t('home.portfolio.stats.brigades') }}</span>
           </div>
         }
-        @if (portfolioStore.workers().length > 0) {
+        @if (supabase.workers().length > 0) {
           <div class="stat">
-            <strong>{{ portfolioStore.workers().length }}</strong>
+            <strong>{{ supabase.workers().length }}</strong>
             <span>{{ translation.t('home.portfolio.stats.workers') }}</span>
-          </div>
-        }
-        @if (furnitureStore.published().length > 0) {
-          <div class="stat">
-            <strong>{{ furnitureStore.published().length }}</strong>
-            <span>{{ translation.t('home.portfolio.stats.furniture') }}</span>
           </div>
         }
       </div>

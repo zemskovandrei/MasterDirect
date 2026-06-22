@@ -107,7 +107,7 @@ export class SiteLayoutComponent {
 
     afterNextRender(() => {
       this.supabase.prefetchActiveJobs();
-      this.supabase.loadProfiles().subscribe({
+      this.supabase.ensureProfilesLoaded().subscribe({
         next: () => {
           void this.cabinetSession.restoreForCurrentUser();
         },

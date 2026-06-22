@@ -137,9 +137,9 @@ export const REVIEWS_PAGE_BACKGROUNDS: Record<
     master:
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
     furniture:
-      'https://images.unsplash.com/photo-1616594039964-3e4de31d0f1e?q=80&w=1920',
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1920',
     renovation:
-      'https://images.unsplash.com/photo-1600566752227-8f3b1e8dbf4e?q=80&w=1920',
+      'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1920',
   },
   recommendation: {
     brigade:

@@ -189,6 +189,18 @@ export class DataService {
     return this.requireSingle<Order>(data, error, 'insertOrder');
   }
 
+  async getOrderById(id: number): Promise<Order> {
+    const client = await this.requireClient();
+
+    const { data, error } = await client
+      .from(this.orderTable)
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    return this.requireSingle<Order>(data, error, 'getOrderById');
+  }
+
   async insertOrderFile(row: OrderFileInsert): Promise<void> {
     const client = await this.requireClient();
 
@@ -215,6 +227,27 @@ export class DataService {
 
   async completeOrder(id: number): Promise<Order> {
     return this.updateOrder(id, { status: ORDER_COMPLETED_STATUS });
+  }
+
+  async countCompletedOrdersByUser(userId: string): Promise<number> {
+    const client = await this.requireClient();
+    const trimmedUserId = userId.trim();
+    if (!trimmedUserId) {
+      return 0;
+    }
+
+    const { count, error } = await client
+      .from(this.orderTable)
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', trimmedUserId)
+      .eq('status', ORDER_COMPLETED_STATUS);
+
+    if (error) {
+      logSupabaseError('countCompletedOrdersByUser', error);
+      throw toDataServiceError(error, 'countCompletedOrdersByUser');
+    }
+
+    return count ?? 0;
   }
 
   // ─── site_reviews ─────────────────────────────────────────────────────────

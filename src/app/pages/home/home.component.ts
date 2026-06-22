@@ -8,8 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
-import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -34,8 +32,6 @@ interface ServiceItem {
 })
 export class HomeComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
-  protected readonly portfolioStore = inject(PortfolioStoreService);
-  protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -92,7 +88,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.supabase.loadProfiles().subscribe();
+      this.supabase.ensureProfilesLoaded().subscribe();
     }
   }
 }

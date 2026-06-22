@@ -170,7 +170,14 @@
                   <div class="cabinet-verify" role="region" [attr.aria-label]="translation.t('cabinet.shareAria')">
                     <p class="field__label">{{ translation.t('cabinet.shareTitle') }}</p>
                     <div class="cabinet-verify__row">
-                      <input class="field-input" type="text" readonly [value]="link" />
+                      <input
+                        class="field-input"
+                        type="text"
+                        readonly
+                        [value]="link"
+                        title="{{ translation.t('cabinet.shareTitle') }}"
+                        placeholder="{{ translation.t('cabinet.shareTitle') }}"
+                      />
                       <button type="button" class="btn-signin" (click)="copyVerificationLink(link)">
                         {{ translation.t('cabinet.copy') }}
                       </button>
@@ -253,7 +260,11 @@
                         (change)="onFileSelected('before', $event)"
                       />
                       @if (beforePreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewBefore')"
+                          title="{{ translation.t('cabinet.previewBefore') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -278,7 +289,11 @@
                         (change)="onFileSelected('after', $event)"
                       />
                       @if (afterPreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewAfter')"
+                          title="{{ translation.t('cabinet.previewAfter') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -311,6 +326,12 @@
                       }
                     </div>
                   }
+                </div>
+              }
+
+              @if (premiumAccessUnlocked()) {
+                <div class="cabinet-status cabinet-status--ok" role="status">
+                  Платная версия доступна
                 </div>
               }
             </div>
@@ -484,7 +505,11 @@
                         (change)="onFileSelected('before', $event)"
                       />
                       @if (beforePreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewBefore')"
+                          title="{{ translation.t('cabinet.previewBefore') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -509,7 +534,11 @@
                         (change)="onFileSelected('after', $event)"
                       />
                       @if (afterPreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewAfter')"
+                          title="{{ translation.t('cabinet.previewAfter') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -532,6 +561,12 @@
                       <app-before-after [work]="work" [showCaption]="false" />
                     </div>
                   }
+                </div>
+              }
+
+              @if (premiumAccessUnlocked()) {
+                <div class="cabinet-status cabinet-status--ok" role="status">
+                  Платная версия доступна
                 </div>
               }
             </div>

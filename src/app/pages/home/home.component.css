@@ -698,9 +698,10 @@ section.hero-section {
   }
 
   .features-block .features {
-    min-height: clamp(780px, 68vh, 1080px);
-    padding: 2rem 1rem;
+    min-height: auto;
+    padding: 2rem 1rem 5.5rem;
     background-position: center 40%;
+    overflow: visible;
   }
 
   .features-grid .feature-card,
@@ -905,8 +906,8 @@ section.hero-section {
   }
 
   .services-block .services {
-    min-height: clamp(585px, 58vh, 870px);
-    padding: 2rem 1rem;
+    min-height: auto;
+    padding: 2rem 1rem 3.5rem;
   }
 
   .services-grid {
@@ -930,7 +931,7 @@ section.hero-section {
 @media (max-width: 768px) {
   .portfolio-teaser {
     margin-top: 0;
-    padding: 2.75rem 1rem 3.5rem;
+    padding: 2.75rem 1rem 5rem;
   }
 
   .portfolio-teaser .section-header {
@@ -982,9 +983,14 @@ section.hero-section {
     flex: 1 1 100%;
   }
 
+  .portfolio-teaser {
+    padding: 2rem 1rem 4rem;
+  }
+
   .features-block .features,
   .services-block .services {
     min-height: auto;
-    padding: 1.75rem 1rem;
+    padding: 1.75rem 1rem 4.5rem;
+    overflow: visible;
   }
 }

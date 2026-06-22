@@ -156,21 +156,20 @@
                     @if (calculatorChecklistExtraGroup(); as extraGroup) {
                       @if (extraGroup.items.length > 0) {
                         <ul class="quiz-checklist-extra__grid">
-                          @for (item of extraGroup.items; track item.id) {
-                            <li
-                              class="quiz-checklist-extra__item"
-                              [class.quiz-checklist-extra__item--off]="!item.selected"
-                            >
-                              <label class="quiz-scope-line__toggle">
-                                <input
-                                  type="checkbox"
-                                  [checked]="item.selected"
-                                  (change)="toggleChecklistItem(item.id)"
-                                />
-                                <span>{{ translation.t(item.labelKey) }}</span>
-                              </label>
-                            </li>
-                          }
+                          <li
+                            *ngFor="let item of extraGroup.items; trackBy: trackExtraChecklistItem"
+                            class="quiz-checklist-extra__item"
+                            [class.quiz-checklist-extra__item--off]="!item.selected"
+                          >
+                            <label class="quiz-scope-line__toggle">
+                              <input
+                                type="checkbox"
+                                [checked]="item.selected"
+                                (change)="toggleChecklistItem(item.id)"
+                              />
+                              <span>{{ translation.t(item.labelKey) }}</span>
+                            </label>
+                          </li>
                         </ul>
                       }
                     } @else if (calculatorChecklistSearchQuery().trim()) {
@@ -192,9 +191,8 @@
                           class="quiz-checklist-custom__input"
                           [value]="calculatorChecklistCustomDraft()"
                           (input)="onCustomChecklistDraftInput($any($event.target).value)"
-                          [placeholder]="
-                            translation.t('home.calculator.checklistCustomPlaceholder')
-                          "
+                          placeholder="{{ translation.t('home.calculator.checklistCustomPlaceholder') }}"
+                          title="{{ translation.t('home.calculator.checklistCustomPlaceholder') }}"
                           (keydown.enter)="$event.preventDefault(); addCustomChecklistItem()"
                         />
                         <button
@@ -212,21 +210,20 @@
                       }
                       @if (calculatorChecklistFilteredCustomItems().length > 0) {
                         <ul class="quiz-checklist-custom__list">
-                          @for (item of calculatorChecklistFilteredCustomItems(); track item) {
-                            <li class="quiz-checklist-custom__item">
-                              <span>{{ item }}</span>
-                              <button
-                                type="button"
-                                class="quiz-checklist-custom__remove"
-                                (click)="removeCustomChecklistItem(item)"
-                                [attr.aria-label]="
-                                  translation.t('home.calculator.checklistCustomRemove')
-                                "
-                              >
-                                ×
-                              </button>
-                            </li>
-                          }
+                          <li
+                            *ngFor="let item of calculatorChecklistFilteredCustomItems(); trackBy: trackCustomChecklistItem"
+                            class="quiz-checklist-custom__item"
+                          >
+                            <span>{{ item }}</span>
+                            <button
+                              type="button"
+                              class="quiz-checklist-custom__remove"
+                              (click)="removeCustomChecklistItem(item)"
+                              [attr.aria-label]="translation.t('home.calculator.checklistCustomRemove')"
+                            >
+                              ×
+                            </button>
+                          </li>
                         </ul>
                       }
                     </div>
@@ -313,28 +310,27 @@
 
                   <div class="quiz-estimate-breakdown quiz-checklist-breakdown">
                     @for (group of calculatorChecklistMainFilteredGroups(); track group.phaseId) {
-                      @if (group.items.length > 0) {
-                        <section class="quiz-estimate-group quiz-checklist-phase">
-                          <h4 class="quiz-estimate-group__title">
-                            {{ translation.t(group.titleKey) }}
-                          </h4>
-                          <ul class="quiz-scope-lines">
-                            @for (item of group.items; track item.id) {
-                              <li
-                                class="quiz-scope-line"
-                                [class.quiz-scope-line--disabled]="!item.selected"
-                              >
-                                <label class="quiz-scope-line__toggle">
-                                  <input
-                                    type="checkbox"
-                                    [checked]="item.selected"
-                                    (change)="toggleChecklistItem(item.id)"
-                                  />
-                                  <span>{{ translation.t(item.labelKey) }}</span>
-                                </label>
-                              </li>
-                            }
-                          </ul>
+                          @if (group.items.length > 0) {
+                            <section class="quiz-estimate-group quiz-checklist-phase">
+                              <h4 class="quiz-estimate-group__title">
+                                {{ translation.t(group.titleKey) }}
+                              </h4>
+                              <ul class="quiz-scope-lines">
+                                <li
+                                  *ngFor="let item of group.items; trackBy: trackMainChecklistItem"
+                                  class="quiz-scope-line"
+                                  [class.quiz-scope-line--disabled]="!item.selected"
+                                >
+                                  <label class="quiz-scope-line__toggle">
+                                    <input
+                                      type="checkbox"
+                                      [checked]="item.selected"
+                                      (change)="toggleChecklistItem(item.id)"
+                                    />
+                                    <span>{{ translation.t(item.labelKey) }}</span>
+                                  </label>
+                                </li>
+                              </ul>
                         </section>
                       }
                     }

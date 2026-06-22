@@ -1,34 +1,24 @@
 import {
   Component,
-  ElementRef,
   HostListener,
   computed,
   inject,
   signal,
-  viewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  ReviewPerformerTypeKey,
-  ReviewSubmission,
-  WorkProject,
-} from '../../core/models/portfolio.models';
+import { ReviewPerformerTypeKey } from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ReviewStoreService } from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
-import { beforeAfterWork } from '../../core/utils/before-after.util';
-import { compressWorkImageFile } from '../../core/utils/compress-image.util';
-import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import {
   reviewsHeroVisualStyle,
-  reviewsPageBackgroundStyle,
+  reviewsPageShellStyle,
 } from '../../core/constants/catalog-tab-backgrounds';
-import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 export type ReviewCategoryKey = 'brigade' | 'master' | 'furniture' | 'renovation';
 export type ReviewFormMode = 'review' | 'recommendation' | 'siteFeedback';
@@ -42,7 +32,7 @@ interface PerformerOption {
 @Component({
   selector: 'app-reviews-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BeforeAfterComponent, CatalogOrderCalculatorSectionComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './reviews-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
@@ -55,9 +45,7 @@ export class ReviewsPageComponent {
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
 
-  protected readonly pageBackground = computed(() =>
-    reviewsPageBackgroundStyle(this.formMode(), this.category()),
-  );
+  protected readonly pageShellStyle = reviewsPageShellStyle();
 
   protected readonly heroVisualStyle = computed(() =>
     reviewsHeroVisualStyle(this.formMode(), this.category()),
@@ -100,14 +88,6 @@ export class ReviewsPageComponent {
   protected readonly submitSuccess = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly hoverRating = signal(0);
-
-  protected readonly beforePreview = signal<string | null>(null);
-  protected readonly afterPreview = signal<string | null>(null);
-  protected readonly beforeDragging = signal(false);
-  protected readonly afterDragging = signal(false);
-
-  private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
-  private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
 
   protected readonly maxTextWords = MAX_TEXT_WORDS;
   protected readonly countWords = countWords;
@@ -278,8 +258,6 @@ export class ReviewsPageComponent {
       review: v.review,
       kind,
       rating: kind === 'recommendation' ? 5 : v.rating,
-      beforeImage: kind === 'review' ? (this.beforePreview() ?? undefined) : undefined,
-      afterImage: kind === 'review' ? (this.afterPreview() ?? undefined) : undefined,
     };
 
     if (this.category() === 'renovation') {
@@ -326,9 +304,6 @@ export class ReviewsPageComponent {
     });
     this.applyFormModeValidators();
     this.performerQuery.set('');
-    this.beforePreview.set(null);
-    this.afterPreview.set(null);
-    this.resetFileInputs();
     setTimeout(() => this.submitSuccess.set(false), 6000);
   }
 
@@ -519,96 +494,8 @@ export class ReviewsPageComponent {
     }
   }
 
-  onFileSelected(side: 'before' | 'after', event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-    void this.loadImage(side, file, input);
-  }
-
-  onDropzoneDragOver(side: 'before' | 'after', event: DragEvent) {
-    event.preventDefault();
-    if (side === 'before') {
-      this.beforeDragging.set(true);
-    } else {
-      this.afterDragging.set(true);
-    }
-  }
-
-  onDropzoneDragLeave(side: 'before' | 'after') {
-    if (side === 'before') {
-      this.beforeDragging.set(false);
-    } else {
-      this.afterDragging.set(false);
-    }
-  }
-
-  onDropzoneDrop(side: 'before' | 'after', event: DragEvent) {
-    event.preventDefault();
-    this.onDropzoneDragLeave(side);
-    const file = event.dataTransfer?.files?.[0];
-    if (!file) {
-      return;
-    }
-    const input =
-      side === 'before' ? this.beforeInput()?.nativeElement : this.afterInput()?.nativeElement;
-    void this.loadImage(side, file, input);
-  }
-
-  private async loadImage(side: 'before' | 'after', file: File, input?: HTMLInputElement) {
-    if (!file.type.startsWith('image/')) {
-      alert(this.translation.t('reviewsPage.errors.imageOnly'));
-      if (input) {
-        input.value = '';
-      }
-      return;
-    }
-
-    if (file.size > 15 * 1024 * 1024) {
-      alert(this.translation.t('reviewsPage.errors.fileTooLarge'));
-      if (input) {
-        input.value = '';
-      }
-      return;
-    }
-
-    try {
-      const dataUrl = await compressWorkImageFile(file);
-      if (side === 'before') {
-        this.beforePreview.set(dataUrl);
-      } else {
-        this.afterPreview.set(dataUrl);
-      }
-    } catch {
-      alert(this.translation.t('cabinet.alertImageCompressFailed'));
-      if (input) {
-        input.value = '';
-      }
-    }
-  }
-
-  private resetFileInputs() {
-    const before = this.beforeInput()?.nativeElement;
-    const after = this.afterInput()?.nativeElement;
-    if (before) {
-      before.value = '';
-    }
-    if (after) {
-      after.value = '';
-    }
-  }
-
   @HostListener('document:click')
   closePerformerMenu() {
     this.performerMenuOpen.set(false);
-  }
-
-  protected reviewPhotosWork(item: ReviewSubmission): WorkProject | null {
-    if (!item.beforeImage || !item.afterImage) {
-      return null;
-    }
-    return beforeAfterWork(item.id, item.beforeImage, item.afterImage);
   }
 }

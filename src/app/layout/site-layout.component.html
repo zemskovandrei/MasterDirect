@@ -27,68 +27,58 @@
           @if (mobileMenuOpen()) {
             <p class="nav-mobile-intro">{{ translation.t('app.nav.menuIntro') }}</p>
           }
-          <ul>
-            <li>
-              <a
-                routerLink="/"
-                fragment="features"
-                class="nav-link-item"
-                [class.active]="isNavFeaturesActive()"
-                (click)="onNavClick()"
-              >
-                <span class="nav-link-title">{{ translation.t('app.nav.features') }}</span>
-                <span class="nav-link-desc">{{ translation.t('app.nav.featuresDesc') }}</span>
-              </a>
-            </li>
-            <li>
-              <a
-                routerLink="/portfolio"
-                class="nav-link-item"
-                [class.active]="isNavCatalogActive()"
-                (click)="onNavClick()"
-              >
-                <span class="nav-link-title">{{ translation.t('app.nav.catalog') }}</span>
-                <span class="nav-link-desc">{{ translation.t('app.nav.catalogDesc') }}</span>
-              </a>
-            </li>
-            <li>
-              <a
-                routerLink="/jobs"
-                class="nav-link-item"
-                routerLinkActive="active"
-                (click)="onNavClick()"
-                (mouseenter)="prefetchJobs()"
-                (focus)="prefetchJobs()"
-              >
-                <span class="nav-link-title">{{ translation.t('app.nav.jobsBoard') }}</span>
-                <span class="nav-link-desc">{{ translation.t('app.nav.jobsBoardDesc') }}</span>
-              </a>
-            </li>
-            <li>
-              <a
-                routerLink="/reviews"
-                class="nav-link-item"
-                routerLinkActive="active"
-                (click)="onNavClick()"
-              >
-                <span class="nav-link-title">{{ translation.t('app.nav.reviews') }}</span>
-                <span class="nav-link-desc">{{ translation.t('app.nav.reviewsDesc') }}</span>
-              </a>
-            </li>
-            <li>
-              <a
-                routerLink="/"
-                fragment="catalog"
-                class="nav-link-item"
-                [class.active]="isNavGalleryActive()"
-                (click)="onNavClick()"
-              >
-                <span class="nav-link-title">{{ translation.t('app.nav.worksGallery') }}</span>
-                <span class="nav-link-desc">{{ translation.t('app.nav.worksGalleryDesc') }}</span>
-              </a>
-            </li>
+          <div class="nav-links">
+            <a
+              routerLink="/"
+              fragment="features"
+              class="nav-link-item"
+              [class.active]="isNavFeaturesActive()"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.features') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.featuresDesc') }}</span>
+            </a>
+            <a
+              routerLink="/portfolio"
+              class="nav-link-item"
+              [class.active]="isNavCatalogActive()"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.catalog') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.catalogDesc') }}</span>
+            </a>
+            <a
+              routerLink="/jobs"
+              class="nav-link-item"
+              routerLinkActive="active"
+              (click)="onNavClick()"
+              (mouseenter)="prefetchJobs()"
+              (focus)="prefetchJobs()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.jobsBoard') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.jobsBoardDesc') }}</span>
+            </a>
+            <a
+              routerLink="/reviews"
+              class="nav-link-item"
+              routerLinkActive="active"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.reviews') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.reviewsDesc') }}</span>
+            </a>
+            <a
+              routerLink="/"
+              fragment="catalog"
+              class="nav-link-item"
+              [class.active]="isNavGalleryActive()"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.worksGallery') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.worksGalleryDesc') }}</span>
+            </a>
             @if (mobileMenuOpen()) {
-              <li class="nav-auth-mobile">
+              <div class="nav-auth-mobile">
                 <div class="nav-auth-mobile__inner">
                   @if (isLoggedIn()) {
                     <a
@@ -113,9 +103,9 @@
                     </a>
                   }
                 </div>
-              </li>
+              </div>
             }
-          </ul>
+          </div>
         </nav>
       </div>
 
@@ -154,6 +144,7 @@
           [attr.aria-expanded]="mobileMenuOpen()"
           aria-controls="main-nav"
           [attr.aria-label]="translation.t('app.actions.openMenu')"
+          title="{{ translation.t('app.actions.openMenu') }}"
         >
           <span class="menu-toggle-bar"></span>
           <span class="menu-toggle-bar"></span>
@@ -168,6 +159,7 @@
         class="nav-backdrop"
         (click)="closeMobileMenu()"
         [attr.aria-label]="translation.t('app.actions.closeMenu')"
+        title="{{ translation.t('app.actions.closeMenu') }}"
       ></button>
     }
   </header>
@@ -185,25 +177,13 @@
 
       <div class="footer-column">
         <h3>{{ translation.t('app.footer.sections') }}</h3>
-        <ul>
-          <li>
-            <a routerLink="/" fragment="features">{{ translation.t('app.nav.features') }}</a>
-          </li>
-          <li>
-            <a routerLink="/portfolio">{{ translation.t('app.nav.catalog') }}</a>
-          </li>
-          <li>
-            <a routerLink="/jobs" (mouseenter)="prefetchJobs()" (focus)="prefetchJobs()">{{
-              translation.t('jobs.title')
-            }}</a>
-          </li>
-          <li>
-            <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
-          </li>
-          <li>
-            <a routerLink="/" fragment="catalog">{{ translation.t('app.nav.worksGallery') }}</a>
-          </li>
-        </ul>
+        <div class="footer-links">
+          <a routerLink="/" fragment="features">{{ translation.t('app.nav.features') }}</a>
+          <a routerLink="/portfolio">{{ translation.t('app.nav.catalog') }}</a>
+          <a routerLink="/jobs" (mouseenter)="prefetchJobs()" (focus)="prefetchJobs()">{{ translation.t('jobs.title') }}</a>
+          <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
+          <a routerLink="/" fragment="catalog">{{ translation.t('app.nav.worksGallery') }}</a>
+        </div>
       </div>
     </div>
 

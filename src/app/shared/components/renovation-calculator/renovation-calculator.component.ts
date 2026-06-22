@@ -350,6 +350,18 @@ export class RenovationCalculatorComponent implements OnInit {
     );
   }
 
+  protected trackMainChecklistItem(_: number, item: { id: string }): string {
+    return item.id;
+  }
+
+  protected trackExtraChecklistItem(_: number, item: { id: string }): string {
+    return item.id;
+  }
+
+  protected trackCustomChecklistItem(_: number, item: string): string {
+    return item;
+  }
+
   totalSelectedWorkCount(): number {
     return (
       this.calculatorChecklistSelection().length + this.calculatorChecklistCustomItems().length

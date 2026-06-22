@@ -23,7 +23,6 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
-import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 
 @Component({
   selector: 'app-brigades-page',
@@ -34,7 +33,6 @@ import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/
     ReactiveFormsModule,
     BeforeAfterComponent,
     SocialLinksComponent,
-    CatalogOrderCalculatorSectionComponent,
   ],
   templateUrl: './brigades-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

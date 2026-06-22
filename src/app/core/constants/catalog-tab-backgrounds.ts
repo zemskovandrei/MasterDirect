@@ -126,76 +126,63 @@ export function catalogTabBackgroundStyle(
 export type ReviewPageFormMode = 'review' | 'recommendation' | 'siteFeedback';
 export type ReviewPageCategory = 'brigade' | 'master' | 'furniture' | 'renovation';
 
-/** Фото для каждой комбинации «тип публикации × категория» на /reviews. */
-export const REVIEWS_SITE_FEEDBACK_PHOTO =
-  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1920';
-
+/** Уникальные фото только для /reviews — не пересекаются с CATALOG_TAB_BACKGROUNDS. */
 export const REVIEWS_PAGE_BACKGROUNDS: Record<
   ReviewPageFormMode,
   Record<ReviewPageCategory, string>
 > = {
   review: {
     brigade:
-      'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920',
+      'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1920',
     master:
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1920',
     furniture:
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1920',
+      'https://images.unsplash.com/photo-1616594039964-3e4de31d0f1e?q=80&w=1920',
     renovation:
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1920',
+      'https://images.unsplash.com/photo-1600566752227-8f3b1e8dbf4e?q=80&w=1920',
   },
   recommendation: {
     brigade:
-      'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1920',
+      'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1920',
     master:
-      'https://images.unsplash.com/photo-1581094794329-cf1c4f5c8c2e?q=80&w=1920',
+      'https://images.unsplash.com/photo-1581092921461-eab62e97a780?q=80&w=1920',
     furniture:
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920',
+      'https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1920',
     renovation:
-      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1920',
+      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=1920',
   },
   siteFeedback: {
-    brigade: REVIEWS_SITE_FEEDBACK_PHOTO,
-    master: REVIEWS_SITE_FEEDBACK_PHOTO,
-    furniture: REVIEWS_SITE_FEEDBACK_PHOTO,
-    renovation: REVIEWS_SITE_FEEDBACK_PHOTO,
+    brigade:
+      'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1920',
+    master:
+      'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1920',
+    furniture:
+      'https://images.unsplash.com/photo-1493666438817-866a91353ca9?q=80&w=1920',
+    renovation:
+      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?q=80&w=1920',
   },
 };
 
 const REVIEWS_PAGE_POSITION: Record<ReviewPageCategory, string> = {
-  brigade: 'center 35%',
-  master: 'center 40%',
+  brigade: 'center 30%',
+  master: 'center 45%',
   furniture: 'center center',
-  renovation: 'center 55%',
+  renovation: 'center 50%',
 };
 
-const REVIEWS_PAGE_OVERLAY: Record<ReviewPageFormMode, string> = {
-  review: 'linear-gradient(135deg, rgba(11, 31, 63, 0.82) 0%, rgba(15, 23, 42, 0.55) 48%, rgba(90, 154, 110, 0.35) 100%)',
-  recommendation:
-    'linear-gradient(135deg, rgba(4, 47, 46, 0.78) 0%, rgba(15, 23, 42, 0.52) 50%, rgba(16, 185, 129, 0.32) 100%)',
-  siteFeedback:
-    'linear-gradient(135deg, rgba(12, 74, 110, 0.82) 0%, rgba(15, 23, 42, 0.58) 55%, rgba(56, 189, 248, 0.28) 100%)',
-};
-
-/** Фон всей страницы /reviews — меняется по вкладкам. */
-export function reviewsPageBackgroundStyle(
-  mode: ReviewPageFormMode,
-  category: ReviewPageCategory,
-): Record<string, string> {
-  const photoUrl = REVIEWS_PAGE_BACKGROUNDS[mode][category];
-  const position = REVIEWS_PAGE_POSITION[category];
-
+/** Фон страницы отзывов: спокойное интерьерное фото с тёмным оверлеем. */
+export function reviewsPageShellStyle(): Record<string, string> {
+  const photoUrl = 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1920';
   return {
-    backgroundColor: '#0c1222',
-    backgroundImage: `${REVIEWS_PAGE_OVERLAY[mode]}, url('${photoUrl}')`,
+    backgroundColor: '#141c28',
+    backgroundImage: `linear-gradient(180deg, rgba(20, 28, 40, 0.72) 0%, rgba(20, 28, 40, 0.56) 45%, rgba(20, 28, 40, 0.78) 100%), url('${photoUrl}')`,
     backgroundSize: 'cover',
-    backgroundPosition: position,
+    backgroundPosition: 'center center',
     backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'scroll',
   };
 }
 
-/** Фото для боковой hero-панели формы. */
+/** Фото для боковой hero-панели формы — уникально для каждой вкладки. */
 export function reviewsHeroVisualStyle(
   mode: ReviewPageFormMode,
   category: ReviewPageCategory,
@@ -204,7 +191,7 @@ export function reviewsHeroVisualStyle(
   const position = REVIEWS_PAGE_POSITION[category];
 
   return {
-    backgroundImage: `linear-gradient(180deg, rgba(8, 15, 30, 0.15) 0%, rgba(8, 15, 30, 0.72) 100%), url('${photoUrl}')`,
+    backgroundImage: `linear-gradient(180deg, rgba(8, 15, 30, 0.08) 0%, rgba(8, 15, 30, 0.78) 100%), url('${photoUrl}')`,
     backgroundSize: 'cover',
     backgroundPosition: position,
     backgroundRepeat: 'no-repeat',

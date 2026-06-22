@@ -73,7 +73,12 @@
         @for (service of services; track service.image) {
           <article class="service-card">
             <div class="service-card-media">
-              <img [src]="service.image" [alt]="translation.t(service.title)" loading="lazy" />
+              <img
+                [src]="service.image"
+                [alt]="translation.t(service.title)"
+                title="{{ translation.t(service.title) }}"
+                loading="lazy"
+              />
             </div>
             <div class="service-card-body">
               <h3>{{ translation.t(service.title) }}</h3>

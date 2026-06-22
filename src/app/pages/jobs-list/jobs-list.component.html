@@ -74,11 +74,11 @@
                         @if (section.title) {
                           <p class="jobs-glass-card__scope-section-title">{{ section.title }}</p>
                         }
-                        <ul class="jobs-glass-card__scope-list">
+                        <div class="jobs-glass-card__scope-list" role="list">
                           @for (item of section.items; track item) {
-                            <li>{{ item }}</li>
+                            <div class="jobs-glass-card__scope-list-item" role="listitem">{{ item }}</div>
                           }
-                        </ul>
+                        </div>
                       }
                     </div>
                   </div>
@@ -179,7 +179,7 @@
         ×
       </button>
       <p class="jobs-photo-lightbox__title">{{ preview.title }}</p>
-      <img class="jobs-photo-lightbox__image" [src]="preview.src" [alt]="preview.title" />
+      <img class="jobs-photo-lightbox__image" [src]="preview.src" [alt]="preview.title" title="{{ preview.title }}" />
       <a
         class="jobs-photo-lightbox__open"
         [href]="preview.src"

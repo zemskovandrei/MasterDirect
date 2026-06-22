@@ -5,6 +5,8 @@ import { ReviewStoreService } from '../../core/services/review-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { ReviewSubmission } from '../../core/models/portfolio.models';
+import { AdminAuthService } from '../../core/services/admin-auth.service';
 
 @Component({
   selector: 'app-portfolio-catalog',
@@ -18,10 +20,41 @@ export class PortfolioCatalogComponent implements OnInit {
   protected readonly supabase = inject(SupabaseService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
+  protected readonly adminAuth = inject(AdminAuthService);
 
   protected readonly pageBackground = catalogTabBackgroundStyle('catalogHub');
 
   ngOnInit(): void {
     this.supabase.loadProfiles().subscribe();
+  }
+
+  protected reviewBackgroundClass(review: ReviewSubmission): string {
+    const text = `${review.category} ${review.review} ${review.performerType}`.toLowerCase();
+
+    if (text.includes('плит') || text.includes('кафел')) {
+      return 'review-card--bg-tile';
+    }
+
+    if (text.includes('элект')) {
+      return 'review-card--bg-electric';
+    }
+
+    if (text.includes('сантех') || text.includes('труб')) {
+      return 'review-card--bg-plumbing';
+    }
+
+    if (text.includes('мебел')) {
+      return 'review-card--bg-furniture';
+    }
+
+    if (text.includes('ремонт') || text.includes('отдел')) {
+      return 'review-card--bg-renovation';
+    }
+
+    return 'review-card--bg-general';
+  }
+
+  protected deleteReview(reviewId: string): void {
+    void this.reviewStore.deleteReview(reviewId);
   }
 }

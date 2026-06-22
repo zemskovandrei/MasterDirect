@@ -42,13 +42,12 @@
     @if (reviewStore.approvedReviews().length > 0) {
       <section class="catalog-reviews">
         <div class="section-header">
-          <span class="section-eyebrow">{{ translation.t('portfolio.hub.reviewsEyebrow') }}</span>
           <h2>{{ translation.t('portfolio.hub.reviewsTitle') }}</h2>
           <p class="section-subtitle">{{ translation.t('portfolio.hub.reviewsLead') }}</p>
         </div>
         <div class="review-grid">
           @for (review of reviewStore.approvedReviews(); track review.id) {
-            <article class="review-card">
+            <article class="review-card" [ngClass]="reviewBackgroundClass(review)">
               <p>{{ reviewStore.localizeReview(review) }}</p>
               <div class="review-meta">
                 <strong>{{ review.name }}</strong>
@@ -57,10 +56,21 @@
                   {{ reviewStore.localizeCategory(review) }}</span
                 >
               </div>
+              @if (adminAuth.isAdmin()) {
+                <button
+                  type="button"
+                  class="review-card-delete-btn"
+                  (click)="deleteReview(review.id)"
+                >
+                  Удалить отзыв
+                </button>
+              }
             </article>
           }
         </div>
       </section>
+    } @else {
+      <p class="catalog-reviews-empty">Пока нет отзывов.</p>
     }
 
   </div>

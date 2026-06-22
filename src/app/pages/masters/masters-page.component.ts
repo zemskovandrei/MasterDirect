@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   PLATFORM_ID,
+  computed,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -52,6 +53,25 @@ export class MastersPageComponent implements OnInit {
   protected readonly editingPerformer = signal<PerformerProfile | null>(null);
   protected readonly adminSaving = signal(false);
   protected readonly selectedPerformerId = signal<string | null>(null);
+  protected readonly hiddenPerformerIds = signal<Set<string>>(new Set());
+  protected readonly specialtySearchQuery = signal('');
+
+  protected readonly visibleWorkers = computed(() => {
+    const hidden = this.hiddenPerformerIds();
+    const filtered = this.supabase.workers().filter((worker) => !hidden.has(worker.id));
+    const query = this.normalizeSearchText(this.specialtySearchQuery());
+
+    if (!query) {
+      return filtered;
+    }
+
+    return filtered.filter((worker) => {
+      const haystack = this.normalizeSearchText(
+        `${worker.name} ${worker.specialty ?? ''} ${worker.description ?? ''}`,
+      );
+      return haystack.includes(query);
+    });
+  });
 
   protected readonly editForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -136,8 +156,28 @@ export class MastersPageComponent implements OnInit {
       return;
     }
 
+    this.deleteFromUI(performer.id);
+
     if (this.editingPerformer()?.id === performer.id) {
       this.closeEditPerformer();
+    }
+  }
+
+  deleteFromUI(id: string): void {
+    const targetId = id.trim();
+    if (!targetId) {
+      return;
+    }
+
+    this.hiddenPerformerIds.update((current) => {
+      const next = new Set(current);
+      next.add(targetId);
+      return next;
+    });
+
+    if (this.selectedPerformerId() === targetId) {
+      this.selectedPerformerId.set(null);
+      saveCatalogSelection(null);
     }
   }
 
@@ -152,5 +192,13 @@ export class MastersPageComponent implements OnInit {
   adminLogout() {
     this.catalogAdmin.logout();
     this.closeEditPerformer();
+  }
+
+  protected updateSpecialtySearchQuery(value: string): void {
+    this.specialtySearchQuery.set(value ?? '');
+  }
+
+  private normalizeSearchText(value: string): string {
+    return value.toLowerCase().replace(/\s+/g, ' ').trim();
   }
 }

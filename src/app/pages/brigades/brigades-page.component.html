@@ -2,19 +2,11 @@
   <section class="catalog">
     <div class="catalog-inner">
       <section class="catalog-group catalog-group--brigade" id="brigade-section">
-        @if (catalogAdmin.isAdmin()) {
-          <div class="catalog-admin-toolbar catalog-admin-toolbar--page">
-            <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
-            <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
-              {{ translation.t('admin.logout') }}
-            </button>
-          </div>
-        }
 
         <div class="catalog-group-body">
         <p class="catalog-page-tagline">{{ translation.t('brigades.listLead') }}</p>
         <div class="performer-grid">
-          @for (p of supabase.brigades(); track p.id) {
+          @for (p of visibleBrigades(); track p.id) {
             <article
               class="performer-card performer-card--brigade performer-card--enhanced"
               [class.performer-card--admin]="catalogAdmin.isAdmin()"

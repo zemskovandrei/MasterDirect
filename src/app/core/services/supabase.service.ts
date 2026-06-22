@@ -776,6 +776,25 @@ export class SupabaseService {
     return this.deleteProfile(id, 'brigade');
   }
 
+  deleteSpecialistWithEvidence(
+    specialistId: string,
+    adminEmail: string,
+  ): Observable<SupabaseMutationResult<null>> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.deleteSpecialistWithEvidenceRow(specialistId, adminEmail)).pipe(
+      catchError((err) => {
+        console.error('Delete specialist with evidence error:', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Delete failed',
+        });
+      }),
+    );
+  }
+
   deleteFurnitureOrder(id: string): Observable<SupabaseMutationResult<null>> {
     if (!isPlatformBrowser(this.platformId)) {
       return of({ data: null, error: 'Browser only' });
@@ -1425,6 +1444,46 @@ export class SupabaseService {
     }
   }
 
+  private async deleteSpecialistWithEvidenceRow(
+    specialistId: string,
+    adminEmail: string,
+  ): Promise<SupabaseMutationResult<null>> {
+    const targetId = specialistId?.trim();
+    const actorEmail = adminEmail?.trim().toLowerCase();
+
+    if (!targetId) {
+      return { data: null, error: 'Missing specialist id' };
+    }
+
+    if (!actorEmail) {
+      return { data: null, error: 'Missing admin email' };
+    }
+
+    try {
+      const client = await this.resolveClient();
+      if (!client) {
+        return { data: null, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const { error } = await client.rpc('delete_specialist_with_evidence', {
+        target_id: targetId,
+        admin_email: actorEmail,
+      });
+
+      if (error) {
+        return { data: null, error: error.message };
+      }
+
+      this.removeProfileFromState(targetId);
+      await this.refreshProfilesFromDatabase();
+      return { data: null, error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      console.error('Delete specialist with evidence error:', err);
+      return { data: null, error: message };
+    }
+  }
+
   isConfigured(): boolean {
     return this.supabaseClientService.isConfigured();
   }
@@ -1921,13 +1980,21 @@ export class SupabaseService {
       const specialistsResult = await client
         .from(environment.supabase.specialistTable)
         .select('*')
+        .neq('role', 'admin')
         .order('name', { ascending: true });
 
       if (specialistsResult.error) {
         logSupabaseError('loadSpecialists', specialistsResult.error);
+        this.profilesSignal.set(localProfiles);
+        this.loadedSignal.set(true);
+        return localProfiles;
       } else {
         for (const row of (specialistsResult.data ?? []) as MasterRow[]) {
           if (!row?.id) {
+            continue;
+          }
+
+          if (row.is_archive) {
             continue;
           }
 
@@ -1976,10 +2043,6 @@ export class SupabaseService {
   }
 
   private mergeCatalogProfiles(remote: Profile[], local: Profile[]): Profile[] {
-    if (remote.length === 0) {
-      return local;
-    }
-
     const byId = new Map<string, Profile>();
 
     for (const profile of remote) {

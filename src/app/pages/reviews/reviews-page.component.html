@@ -38,7 +38,7 @@
               [attr.aria-label]="translation.t('reviewsPage.form.modeAria')"
             >
               <legend class="sr-only">{{ translation.t('reviewsPage.form.modeAria') }}</legend>
-              @for (mode of formModes; track mode) {
+                @for (mode of formModes; track mode) {
                 <button
                   type="button"
                   class="form-mode-tab"
@@ -103,74 +103,23 @@
             </label>
 
             @if (!isSiteFeedbackMode()) {
-              @if (category() === 'renovation') {
-                <label
-                  class="review-field"
-                  [class.review-field--error]="fieldInvalid('performerFreeText')"
+              <label
+                class="review-field"
+                [class.review-field--error]="fieldInvalid('performerFreeText')"
+              >
+                <span class="review-label"
+                  >{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span
                 >
-                  <span class="review-label"
-                    >{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span
-                  >
-                  <input
-                    type="text"
-                    formControlName="performerFreeText"
-                    [placeholder]="performerPlaceholder()"
-                    autocomplete="off"
-                  />
-                  @if (fieldInvalid('performerFreeText')) {
-                    <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
-                  }
-                </label>
-              } @else {
-                <div
-                  class="review-field review-field--search"
-                  [class.review-field--error]="fieldInvalid('performerId')"
-                  (click)="$event.stopPropagation()"
-                >
-                  <span class="review-label"
-                    >{{ translation.t('reviewsPage.form.performer') }} <em>*</em></span
-                  >
-                  <div class="performer-search-wrap">
-                    <input
-                      type="text"
-                      class="performer-search-input"
-                      [value]="performerQuery() || selectedPerformerName()"
-                      (input)="onPerformerInput($any($event.target).value)"
-                      (focus)="performerMenuOpen.set(true)"
-                      placeholder="Search performer"
-                      autocomplete="off"
-                      role="combobox"
-                      aria-autocomplete="list"
-                      aria-expanded="false"
-                      aria-controls="performer-suggestions-list"
-                      aria-label="Search performer"
-                      title="Search performer"
-                    />
-                    @if (performerMenuOpen() && filteredPerformers().length > 0) {
-                      <div class="performer-suggestions" role="listbox" id="performer-suggestions-list">
-                        @for (option of filteredPerformers(); track option.id) {
-                          <button
-                            type="button"
-                            role="option"
-                            [attr.aria-selected]="selectedPerformerName() === option.name"
-                            title="Select performer"
-                            (click)="selectPerformer(option)"
-                          >
-                            <strong>{{ option.name }}</strong>
-                            <span>{{ option.subtitle }}</span>
-                          </button>
-                        }
-                      </div>
-                    } @else if (performerMenuOpen() && performerOptions().length === 0) {
-                      <p class="performer-empty">{{ translation.t('reviewsPage.form.performerEmpty') }}</p>
-                    }
-                  </div>
-                  <input type="hidden" formControlName="performerId" />
-                  @if (fieldInvalid('performerId')) {
-                    <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
-                  }
-                </div>
-              }
+                <input
+                  type="text"
+                  formControlName="performerFreeText"
+                  [placeholder]="performerPlaceholder()"
+                  autocomplete="off"
+                />
+                @if (fieldInvalid('performerFreeText')) {
+                  <small class="field-error">{{ translation.t('reviewsPage.errors.performer') }}</small>
+                }
+              </label>
 
               @if (!isRecommendationMode()) {
                 <div class="review-field" [class.review-field--error]="fieldInvalid('rating')">
@@ -249,6 +198,20 @@
             </button>
           </form>
         </div>
+      </section>
+
+      <section class="reviews-site-feedback-list" aria-label="Отзывы о сайте">
+        @if (data?.siteFeedbackReviews?.length > 0) {
+          <div class="reviews-site-feedback-grid">
+            @for (review of data.siteFeedbackReviews; track review.id) {
+              <article class="reviews-site-feedback-card">
+                <p>{{ review.review_text }}</p>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="reviews-site-feedback-empty">Отзывов пока нет.</p>
+        }
       </section>
     </div>
   </section>

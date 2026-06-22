@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   PLATFORM_ID,
+  computed,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -40,6 +41,12 @@ export class FurnitureCompaniesPageComponent implements OnInit {
 
   protected readonly pageBackground = catalogTabBackgroundStyle('furniture');
   protected readonly selectedCompanyId = signal<string | null>(null);
+  protected readonly hiddenCompanyIds = signal<Set<string>>(new Set());
+
+  protected readonly visibleCompanies = computed(() => {
+    const hidden = this.hiddenCompanyIds();
+    return this.supabase.furnitureCompanies().filter((company) => !hidden.has(company.id));
+  });
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -64,6 +71,27 @@ export class FurnitureCompaniesPageComponent implements OnInit {
     const error = await this.catalogAdmin.deleteFurnitureCompany(company);
     if (error) {
       alert(error);
+      return;
+    }
+
+    this.deleteFromUI(company.id);
+  }
+
+  deleteFromUI(id: string): void {
+    const targetId = id.trim();
+    if (!targetId) {
+      return;
+    }
+
+    this.hiddenCompanyIds.update((current) => {
+      const next = new Set(current);
+      next.add(targetId);
+      return next;
+    });
+
+    if (this.selectedCompanyId() === targetId) {
+      this.selectedCompanyId.set(null);
+      saveCatalogSelection(null);
     }
   }
 

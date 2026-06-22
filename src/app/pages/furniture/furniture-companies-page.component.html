@@ -2,19 +2,10 @@
 <section class="catalog">
   <div class="catalog-inner">
     <section class="catalog-group catalog-group--furniture" id="furniture">
-      @if (catalogAdmin.isAdmin()) {
-        <div class="catalog-admin-toolbar catalog-admin-toolbar--page">
-          <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
-          <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
-            {{ translation.t('admin.logout') }}
-          </button>
-        </div>
-      }
-
       <div class="catalog-group-body">
       <p class="catalog-page-tagline">{{ translation.t('furniture.listLead') }}</p>
       <div class="performer-grid">
-        @for (company of supabase.furnitureCompanies(); track company.id) {
+        @for (company of visibleCompanies(); track company.id) {
           <article
             class="performer-card performer-card--furniture performer-card--enhanced"
             [class.performer-card--admin]="catalogAdmin.isAdmin()"

@@ -334,16 +334,6 @@
                     {{ translation.t('cabinet.forgotPasswordLink') }}
                   </button>
                 </div>
-                <p class="register-card__muted">
-                  {{ translation.t('cabinet.deleteAccountHint') }}
-                  <button
-                    type="button"
-                    class="link-accent"
-                    (click)="openDeleteAccountPanel(form.controls.email.value)"
-                  >
-                    {{ translation.t('cabinet.deleteAccountSummary') }}
-                  </button>
-                </p>
               }
             }
 
@@ -569,7 +559,11 @@
                         (change)="onBeforeAfterSelected('before', $event)"
                       />
                       @if (beforePreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewBefore')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewBefore')"
+                          title="{{ translation.t('cabinet.previewBefore') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -594,7 +588,11 @@
                         (change)="onBeforeAfterSelected('after', $event)"
                       />
                       @if (afterPreview(); as preview) {
-                        <img [src]="preview" [alt]="translation.t('cabinet.previewAfter')" />
+                        <img
+                          [src]="preview"
+                          [alt]="translation.t('cabinet.previewAfter')"
+                          title="{{ translation.t('cabinet.previewAfter') }}"
+                        />
                       } @else {
                         <span>{{ translation.t('cabinet.dropHint') }}</span>
                       }
@@ -688,61 +686,6 @@
           </div>
         }
 
-        @if (deleteAccountSuccess()) {
-          <p class="register-alert register-alert--ok" role="status">
-            {{ deleteAccountSuccess() }}
-          </p>
-        }
-
-        <details class="register-delete-account" [open]="showDeleteAccountPanel()">
-          <summary class="register-delete-account__summary">
-            {{ translation.t('cabinet.deleteAccountSummary') }}
-          </summary>
-          <p class="register-card__muted">{{ translation.t('cabinet.deleteAccountLead') }}</p>
-          @if (deleteAccountError()) {
-            <p class="register-alert register-alert--error" role="alert">
-              {{ deleteAccountError() }}
-            </p>
-          }
-          <form
-            class="register-form register-delete-account__form"
-            [formGroup]="deleteAccountForm"
-            (ngSubmit)="deleteAccountAndReset()"
-            novalidate
-          >
-            <label class="field">
-              <span class="field__label">{{ translation.t('cabinet.emailLabel') }} *</span>
-              <input
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-                class="field-input"
-                [class.field-input--error]="deleteAccountFieldInvalid('email')"
-              />
-            </label>
-            <label class="field">
-              <span class="field__label">{{ translation.t('cabinet.passwordLabel') }} *</span>
-              <input
-                type="password"
-                formControlName="password"
-                autocomplete="current-password"
-                class="field-input"
-                [class.field-input--error]="deleteAccountFieldInvalid('password')"
-              />
-            </label>
-            <button
-              type="submit"
-              class="register-delete-account__btn"
-              [disabled]="deleteAccountSubmitting()"
-            >
-              {{
-                deleteAccountSubmitting()
-                  ? translation.t('cabinet.deleteAccountSubmitting')
-                  : translation.t('cabinet.deleteAccountButton')
-              }}
-            </button>
-          </form>
-        </details>
       </div>
     </main>
   </div>

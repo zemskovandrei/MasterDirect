@@ -2,19 +2,23 @@
 <section class="catalog">
   <div class="catalog-inner">
     <section class="catalog-group catalog-group--worker" id="workers">
-      @if (catalogAdmin.isAdmin()) {
-        <div class="catalog-admin-toolbar catalog-admin-toolbar--page">
-          <span class="catalog-admin-badge">{{ translation.t('admin.badge') }}</span>
-          <button type="button" class="catalog-admin-logout" (click)="adminLogout()">
-            {{ translation.t('admin.logout') }}
-          </button>
-        </div>
-      }
-
       <div class="catalog-group-body">
       <p class="catalog-page-tagline">{{ translation.t('masters.listLead') }}</p>
+      <div class="catalog-specialty-search" role="search">
+        <label class="catalog-specialty-search__label" for="masters-specialty-search">
+          Поиск по специализации
+        </label>
+        <input
+          id="masters-specialty-search"
+          type="search"
+          class="catalog-specialty-search__input"
+          placeholder="Например: электрик, плиточник, сантехник"
+          [value]="specialtySearchQuery()"
+          (input)="updateSpecialtySearchQuery(($any($event.target).value ?? ''))"
+        />
+      </div>
       <div class="performer-grid">
-        @for (p of supabase.workers(); track p.id) {
+        @for (p of visibleWorkers(); track p.id) {
           <article
             class="performer-card performer-card--worker performer-card--enhanced"
             [class.performer-card--admin]="catalogAdmin.isAdmin()"

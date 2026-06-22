@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, PLATFORM_ID, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -14,7 +14,7 @@ import { TranslationService } from '../../core/services/translation.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./moderation.component.css'],
 })
-export class ModerationComponent {
+export class ModerationComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly adminAuth = inject(AdminAuthService);
@@ -24,16 +24,46 @@ export class ModerationComponent {
   protected readonly loginError = signal(false);
   protected readonly submitting = signal(false);
 
+  private autoRefreshInterval: ReturnType<typeof setInterval> | null = null;
+
   protected readonly loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  constructor() {
+  ngOnInit(): void {
     if (isPlatformBrowser(this.platformId) && this.adminAuth.isAdmin()) {
       void this.reviewStore.loadPendingReviews();
+      this.startAutoRefresh();
     }
   }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
+  }
+
+  private startAutoRefresh(): void {
+    if (!isPlatformBrowser(this.platformId) || this.autoRefreshInterval) {
+      return;
+    }
+
+    this.autoRefreshInterval = setInterval(() => {
+      if (this.adminAuth.isAdmin()) {
+        void this.reviewStore.loadPendingReviews();
+      } else {
+        this.stopAutoRefresh();
+      }
+    }, 10000);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+    }
+  }
+
+  constructor() {}
 
   async submitLogin() {
     if (this.loginForm.invalid) {

@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import type { User } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
+import { SupabaseService } from './supabase.service';
 
 /** Отладка UI админки. Держите false в production. */
 export const DEBUG_FORCE_ADMIN_UI = false;
@@ -11,6 +12,7 @@ export const DEBUG_FORCE_ADMIN_UI = false;
 export class AdminAuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
+  private readonly supabase = inject(SupabaseService);
   private readonly isAdminSignal = signal(false);
 
   /** true только при входе администратора через Supabase Auth. */
@@ -28,7 +30,7 @@ export class AdminAuthService {
       this.initPromise = this.syncFromSession();
 
       effect(() => {
-        this.isAdminSignal.set(this.isAdminUser(this.auth.user()));
+        void this.syncAdminState(this.auth.user());
       });
     }
   }
@@ -50,7 +52,10 @@ export class AdminAuthService {
       return false;
     }
 
-    if (!this.isAdminUser(result.user)) {
+    const isAdmin = await this.resolveIsAdminUser(result.user);
+    this.isAdminSignal.set(isAdmin);
+
+    if (!isAdmin) {
       await this.auth.signOut();
       return false;
     }
@@ -64,10 +69,11 @@ export class AdminAuthService {
 
   private async syncFromSession(): Promise<void> {
     await this.auth.ensureInitialized();
-    await this.auth.getUser();
+    const user = await this.auth.getUser();
+    await this.syncAdminState(user);
   }
 
-  private isAdminUser(user: User | null): boolean {
+  private isAdminUserByEmailOrMetadata(user: User | null): boolean {
     if (!user?.email) {
       return false;
     }
@@ -80,5 +86,41 @@ export class AdminAuthService {
     const appRole = user.app_metadata?.['role'];
     const userRole = user.user_metadata?.['role'];
     return appRole === 'admin' || userRole === 'admin';
+  }
+
+  private async syncAdminState(user: User | null): Promise<void> {
+    const isAdmin = await this.resolveIsAdminUser(user);
+    this.isAdminSignal.set(isAdmin);
+  }
+
+  private async resolveIsAdminUser(user: User | null): Promise<boolean> {
+    if (!user) {
+      return false;
+    }
+
+    if (this.isAdminUserByEmailOrMetadata(user)) {
+      return true;
+    }
+
+    try {
+      const client = await this.supabase.getClient();
+      if (!client) {
+        return false;
+      }
+
+      const { data, error } = await client
+        .from(environment.supabase.specialistTable)
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        return false;
+      }
+
+      return String((data as { role?: string | null } | null)?.role ?? '').trim().toLowerCase() === 'admin';
+    } catch {
+      return false;
+    }
   }
 }

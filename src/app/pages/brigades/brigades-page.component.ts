@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   PLATFORM_ID,
+  computed,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -53,6 +54,12 @@ export class BrigadesPageComponent implements OnInit {
   protected readonly selectedBrigadeId = signal<string | null>(null);
   protected readonly editingPerformer = signal<PerformerProfile | null>(null);
   protected readonly adminSaving = signal(false);
+  protected readonly hiddenPerformerIds = signal<Set<string>>(new Set());
+
+  protected readonly visibleBrigades = computed(() => {
+    const hidden = this.hiddenPerformerIds();
+    return this.supabase.brigades().filter((brigade) => !hidden.has(brigade.id));
+  });
 
   protected readonly editForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -141,8 +148,28 @@ export class BrigadesPageComponent implements OnInit {
       return;
     }
 
+    this.deleteFromUI(performer.id);
+
     if (this.editingPerformer()?.id === performer.id) {
       this.closeEditPerformer();
+    }
+  }
+
+  deleteFromUI(id: string): void {
+    const targetId = id.trim();
+    if (!targetId) {
+      return;
+    }
+
+    this.hiddenPerformerIds.update((current) => {
+      const next = new Set(current);
+      next.add(targetId);
+      return next;
+    });
+
+    if (this.selectedBrigadeId() === targetId) {
+      this.selectedBrigadeId.set(null);
+      saveCatalogSelection(null);
     }
   }
 
@@ -172,4 +199,5 @@ export class BrigadesPageComponent implements OnInit {
       }, 0);
     }
   }
+
 }

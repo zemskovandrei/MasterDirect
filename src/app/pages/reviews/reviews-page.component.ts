@@ -1,6 +1,7 @@
 import {
   Component,
   HostListener,
+  OnInit,
   computed,
   inject,
   signal,
@@ -37,13 +38,17 @@ interface PerformerOption {
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../../styles/catalog-pages.css', './reviews-page.component.css'],
 })
-export class ReviewsPageComponent {
+export class ReviewsPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly supabase = inject(SupabaseService);
   protected readonly reviewStore = inject(ReviewStoreService);
   protected readonly translation = inject(TranslationService);
+
+  data: { siteFeedbackReviews: Array<{ id: string; review_text: string; user_name?: string }> } = {
+    siteFeedbackReviews: [],
+  };
 
   protected readonly pageShellStyle = reviewsPageShellStyle();
 
@@ -155,6 +160,31 @@ export class ReviewsPageComponent {
     'renovation',
   ];
 
+  async ngOnInit(): Promise<void> {
+    await this.loadData();
+  }
+
+  async loadData(): Promise<void> {
+    const client = await this.supabase.getClient();
+    if (!client) {
+      this.data.siteFeedbackReviews = [];
+      return;
+    }
+
+    const { data: reviews, error } = await client.from('site_reviews').select('*');
+
+    if (error) {
+      this.data.siteFeedbackReviews = [];
+      return;
+    }
+
+    this.data.siteFeedbackReviews = (reviews as Array<{
+      id: string;
+      review_text: string;
+      user_name?: string;
+    }> | null) ?? [];
+  }
+
   selectCategory(next: ReviewCategoryKey) {
     this.category.set(next);
     this.performerQuery.set('');
@@ -234,13 +264,9 @@ export class ReviewsPageComponent {
       return;
     }
 
-    if (this.category() === 'renovation') {
-      const freeText = this.reviewForm.get('performerFreeText')?.value.trim() ?? '';
-      if (!freeText) {
-        this.reviewForm.get('performerFreeText')?.setErrors({ required: true });
-      }
-    } else if (!this.reviewForm.get('performerId')?.value) {
-      this.reviewForm.get('performerId')?.setErrors({ required: true });
+    const freeText = this.reviewForm.get('performerFreeText')?.value.trim() ?? '';
+    if (!freeText) {
+      this.reviewForm.get('performerFreeText')?.setErrors({ required: true });
     }
 
     if (this.reviewForm.invalid) {
@@ -260,33 +286,14 @@ export class ReviewsPageComponent {
       rating: kind === 'recommendation' ? 5 : v.rating,
     };
 
-    if (this.category() === 'renovation') {
-      const performerName = v.performerFreeText.trim();
-      const created = await this.reviewStore.addReview({
-        ...sharedPayload,
-        category: performerName,
-      });
-      if (!created) {
-        this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
-        return;
-      }
-    } else {
-      const performer = this.performerOptions().find((p) => p.id === v.performerId);
-      if (!performer) {
-        this.reviewForm.get('performerId')?.setErrors({ required: true });
-        this.reviewForm.get('performerId')?.markAsTouched();
-        return;
-      }
-
-      const created = await this.reviewStore.addReview({
-        ...sharedPayload,
-        category: performer.name,
-        performerId: performer.id,
-      });
-      if (!created) {
-        this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
-        return;
-      }
+    const performerName = v.performerFreeText.trim();
+    const created = await this.reviewStore.addReview({
+      ...sharedPayload,
+      category: performerName,
+    });
+    if (!created) {
+      this.submitError.set(this.translation.t('reviewsPage.errors.submitFailed'));
+      return;
     }
 
     this.finishSubmitSuccess();

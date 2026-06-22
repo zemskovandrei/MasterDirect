@@ -63,14 +63,14 @@
             <strong>{{ translation.t('moderation.notifications.title') }}</strong>
             <span>{{ translation.t('moderation.notifications.subtitle') }}</span>
           </div>
-          <ul class="notification-list">
+          <div class="notification-list" role="list">
             @for (note of reviewStore.notifications(); track note.id) {
-              <li>
+              <div role="listitem">
                 <a [routerLink]="note.link" class="notification-link">{{ note.message }}</a>
                 <time>{{ note.createdAt | date: 'short' }}</time>
-              </li>
+              </div>
             }
-          </ul>
+          </div>
         </section>
       }
 

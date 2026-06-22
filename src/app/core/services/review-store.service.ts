@@ -9,6 +9,7 @@ import type { ReviewRow } from '../models/master.model';
 import { environment } from '../../../environments/environment';
 import { TranslationService } from './translation.service';
 import { SupabaseService } from './supabase.service';
+import { AdminAuthService } from './admin-auth.service';
 import { logSupabaseError } from '../utils/supabase-error.util';
 
 /** Маркер в `review_text` для предложений по улучшению сайта (без отдельной колонки в БД). */
@@ -22,6 +23,7 @@ export class ReviewStoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translation = inject(TranslationService);
   private readonly supabase = inject(SupabaseService);
+  private readonly adminAuth = inject(AdminAuthService);
 
   private readonly reviewsSignal = signal<ReviewSubmission[]>([]);
   private readonly notificationsSignal = signal<ReviewNotification[]>([]);
@@ -33,7 +35,10 @@ export class ReviewStoreService {
     this.reviewsSignal().filter((review) => review.status === 'pending'),
   );
   readonly approvedReviews = computed(() =>
-    this.reviewsSignal().filter((review) => review.status === 'approved'),
+    this.reviewsSignal().filter(
+      (review) =>
+        review.status === 'approved' && (this.adminAuth.isAdmin() || review.kind !== 'siteFeedback'),
+    ),
   );
   readonly notifications = this.notificationsSignal.asReadonly();
 
@@ -122,8 +127,9 @@ export class ReviewStoreService {
       }
 
       const { data, error } = await client
-        .from(environment.supabase.reviewsTable)
+        .from('site_reviews')
         .select('*')
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -133,10 +139,7 @@ export class ReviewStoreService {
 
       const approved =
         (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'approved')) ?? [];
-      this.reviewsSignal.update((current) => {
-        const pending = current.filter((review) => review.status === 'pending');
-        return [...pending, ...approved];
-      });
+      this.reviewsSignal.set(approved);
     } finally {
       this.loadingSignal.set(false);
     }
@@ -147,12 +150,36 @@ export class ReviewStoreService {
       return;
     }
 
-    // В схеме без is_approved модерация только локально (после addReview).
-    this.reviewsSignal.update((current) => {
-      const approved = current.filter((review) => review.status === 'approved');
-      const pending = current.filter((review) => review.status === 'pending');
-      return [...pending, ...approved];
-    });
+    this.loadingSignal.set(true);
+
+    try {
+      const client = await this.supabase.getClient();
+      if (!client) {
+        return;
+      }
+
+      const { data, error } = await client
+        .from('site_reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        logSupabaseError('loadPendingReviews', error);
+        return;
+      }
+
+      const rows = (data as ReviewRow[] | null) ?? [];
+      const pending = rows
+        .filter((row) => row.is_approved !== true)
+        .map((row) => this.mapRow(row, 'pending'));
+      const approved = rows
+        .filter((row) => row.is_approved === true)
+        .map((row) => this.mapRow(row, 'approved'));
+
+      this.reviewsSignal.set([...pending, ...approved]);
+    } finally {
+      this.loadingSignal.set(false);
+    }
   }
 
   async addReview(data: {
@@ -207,7 +234,21 @@ export class ReviewStoreService {
       return;
     }
 
-    // Без колонки is_approved — публикуем только в UI (строка уже в site_reviews).
+    const client = await this.supabase.getClient();
+    if (!client) {
+      return;
+    }
+
+    const { error } = await client
+      .from('site_reviews')
+      .update({ is_approved: true })
+      .eq('id', id);
+
+    if (error) {
+      logSupabaseError('approveReview', error);
+      return;
+    }
+
     this.reviewsSignal.update((list) =>
       list.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
@@ -215,15 +256,19 @@ export class ReviewStoreService {
   }
 
   async rejectReview(id: string): Promise<void> {
+    await this.deleteReview(id);
+  }
+
+  async deleteReview(id: string): Promise<void> {
     const client = await this.supabase.getClient();
     if (!client) {
       return;
     }
 
-    const { error } = await client.from(environment.supabase.reviewsTable).delete().eq('id', id);
+    const { error } = await client.from('site_reviews').delete().eq('id', id);
 
     if (error) {
-      logSupabaseError('rejectReview', error);
+      logSupabaseError('deleteReview', error);
       return;
     }
 

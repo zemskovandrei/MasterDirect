@@ -8,6 +8,8 @@ import { FurnitureStoreService } from './furniture-store.service';
 import { PortfolioStoreService } from './portfolio-store.service';
 import { SupabaseService } from './supabase.service';
 import { TranslationService } from './translation.service';
+import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogAdminService {
@@ -16,6 +18,7 @@ export class CatalogAdminService {
   private readonly portfolioStore = inject(PortfolioStoreService);
   private readonly furnitureStore = inject(FurnitureStoreService);
   private readonly adminAuth = inject(AdminAuthService);
+  private readonly auth = inject(AuthService);
   private readonly translation = inject(TranslationService);
 
   isAdmin(): boolean {
@@ -40,8 +43,13 @@ export class CatalogAdminService {
       return null;
     }
 
+    const adminEmail =
+      this.auth.user()?.email?.trim().toLowerCase() ||
+      environment.supabase.adminEmails[0]?.trim().toLowerCase() ||
+      'admin@smartbuild.tech';
+
     const result = await firstValueFrom(
-      this.supabase.deleteProfile(performer.id, performer.type),
+      this.supabase.deleteSpecialistWithEvidence(performer.id, adminEmail),
     );
     return result.error;
   }

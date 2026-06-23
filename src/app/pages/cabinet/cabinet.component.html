@@ -36,7 +36,11 @@
               <div class="cabinet-card-head">
                 <div class="register-form__photo">
                   <div class="register-form__photo-box cabinet-card-head__avatar" aria-hidden="true">
-                    {{ profileInitial() }}
+                    @if (profileAvatarUrl(); as avatarUrl) {
+                      <img [src]="avatarUrl" alt="" class="cabinet-card-head__avatar-img" />
+                    } @else {
+                      {{ profileInitial() }}
+                    }
                   </div>
                   <div>
                     <span class="cabinet-card-head__badge">{{

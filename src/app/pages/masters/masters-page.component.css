@@ -92,6 +92,29 @@
   color: #b91c1c;
 }
 
+.performer-balance {
+  margin: 0.35rem 0 0;
+  color: var(--color-navy);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.performer-balance strong {
+  color: #0f766e;
+}
+
+.performer-busy-status {
+  margin: 0.35rem 0 0;
+  color: var(--color-navy);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.performer-busy-status--full {
+  color: #dc2626;
+  font-weight: 700;
+}
+
 .performer-admin-btn--delete:hover {
   background: rgba(220, 38, 38, 0.2);
 }
@@ -105,8 +128,8 @@
   justify-content: center;
   padding: 1.25rem;
   background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .performer-edit-dialog {

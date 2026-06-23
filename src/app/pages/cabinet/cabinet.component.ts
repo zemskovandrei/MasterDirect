@@ -235,6 +235,10 @@ export class CabinetComponent {
     return name.trim().charAt(0).toUpperCase() || '?';
   }
 
+  protected profileAvatarUrl(): string | null {
+    return this.store.currentPerformer()?.avatarUrl ?? this.furnitureStore.currentCompany()?.avatarUrl ?? null;
+  }
+
   private async refreshPremiumAccess(): Promise<void> {
     const userId = this.auth.user()?.id;
     if (!userId) {

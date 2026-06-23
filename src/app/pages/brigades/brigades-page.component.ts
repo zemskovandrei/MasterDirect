@@ -24,6 +24,7 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { isPerformerBusy, getPerformerBusyStatus } from '../../core/utils/performer-busy.util';
 
 @Component({
   selector: 'app-brigades-page',
@@ -49,6 +50,8 @@ export class BrigadesPageComponent implements OnInit {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly hasSocialLinks = hasSocialLinks;
+  protected readonly isPerformerBusy = isPerformerBusy;
+  protected readonly getPerformerBusyStatus = getPerformerBusyStatus;
 
   protected readonly pageBackground = catalogTabBackgroundStyle('brigade');
   protected readonly selectedBrigadeId = signal<string | null>(null);

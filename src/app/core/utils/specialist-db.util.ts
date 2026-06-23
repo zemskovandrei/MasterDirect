@@ -7,6 +7,7 @@ export interface SpecialistWriteInput {
   firstName?: string;
   lastName?: string;
   phone: string;
+  avatarUrl?: string | null;
   city?: string;
   specialty: string;
   proRole?: string;
@@ -91,6 +92,7 @@ export function specialistRowToWritePayload(input: SpecialistWriteInput): Record
     name,
     surname,
     phone,
+    avatar_url: input.avatarUrl?.trim() || null,
     skills: skillsFromSpecialty(input.specialty),
     city: input.city?.trim() || null,
     role: input.proRole?.trim() || null,
@@ -127,6 +129,10 @@ export function profilePatchToSpecialistRow(
 
   if (patch.phone !== undefined) {
     row['phone'] = patch.phone?.trim() || '-';
+  }
+
+  if (patch.avatarUrl !== undefined) {
+    row['avatar_url'] = patch.avatarUrl?.trim() || null;
   }
 
   if (patch.whatsapp !== undefined) {

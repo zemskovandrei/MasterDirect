@@ -19,7 +19,7 @@ import type {
 } from '../models/database.models';
 import { ORDER_COMPLETED_STATUS, isActiveOrderStatus } from '../models/database.models';
 import { specialistRowToWritePayload, type SpecialistWriteInput } from '../utils/specialist-db.util';
-import { logSupabaseError } from '../utils/supabase-error.util';
+import { logSupabaseError, isSupabaseSchemaColumnError, supabaseErrorMessage } from '../utils/supabase-error.util';
 import { SupabaseClientService } from './supabase-client.service';
 
 const NOT_CONFIGURED = 'Supabase не настроен. Укажите url и anonKey в environment.';
@@ -81,11 +81,21 @@ export class DataService {
   async upsertSpecialist(row: SpecialistInsert): Promise<Specialist> {
     const client = await this.requireClient();
 
-    const { data, error } = await client
+    let { data, error } = await client
       .from(this.specialistTable)
       .upsert(row, { onConflict: 'id' })
       .select('*')
       .single();
+
+    if (error && this.isMissingAvatarColumnError(error)) {
+      const fallbackRow: Partial<SpecialistInsert> = { ...row };
+      delete (fallbackRow as { avatar_url?: unknown }).avatar_url;
+      ({ data, error } = await client
+        .from(this.specialistTable)
+        .upsert(fallbackRow as SpecialistInsert, { onConflict: 'id' })
+        .select('*')
+        .single());
+    }
 
     return this.requireSingle<Specialist>(data, error, 'upsertSpecialist');
   }
@@ -357,5 +367,12 @@ export class DataService {
     }
 
     return data ?? [];
+  }
+
+  private isMissingAvatarColumnError(error: unknown): boolean {
+    if (!isSupabaseSchemaColumnError(error)) {
+      return false;
+    }
+    return supabaseErrorMessage(error).toLowerCase().includes('avatar_url');
   }
 }

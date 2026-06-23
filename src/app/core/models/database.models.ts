@@ -8,6 +8,7 @@ export interface Specialist {
   name: string;
   surname: string;
   phone: string;
+  balance?: number | null;
   skills: string[] | null;
   city: string | null;
   is_verified: boolean | null;

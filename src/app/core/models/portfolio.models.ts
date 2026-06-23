@@ -43,7 +43,8 @@ export interface PerformerProfile {
   name: string;
   specialty: string;
   description: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
+  balance?: number | null;
   socialLinks?: PerformerSocialLinks;
   works: WorkProject[];
   isDemo?: boolean;
@@ -55,6 +56,10 @@ export interface PerformerProfile {
   callOutFee?: string | null;
   /** Цвет фона шапки профиля (Supabase `header_bg`). */
   headerBg?: string | null;
+  /** Текущее количество активных заказов. */
+  currentActiveOrders?: number | null;
+  /** Максимальное количество одновременных заказов. */
+  maxActiveOrders?: number | null;
 }
 
 export interface CabinetSession {

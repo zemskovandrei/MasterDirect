@@ -46,6 +46,11 @@
                   @if (catalogL10n.performerSpecialtyTagline(p); as tagline) {
                     <p class="performer-specialty-tagline">{{ tagline }}</p>
                   }
+                  @if (getPerformerBusyStatus(p)) {
+                    <p class="performer-busy-status" [class.performer-busy-status--full]="isPerformerBusy(p)">
+                      📋 {{ getPerformerBusyStatus(p) }}
+                    </p>
+                  }
                 </div>
               </div>
 

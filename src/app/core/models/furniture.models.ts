@@ -14,6 +14,7 @@ export interface FurnitureCompany {
   name: string;
   specialty: string;
   description: string;
+  avatarUrl?: string | null;
   city: string;
   socialLinks?: PerformerSocialLinks;
   whatsapp_phone?: string | null;

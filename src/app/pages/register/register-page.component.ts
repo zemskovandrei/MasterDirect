@@ -54,6 +54,21 @@ import {
 import { buildFurnitureSlug } from '../../core/utils/furniture-id.util';
 import { wipeCatalogStorage } from '../../core/utils/catalog-wipe.util';
 
+function previewToFileLike(preview: string | null, filename: string): File | null {
+  if (!preview) {
+    return null;
+  }
+
+  const base64 = preview.includes(',') ? preview.split(',')[1] : preview;
+  if (!base64) {
+    return null;
+  }
+
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new File([bytes], filename, { type: 'image/jpeg' });
+}
+
 /** Roles shown on the registration form. */
 export const REGISTRATION_ROLES: ProRole[] = ['builder', 'master', 'furniture_maker'];
 
@@ -534,6 +549,7 @@ export class RegisterPageComponent {
           first_name: v.firstName.trim(),
           last_name: v.lastName.trim(),
           phone: v.phone.trim(),
+          avatarUrl: this.profilePreview(),
           city: v.city,
           specialty: v.specialty,
           description,
@@ -555,6 +571,7 @@ export class RegisterPageComponent {
           firstName: v.firstName.trim(),
           lastName: v.lastName.trim(),
           phone: v.phone.trim(),
+          avatarUrl: this.profilePreview(),
           city: v.city,
           specialty: v.specialty,
           proRole,

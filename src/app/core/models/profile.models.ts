@@ -8,6 +8,7 @@ export interface Profile {
   name: string;
   specialty: string;
   description: string;
+  balance?: number | null;
   /** Локальный slug (не UUID) для маршрутов и legacy localStorage. */
   slug?: string | null;
   city?: string | null;
@@ -22,6 +23,8 @@ export interface Profile {
   facebook?: string | null;
   header_bg?: string | null;
   created_at?: string | null;
+  current_active_orders?: number | null;
+  max_active_orders?: number | null;
 }
 
 export interface ProfileInsert {
@@ -42,6 +45,8 @@ export interface ProfileUpdate {
   name?: string;
   specialty?: string;
   description?: string;
+  avatarUrl?: string | null;
+  balance?: number | null;
   city?: string;
   callOutFee?: string;
   phone?: string;

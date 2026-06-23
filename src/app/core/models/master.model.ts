@@ -6,6 +6,8 @@ export interface MasterRow {
   name: string;
   surname: string;
   phone: string;
+  avatar_url?: string | null;
+  balance?: number | null;
   skills?: string[] | null;
   city?: string | null;
   is_verified?: boolean | null;
@@ -26,6 +28,8 @@ export interface MasterRow {
   whatsapp?: string | null;
   telegram?: string | null;
   header_bg?: string | null;
+  current_active_orders?: number | null;
+  max_active_orders?: number | null;
 }
 
 /** Строка таблицы `brigades`. */
@@ -33,10 +37,12 @@ export interface BrigadeRow {
   id: string;
   full_name: string;
   phone: string | null;
+  avatar_url?: string | null;
   city: string | null;
   specialty: string | null;
   description: string | null;
   call_out_fee: string | null;
+  balance?: number | null;
   whatsapp_phone: string | null;
   tg_username: string | null;
   whatsapp: string | null;
@@ -95,6 +101,7 @@ export interface AuthSignUpMetadata {
   first_name?: string;
   last_name?: string;
   phone?: string;
+  avatarUrl?: string | null;
   city?: string;
   specialty?: string;
   description?: string;

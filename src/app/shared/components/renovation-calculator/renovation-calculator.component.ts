@@ -863,7 +863,7 @@ export class RenovationCalculatorComponent implements OnInit {
       id: performer.id,
       pool,
       name: performer.name,
-      avatarUrl: performer.avatarUrl,
+      avatarUrl: performer.avatarUrl ?? undefined,
       city: this.translation.t('home.calculator.defaultCity'),
       experience: this.formatCalculatorExperience(performer.works.length),
       callOutFee,

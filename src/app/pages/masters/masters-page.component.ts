@@ -23,6 +23,7 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { isPerformerBusy, getPerformerBusyStatus } from '../../core/utils/performer-busy.util';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -47,6 +48,8 @@ export class MastersPageComponent implements OnInit {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly hasSocialLinks = hasSocialLinks;
+  protected readonly isPerformerBusy = isPerformerBusy;
+  protected readonly getPerformerBusyStatus = getPerformerBusyStatus;
 
   protected readonly pageBackground = catalogTabBackgroundStyle('workers');
 

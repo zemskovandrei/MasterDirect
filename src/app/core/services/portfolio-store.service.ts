@@ -72,6 +72,7 @@ export class PortfolioStoreService {
     specialty: string;
     description: string;
     callOutFee?: string;
+    avatarUrl?: string | null;
     socialLinks?: PerformerSocialLinks;
   }): PerformerProfile {
     const id = this.generateId(data.type, data.name);
@@ -86,6 +87,7 @@ export class PortfolioStoreService {
       specialty: string;
       description: string;
       callOutFee?: string;
+      avatarUrl?: string | null;
       socialLinks?: PerformerSocialLinks;
     },
   ): PerformerProfile {
@@ -97,6 +99,7 @@ export class PortfolioStoreService {
       name: data.name.trim(),
       specialty: data.specialty.trim(),
       description: data.description.trim(),
+      avatarUrl: data.avatarUrl ?? null,
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
       callOutFee,
       works: [],

@@ -54,6 +54,14 @@
                 <h3>
                   <a [routerLink]="performerLink(p.id)">{{ p.name }}</a>
                 </h3>
+                @if (p.balance != null) {
+                  <p class="performer-balance">Баланс: <strong>{{ p.balance }} руб.</strong></p>
+                }
+                @if (getPerformerBusyStatus(p)) {
+                  <p class="performer-busy-status" [class.performer-busy-status--full]="isPerformerBusy(p)">
+                    📋 {{ getPerformerBusyStatus(p) }}
+                  </p>
+                }
                 <p class="performer-specialty">{{ catalogL10n.performerSpecialty(p) }}</p>
                 @if (catalogL10n.performerSpecialtyTagline(p); as tagline) {
                   <p class="performer-specialty-tagline">{{ tagline }}</p>

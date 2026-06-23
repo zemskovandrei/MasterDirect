@@ -8,6 +8,11 @@ import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/pr
 import { PerformerProfile, PerformerSocialLinks, WorkProject } from '../models/portfolio.models';
 import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
+  portfolioWorkRowToProject,
+  portfolioWorkToInsertRow,
+  type PortfolioWorkRow,
+} from '../models/portfolio-work.model';
+import {
   furnitureCompanyToProfile,
   masterRowToProfile,
   performerToProfile,
@@ -28,7 +33,7 @@ import {
 import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
-import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint, formatStorageUploadError, isStorageBucketMissingError, isRlsPolicyError, formatSupabaseMutationError } from '../utils/supabase-error.util';
+import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint, formatStorageUploadError, isStorageBucketMissingError, isRlsPolicyError, formatSupabaseMutationError, isSupabaseMissingTableError, isSupabaseSchemaColumnError } from '../utils/supabase-error.util';
 import { compressWorkImageFile } from '../utils/compress-image.util';
 import { specialistRowToWritePayload, profilePatchToSpecialistRow } from '../utils/specialist-db.util';
 import { mergeSocialLinks } from '../utils/social-links.util';
@@ -99,6 +104,9 @@ export class SupabaseService {
   private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
   private profilesRefreshPromise: Promise<Profile[]> | null = null;
     private profilesInitialized = false;
+  private portfolioWorksTableMissing = false;
+  private portfolioWorksStatusColumnMissing = false;
+  private specialistAvatarColumnMissing = false;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly portfolioWorksByOwnerSignal = signal<Map<string, WorkProject[]>>(new Map());
@@ -555,14 +563,28 @@ export class SupabaseService {
         .eq('id', input.userId)
         .maybeSingle();
 
-      const result = existing
+        let result = existing
         ? await client
-            .from(environment.supabase.specialistTable)
-            .update(payload)
-            .eq('id', input.userId)
+          .from(environment.supabase.specialistTable)
+          .update(payload)
+          .eq('id', input.userId)
         : await client
+          .from(environment.supabase.specialistTable)
+          .upsert(payload, { onConflict: 'id' });
+
+        if (result.error && this.isMissingAvatarColumnError(result.error)) {
+        this.specialistAvatarColumnMissing = true;
+        const fallbackPayload = { ...(payload as Record<string, unknown>) };
+        delete fallbackPayload['avatar_url'];
+        result = existing
+          ? await client
             .from(environment.supabase.specialistTable)
-            .upsert(payload, { onConflict: 'id' });
+            .update(fallbackPayload)
+            .eq('id', input.userId)
+          : await client
+            .from(environment.supabase.specialistTable)
+            .upsert(fallbackPayload, { onConflict: 'id' });
+        }
 
       if (result.error) {
         logSupabaseError('registerAuthProfile', result.error);
@@ -576,6 +598,16 @@ export class SupabaseService {
       const message = err instanceof Error ? err.message : 'Profile registration failed';
       return { error: message };
     }
+  }
+
+  private isMissingAvatarColumnError(error: unknown): boolean {
+    if (this.specialistAvatarColumnMissing) {
+      return true;
+    }
+    if (!isSupabaseSchemaColumnError(error)) {
+      return false;
+    }
+    return supabaseErrorMessage(error).toLowerCase().includes('avatar_url');
   }
 
   async syncAuthProfileFromUser(user: {
@@ -1976,6 +2008,7 @@ export class SupabaseService {
       }
 
       const remoteProfiles: Profile[] = [];
+      const remoteWorks = await this.loadPortfolioWorksFromDatabase(client);
 
       const specialistsResult = await client
         .from(environment.supabase.specialistTable)
@@ -2008,13 +2041,13 @@ export class SupabaseService {
       }
 
       const merged = this.mergeCatalogProfiles(remoteProfiles, localProfiles);
-      this.syncPortfolioWorksToStores(this.buildWorksMapFromLocalStores(), merged);
+      this.syncPortfolioWorksToStores(this.buildWorksMapFromLocalStores(remoteWorks), merged);
 
       console.info('[SupabaseService] catalog loaded', {
         remote: remoteProfiles.length,
         local: localProfiles.length,
         merged: merged.length,
-        works: 0,
+        works: remoteWorks.size,
       });
 
       this.profilesSignal.set(merged);
@@ -2059,8 +2092,8 @@ export class SupabaseService {
     return Array.from(byId.values());
   }
 
-  private buildWorksMapFromLocalStores(): Map<string, WorkProject[]> {
-    const map = new Map(this.portfolioWorksByOwnerSignal());
+  private buildWorksMapFromLocalStores(remoteWorks?: Map<string, WorkProject[]>): Map<string, WorkProject[]> {
+    const map = new Map(remoteWorks ?? this.portfolioWorksByOwnerSignal());
 
     for (const performer of this.portfolioStore.performers()) {
       if (performer.works.length > 0) {
@@ -2106,14 +2139,61 @@ export class SupabaseService {
       id: input.work.id || crypto.randomUUID(),
     };
 
-    this.upsertWorkInCaches(input.ownerId, work);
-    return { data: work, error: null };
+    const client = await this.resolveClient();
+    if (!client) {
+      return { data: null, error: SUPABASE_NOT_CONFIGURED };
+    }
+
+    const payload = portfolioWorkToInsertRow({
+      ownerId: input.ownerId,
+      ownerType: input.ownerType,
+      work,
+    });
+
+    if (this.portfolioWorksTableMissing) {
+      this.upsertWorkInCaches(input.ownerId, work);
+      return { data: work, error: null };
+    }
+
+    const { data, error } = await client
+      .from('portfolio_works')
+      .upsert(payload, { onConflict: 'id' })
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      if (isSupabaseMissingTableError(error, 'portfolio_works')) {
+        this.portfolioWorksTableMissing = true;
+        this.upsertWorkInCaches(input.ownerId, work);
+        return { data: work, error: null };
+      }
+      logSupabaseError('savePortfolioWorkRow', error);
+      return { data: null, error: error.message };
+    }
+
+    const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : work;
+    this.upsertWorkInCaches(input.ownerId, saved);
+    return { data: saved, error: null };
   }
 
   private async deletePortfolioWorkRow(workId: string): Promise<SupabaseMutationResult<null>> {
     const trimmedId = workId.trim();
     if (!trimmedId) {
       return { data: null, error: 'Missing work id' };
+    }
+
+    const client = await this.resolveClient();
+    if (client && !this.portfolioWorksTableMissing) {
+      const { error } = await client.from('portfolio_works').delete().eq('id', trimmedId);
+      if (error) {
+        if (isSupabaseMissingTableError(error, 'portfolio_works')) {
+          this.portfolioWorksTableMissing = true;
+          this.removeWorkFromCaches(trimmedId);
+          return { data: null, error: null };
+        }
+        logSupabaseError('deletePortfolioWorkRow', error);
+        return { data: null, error: error.message };
+      }
     }
 
     this.removeWorkFromCaches(trimmedId);
@@ -2199,6 +2279,60 @@ export class SupabaseService {
       this.furnitureStore.getCompany(ownerId) ??
       this.furnitureStore.companies().find((item) => item.dbId === ownerId);
     return company?.works ?? [];
+  }
+
+  private async loadPortfolioWorksFromDatabase(
+    client: SupabaseClient,
+  ): Promise<Map<string, WorkProject[]>> {
+    const worksMap = new Map<string, WorkProject[]>();
+    if (this.portfolioWorksTableMissing) {
+      return worksMap;
+    }
+
+    const runQuery = (withStatusFilter: boolean) => {
+      let query = client.from('portfolio_works').select('*');
+      if (withStatusFilter) {
+        query = query.eq('status', 'verified');
+      }
+      return query.order('created_at', { ascending: false });
+    };
+
+    let withStatusFilter = !this.portfolioWorksStatusColumnMissing;
+    let { data, error } = await runQuery(withStatusFilter);
+
+    if (error && this.isPortfolioWorksStatusColumnError(error) && withStatusFilter) {
+      this.portfolioWorksStatusColumnMissing = true;
+      withStatusFilter = false;
+      ({ data, error } = await runQuery(false));
+    }
+
+    if (error) {
+      if (isSupabaseMissingTableError(error, 'portfolio_works')) {
+        this.portfolioWorksTableMissing = true;
+        return worksMap;
+      }
+      logSupabaseError('loadPortfolioWorksFromDatabase', error);
+      return worksMap;
+    }
+
+    for (const row of (data ?? []) as PortfolioWorkRow[]) {
+      if (!row?.owner_id) {
+        continue;
+      }
+
+      const work = portfolioWorkRowToProject(row);
+      const existing = worksMap.get(row.owner_id) ?? [];
+      worksMap.set(row.owner_id, [...existing, work]);
+    }
+
+    return worksMap;
+  }
+
+  private isPortfolioWorksStatusColumnError(error: unknown): boolean {
+    if (!isSupabaseSchemaColumnError(error)) {
+      return false;
+    }
+    return supabaseErrorMessage(error).toLowerCase().includes('status');
   }
 
   private buildProfilesFromLocalStores(): Profile[] {

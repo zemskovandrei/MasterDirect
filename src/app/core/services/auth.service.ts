@@ -29,6 +29,7 @@ export interface RegisterProfilePayload {
   firstName?: string;
   lastName?: string;
   phone: string;
+  avatarUrl?: string | null;
   city: string;
   specialty: string;
   proRole?: string;
@@ -158,6 +159,7 @@ export class AuthService {
         firstName: profile.firstName,
         lastName: profile.lastName,
         phone: profile.phone,
+        avatarUrl: profile.avatarUrl,
         city: profile.city,
         specialty: profile.specialty,
         proRole: profile.proRole,

@@ -116,6 +116,27 @@ export function isSupabaseSchemaColumnError(error: unknown): boolean {
   );
 }
 
+/** PostgREST / Postgres: таблица отсутствует в схеме или schema cache. */
+export function isSupabaseMissingTableError(error: unknown, tableName?: string): boolean {
+  const text = supabaseErrorMessage(error).toLowerCase();
+  const missingRelation =
+    text.includes('relation') && text.includes('does not exist') && text.includes('42p01');
+  const schemaCacheMiss =
+    text.includes('could not find the table') ||
+    text.includes('schema cache') ||
+    text.includes('pgrst205');
+
+  if (!missingRelation && !schemaCacheMiss) {
+    return false;
+  }
+
+  if (!tableName) {
+    return true;
+  }
+
+  return text.includes(tableName.toLowerCase());
+}
+
 export function logFetchResponseError(
   context: string,
   response: Response,

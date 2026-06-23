@@ -44,6 +44,7 @@ export class PerformerProfileComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly contactsRevealed = signal(false);
+  protected readonly currentBalance = signal<number | null>(null);
 
   protected readonly headerColor = signal('#0c7489');
 
@@ -122,6 +123,17 @@ export class PerformerProfileComponent {
       }
 
       this.contactsRevealed.set(matchesCatalogSelection(type as CatalogSelectionType, id));
+    });
+
+    effect(() => {
+      const performer = this.performer();
+      if (!performer || !this.isProfileOwner()) {
+        this.currentBalance.set(null);
+        return;
+      }
+
+      const profile = this.supabase.profiles().find((item) => item.id === performer.id);
+      this.currentBalance.set(profile?.balance ?? null);
     });
   }
 

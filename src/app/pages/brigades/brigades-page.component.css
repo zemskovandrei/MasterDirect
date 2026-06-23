@@ -96,6 +96,18 @@
   background: rgba(220, 38, 38, 0.2);
 }
 
+.performer-busy-status {
+  margin: 0.35rem 0 0;
+  color: var(--color-navy);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.performer-busy-status--full {
+  color: #dc2626;
+  font-weight: 700;
+}
+
 .performer-edit-overlay {
   position: fixed;
   inset: 0;

@@ -115,6 +115,62 @@
   font-weight: 700;
 }
 
+.busy-state,
+.free-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.busy-state p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.loading-spinner,
+.no-masters {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.loading-spinner p,
+.no-masters p {
+  margin: 0;
+}
+
+.no-masters {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.masters-grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.related-master-card {
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.related-master-card h4,
+.related-master-card p {
+  margin: 0;
+}
+
 .performer-admin-btn--delete:hover {
   background: rgba(220, 38, 38, 0.2);
 }

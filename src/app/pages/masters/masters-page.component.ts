@@ -7,12 +7,14 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CatalogAdminService } from '../../core/services/catalog-admin.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { PerformerProfile } from '../../core/models/portfolio.models';
+import { DataService } from '../../core/services/data.service';
+import type { Specialist } from '../../core/models/database.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
@@ -42,8 +44,10 @@ import { firstValueFrom } from 'rxjs';
 })
 export class MastersPageComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   protected readonly supabase = inject(SupabaseService);
+  private readonly dataService = inject(DataService);
   protected readonly catalogAdmin = inject(CatalogAdminService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -58,6 +62,9 @@ export class MastersPageComponent implements OnInit {
   protected readonly selectedPerformerId = signal<string | null>(null);
   protected readonly hiddenPerformerIds = signal<Set<string>>(new Set());
   protected readonly specialtySearchQuery = signal('');
+  protected recommendationRequested = false;
+  protected isLoading = false;
+  protected relatedMasters: Specialist[] = [];
 
   protected readonly visibleWorkers = computed(() => {
     const hidden = this.hiddenPerformerIds();
@@ -103,6 +110,79 @@ export class MastersPageComponent implements OnInit {
       saveCatalogSelection(next ? { type: 'worker', id: next } : null);
       return next;
     });
+  }
+
+  selectMaster(masterId: string): void {
+    this.toggleSelect(masterId);
+  }
+
+  isBusy(master: PerformerProfile): boolean {
+    return this.isPerformerBusy(master);
+  }
+
+  notifyMe(masterId: string): void {
+    const id = masterId.trim();
+    if (!id || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const storageKey = 'smartbuild.notify-when-free';
+    const existingRaw = localStorage.getItem(storageKey);
+    const existing = existingRaw
+      ? existingRaw
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    if (!existing.includes(id)) {
+      existing.push(id);
+      localStorage.setItem(storageKey, existing.join(','));
+    }
+
+    alert('Мы уведомим вас, когда у мастера освободится слот.');
+  }
+
+  async showSimilar(masterSkills: string[], masterId: string): Promise<void> {
+    this.recommendationRequested = true;
+    this.isLoading = true;
+    let result: { data: Specialist[]; error: string | null } = { data: [], error: null };
+
+    try {
+      result = await this.dataService.loadRecommendations(masterSkills, masterId, 'Batumi', 3);
+      this.relatedMasters = result.data || [];
+    } finally {
+      this.isLoading = false;
+    }
+
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+
+    if (!this.relatedMasters.length) {
+      alert('Похожие мастера пока не найдены.');
+      return;
+    }
+
+    const names = this.relatedMasters
+      .map((item) => [item.name, item.surname].filter(Boolean).join(' ').trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ');
+
+    alert(`Похожие мастера: ${names}`);
+  }
+
+  toSkillsArray(specialty: string): string[] {
+    return specialty
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  openRequestForm(): void {
+    void this.router.navigate(['/jobs']);
   }
 
   openEditPerformer(performer: PerformerProfile) {

@@ -97,18 +97,36 @@
               }
 
               <div class="performer-card__actions">
-                <button
-                  type="button"
-                  class="performer-select-btn"
-                  [class.performer-select-btn--active]="selectedPerformerId() === p.id"
-                  (click)="toggleSelect(p.id)"
-                >
-                  {{
-                    selectedPerformerId() === p.id
-                      ? translation.t('catalog.selected')
-                      : translation.t('catalog.select')
-                  }}
-                </button>
+                @if (isBusy(p)) {
+                  <div class="busy-state">
+                    <p>🔴 Все слоты заняты</p>
+                    <button type="button" class="performer-select-btn" (click)="notifyMe(p.id)">
+                      Уведомить меня
+                    </button>
+                    <button
+                      type="button"
+                      class="performer-select-btn"
+                      (click)="showSimilar(toSkillsArray(p.specialty), p.id)"
+                    >
+                      Посмотреть похожих
+                    </button>
+                  </div>
+                } @else {
+                  <div class="free-state">
+                    <button
+                      type="button"
+                      class="performer-select-btn"
+                      [class.performer-select-btn--active]="selectedPerformerId() === p.id"
+                      (click)="selectMaster(p.id)"
+                    >
+                      {{
+                        selectedPerformerId() === p.id
+                          ? translation.t('catalog.selected')
+                          : 'Выбрать мастера'
+                      }}
+                    </button>
+                  </div>
+                }
                 <a [routerLink]="performerLink(p.id)" class="performer-more">
                   {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
                 </a>
@@ -117,6 +135,35 @@
           </article>
         }
       </div>
+
+      @if (recommendationRequested && isLoading) {
+        <div class="loading-spinner">
+          <p>Ищем доступных специалистов...</p>
+        </div>
+      }
+
+      @if (recommendationRequested && !isLoading && relatedMasters.length > 0) {
+        <div class="masters-grid">
+          @for (master of relatedMasters; track master.id) {
+            <article class="related-master-card">
+              <h4>{{ master.name }} {{ master.surname }}</h4>
+              @if (master.skills?.length) {
+                <p>{{ master.skills?.join(', ') }}</p>
+              }
+              <a class="performer-more" [routerLink]="performerLink(master.id)">Открыть профиль →</a>
+            </article>
+          }
+        </div>
+      }
+
+      @if (recommendationRequested && !isLoading && relatedMasters.length === 0) {
+        <div class="no-masters">
+          <p>К сожалению, свободных специалистов по вашему профилю сейчас нет.</p>
+          <button type="button" class="performer-select-btn" (click)="openRequestForm()">
+            Оставить заявку на подбор
+          </button>
+        </div>
+      }
       </div>
     </section>
   </div>

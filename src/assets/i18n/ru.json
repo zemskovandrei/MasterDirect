@@ -1,7 +1,8 @@
 {
   "locale": {
     "ru": "Русский",
-    "en": "English"
+    "en": "English",
+    "ge": "Грузинский"
   },
   "app": {
     "tagline": "Ремонт и отделка",

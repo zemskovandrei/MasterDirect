@@ -8,27 +8,27 @@
     (click)="toggleMenu()"
     (mouseenter)="menuOpen.set(true)"
   >
-    <span class="lang-flag" aria-hidden="true">{{ currentOption().flag }}</span>
     <span class="lang-code">{{ currentOption().initials }}</span>
     <span class="lang-chevron" aria-hidden="true">▾</span>
   </button>
 
   <ul
     class="lang-dropdown"
-    role="listbox"
+    role="menu"
     [attr.aria-label]="translation.t('app.header.langSelector')"
+    title="Language menu"
   >
     @for (option of options; track option.code) {
-      <li role="option" [attr.aria-selected]="translation.locale() === option.code">
+      <li role="none">
         <button
           type="button"
+          role="menuitem"
           class="lang-dropdown-item"
           [class.lang-dropdown-item--active]="translation.locale() === option.code"
           (click)="selectLocale(option.code)"
         >
-          <span class="lang-dropdown-flag" aria-hidden="true">{{ option.flag }}</span>
+          <span class="lang-dropdown-initials">{{ option.initials }}</span>
           <span class="lang-dropdown-label">{{ option.label }}</span>
-          <span class="lang-dropdown-code">{{ option.initials }}</span>
         </button>
       </li>
     }

@@ -16,6 +16,8 @@ import type {
   SpecialistInsert,
   SpecialistUpdate,
   SpecialistAccountType,
+  WaitlistEntry,
+  WaitlistInsert,
 } from '../models/database.models';
 import { ORDER_COMPLETED_STATUS, isActiveOrderStatus } from '../models/database.models';
 import { specialistRowToWritePayload, type SpecialistWriteInput } from '../utils/specialist-db.util';
@@ -148,6 +150,165 @@ export class DataService {
 
   async countFurnitureCompanies(): Promise<number> {
     return this.countSpecialistsByAccountType('furniture');
+  }
+
+  async getRecommendedSpecialists(
+    masterSkills: string[],
+    currentMasterId: string,
+    limit = 3,
+  ): Promise<{ data: Specialist[] | null; error: string | null }> {
+    const client = await this.requireClient();
+    const normalizedSkills = Array.from(
+      new Set(masterSkills.map((skill) => skill.trim()).filter(Boolean)),
+    );
+    const currentId = currentMasterId.trim();
+
+    if (!normalizedSkills.length) {
+      return { data: [], error: null };
+    }
+
+    const { data, error } = await client
+      .from(this.specialistTable)
+      .select('*')
+      .contains('skills', normalizedSkills)
+      .neq('id', currentId)
+      .limit(50);
+
+    if (error) {
+      logSupabaseError('getRecommendedSpecialists', error);
+      return {
+        data: null,
+        error: supabaseErrorMessage(error) || error.message,
+      };
+    }
+
+    const candidates = (data ?? []) as Specialist[];
+
+    // В таблице specialist колонки загрузки могут отсутствовать в типе, поэтому фильтруем мягко.
+    const available = candidates.filter((specialist) => this.hasAvailableCapacity(specialist));
+
+    return {
+      data: available.slice(0, Math.max(1, limit)),
+      error: null,
+    };
+  }
+
+  async getTopMastersByCity(
+    city: string,
+    limit = 3,
+  ): Promise<{ data: Specialist[] | null; error: string | null }> {
+    const client = await this.requireClient();
+    const normalizedCity = city.trim();
+
+    if (!normalizedCity) {
+      return { data: [], error: null };
+    }
+
+    const { data, error } = await client
+      .from(this.specialistTable)
+      .select('*')
+      .eq('city', normalizedCity)
+      .eq('is_archive', false)
+      .order('orders_count', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      logSupabaseError('getTopMastersByCity', error);
+      return {
+        data: null,
+        error: supabaseErrorMessage(error) || error.message,
+      };
+    }
+
+    const candidates = (data ?? []) as Specialist[];
+    const available = candidates.filter((specialist) => this.hasAvailableCapacity(specialist));
+
+    return {
+      data: available.slice(0, Math.max(1, limit)),
+      error: null,
+    };
+  }
+
+  async loadRecommendations(
+    skills: string[],
+    masterId: string,
+    city = 'Batumi',
+    limit = 3,
+  ): Promise<{ data: Specialist[]; error: string | null }> {
+    let result = await this.getRecommendedSpecialists(skills, masterId, limit);
+
+    if (!result.data?.length) {
+      result = await this.getTopMastersByCity(city, limit);
+    }
+
+    return {
+      data: result.data ?? [],
+      error: result.error,
+    };
+  }
+
+  async addToWaitlist(
+    masterId: string,
+    email: string,
+  ): Promise<{ data: WaitlistEntry[] | null; error: string | null }> {
+    const client = await this.requireClient();
+    const normalizedMasterId = masterId.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedMasterId || !normalizedEmail) {
+      return { data: null, error: 'masterId and email are required' };
+    }
+
+    const payload: WaitlistInsert = {
+      master_id: normalizedMasterId,
+      user_email: normalizedEmail,
+      статус: 'pending',
+    };
+
+    const { data, error } = await client.from('waitlist').insert([payload]).select('*');
+
+    if (error) {
+      logSupabaseError('addToWaitlist', error);
+      return {
+        data: null,
+        error: supabaseErrorMessage(error) || error.message,
+      };
+    }
+
+    return {
+      data: (data ?? []) as WaitlistEntry[],
+      error: null,
+    };
+  }
+
+  async confirmByMaster(
+    dealId: string,
+  ): Promise<{ data: Record<string, unknown>[] | null; error: string | null }> {
+    const client = await this.requireClient();
+    const normalizedDealId = dealId.trim();
+
+    if (!normalizedDealId) {
+      return { data: null, error: 'dealId is required' };
+    }
+
+    const { data, error } = await client
+      .from('deals')
+      .update({ master_confirmed: true })
+      .eq('идентификатор', normalizedDealId)
+      .select('*');
+
+    if (error) {
+      logSupabaseError('confirmByMaster', error);
+      return {
+        data: null,
+        error: supabaseErrorMessage(error) || error.message,
+      };
+    }
+
+    return {
+      data: (data ?? []) as Record<string, unknown>[],
+      error: null,
+    };
   }
 
   // ─── order ────────────────────────────────────────────────────────────────
@@ -374,5 +535,35 @@ export class DataService {
       return false;
     }
     return supabaseErrorMessage(error).toLowerCase().includes('avatar_url');
+  }
+
+  private hasAvailableCapacity(specialist: Specialist): boolean {
+    const row = specialist as Specialist & {
+      current_active_orders?: unknown;
+      max_active_orders?: unknown;
+    };
+
+    const currentOrders = this.toNumericValue(row.current_active_orders);
+    const maxOrders = this.toNumericValue(row.max_active_orders);
+
+    // Если лимит не задан, считаем мастера доступным.
+    if (maxOrders == null) {
+      return true;
+    }
+
+    return (currentOrders ?? 0) < maxOrders;
+  }
+
+  private toNumericValue(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
   }
 }

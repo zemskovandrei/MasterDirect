@@ -5,12 +5,12 @@ interface LanguageOption {
   code: Locale;
   label: string;
   initials: string;
-  flag: string;
 }
 
 const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { code: 'ru', label: 'Русский', initials: 'RU', flag: '🇷🇺' },
-  { code: 'en', label: 'English', initials: 'EN', flag: '🇬🇧' },
+  { code: 'ru', label: 'Русский', initials: 'RU' },
+  { code: 'en', label: 'English', initials: 'EN' },
+  { code: 'ge', label: 'ქართული', initials: 'GE' },
 ];
 
 @Component({

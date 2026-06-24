@@ -108,3 +108,14 @@ export type SiteReviewInsert = Pick<SiteReview, 'user_name' | 'review_text'> & {
 
 /** Частичное обновление отзыва (модерация). */
 export type SiteReviewUpdate = Partial<Pick<SiteReview, 'user_name' | 'review_text' | 'is_approved'>>;
+
+/** Строка таблицы `waitlist` для уведомлений о свободных слотах. */
+export interface WaitlistEntry {
+  id?: string | number;
+  master_id: string;
+  user_email: string;
+  /** В текущей БД колонка названа на русском: `статус`. */
+  статус?: string | null;
+}
+
+export type WaitlistInsert = Pick<WaitlistEntry, 'master_id' | 'user_email' | 'статус'>;

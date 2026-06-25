@@ -8,6 +8,7 @@
     "build:pages": "ng build --configuration=github-pages",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "postinstall": "node scripts/fix-rxjs-tsconfig.mjs",
     "purge:registrations": "node scripts/purge-registrations-by-email.mjs",
     "serve:ssr:pro-remont": "node dist/pro-remont/server/server.mjs"
   },

@@ -1,6 +1,7 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
@@ -2307,6 +2308,28 @@ export class SupabaseService {
   private async loadPortfolioWorksFromDatabase(
     client: SupabaseClient,
   ): Promise<Map<string, WorkProject[]>> {
+    const tableName = 'portfolio_works';
+    const buildSupabaseQueryDebug = (withStatusFilter: boolean): string => {
+      const base = "from('portfolio_works').select('*')";
+      if (withStatusFilter) {
+        return `${base}.eq('status', 'verified').order('created_at', { ascending: false })`;
+      }
+      return `${base}.order('created_at', { ascending: false })`;
+    };
+
+    const logPortfolioWorksQuery = (
+      supabaseQuery: string,
+      data: unknown,
+      error: PostgrestError | null,
+    ): void => {
+      console.info('[Supabase] portfolio_works query result', {
+        tableName,
+        supabaseQuery,
+        data,
+        error,
+      });
+    };
+
     const worksMap = new Map<string, WorkProject[]>();
     if (this.portfolioWorksTableMissing) {
       return this.loadWorksTableFallback(client);
@@ -2321,23 +2344,27 @@ export class SupabaseService {
     };
 
     let withStatusFilter = !this.portfolioWorksStatusColumnMissing;
+    let supabaseQueryDebug = buildSupabaseQueryDebug(withStatusFilter);
     let { data, error } = await runQuery(withStatusFilter);
+    logPortfolioWorksQuery(supabaseQueryDebug, data, error);
 
     if (error && this.isPortfolioWorksStatusColumnError(error) && withStatusFilter) {
       this.portfolioWorksStatusColumnMissing = true;
       withStatusFilter = false;
+      supabaseQueryDebug = buildSupabaseQueryDebug(false);
       ({ data, error } = await runQuery(false));
+      logPortfolioWorksQuery(supabaseQueryDebug, data, error);
     }
 
     // Fallback: if strict "verified" filter yields no rows, load all works.
     if (!error && withStatusFilter && (!data || data.length === 0)) {
+      supabaseQueryDebug = buildSupabaseQueryDebug(false);
       ({ data, error } = await runQuery(false));
+      logPortfolioWorksQuery(supabaseQueryDebug, data, error);
     }
 
-    console.log('Данные из БД:', data);
-    console.error('Ошибка:', error);
-
     if (error) {
+      console.error('Ошибка запроса portfolio_works (PostgrestError):', error as PostgrestError);
       if (isSupabaseMissingTableError(error, 'portfolio_works')) {
         this.portfolioWorksTableMissing = true;
         return this.loadWorksTableFallback(client);

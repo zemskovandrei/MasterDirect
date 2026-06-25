@@ -2374,7 +2374,20 @@ export class SupabaseService {
     }
 
     if (!data || data.length === 0) {
-      return this.loadWorksTableFallback(client);
+      const fallbackWorksMap = await this.loadWorksTableFallback(client);
+      const fallbackRowsCount = Array.from(fallbackWorksMap.values()).reduce(
+        (acc, works) => acc + works.length,
+        0,
+      );
+      console.info('[Supabase] portfolio_works is empty, fallback to works', {
+        tableName: 'portfolio_works',
+        supabaseQuery: supabaseQueryDebug,
+        portfolioRowsCount: data?.length ?? 0,
+        fallbackTable: 'works',
+        fallbackRowsCount,
+        fallbackOwnersCount: fallbackWorksMap.size,
+      });
+      return fallbackWorksMap;
     }
 
     for (const row of (data ?? []) as PortfolioWorkRow[]) {
@@ -2396,11 +2409,19 @@ export class SupabaseService {
 
   private async loadWorksTableFallback(client: SupabaseClient): Promise<Map<string, WorkProject[]>> {
     const worksMap = new Map<string, WorkProject[]>();
+    const fallbackQuery = "from('works').select('*').order('created_at', { ascending: false })";
 
     const { data, error } = await client
       .from('works')
       .select('*')
       .order('created_at', { ascending: false });
+
+    console.info('[Supabase] works fallback query result', {
+      tableName: 'works',
+      supabaseQuery: fallbackQuery,
+      data,
+      error,
+    });
 
     if (error) {
       if (!isSupabaseMissingTableError(error, 'works')) {

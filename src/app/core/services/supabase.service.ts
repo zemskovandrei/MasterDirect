@@ -244,11 +244,24 @@ export class SupabaseService {
     }
   }
 
-  getClient(): Promise<SupabaseClient | null> {
+  getClient(): Promise<SupabaseClient<any> | null> {
     return this.supabaseClientService.getClient();
   }
 
-  private resolveClient(): Promise<SupabaseClient | null> {
+  /**
+   * Обёртка для доступа к таблицам по динамическому имени (например, из environment).
+   * Используйте её, когда имя таблицы приходит строкой, а не литералом.
+   */
+  async getTable(tableName: string) {
+    const client = await this.resolveClient();
+    if (!client) {
+      throw new Error(SUPABASE_NOT_CONFIGURED);
+    }
+
+    return client.from(tableName as any);
+  }
+
+  private resolveClient(): Promise<SupabaseClient<any> | null> {
     return this.supabaseClientService.getClient();
   }
 
@@ -530,10 +543,7 @@ export class SupabaseService {
     }
 
     try {
-      const client = await this.resolveClient();
-      if (!client) {
-        return { error: SUPABASE_NOT_CONFIGURED };
-      }
+      const specialistTable = await this.getTable(environment.supabase.specialistTable);
 
       const slug =
         input.accountType === 'furniture'
@@ -557,34 +567,27 @@ export class SupabaseService {
         facebook: input.facebook,
       });
 
-      const { data: existing } = await client
-        .from(environment.supabase.specialistTable)
+      const { data: existing } = await specialistTable
         .select('id')
         .eq('id', input.userId)
         .maybeSingle();
 
-        let result = existing
-        ? await client
-          .from(environment.supabase.specialistTable)
+      let result = existing
+        ? await specialistTable
           .update(payload)
           .eq('id', input.userId)
-        : await client
-          .from(environment.supabase.specialistTable)
-          .upsert(payload, { onConflict: 'id' });
+        : await specialistTable.upsert(payload as any, { onConflict: 'id' as any });
 
-        if (result.error && this.isMissingAvatarColumnError(result.error)) {
+      if (result.error && this.isMissingAvatarColumnError(result.error)) {
         this.specialistAvatarColumnMissing = true;
         const fallbackPayload = { ...(payload as Record<string, unknown>) };
         delete fallbackPayload['avatar_url'];
         result = existing
-          ? await client
-            .from(environment.supabase.specialistTable)
+          ? await specialistTable
             .update(fallbackPayload)
             .eq('id', input.userId)
-          : await client
-            .from(environment.supabase.specialistTable)
-            .upsert(fallbackPayload, { onConflict: 'id' });
-        }
+          : await specialistTable.upsert(fallbackPayload as any, { onConflict: 'id' as any });
+      }
 
       if (result.error) {
         logSupabaseError('registerAuthProfile', result.error);
@@ -720,8 +723,9 @@ export class SupabaseService {
       return { error: this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED };
     }
 
-    const { data: existing, error: readError } = await client
-      .from(environment.supabase.specialistTable)
+    const specialistTable = client.from(environment.supabase.specialistTable as any);
+
+    const { data: existing, error: readError } = await specialistTable
       .select('id')
       .eq('id', dbId)
       .maybeSingle();
@@ -1503,6 +1507,12 @@ export class SupabaseService {
       });
 
       if (error) {
+        if (this.isMissingDeleteWithEvidenceRpc(error)) {
+          console.warn(
+            '[SupabaseService] RPC delete_specialist_with_evidence is missing, fallback to deleteSpecialistRow',
+          );
+          return this.deleteSpecialistRow(targetId);
+        }
         return { data: null, error: error.message };
       }
 
@@ -1514,6 +1524,17 @@ export class SupabaseService {
       console.error('Delete specialist with evidence error:', err);
       return { data: null, error: message };
     }
+  }
+
+  private isMissingDeleteWithEvidenceRpc(error: unknown): boolean {
+    const message = supabaseErrorMessage(error).toLowerCase();
+    return (
+      message.includes('delete_specialist_with_evidence') &&
+      (message.includes('not found') ||
+        message.includes('does not exist') ||
+        message.includes('could not find') ||
+        message.includes('pgrst202'))
+    );
   }
 
   isConfigured(): boolean {
@@ -1875,9 +1896,9 @@ export class SupabaseService {
   }
 
   private async deleteJobklientJobRow(id: string): Promise<JobklientMutationResult> {
-    const jobId = normalizeUuid(id?.trim());
+    const jobId = id?.trim();
     if (!jobId) {
-      console.error('Jobklient delete error: missing UUID', id);
+      console.error('Jobklient delete error: Missing job id', id);
       return { error: 'Missing job id' };
     }
 
@@ -1886,14 +1907,11 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
-      const client = await this.resolveClient();
-      if (!client) {
-        return { error: SUPABASE_NOT_CONFIGURED };
-      }
+      const jobsTable = await this.getTable(environment.supabase.jobsTable);
 
       console.log('[SupabaseService] deleteJobklientJob: DELETE by id', jobId);
 
-      const { error } = await client.from(environment.supabase.jobsTable).delete().eq('id', jobId);
+      const { error } = await jobsTable.delete().eq('id', jobId);
 
       if (error) {
         console.error('Jobklient delete error:', error.message, error.details);
@@ -1927,21 +1945,17 @@ export class SupabaseService {
   }
 
   private async fetchJobklientRows(filters?: { city?: string }): Promise<unknown[]> {
-    const client = await this.resolveClient();
-    if (!client) {
-      throw new Error(SUPABASE_NOT_CONFIGURED);
-    }
+    const jobsTable: any = await this.getTable(environment.supabase.jobsTable);
 
     const buildQuery = (columns: string) => {
-      let query = client
-        .from(environment.supabase.jobsTable)
+      let query: any = jobsTable
         .select(columns)
-        .neq('status', 'completed')
+        .neq('status' as any, 'completed')
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (filters?.city) {
-        query = query.eq('city', filters.city);
+        query = query.eq('city' as any, filters.city);
       }
 
       return query;
@@ -1962,7 +1976,7 @@ export class SupabaseService {
     }
 
     return (data ?? []).filter(
-      (row) => !isCompletedOrderStatus((row as { status?: string | null }).status),
+      (row: unknown) => !isCompletedOrderStatus((row as { status?: string | null }).status),
     );
   }
 
@@ -2010,10 +2024,10 @@ export class SupabaseService {
       const remoteProfiles: Profile[] = [];
       const remoteWorks = await this.loadPortfolioWorksFromDatabase(client);
 
-      const specialistsResult = await client
-        .from(environment.supabase.specialistTable)
+      const specialistTable: any = await this.getTable(environment.supabase.specialistTable);
+      const specialistsResult = await specialistTable
         .select('*')
-        .neq('role', 'admin')
+        .neq('role' as any, 'admin')
         .order('name', { ascending: true });
 
       if (specialistsResult.error) {
@@ -2155,25 +2169,34 @@ export class SupabaseService {
       return { data: work, error: null };
     }
 
-    const { data, error } = await client
-      .from('portfolio_works')
-      .upsert(payload, { onConflict: 'id' })
-      .select('*')
-      .maybeSingle();
+    try {
+      const { data, error } = await client
+        .from('portfolio_works' as any)
+        .upsert(payload as any, { onConflict: 'id' })
+        .select('*')
+        .maybeSingle();
 
-    if (error) {
-      if (isSupabaseMissingTableError(error, 'portfolio_works')) {
-        this.portfolioWorksTableMissing = true;
-        this.upsertWorkInCaches(input.ownerId, work);
-        return { data: work, error: null };
+      if (error) {
+        if (isSupabaseMissingTableError(error, 'portfolio_works')) {
+          this.portfolioWorksTableMissing = true;
+          this.upsertWorkInCaches(input.ownerId, work);
+          return { data: work, error: null };
+        }
+
+        console.error('Supabase Error Details:', error);
+        logSupabaseError('savePortfolioWorkRow', error);
+        return { data: null, error: error.message };
       }
-      logSupabaseError('savePortfolioWorkRow', error);
-      return { data: null, error: error.message };
-    }
 
-    const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : work;
-    this.upsertWorkInCaches(input.ownerId, saved);
-    return { data: saved, error: null };
+      const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : work;
+      this.upsertWorkInCaches(input.ownerId, saved);
+      return { data: saved, error: null };
+    } catch (err) {
+      console.error('Unexpected Error:', err);
+      logSupabaseError('savePortfolioWorkRow', err);
+      const message = err instanceof Error ? err.message : 'Save failed';
+      return { data: null, error: message };
+    }
   }
 
   private async deletePortfolioWorkRow(workId: string): Promise<SupabaseMutationResult<null>> {
@@ -2286,7 +2309,7 @@ export class SupabaseService {
   ): Promise<Map<string, WorkProject[]>> {
     const worksMap = new Map<string, WorkProject[]>();
     if (this.portfolioWorksTableMissing) {
-      return worksMap;
+      return this.loadWorksTableFallback(client);
     }
 
     const runQuery = (withStatusFilter: boolean) => {
@@ -2306,13 +2329,25 @@ export class SupabaseService {
       ({ data, error } = await runQuery(false));
     }
 
+    // Fallback: if strict "verified" filter yields no rows, load all works.
+    if (!error && withStatusFilter && (!data || data.length === 0)) {
+      ({ data, error } = await runQuery(false));
+    }
+
+    console.log('Данные из БД:', data);
+    console.error('Ошибка:', error);
+
     if (error) {
       if (isSupabaseMissingTableError(error, 'portfolio_works')) {
         this.portfolioWorksTableMissing = true;
-        return worksMap;
+        return this.loadWorksTableFallback(client);
       }
       logSupabaseError('loadPortfolioWorksFromDatabase', error);
       return worksMap;
+    }
+
+    if (!data || data.length === 0) {
+      return this.loadWorksTableFallback(client);
     }
 
     for (const row of (data ?? []) as PortfolioWorkRow[]) {
@@ -2320,9 +2355,53 @@ export class SupabaseService {
         continue;
       }
 
-      const work = portfolioWorkRowToProject(row);
+      const work = portfolioWorkRowToProject({
+        ...row,
+        before_image_url: this.normalizePortfolioImageUrl(row.before_image_url),
+        after_image_url: this.normalizePortfolioImageUrl(row.after_image_url),
+      });
       const existing = worksMap.get(row.owner_id) ?? [];
       worksMap.set(row.owner_id, [...existing, work]);
+    }
+
+    return worksMap;
+  }
+
+  private async loadWorksTableFallback(client: SupabaseClient): Promise<Map<string, WorkProject[]>> {
+    const worksMap = new Map<string, WorkProject[]>();
+
+    const { data, error } = await client
+      .from('works')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (!isSupabaseMissingTableError(error, 'works')) {
+        logSupabaseError('loadWorksTableFallback', error);
+      }
+      return worksMap;
+    }
+
+    for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+      const ownerId = String(row['owner_id'] ?? row['user_id'] ?? '').trim();
+      if (!ownerId) {
+        continue;
+      }
+
+      const work = portfolioWorkRowToProject({
+        id: String(row['id'] ?? crypto.randomUUID()),
+        owner_id: ownerId,
+        owner_type: String(row['owner_type'] ?? 'worker') as PortfolioWorkOwnerType,
+        title: row['title'] == null ? null : String(row['title']),
+        description: row['description'] == null ? null : String(row['description']),
+        before_image_url: this.normalizePortfolioImageUrl(String(row['before_image_url'] ?? '')),
+        after_image_url: this.normalizePortfolioImageUrl(String(row['after_image_url'] ?? '')),
+        status: row['status'] == null ? null : String(row['status']),
+        created_at: String(row['created_at'] ?? new Date().toISOString()),
+      });
+
+      const existing = worksMap.get(ownerId) ?? [];
+      worksMap.set(ownerId, [...existing, work]);
     }
 
     return worksMap;
@@ -2333,6 +2412,35 @@ export class SupabaseService {
       return false;
     }
     return supabaseErrorMessage(error).toLowerCase().includes('status');
+  }
+
+  private normalizePortfolioImageUrl(raw: string | null | undefined): string {
+    const value = String(raw ?? '').trim();
+    if (!value) {
+      return '';
+    }
+
+    if (/^(data:image\/|blob:|https?:\/\/)/i.test(value)) {
+      return value;
+    }
+
+    const base = environment.supabase.url.replace(/\/+$/, '');
+    const withoutLeading = value.replace(/^\/+/, '');
+
+    if (/^storage\/v1\/object\/public\//i.test(withoutLeading)) {
+      return `${base}/${withoutLeading}`;
+    }
+
+    if (/^[a-z0-9-]+\.supabase\.co\//i.test(withoutLeading)) {
+      return `https://${withoutLeading}`;
+    }
+
+    // Interpret "bucket/path/to/file" as a public object path.
+    if (/^[^/]+\/.+/i.test(withoutLeading)) {
+      return `${base}/storage/v1/object/public/${withoutLeading}`;
+    }
+
+    return value;
   }
 
   private buildProfilesFromLocalStores(): Profile[] {

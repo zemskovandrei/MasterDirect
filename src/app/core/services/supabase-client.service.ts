@@ -12,8 +12,8 @@ const NOT_CONFIGURED = 'Supabase не настроен. Укажите url и an
 export class SupabaseClientService {
   private readonly platformId = inject(PLATFORM_ID);
 
-  private supabaseClient: SupabaseClient | null = null;
-  private clientPromise: Promise<SupabaseClient | null> | null = null;
+  private supabaseClient: SupabaseClient<any> | null = null;
+  private clientPromise: Promise<SupabaseClient<any> | null> | null = null;
 
   isConfigured(): boolean {
     const { url, anonKey } = environment.supabase;
@@ -38,7 +38,7 @@ export class SupabaseClientService {
     return hasSupabaseHost && hasPublicKey && anonKey.length > 20;
   }
 
-  getClient(): Promise<SupabaseClient | null> {
+  getClient(): Promise<SupabaseClient<any> | null> {
     if (!isPlatformBrowser(this.platformId)) {
       return Promise.resolve(null);
     }

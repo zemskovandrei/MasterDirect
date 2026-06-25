@@ -144,8 +144,15 @@ export class JobsListComponent implements OnInit {
     });
   }
 
-  async deleteJob(order: Job): Promise<void> {
-    if (!order.id?.trim() || this.isJobAdminBusy(order.id)) {
+  async deleteJob(jobId: string): Promise<void> {
+    if (!jobId?.trim() || this.isJobAdminBusy(jobId)) {
+      console.error('Jobklient delete error: Missing job id');
+      return;
+    }
+
+    const order = this.jobs().find((item) => item.id === jobId);
+    if (!order) {
+      console.error('Jobklient delete error: job not found in current list', jobId);
       return;
     }
 
@@ -156,11 +163,11 @@ export class JobsListComponent implements OnInit {
       return;
     }
 
-    this.adminActionJobId.set(order.id);
+    this.adminActionJobId.set(jobId);
     this.adminActionError.set(null);
 
     try {
-      const result = await firstValueFrom(this.supabase.deleteJob(order.id));
+      const result = await firstValueFrom(this.supabase.deleteJob(jobId));
       if (result.error) {
         this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
         console.error('Jobklient delete error:', result.error);

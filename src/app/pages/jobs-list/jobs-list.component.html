@@ -137,7 +137,7 @@
                       type="button"
                       class="job-card__admin-btn job-card__admin-btn--delete"
                       [disabled]="isJobAdminBusy(order.id)"
-                      (click)="deleteJob(order)"
+                      (click)="deleteJob(order.id)"
                     >
                       {{ translation.t('admin.jobs.delete') }}
                     </button>

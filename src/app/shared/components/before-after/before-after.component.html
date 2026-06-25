@@ -17,6 +17,7 @@
         <img
           [src]="work().beforeImage"
           [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
+          title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.before') }}"
           loading="lazy"
         />
       </div>
@@ -28,6 +29,7 @@
         <img
           [src]="work().afterImage"
           [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
+          title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.after') }}"
           loading="lazy"
         />
       </div>

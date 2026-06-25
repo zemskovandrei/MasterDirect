@@ -41,10 +41,19 @@ export class CatalogLocalizationService {
   }
 
   workTitle(work: WorkProject): string {
+    const fallback = this.t('beforeAfter.tag', 'Работа до и после');
+
     if (work.i18nKey) {
-      return this.t(`${work.i18nKey}.title`, work.title);
+      const localized = this.t(`${work.i18nKey}.title`, work.title);
+      return this.isLikelyGarbageTitle(localized) ? fallback : localized;
     }
-    return work.title;
+
+    const title = (work.title ?? '').trim();
+    if (!title || this.isLikelyGarbageTitle(title)) {
+      return fallback;
+    }
+
+    return title;
   }
 
   workDescription(work: WorkProject): string {
@@ -120,5 +129,27 @@ export class CatalogLocalizationService {
     this.translation.locale();
     const value = this.translation.t(key);
     return value && value !== key ? value : fallback;
+  }
+
+  private isLikelyGarbageTitle(value: string): boolean {
+    const title = value.trim();
+    if (!title) {
+      return true;
+    }
+
+    // Accept short titles and normal multi-word phrases.
+    if (title.length <= 8 || /\s/.test(title)) {
+      return false;
+    }
+
+    // Keyboard-mash heuristic: long single token with too few vowels.
+    const latinOnly = /^[a-z]+$/i.test(title);
+    if (!latinOnly) {
+      return false;
+    }
+
+    const vowels = (title.match(/[aeiouy]/gi) ?? []).length;
+    const ratio = vowels / title.length;
+    return title.length >= 10 && ratio < 0.22;
   }
 }

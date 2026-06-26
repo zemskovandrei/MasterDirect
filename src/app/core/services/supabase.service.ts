@@ -901,6 +901,86 @@ export class SupabaseService {
     );
   }
 
+  async uploadWork(
+    fileBefore: File,
+    fileAfter: File,
+    description: string,
+    specialistId: string,
+  ): Promise<SupabaseMutationResult<Record<string, unknown>>> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { data: null, error: 'Browser only' };
+    }
+
+    const trimmedSpecialistId = specialistId?.trim();
+    if (!trimmedSpecialistId) {
+      return { data: null, error: 'Missing specialist id' };
+    }
+
+    const client = await this.resolveClient();
+    if (!client) {
+      return { data: null, error: SUPABASE_NOT_CONFIGURED };
+    }
+
+    const beforeExt = this.imageMimeTypeToExtension(fileBefore.type || 'image/png');
+    const afterExt = this.imageMimeTypeToExtension(fileAfter.type || 'image/png');
+    const ts = Date.now();
+    const beforePath = `public/${ts}_before.${beforeExt}`;
+    const afterPath = `public/${ts}_after.${afterExt}`;
+
+    const { data: fileDataBefore, error: uploadErrorBefore } = await client.storage
+      .from(PORTFOLIO_BUCKET)
+      .upload(beforePath, fileBefore, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: fileBefore.type || 'image/png',
+      });
+
+    const { data: fileDataAfter, error: uploadErrorAfter } = await client.storage
+      .from(PORTFOLIO_BUCKET)
+      .upload(afterPath, fileAfter, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: fileAfter.type || 'image/png',
+      });
+
+    if (uploadErrorBefore || uploadErrorAfter || !fileDataBefore?.path || !fileDataAfter?.path) {
+      const uploadError = uploadErrorBefore || uploadErrorAfter || new Error('Storage path missing');
+      console.error('Ошибка при загрузке фото:', uploadError);
+      logSupabaseError('uploadWork.upload', uploadError);
+      return {
+        data: null,
+        error: formatStorageUploadError(uploadError, PORTFOLIO_BUCKET),
+      };
+    }
+
+    const urlBefore = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataBefore.path).data.publicUrl;
+    const urlAfter = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataAfter.path).data.publicUrl;
+
+    const payload = {
+      before_image_url: urlBefore,
+      after_image_url: urlAfter,
+      description,
+      specialist_id: trimmedSpecialistId,
+      owner_id: trimmedSpecialistId,
+      owner_type: 'specialist',
+      status: 'pending',
+    };
+
+    const { data, error } = await client
+      .from('portfolio_works' as any)
+      .insert([payload] as any)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Ошибка сохранения работы:', error);
+      logSupabaseError('uploadWork.insert', error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: (data as Record<string, unknown> | null) ?? null, error: null };
+  }
+
   async countCompletedOrdersForUser(userId: string): Promise<number> {
     if (!isPlatformBrowser(this.platformId)) {
       return 0;

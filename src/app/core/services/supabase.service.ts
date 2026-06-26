@@ -2025,6 +2025,7 @@ export class SupabaseService {
 
       const remoteProfiles: Profile[] = [];
       const remoteWorks = await this.loadPortfolioWorksFromDatabase(client);
+      console.log('mapped works', remoteWorks);
 
       const specialistTable: any = await this.getTable(environment.supabase.specialistTable);
       const specialistsResult = await specialistTable
@@ -2040,10 +2041,18 @@ export class SupabaseService {
       } else {
         for (const row of (specialistsResult.data ?? []) as MasterRow[]) {
           if (!row?.id) {
+            console.log('work skipped because...', {
+              reason: 'specialist row has no id',
+              row,
+            });
             continue;
           }
 
           if (row.is_archive) {
+            console.log('work skipped because...', {
+              reason: 'specialist is archived (is_archive=true)',
+              specialist_id: row.id,
+            });
             continue;
           }
 
@@ -2495,6 +2504,7 @@ export class SupabaseService {
     let supabaseQueryDebug = buildSupabaseQueryDebug(withStatusFilter);
     let { data, error } = await runQuery(withStatusFilter);
     logPortfolioWorksQuery(supabaseQueryDebug, data, error);
+    console.log('portfolio rows', data);
 
     if (error && this.isPortfolioWorksStatusColumnError(error) && withStatusFilter) {
       this.portfolioWorksStatusColumnMissing = true;
@@ -2538,19 +2548,35 @@ export class SupabaseService {
       return fallbackWorksMap;
     }
 
-    for (const row of (data ?? []) as PortfolioWorkRow[]) {
-      if (!row?.owner_id) {
+    for (const row of (data ?? []) as Array<PortfolioWorkRow & { performer_id?: string | null }>) {
+      const ownerId = String(row?.owner_id ?? row?.performer_id ?? '').trim();
+      if (!ownerId) {
+        console.log('work skipped because...', {
+          reason: 'missing owner_id and performer_id',
+          row,
+        });
         continue;
+      }
+
+      if (!row.owner_type) {
+        console.log('work skipped because...', {
+          reason: 'owner_type is empty (not filtered, for diagnostics)',
+          ownerId,
+          row,
+        });
       }
 
       const work = portfolioWorkRowToProject({
         ...row,
+        owner_id: ownerId,
         before_image_url: this.normalizePortfolioImageUrl(row.before_image_url),
         after_image_url: this.normalizePortfolioImageUrl(row.after_image_url),
       });
-      const existing = worksMap.get(row.owner_id) ?? [];
-      worksMap.set(row.owner_id, [...existing, work]);
+      const existing = worksMap.get(ownerId) ?? [];
+      worksMap.set(ownerId, [...existing, work]);
     }
+
+    console.log('mapped works', worksMap);
 
     return worksMap;
   }

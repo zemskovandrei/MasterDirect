@@ -53,6 +53,7 @@ const JOBS_LIST_COLUMNS =
 const JOBS_ACTIVE_STATUS = 'active';
 const ORDER_COMPLETED_STATUS = 'completed';
 const ORDER_FILES_BUCKET = 'orders-files';
+const PORTFOLIO_BUCKET = 'portfolio';
 
 export interface SupabaseMutationResult<T = Profile> {
   data: T | null;
@@ -2159,16 +2160,23 @@ export class SupabaseService {
       return { data: null, error: SUPABASE_NOT_CONFIGURED };
     }
 
-    const payload = portfolioWorkToInsertRow({
-      ownerId: input.ownerId,
-      ownerType: input.ownerType,
-      work,
-    });
-
     if (this.portfolioWorksTableMissing) {
       this.upsertWorkInCaches(input.ownerId, work);
       return { data: work, error: null };
     }
+
+    const preparedWork = await this.preparePortfolioWorkImages(input.ownerId, work);
+    if (preparedWork.error) {
+      return { data: null, error: preparedWork.error };
+    }
+
+    const workForSave = preparedWork.work;
+
+    const payload = portfolioWorkToInsertRow({
+      ownerId: input.ownerId,
+      ownerType: input.ownerType,
+      work: workForSave,
+    });
 
     try {
       const { data, error } = await client
@@ -2180,8 +2188,8 @@ export class SupabaseService {
       if (error) {
         if (isSupabaseMissingTableError(error, 'portfolio_works')) {
           this.portfolioWorksTableMissing = true;
-          this.upsertWorkInCaches(input.ownerId, work);
-          return { data: work, error: null };
+          this.upsertWorkInCaches(input.ownerId, workForSave);
+          return { data: workForSave, error: null };
         }
 
         console.error('Supabase Error Details:', error);
@@ -2189,7 +2197,7 @@ export class SupabaseService {
         return { data: null, error: error.message };
       }
 
-      const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : work;
+      const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : workForSave;
       this.upsertWorkInCaches(input.ownerId, saved);
       return { data: saved, error: null };
     } catch (err) {
@@ -2197,6 +2205,122 @@ export class SupabaseService {
       logSupabaseError('savePortfolioWorkRow', err);
       const message = err instanceof Error ? err.message : 'Save failed';
       return { data: null, error: message };
+    }
+  }
+
+  private async preparePortfolioWorkImages(
+    ownerId: string,
+    work: WorkProject,
+  ): Promise<{ work: WorkProject; error: string | null }> {
+    const beforeUpload = await this.uploadPortfolioImageIfNeeded({
+      ownerId,
+      workId: work.id,
+      side: 'before',
+      imageRef: work.beforeImage,
+    });
+
+    if (beforeUpload.error) {
+      return { work, error: beforeUpload.error };
+    }
+
+    const afterUpload = await this.uploadPortfolioImageIfNeeded({
+      ownerId,
+      workId: work.id,
+      side: 'after',
+      imageRef: work.afterImage,
+    });
+
+    if (afterUpload.error) {
+      return { work, error: afterUpload.error };
+    }
+
+    return {
+      work: {
+        ...work,
+        beforeImage: beforeUpload.imageRef,
+        afterImage: afterUpload.imageRef,
+      },
+      error: null,
+    };
+  }
+
+  private async uploadPortfolioImageIfNeeded(input: {
+    ownerId: string;
+    workId: string;
+    side: 'before' | 'after';
+    imageRef: string;
+  }): Promise<{ imageRef: string; error: string | null }> {
+    const value = input.imageRef?.trim();
+    if (!value) {
+      return { imageRef: '', error: 'Missing portfolio image' };
+    }
+
+    if (!value.startsWith('data:image/')) {
+      return { imageRef: value, error: null };
+    }
+
+    try {
+      if (!this.isConfigured()) {
+        return { imageRef: value, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const client = await this.resolveClient();
+      if (!client) {
+        return { imageRef: value, error: SUPABASE_NOT_CONFIGURED };
+      }
+
+      const blob = await this.dataUrlToBlob(value);
+      const extension = this.imageMimeTypeToExtension(blob.type);
+      const safeOwnerId = ownerIdToPathSegment(input.ownerId);
+      const safeWorkId = ownerIdToPathSegment(input.workId);
+      const timestamp = Date.now();
+      const path = `public/${safeOwnerId}/${safeWorkId}_${input.side}_${timestamp}.${extension}`;
+
+      const { error } = await client.storage.from(PORTFOLIO_BUCKET).upload(path, blob, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: blob.type || 'image/jpeg',
+      });
+
+      if (error) {
+        logSupabaseError('uploadPortfolioImageIfNeeded', error);
+        return {
+          imageRef: value,
+          error: formatStorageUploadError(error, PORTFOLIO_BUCKET),
+        };
+      }
+
+      const { data } = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path);
+      return { imageRef: data.publicUrl, error: null };
+    } catch (err) {
+      logSupabaseError('uploadPortfolioImageIfNeeded', err);
+      return {
+        imageRef: value,
+        error: err instanceof Error ? err.message : 'Image upload failed',
+      };
+    }
+  }
+
+  private async dataUrlToBlob(dataUrl: string): Promise<Blob> {
+    const response = await fetch(dataUrl);
+    if (!response.ok) {
+      throw new Error('Could not read image data');
+    }
+    return response.blob();
+  }
+
+  private imageMimeTypeToExtension(mimeType: string): string {
+    switch (mimeType.toLowerCase()) {
+      case 'image/png':
+        return 'png';
+      case 'image/webp':
+        return 'webp';
+      case 'image/gif':
+        return 'gif';
+      case 'image/jpg':
+      case 'image/jpeg':
+      default:
+        return 'jpg';
     }
   }
 
@@ -2343,7 +2467,8 @@ export class SupabaseService {
       return query.order('created_at', { ascending: false });
     };
 
-    let withStatusFilter = !this.portfolioWorksStatusColumnMissing;
+    // Временное решение для проверки: отключён фильтр по статусу
+    let withStatusFilter = false; // !this.portfolioWorksStatusColumnMissing;
     let supabaseQueryDebug = buildSupabaseQueryDebug(withStatusFilter);
     let { data, error } = await runQuery(withStatusFilter);
     logPortfolioWorksQuery(supabaseQueryDebug, data, error);
@@ -2539,4 +2664,8 @@ export class SupabaseService {
       socialLinks: mergeSocialLinks(company.socialLinks, local?.socialLinks),
     };
   }
+}
+
+function ownerIdToPathSegment(value: string): string {
+  return value.trim().replace(/[^a-zA-Z0-9_-]+/g, '_');
 }

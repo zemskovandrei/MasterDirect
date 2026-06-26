@@ -2548,11 +2548,15 @@ export class SupabaseService {
       return fallbackWorksMap;
     }
 
-    for (const row of (data ?? []) as Array<PortfolioWorkRow & { performer_id?: string | null }>) {
-      const ownerId = String(row?.owner_id ?? row?.performer_id ?? '').trim();
+    for (const row of (data ?? []) as Array<
+      PortfolioWorkRow & { performer_id?: string | null; specialist_id?: string | null }
+    >) {
+      const ownerId = String(
+        row?.owner_id ?? row?.specialist_id ?? row?.performer_id ?? '',
+      ).trim();
       if (!ownerId) {
         console.log('work skipped because...', {
-          reason: 'missing owner_id and performer_id',
+          reason: 'missing owner_id/specialist_id',
           row,
         });
         continue;

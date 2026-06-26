@@ -2148,12 +2148,12 @@ export class SupabaseService {
       const merged = this.mergeCatalogProfiles(remoteProfiles, localProfiles);
       this.syncPortfolioWorksToStores(this.buildWorksMapFromLocalStores(remoteWorks), merged);
 
-      console.info('[SupabaseService] catalog loaded', {
-        remote: remoteProfiles.length,
-        local: localProfiles.length,
-        merged: merged.length,
-        works: remoteWorks.size,
-      });
+      // console.info('[SupabaseService] catalog loaded', {
+      //   remote: remoteProfiles.length,
+      //   local: localProfiles.length,
+      //   merged: merged.length,
+      //   works: remoteWorks.size,
+      // });
 
       this.profilesSignal.set(merged);
       this.loadedSignal.set(true);

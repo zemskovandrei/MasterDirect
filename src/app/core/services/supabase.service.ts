@@ -2113,17 +2113,40 @@ export class SupabaseService {
 
     for (const performer of this.portfolioStore.performers()) {
       if (performer.works.length > 0) {
-        map.set(performer.id, performer.works);
+        map.set(
+          performer.id,
+          this.mergeWorkCollections(map.get(performer.id) ?? [], performer.works),
+        );
       }
     }
 
     for (const company of this.furnitureStore.companies()) {
       if (company.works.length > 0) {
-        map.set(company.dbId ?? company.id, company.works);
+        const ownerId = company.dbId ?? company.id;
+        map.set(ownerId, this.mergeWorkCollections(map.get(ownerId) ?? [], company.works));
       }
     }
 
     return map;
+  }
+
+  private mergeWorkCollections(
+    remoteWorks: WorkProject[],
+    localWorks: WorkProject[],
+  ): WorkProject[] {
+    const merged = new Map<string, WorkProject>();
+
+    for (const item of localWorks) {
+      merged.set(item.id, item);
+    }
+
+    for (const item of remoteWorks) {
+      merged.set(item.id, item);
+    }
+
+    return Array.from(merged.values()).sort(
+      (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+    );
   }
 
   private syncPortfolioWorksToStores(worksMap: Map<string, WorkProject[]>, profiles: Profile[]): void {

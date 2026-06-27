@@ -46,9 +46,15 @@ jobs:
       - name: Verify build output
         run: test -f dist/pro-remont/browser/index.html
 
+      - name: Normalize SPA entrypoint for GitHub Pages
+        run: |
+          if [ -f dist/pro-remont/browser/index.csr.html ]; then
+            cp dist/pro-remont/browser/index.csr.html dist/pro-remont/browser/index.html
+          fi
+
       - name: SPA fallback for client routes
         run: |
-          cp dist/pro-remont/browser/index.csr.html dist/pro-remont/browser/404.html 2>/dev/null || cp dist/pro-remont/browser/index.html dist/pro-remont/browser/404.html
+          cp dist/pro-remont/browser/index.html dist/pro-remont/browser/404.html
           cp public/.nojekyll dist/pro-remont/browser/.nojekyll
 
       - name: Upload artifact

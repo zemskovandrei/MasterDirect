@@ -1,3 +1,5 @@
+@use '../../styles/cabinet-backgrounds.scss';
+
 :host {
   display: block;
   min-height: calc(100dvh - 4.5rem);
@@ -7,8 +9,6 @@
   --register-mint: #00e5a8;
   --register-navy: #0c1222;
 }
-
-@import '../../styles/cabinet-backgrounds.scss';
 
 .register-page {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;

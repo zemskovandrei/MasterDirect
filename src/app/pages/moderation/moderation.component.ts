@@ -91,11 +91,11 @@ export class ModerationComponent implements OnInit, OnDestroy {
     this.loginError.set(false);
   }
 
-  approveReview(reviewId: string) {
-    void this.reviewStore.approveReview(reviewId);
+  publishReview(reviewId: string) {
+    void this.reviewStore.publishReview(reviewId);
   }
 
-  rejectReview(reviewId: string) {
+  deleteReview(reviewId: string) {
     void this.reviewStore.rejectReview(reviewId);
   }
 }

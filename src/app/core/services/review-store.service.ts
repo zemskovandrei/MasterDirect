@@ -36,8 +36,7 @@ export class ReviewStoreService {
   );
   readonly approvedReviews = computed(() =>
     this.reviewsSignal().filter(
-      (review) =>
-        review.status === 'approved' && (this.adminAuth.isAdmin() || review.kind !== 'siteFeedback'),
+      (review) => review.status === 'approved' && (this.adminAuth.isAdmin() || review.kind !== 'siteFeedback'),
     ),
   );
   readonly notifications = this.notificationsSignal.asReadonly();
@@ -126,11 +125,9 @@ export class ReviewStoreService {
         return;
       }
 
-      const { data, error } = await client
-        .from('site_reviews')
-        .select('*')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
+      const { data, error } = await client.from('site_reviews').select('*').order('created_at', {
+        ascending: false,
+      });
 
       if (error) {
         logSupabaseError('loadApprovedReviews', error);
@@ -138,7 +135,9 @@ export class ReviewStoreService {
       }
 
       const approved =
-        (data as ReviewRow[] | null)?.map((row) => this.mapRow(row, 'approved')) ?? [];
+        (data as ReviewRow[] | null)
+          ?.filter((row) => row.status === 'approved' || row.is_approved === true)
+          .map((row) => this.mapRow(row, 'approved')) ?? [];
       this.reviewsSignal.set(approved);
     } finally {
       this.loadingSignal.set(false);
@@ -158,11 +157,9 @@ export class ReviewStoreService {
         return;
       }
 
-      const { data, error } = await client
-        .from('site_reviews')
-        .select('*')
-        .or('status.eq.pending,status.is.null')
-        .order('created_at', { ascending: false });
+      const { data, error } = await client.from('site_reviews').select('*').order('created_at', {
+        ascending: false,
+      });
 
       if (error) {
         logSupabaseError('loadPendingReviews', error);
@@ -171,10 +168,14 @@ export class ReviewStoreService {
 
       const rows = (data as ReviewRow[] | null) ?? [];
       const pending = rows
-        .filter((row) => (row.status ?? (row.is_approved ? 'approved' : 'pending')) === 'pending')
+        .filter(
+          (row) =>
+            (row.status ?? (row.is_approved ? 'approved' : 'pending')) === 'pending' ||
+            row.is_approved === false,
+        )
         .map((row) => this.mapRow(row, 'pending'));
       const approved = rows
-        .filter((row) => (row.status ?? (row.is_approved ? 'approved' : 'pending')) === 'approved')
+        .filter((row) => row.status === 'approved' || row.is_approved === true)
         .map((row) => this.mapRow(row, 'approved'));
 
       this.reviewsSignal.set([...pending, ...approved]);
@@ -210,6 +211,8 @@ export class ReviewStoreService {
     const row = {
       user_name: data.name.trim(),
       review_text: reviewText,
+      status: 'pending',
+      is_approved: false,
     };
 
     const { data: inserted, error } = await client
@@ -229,7 +232,7 @@ export class ReviewStoreService {
     return submission;
   }
 
-  async approveReview(id: string): Promise<void> {
+  async publishReview(id: string): Promise<void> {
     const review = this.reviewsSignal().find((item) => item.id === id);
     if (!review || review.status === 'approved') {
       return;
@@ -242,7 +245,7 @@ export class ReviewStoreService {
 
     const { error } = await client
       .from('site_reviews')
-      .update({ status: 'approved' })
+      .update({ status: 'approved', is_approved: true })
       .eq('id', id);
 
     if (error) {
@@ -252,6 +255,10 @@ export class ReviewStoreService {
 
     await this.loadPendingReviews();
     this.addPublicationNotification(review);
+  }
+
+  async approveReview(id: string): Promise<void> {
+    await this.publishReview(id);
   }
 
   async rejectReview(id: string): Promise<void> {

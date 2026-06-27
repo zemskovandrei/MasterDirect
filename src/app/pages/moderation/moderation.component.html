@@ -98,11 +98,11 @@
                 </div>
                 <p>{{ reviewStore.localizeReview(review) }}</p>
                 <div class="review-actions">
-                  <button type="button" class="btn-secondary" (click)="rejectReview(review.id)">
-                    {{ translation.t('moderation.actions.reject') }}
+                  <button type="button" class="btn-secondary" (click)="deleteReview(review.id)">
+                    {{ translation.t('moderation.actions.delete') }}
                   </button>
-                  <button type="button" class="btn-primary" (click)="approveReview(review.id)">
-                    {{ translation.t('moderation.actions.approve') }}
+                  <button type="button" class="btn-primary" (click)="publishReview(review.id)">
+                    {{ translation.t('moderation.actions.publish') }}
                   </button>
                 </div>
               </article>

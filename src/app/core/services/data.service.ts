@@ -429,11 +429,11 @@ export class DataService {
     const { data, error } = await client
       .from(this.reviewsTable)
       .select('*')
-      .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    return this.requireList<SiteReview>(data, error, 'listApprovedReviews');
+    const rows = this.requireList<SiteReview>(data, error, 'listApprovedReviews');
+    return rows.filter((row) => row.status === 'approved' || row.is_approved === true);
   }
 
   async listPendingReviews(_limit = 50): Promise<SiteReview[]> {
@@ -467,7 +467,7 @@ export class DataService {
   }
 
   async approveReview(id: string): Promise<SiteReview> {
-    return this.updateReview(id, { status: 'approved' });
+    return this.updateReview(id, { status: 'approved', is_approved: true });
   }
 
   private async getReviewById(id: string): Promise<SiteReview> {

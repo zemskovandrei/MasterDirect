@@ -580,8 +580,8 @@
       "empty": "No new reviews yet."
     },
     "actions": {
-      "reject": "Reject",
-      "approve": "Approve"
+      "delete": "Delete",
+      "publish": "Publish"
     }
   }
 }

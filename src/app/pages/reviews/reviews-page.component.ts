@@ -171,10 +171,7 @@ export class ReviewsPageComponent implements OnInit {
       return;
     }
 
-    const { data: reviews, error } = await client
-      .from('site_reviews')
-      .select('*')
-      .eq('status', 'approved');
+    const { data: reviews, error } = await client.from('site_reviews').select('*');
 
     if (error) {
       this.data.siteFeedbackReviews = [];
@@ -185,7 +182,10 @@ export class ReviewsPageComponent implements OnInit {
       id: string;
       review_text: string;
       user_name?: string;
-    }> | null) ?? [];
+      status?: string | null;
+      is_approved?: boolean | null;
+    }> | null)
+      ?.filter((row) => row.status === 'approved' || row.is_approved === true) ?? [];
   }
 
   selectCategory(next: ReviewCategoryKey) {

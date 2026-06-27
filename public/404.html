@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var repoBase = '/FlooringLeader';
+        var path = window.location.pathname || '/';
+        var base = path.indexOf(repoBase) === 0 ? repoBase : '';
+        var routePath = path.slice(base.length) || '/';
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+
+        var target = base + '/#' + routePath + search + hash;
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting...
+  </body>
+</html>

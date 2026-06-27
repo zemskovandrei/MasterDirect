@@ -44,6 +44,25 @@ npm run build:pages
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## Production Release
+
+API build:
+
+```bash
+npm run build:api
+```
+
+API run:
+
+```bash
+npm run start:api
+```
+
+Release docs:
+
+- `DEPLOYMENT.md`
+- `RELEASE_CHECKLIST.md`
+
 ## Running unit tests
 
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:

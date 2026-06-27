@@ -1,12 +1,16 @@
 import 'dotenv/config';
 
 import cors from 'cors';
-import express, { NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response, RequestHandler } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL?.trim() ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
+const ADMIN_EMAILS = parseCsv(process.env.ADMIN_EMAILS).map((item) => item.toLowerCase());
+const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
+const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 60_000);
+const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('[FlooringLeader API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
@@ -22,8 +26,23 @@ const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROL
 
 const app = express();
 
-app.use(cors());
+app.disable('x-powered-by');
+app.set('trust proxy', true);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.length === 0) {
+      callback(null, true);
+      return;
+    }
+    callback(null, ALLOWED_ORIGINS.includes(origin));
+  },
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
+app.use(setSecurityHeaders());
+app.use('/api', createInMemoryRateLimiter(API_RATE_LIMIT_WINDOW_MS, API_RATE_LIMIT_MAX));
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
@@ -64,6 +83,58 @@ function hasVisibleName(value: string | null | undefined): boolean {
   return Boolean(value?.trim());
 }
 
+function parseCsv(raw: string | undefined): string[] {
+  return String(raw ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizePathParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value[0]?.trim() ?? '';
+  }
+  return value?.trim() ?? '';
+}
+
+function setSecurityHeaders(): RequestHandler {
+  return (_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+    next();
+  };
+}
+
+function createInMemoryRateLimiter(windowMs: number, maxRequests: number): RequestHandler {
+  const store = new Map<string, { count: number; resetAt: number }>();
+  const safeWindowMs = Number.isFinite(windowMs) && windowMs > 0 ? windowMs : 60_000;
+  const safeMaxRequests = Number.isFinite(maxRequests) && maxRequests > 0 ? maxRequests : 120;
+
+  return (req, res, next) => {
+    const now = Date.now();
+    const key = `${req.ip}:${req.path}`;
+    const existing = store.get(key);
+
+    if (!existing || now >= existing.resetAt) {
+      store.set(key, { count: 1, resetAt: now + safeWindowMs });
+      next();
+      return;
+    }
+
+    existing.count += 1;
+    if (existing.count > safeMaxRequests) {
+      res
+        .status(429)
+        .json({ ok: false, error: 'Too many requests, please try again later.' });
+      return;
+    }
+
+    next();
+  };
+}
+
 function extractBearerToken(req: Request): string | null {
   const header = req.headers.authorization?.trim();
   if (!header) {
@@ -91,7 +162,7 @@ async function resolveCurrentUser(token: string | null): Promise<{ id: string; e
 }
 
 async function isAdminUser(user: { id: string; email: string | null }): Promise<boolean> {
-  if (user.email && user.email === 'admin@smartbuild.tech') {
+  if (user.email && ADMIN_EMAILS.includes(user.email)) {
     return true;
   }
 
@@ -280,7 +351,7 @@ app.post('/api/site_reviews', async (req: Request, res: Response) => {
 
 app.delete('/api/orders/:id', async (req: Request, res: Response) => {
   try {
-    const orderId = req.params.id?.trim();
+    const orderId = normalizePathParam(req.params.id);
     if (!orderId) {
       res.status(400).json({ ok: false, error: 'id is required' });
       return;
@@ -313,7 +384,7 @@ app.delete('/api/orders/:id', async (req: Request, res: Response) => {
 
 app.delete('/api/portfolio-works/:id', async (req: Request, res: Response) => {
   try {
-    const workId = req.params.id?.trim();
+    const workId = normalizePathParam(req.params.id);
     if (!workId) {
       res.status(400).json({ ok: false, error: 'id is required' });
       return;

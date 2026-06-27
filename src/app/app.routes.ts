@@ -13,6 +13,8 @@ import { PortfolioCatalogComponent } from './pages/portfolio/portfolio-catalog.c
 import { ReviewsPageComponent } from './pages/reviews/reviews-page.component';
 import { AdminGateComponent } from './pages/admin/admin-gate.component';
 import { JobsListComponent } from './pages/jobs-list/jobs-list.component';
+import { PrivacyPolicyComponent } from './pages/privacy/privacy-policy.component';
+import { TermsOfServiceComponent } from './pages/terms/terms-of-service.component';
 
 export const routes: Routes = [
   { path: 'verify/:token', component: WorkVerificationComponent },
@@ -33,6 +35,8 @@ export const routes: Routes = [
       { path: 'admin', component: AdminGateComponent },
       { path: 'portfolio', component: PortfolioCatalogComponent },
       { path: 'jobs', component: JobsListComponent },
+      { path: 'privacy', component: PrivacyPolicyComponent },
+      { path: 'terms', component: TermsOfServiceComponent },
       { path: 'portfolio/brigade/:id', redirectTo: 'brigades/:id' },
       { path: 'portfolio/worker/:id', redirectTo: 'masters/:id' },
     ],

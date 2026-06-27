@@ -26,6 +26,30 @@ export class PortfolioCatalogComponent implements OnInit {
 
   ngOnInit(): void {
     this.supabase.loadProfiles().subscribe();
+    if (this.adminAuth.isAdmin()) {
+      void this.reviewStore.loadPendingReviews();
+      return;
+    }
+    void this.reviewStore.loadApprovedReviews();
+  }
+
+  protected visibleReviews(): ReviewSubmission[] {
+    if (this.adminAuth.isAdmin()) {
+      return this.reviewStore.reviews().filter((review) => review.status !== 'rejected');
+    }
+    return this.reviewStore.approvedReviews();
+  }
+
+  protected canPublishReview(review: ReviewSubmission): boolean {
+    return review.status === 'pending';
+  }
+
+  protected reviewStatusLabel(review: ReviewSubmission): string {
+    return review.status === 'approved' ? 'Опубликован' : 'На модерации';
+  }
+
+  protected publishReview(reviewId: string): void {
+    void this.reviewStore.publishReview(reviewId);
   }
 
   protected reviewBackgroundClass(review: ReviewSubmission): string {

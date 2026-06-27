@@ -39,31 +39,67 @@
       </a>
     </nav>
 
-    @if (reviewStore.approvedReviews().length > 0) {
+    @if (visibleReviews().length > 0) {
       <section class="catalog-reviews">
         <div class="section-header">
           <h2>{{ translation.t('portfolio.hub.reviewsTitle') }}</h2>
           <p class="section-subtitle">{{ translation.t('portfolio.hub.reviewsLead') }}</p>
         </div>
         <div class="review-grid">
-          @for (review of reviewStore.approvedReviews(); track review.id) {
-            <article class="review-card" [ngClass]="reviewBackgroundClass(review)">
+          @for (review of visibleReviews(); track review.id) {
+            <article
+              class="review-card"
+              [ngClass]="reviewBackgroundClass(review)"
+              [class.review-card--status-pending]="adminAuth.isAdmin() && review.status === 'pending'"
+              [class.review-card--status-approved]="adminAuth.isAdmin() && review.status === 'approved'"
+            >
+              @if (adminAuth.isAdmin()) {
+                <div class="review-card-status-row">
+                  <span
+                    class="review-card-status"
+                    [class.review-card-status--pending]="review.status === 'pending'"
+                    [class.review-card-status--approved]="review.status === 'approved'"
+                  >
+                    {{ review.status === 'pending' ? 'На модерации' : 'Опубликован' }}
+                  </span>
+                </div>
+              }
               <p>{{ reviewStore.localizeReview(review) }}</p>
               <div class="review-meta">
                 <strong>{{ review.name }}</strong>
+                @if (adminAuth.isAdmin()) {
+                  <span
+                    class="review-status-pill"
+                    [class.review-status-pill--pending]="review.status === 'pending'"
+                    [class.review-status-pill--approved]="review.status === 'approved'"
+                  >
+                    {{ reviewStatusLabel(review) }}
+                  </span>
+                }
                 <span
                   >{{ reviewStore.performerTypeLabel(review) }} ·
                   {{ reviewStore.localizeCategory(review) }}</span
                 >
               </div>
               @if (adminAuth.isAdmin()) {
-                <button
-                  type="button"
-                  class="review-card-delete-btn"
-                  (click)="deleteReview(review.id)"
-                >
-                  Удалить отзыв
-                </button>
+                <div class="review-card-admin-actions">
+                  @if (canPublishReview(review)) {
+                    <button
+                      type="button"
+                      class="review-card-publish-btn"
+                      (click)="publishReview(review.id)"
+                    >
+                      {{ translation.t('moderation.actions.publish') }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="review-card-delete-btn"
+                    (click)="deleteReview(review.id)"
+                  >
+                    {{ translation.t('moderation.actions.delete') }}
+                  </button>
+                </div>
               }
             </article>
           }

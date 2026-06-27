@@ -45,7 +45,7 @@ section:not(.hero-section):not(.features-block):not(.services-block):not(.portfo
   font-size: 0.85rem;
   margin-bottom: 12px;
   white-space: normal;
-  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 h2 {
@@ -140,11 +140,13 @@ h2 {
 
 .slide-item.slide-light .slide-bg-overlay {
   background: rgba(255, 255, 255, 0.45);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
 .slide-item.slide-dark .slide-bg-overlay {
   background: rgba(15, 23, 42, 0.6);
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
@@ -354,6 +356,7 @@ h2 {
   top: 50%;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;

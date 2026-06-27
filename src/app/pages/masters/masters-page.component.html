@@ -148,7 +148,7 @@
             <article class="related-master-card">
               <h4>{{ master.name }} {{ master.surname }}</h4>
               @if (master.skills?.length) {
-                <p>{{ master.skills?.join(', ') }}</p>
+                <p>{{ master.skills.join(', ') }}</p>
               }
               <a class="performer-more" [routerLink]="performerLink(master.id)">Открыть профиль →</a>
             </article>

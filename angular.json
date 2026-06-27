@@ -97,6 +97,10 @@
                 {
                   "replace": "src/app/core/config/base-href.ts",
                   "with": "src/app/core/config/base-href.github-pages.ts"
+                },
+                {
+                  "replace": "src/app/core/config/router-hash.ts",
+                  "with": "src/app/core/config/router-hash.github-pages.ts"
                 }
               ],
               "budgets": [

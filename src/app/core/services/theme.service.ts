@@ -99,7 +99,9 @@ export class ThemeService {
       return;
     }
 
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.applyTheme(prefersDark ? 'dark' : 'light', false);
   }
 

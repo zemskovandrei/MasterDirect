@@ -7,6 +7,7 @@ import { APP_BASE_HREF } from '@angular/common';
 import { provideRouter, withHashLocation, withInMemoryScrolling } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { APP_BASE_HREF_VALUE } from './core/config/base-href';
+import { USE_HASH_ROUTING } from './core/config/router-hash';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideRouter(
       routes,
-      withHashLocation(),
+      ...(USE_HASH_ROUTING ? [withHashLocation()] : []),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
     provideHttpClient(withFetch()),

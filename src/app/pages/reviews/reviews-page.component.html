@@ -201,7 +201,7 @@
       </section>
 
       <section class="reviews-site-feedback-list" aria-label="Отзывы о сайте">
-        @if (data?.siteFeedbackReviews?.length > 0) {
+        @if (data.siteFeedbackReviews.length > 0) {
           <div class="reviews-site-feedback-grid">
             @for (review of data.siteFeedbackReviews; track review.id) {
               <article class="reviews-site-feedback-card">

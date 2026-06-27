@@ -1,1 +1,120 @@
 /* Стили каталога — в ../../styles/catalog-pages.css */
+
+.review-card-admin-actions {
+	margin-top: 0.9rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+}
+
+.review-card--status-pending {
+	border-color: rgba(245, 158, 11, 0.35);
+	box-shadow:
+		inset 0 0 0 1px rgba(245, 158, 11, 0.16),
+		0 14px 28px rgba(245, 158, 11, 0.12);
+}
+
+.review-card--status-approved {
+	border-color: rgba(16, 185, 129, 0.32);
+	box-shadow:
+		inset 0 0 0 1px rgba(16, 185, 129, 0.14),
+		0 14px 28px rgba(16, 185, 129, 0.1);
+}
+
+.review-card-status-row {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.review-card-status {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.65rem;
+	padding: 0.2rem 0.62rem;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	font-size: 0.74rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.review-card-status--pending {
+	background: rgba(245, 158, 11, 0.12);
+	border-color: rgba(245, 158, 11, 0.36);
+	color: #92400e;
+}
+
+.review-card-status--approved {
+	background: rgba(16, 185, 129, 0.12);
+	border-color: rgba(16, 185, 129, 0.34);
+	color: #065f46;
+}
+
+.review-status-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+	border: 1px solid transparent;
+}
+
+.review-status-pill--pending {
+	background: rgb(249 115 22 / 0.12);
+	border-color: rgb(249 115 22 / 0.32);
+	color: #9a3412;
+}
+
+.review-status-pill--approved {
+	background: rgb(16 185 129 / 0.12);
+	border-color: rgb(16 185 129 / 0.3);
+	color: #065f46;
+}
+
+.review-card-publish-btn,
+.review-card-delete-btn {
+	min-height: 2.1rem;
+	min-width: 8.4rem;
+	border-radius: 0.65rem;
+	padding: 0.44rem 0.78rem;
+	font-size: 0.82rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition:
+		transform 0.2s ease,
+		box-shadow 0.2s ease,
+		background-color 0.2s ease,
+		color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.review-card-publish-btn {
+	border: 1px solid #0ea5e9;
+	background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+	color: #082f49;
+	box-shadow: 0 8px 20px rgb(14 165 233 / 0.22);
+}
+
+.review-card-publish-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 22px rgb(14 165 233 / 0.28);
+	background: linear-gradient(135deg, #38bdf8, #67e8f9);
+}
+
+.review-card-delete-btn {
+	margin-top: 0;
+}
+
+@media (max-width: 640px) {
+	.review-card-admin-actions {
+		width: 100%;
+	}
+
+	.review-card-publish-btn,
+	.review-card-delete-btn {
+		width: 100%;
+	}
+}

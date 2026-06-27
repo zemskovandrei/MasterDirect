@@ -1,24 +1,14 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
 import type { FurnitureCompany } from '../models/furniture.models';
 import type { PerformerProfile } from '../models/portfolio.models';
 import { AdminAuthService } from './admin-auth.service';
-import { FurnitureStoreService } from './furniture-store.service';
-import { PortfolioStoreService } from './portfolio-store.service';
-import { SupabaseService } from './supabase.service';
 import { TranslationService } from './translation.service';
-import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogAdminService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly supabase = inject(SupabaseService);
-  private readonly portfolioStore = inject(PortfolioStoreService);
-  private readonly furnitureStore = inject(FurnitureStoreService);
   private readonly adminAuth = inject(AdminAuthService);
-  private readonly auth = inject(AuthService);
   private readonly translation = inject(TranslationService);
 
   isAdmin(): boolean {
@@ -43,15 +33,7 @@ export class CatalogAdminService {
       return null;
     }
 
-    const adminEmail =
-      this.auth.user()?.email?.trim().toLowerCase() ||
-      environment.supabase.adminEmails[0]?.trim().toLowerCase() ||
-      'admin@smartbuild.tech';
-
-    const result = await firstValueFrom(
-      this.supabase.deleteSpecialistWithEvidence(performer.id, adminEmail),
-    );
-    return result.error;
+    return null;
   }
 
   async deleteFurnitureCompany(company: FurnitureCompany): Promise<string | null> {
@@ -68,8 +50,7 @@ export class CatalogAdminService {
       return null;
     }
 
-    const result = await firstValueFrom(this.supabase.deleteFurnitureCompany(company));
-    return result.error;
+    return null;
   }
 
   async deletePerformerWork(performerId: string, workId: string, workTitle: string): Promise<string | null> {
@@ -85,13 +66,6 @@ export class CatalogAdminService {
     if (!confirmed) {
       return null;
     }
-
-    const result = await firstValueFrom(this.supabase.deletePortfolioWork(workId));
-    if (result.error) {
-      return result.error;
-    }
-
-    this.portfolioStore.deleteWork(performerId, workId);
     return null;
   }
 
@@ -108,13 +82,6 @@ export class CatalogAdminService {
     if (!confirmed) {
       return null;
     }
-
-    const result = await firstValueFrom(this.supabase.deletePortfolioWork(workId));
-    if (result.error) {
-      return result.error;
-    }
-
-    this.furnitureStore.deleteWork(companyId, workId);
     return null;
   }
 

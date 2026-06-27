@@ -49,7 +49,7 @@
         <p class="jobs-showcase__eyebrow">{{ translation.t('jobs.galleryEyebrow') }}</p>
 
         <div class="jobs-showcase__gallery jobs-orders-grid">
-          @for (order of jobs(); track trackByJobId($index, order)) {
+          @for (order of visibleJobs(); track trackByJobId($index, order)) {
             @if (!isOrderCompleted(order)) {
             <article class="jobs-glass-card jobs-glass-card--compact">
               <div class="jobs-glass-card__body">
@@ -131,7 +131,7 @@
                   </button>
                 }
 
-                @if (adminAuth.showAdminControls()) {
+                @if (canDeleteOrder(order)) {
                   <div class="jobs-glass-card__admin">
                     <button
                       type="button"

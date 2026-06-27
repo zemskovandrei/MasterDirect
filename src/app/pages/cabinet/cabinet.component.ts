@@ -452,6 +452,42 @@ export class CabinetComponent {
     setTimeout(() => this.uploadSuccess.set(false), 6000);
   }
 
+  async deletePerformerWork(workId: string, workTitle: string): Promise<void> {
+    const performer = this.store.currentPerformer();
+    if (!performer || !workId.trim()) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation
+        .t('admin.catalog.deleteWorkConfirm')
+        .replace('{{title}}', workTitle || '—'),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.store.deleteWork(performer.id, workId);
+  }
+
+  async deleteFurnitureWork(workId: string, workTitle: string): Promise<void> {
+    const company = this.furnitureStore.currentCompany();
+    if (!company || !workId.trim()) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation
+        .t('admin.catalog.deleteWorkConfirm')
+        .replace('{{title}}', workTitle || '—'),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.furnitureStore.deleteWork(company.id, workId);
+  }
+
   verificationLink(work: {
     verificationToken?: string;
     verificationStatus?: string;

@@ -318,6 +318,9 @@
                   @for (work of performer.works; track work.id) {
                     <div class="cabinet-works__item">
                       <app-before-after [work]="work" [showCaption]="false" />
+                      <button type="button" class="link-accent" (click)="deletePerformerWork(work.id, work.title)">
+                        {{ translation.t('admin.catalog.deleteWork') }}
+                      </button>
                       @if (workVerificationEnabled) {
                         @if (verificationLink(work); as workLink) {
                           <div class="cabinet-works__link">
@@ -332,7 +335,6 @@
                   }
                 </div>
               }
-
               @if (premiumAccessUnlocked()) {
                 <div class="cabinet-status cabinet-status--ok" role="status">
                   Платная версия доступна
@@ -563,14 +565,11 @@
                   @for (work of company.works; track work.id) {
                     <div class="cabinet-works__item">
                       <app-before-after [work]="work" [showCaption]="false" />
+                      <button type="button" class="link-accent" (click)="deleteFurnitureWork(work.id, work.title)">
+                        {{ translation.t('admin.catalog.deleteWork') }}
+                      </button>
                     </div>
                   }
-                </div>
-              }
-
-              @if (premiumAccessUnlocked()) {
-                <div class="cabinet-status cabinet-status--ok" role="status">
-                  Платная версия доступна
                 </div>
               }
             </div>

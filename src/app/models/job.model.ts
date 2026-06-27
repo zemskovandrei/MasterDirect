@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 const ORDER_FILES_BUCKET = 'orders-files';
 export interface JobklientJobRow {
   id?: number | string | null;
+  user_id?: string | null;
   title?: string | null;
   client_name?: string | null;
   client_phone?: string | null;
@@ -213,6 +214,7 @@ export interface JobDetails {
 /** Нормализованная модель заказа для UI. */
 export interface Job {
   id: string;
+  userId: string | null;
   title: string;
   city: string;
   category: string;
@@ -722,6 +724,7 @@ export function mapJobklientRowToJob(row: JobklientJobRow | null | undefined, in
 
     return {
       id: row.id != null && String(row.id).trim() ? String(row.id).trim() : `job-${index}`,
+      userId: row.user_id?.trim() || null,
       title: safeText(row.title, 'Без названия'),
       city: safeText(row.city, '—'),
       category: safeText(row.category, '—'),

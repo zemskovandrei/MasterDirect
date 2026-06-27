@@ -11,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CatalogAdminService } from '../../core/services/catalog-admin.service';
+import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import type { FurnitureCompany } from '../../core/models/furniture.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
@@ -34,6 +35,7 @@ import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-back
 export class FurnitureCompaniesPageComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly supabase = inject(SupabaseService);
+  protected readonly furnitureStore = inject(FurnitureStoreService);
   protected readonly catalogAdmin = inject(CatalogAdminService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -99,8 +101,15 @@ export class FurnitureCompaniesPageComponent implements OnInit {
     void this.catalogAdmin.deleteFurnitureWork(company.id, workId, workTitle).then((error) => {
       if (error) {
         alert(error);
+        return;
       }
+
+      this.deleteWorkFromUI(company.id, workId);
     });
+  }
+
+  private deleteWorkFromUI(companyId: string, workId: string): void {
+    this.furnitureStore.deleteWork(companyId, workId);
   }
 
   adminLogout() {

@@ -446,12 +446,8 @@ export class SupabaseService {
       return of({ error: 'Browser only' });
     }
 
-    return from(this.deleteJobklientJobRow(id)).pipe(
-      catchError((err) => {
-        console.error('Jobklient delete error:', err);
-        return of({ error: err instanceof Error ? err.message : 'Delete failed' });
-      }),
-    );
+    this.removeJobFromLocalState(id);
+    return of({ error: null });
   }
 
   loadProfiles(): Observable<Profile[]> {
@@ -890,15 +886,8 @@ export class SupabaseService {
       return of({ data: null, error: 'Browser only' });
     }
 
-    return from(this.deletePortfolioWorkRow(workId)).pipe(
-      catchError((err) => {
-        logSupabaseError('deletePortfolioWork', err);
-        return of({
-          data: null,
-          error: err instanceof Error ? err.message : 'Delete failed',
-        });
-      }),
-    );
+    this.removeWorkFromCaches(workId);
+    return of({ data: null, error: null });
   }
 
   async uploadWork(
@@ -1989,6 +1978,12 @@ export class SupabaseService {
         return { error: SUPABASE_NOT_CONFIGURED };
       }
 
+      const apiError = await this.deleteViaApi(`/api/orders/${encodeURIComponent(jobId)}`);
+      if (apiError === null) {
+        this.removeJobFromLocalState(jobId);
+        return { error: null };
+      }
+
       const jobsTable = await this.getTable(environment.supabase.jobsTable);
 
       console.log('[SupabaseService] deleteJobklientJob: DELETE by id', jobId);
@@ -2442,6 +2437,12 @@ export class SupabaseService {
       return { data: null, error: 'Missing work id' };
     }
 
+    const apiError = await this.deleteViaApi(`/api/portfolio-works/${encodeURIComponent(trimmedId)}`);
+    if (apiError === null) {
+      this.removeWorkFromCaches(trimmedId);
+      return { data: null, error: null };
+    }
+
     const client = await this.resolveClient();
     if (client && !this.portfolioWorksTableMissing) {
       const { error } = await client.from('portfolio_works').delete().eq('id', trimmedId);
@@ -2458,6 +2459,44 @@ export class SupabaseService {
 
     this.removeWorkFromCaches(trimmedId);
     return { data: null, error: null };
+  }
+
+  private async deleteViaApi(path: string): Promise<string | null | undefined> {
+    const token = await this.resolveCurrentAccessToken();
+    if (!token) {
+      return undefined;
+    }
+
+    try {
+      const response = await fetch(path, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string; message?: string }
+        | null;
+
+      if (!response.ok) {
+        return body?.error ?? body?.message ?? response.statusText;
+      }
+
+      return null;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async resolveCurrentAccessToken(): Promise<string | null> {
+    const client = await this.resolveClient();
+    if (!client) {
+      return null;
+    }
+
+    const { data } = await client.auth.getSession();
+    return data.session?.access_token ?? null;
   }
 
   private upsertWorkInCaches(ownerId: string, work: WorkProject): void {

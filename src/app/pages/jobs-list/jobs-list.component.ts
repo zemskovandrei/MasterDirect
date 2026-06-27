@@ -4,12 +4,12 @@ import {
   OnInit,
   PLATFORM_ID,
   inject,
+  computed,
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -48,6 +48,11 @@ export class JobsListComponent implements OnInit {
   readonly isLoading = this.supabase.jobsLoading;
   readonly error = this.supabase.jobsError;
   readonly jobs = this.supabase.activeJobs;
+  protected readonly hiddenJobIds = signal<Set<string>>(new Set());
+  protected readonly visibleJobs = computed(() => {
+    const hidden = this.hiddenJobIds();
+    return this.jobs().filter((job) => !hidden.has(job.id));
+  });
 
   protected readonly adminActionJobId = signal<string | null>(null);
   protected readonly adminActionError = signal<string | null>(null);
@@ -97,6 +102,15 @@ export class JobsListComponent implements OnInit {
     return isCompletedOrderStatus(order.status);
   }
 
+  protected canDeleteOrder(order: Job): boolean {
+    if (this.adminAuth.isAdmin()) {
+      return true;
+    }
+
+    const userId = this.auth.user()?.id;
+    return !!userId && !!order.userId && order.userId === userId;
+  }
+
   protected completeOrder(order: Job): void {
     const id = order?.id;
     console.log('[JobsListComponent] Кликнули выполнить для ID:', id);
@@ -144,15 +158,19 @@ export class JobsListComponent implements OnInit {
     });
   }
 
-  async deleteJob(jobId: string): Promise<void> {
-    if (!jobId?.trim() || this.isJobAdminBusy(jobId)) {
+  async deleteJob(orderOrId: Job | string): Promise<void> {
+    const order =
+      typeof orderOrId === 'string'
+        ? this.jobs().find((item) => item.id === orderOrId)
+        : orderOrId;
+
+    if (!order?.id?.trim() || this.isJobAdminBusy(order.id)) {
       console.error('Jobklient delete error: Missing job id');
       return;
     }
 
-    const order = this.jobs().find((item) => item.id === jobId);
-    if (!order) {
-      console.error('Jobklient delete error: job not found in current list', jobId);
+    if (!this.canDeleteOrder(order)) {
+      console.error('Jobklient delete error: insufficient permissions', order.id);
       return;
     }
 
@@ -163,21 +181,11 @@ export class JobsListComponent implements OnInit {
       return;
     }
 
-    this.adminActionJobId.set(jobId);
-    this.adminActionError.set(null);
-
-    try {
-      const result = await firstValueFrom(this.supabase.deleteJob(jobId));
-      if (result.error) {
-        this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-        console.error('Jobklient delete error:', result.error);
-      }
-    } catch (err) {
-      this.adminActionError.set(this.translation.t('admin.jobs.actionError'));
-      console.error('Jobklient delete error:', err);
-    } finally {
-      this.adminActionJobId.set(null);
-    }
+    this.hiddenJobIds.update((current) => {
+      const next = new Set(current);
+      next.add(order.id);
+      return next;
+    });
   }
 
   protected formatOrderBudget(order: Job): string {

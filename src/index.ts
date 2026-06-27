@@ -64,6 +64,92 @@ function hasVisibleName(value: string | null | undefined): boolean {
   return Boolean(value?.trim());
 }
 
+function extractBearerToken(req: Request): string | null {
+  const header = req.headers.authorization?.trim();
+  if (!header) {
+    return null;
+  }
+
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+}
+
+async function resolveCurrentUser(token: string | null): Promise<{ id: string; email: string | null } | null> {
+  if (!token) {
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) {
+    return null;
+  }
+
+  return {
+    id: data.user.id,
+    email: data.user.email?.trim().toLowerCase() ?? null,
+  };
+}
+
+async function isAdminUser(user: { id: string; email: string | null }): Promise<boolean> {
+  if (user.email && user.email === 'admin@smartbuild.tech') {
+    return true;
+  }
+
+  const { data, error } = await supabase
+    .from('specialist')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    return false;
+  }
+
+  return String((data as { role?: string | null } | null)?.role ?? '').trim().toLowerCase() === 'admin';
+}
+
+async function canDeleteOrder(
+  orderId: string,
+  user: { id: string; email: string | null },
+): Promise<boolean> {
+  if (await isAdminUser(user)) {
+    return true;
+  }
+
+  const { data, error } = await supabase
+    .from('order')
+    .select('id,user_id')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return false;
+  }
+
+  return String((data as { user_id?: string | null }).user_id ?? '').trim() === user.id;
+}
+
+async function canDeletePortfolioWork(
+  workId: string,
+  user: { id: string; email: string | null },
+): Promise<boolean> {
+  if (await isAdminUser(user)) {
+    return true;
+  }
+
+  const { data, error } = await supabase
+    .from('portfolio_works')
+    .select('id,owner_id')
+    .eq('id', workId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return false;
+  }
+
+  return String((data as { owner_id?: string | null }).owner_id ?? '').trim() === user.id;
+}
+
 app.post('/api/jobklient', async (req: Request, res: Response) => {
   try {
     const body = req.body as JobklientBody;
@@ -188,6 +274,72 @@ app.post('/api/site_reviews', async (req: Request, res: Response) => {
     res.status(201).json({ ok: true, data });
   } catch (error) {
     console.error('[POST /api/site_reviews] Unexpected error:', error);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/orders/:id', async (req: Request, res: Response) => {
+  try {
+    const orderId = req.params.id?.trim();
+    if (!orderId) {
+      res.status(400).json({ ok: false, error: 'id is required' });
+      return;
+    }
+
+    const user = await resolveCurrentUser(extractBearerToken(req));
+    if (!user) {
+      res.status(401).json({ ok: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const allowed = await canDeleteOrder(orderId, user);
+    if (!allowed) {
+      res.status(403).json({ ok: false, error: 'Forbidden' });
+      return;
+    }
+
+    const { error } = await supabase.from('order').delete().eq('id', orderId);
+    if (error) {
+      res.status(500).json({ ok: false, error: error.message });
+      return;
+    }
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('[DELETE /api/orders/:id] Unexpected error:', error);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/portfolio-works/:id', async (req: Request, res: Response) => {
+  try {
+    const workId = req.params.id?.trim();
+    if (!workId) {
+      res.status(400).json({ ok: false, error: 'id is required' });
+      return;
+    }
+
+    const user = await resolveCurrentUser(extractBearerToken(req));
+    if (!user) {
+      res.status(401).json({ ok: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const allowed = await canDeletePortfolioWork(workId, user);
+    if (!allowed) {
+      res.status(403).json({ ok: false, error: 'Forbidden' });
+      return;
+    }
+
+    const { error } = await supabase.from('portfolio_works').delete().eq('id', workId);
+    if (error) {
+      res.status(500).json({ ok: false, error: error.message });
+      return;
+    }
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('[DELETE /api/portfolio-works/:id] Unexpected error:', error);
     res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 });

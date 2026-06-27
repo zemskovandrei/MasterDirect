@@ -13,6 +13,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CatalogAdminService } from '../../core/services/catalog-admin.service';
+import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { PerformerProfile } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
@@ -46,6 +47,7 @@ export class BrigadesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   protected readonly supabase = inject(SupabaseService);
+  protected readonly portfolioStore = inject(PortfolioStoreService);
   protected readonly catalogAdmin = inject(CatalogAdminService);
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
@@ -180,8 +182,15 @@ export class BrigadesPageComponent implements OnInit {
     void this.catalogAdmin.deletePerformerWork(performer.id, workId, workTitle).then((error) => {
       if (error) {
         alert(error);
+        return;
       }
+
+      this.deleteWorkFromUI(performer.id, workId);
     });
+  }
+
+  private deleteWorkFromUI(performerId: string, workId: string): void {
+    this.portfolioStore.deleteWork(performerId, workId);
   }
 
   adminLogout() {

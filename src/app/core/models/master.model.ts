@@ -91,6 +91,7 @@ export interface ReviewRow {
   performer_name?: string | null;
   before_image?: string | null;
   after_image?: string | null;
+  status?: 'pending' | 'approved' | 'rejected' | null;
   /** Колонка `is_approved` в `site_reviews`. */
   is_approved?: boolean | null;
   created_at?: string;

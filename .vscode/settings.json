@@ -1,3 +1,9 @@
 {
-    "Codegeex.RepoIndex": true
+    "Codegeex.RepoIndex": true,
+    "files.exclude": {
+        "dist": true
+    },
+    "search.exclude": {
+        "dist": true
+    }
 }

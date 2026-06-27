@@ -129,7 +129,7 @@ export class ReviewStoreService {
       const { data, error } = await client
         .from('site_reviews')
         .select('*')
-        .eq('is_approved', true)
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -161,6 +161,7 @@ export class ReviewStoreService {
       const { data, error } = await client
         .from('site_reviews')
         .select('*')
+        .or('status.eq.pending,status.is.null')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -170,10 +171,10 @@ export class ReviewStoreService {
 
       const rows = (data as ReviewRow[] | null) ?? [];
       const pending = rows
-        .filter((row) => row.is_approved !== true)
+        .filter((row) => (row.status ?? (row.is_approved ? 'approved' : 'pending')) === 'pending')
         .map((row) => this.mapRow(row, 'pending'));
       const approved = rows
-        .filter((row) => row.is_approved === true)
+        .filter((row) => (row.status ?? (row.is_approved ? 'approved' : 'pending')) === 'approved')
         .map((row) => this.mapRow(row, 'approved'));
 
       this.reviewsSignal.set([...pending, ...approved]);
@@ -241,7 +242,7 @@ export class ReviewStoreService {
 
     const { error } = await client
       .from('site_reviews')
-      .update({ is_approved: true })
+      .update({ status: 'approved' })
       .eq('id', id);
 
     if (error) {
@@ -249,9 +250,7 @@ export class ReviewStoreService {
       return;
     }
 
-    this.reviewsSignal.update((list) =>
-      list.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
-    );
+    await this.loadPendingReviews();
     this.addPublicationNotification(review);
   }
 

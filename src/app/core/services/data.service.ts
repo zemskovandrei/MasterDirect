@@ -429,6 +429,7 @@ export class DataService {
     const { data, error } = await client
       .from(this.reviewsTable)
       .select('*')
+      .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -466,7 +467,7 @@ export class DataService {
   }
 
   async approveReview(id: string): Promise<SiteReview> {
-    return this.getReviewById(id);
+    return this.updateReview(id, { status: 'approved' });
   }
 
   private async getReviewById(id: string): Promise<SiteReview> {

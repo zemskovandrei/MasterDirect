@@ -97,17 +97,21 @@ export interface SiteReview {
   created_at: string;
   user_name: string;
   review_text: string;
+  status?: 'pending' | 'approved' | 'rejected' | null;
   /** Есть в прод-БД; опционально для обратной совместимости. */
   is_approved?: boolean | null;
 }
 
 /** Payload для `.insert()` в `site_reviews`. */
 export type SiteReviewInsert = Pick<SiteReview, 'user_name' | 'review_text'> & {
+  status?: 'pending' | 'approved' | 'rejected' | null;
   is_approved?: boolean | null;
 };
 
 /** Частичное обновление отзыва (модерация). */
-export type SiteReviewUpdate = Partial<Pick<SiteReview, 'user_name' | 'review_text' | 'is_approved'>>;
+export type SiteReviewUpdate = Partial<
+  Pick<SiteReview, 'user_name' | 'review_text' | 'status' | 'is_approved'>
+>;
 
 /** Строка таблицы `waitlist` для уведомлений о свободных слотах. */
 export interface WaitlistEntry {

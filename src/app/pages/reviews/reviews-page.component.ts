@@ -171,7 +171,10 @@ export class ReviewsPageComponent implements OnInit {
       return;
     }
 
-    const { data: reviews, error } = await client.from('site_reviews').select('*');
+    const { data: reviews, error } = await client
+      .from('site_reviews')
+      .select('*')
+      .eq('status', 'approved');
 
     if (error) {
       this.data.siteFeedbackReviews = [];

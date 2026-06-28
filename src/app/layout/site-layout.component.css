@@ -281,6 +281,11 @@
     color: rgba(255, 255, 255, 0.94);
   }
 
+  /* Скрываем содержимое закрытой панели — предотвращаем утечку nav-links в viewport */
+  .site-layout .nav {
+    overflow: hidden !important;
+  }
+
   /* Разрешаем перенос текста внутри открытой панели */
   .site-layout .nav.nav-open a {
     white-space: normal !important;
@@ -420,7 +425,7 @@
   .site-layout .header-menu {
     flex: 0 0 0 !important;
     width: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     margin: 0 !important;
   }
 
@@ -939,7 +944,7 @@
   .site-layout .header-menu {
     flex: 0 0 0 !important;
     width: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     margin: 0 !important;
   }
 

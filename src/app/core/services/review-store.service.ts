@@ -138,7 +138,7 @@ export class ReviewStoreService {
         (data as ReviewRow[] | null)
           ?.filter((row) => row.status === 'approved' || row.is_approved === true)
           .map((row) => this.mapRow(row, 'approved')) ?? [];
-      this.reviewsSignal.set(approved);
+      this.reviewsSignal.set(this.deduplicateById(approved));
     } finally {
       this.loadingSignal.set(false);
     }
@@ -178,7 +178,7 @@ export class ReviewStoreService {
         .filter((row) => row.status === 'approved' || row.is_approved === true)
         .map((row) => this.mapRow(row, 'approved'));
 
-      this.reviewsSignal.set([...pending, ...approved]);
+      this.reviewsSignal.set(this.deduplicateById([...pending, ...approved]));
     } finally {
       this.loadingSignal.set(false);
     }
@@ -227,19 +227,26 @@ export class ReviewStoreService {
     }
 
     const submission = this.mapRow(inserted as ReviewRow, 'pending', data);
-    this.reviewsSignal.update((list) => [submission, ...list]);
+    this.reviewsSignal.update((list) => this.deduplicateById([submission, ...list]));
     this.addSubmissionNotification(submission);
     return submission;
   }
 
   async publishReview(id: string): Promise<void> {
     const review = this.reviewsSignal().find((item) => item.id === id);
-    if (!review || review.status === 'approved') {
+    if (!review) {
+      console.warn('ReviewStore: publish aborted, review not found in local state', { id });
+      return;
+    }
+
+    if (review.status === 'approved') {
+      console.info('ReviewStore: publish skipped, review is already approved', { id });
       return;
     }
 
     const client = await this.supabase.getClient();
     if (!client) {
+      logSupabaseError('approveReview', new Error('Supabase client is not available'));
       return;
     }
 
@@ -250,8 +257,11 @@ export class ReviewStoreService {
 
     if (error) {
       logSupabaseError('approveReview', error);
+      console.error('ReviewStore: failed to publish review', { id, error });
       return;
     }
+
+    console.info('ReviewStore: review published', { id });
 
     await this.loadPendingReviews();
     this.addPublicationNotification(review);
@@ -379,5 +389,9 @@ export class ReviewStoreService {
 
   private addPublicationNotification(review: ReviewSubmission): void {
     this.addSubmissionNotification(review);
+  }
+
+  private deduplicateById(list: ReviewSubmission[]): ReviewSubmission[] {
+    return list.filter((item, index, self) => index === self.findIndex((candidate) => candidate.id === item.id));
   }
 }

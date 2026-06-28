@@ -13,7 +13,10 @@ import { ReviewPerformerTypeKey } from '../../core/models/portfolio.models';
 import { PortfolioStoreService } from '../../core/services/portfolio-store.service';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { ReviewStoreService } from '../../core/services/review-store.service';
+import {
+  ReviewStoreService,
+  SITE_FEEDBACK_TEXT_PREFIX,
+} from '../../core/services/review-store.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/word-limit.util';
 import {
@@ -178,14 +181,26 @@ export class ReviewsPageComponent implements OnInit {
       return;
     }
 
-    this.data.siteFeedbackReviews = (reviews as Array<{
+    this.data.siteFeedbackReviews = ((reviews as Array<{
       id: string;
       review_text: string;
       user_name?: string;
       status?: string | null;
       is_approved?: boolean | null;
     }> | null)
-      ?.filter((row) => row.status === 'approved' || row.is_approved === true) ?? [];
+      ?.filter((row) => row.status === 'approved' || row.is_approved === true)
+      .map((row) => ({
+        ...row,
+        review_text: this.stripSiteFeedbackPrefix(row.review_text),
+      })) ?? []);
+  }
+
+  private stripSiteFeedbackPrefix(text: string): string {
+    const value = text?.trim() ?? '';
+    if (value.startsWith(SITE_FEEDBACK_TEXT_PREFIX)) {
+      return value.slice(SITE_FEEDBACK_TEXT_PREFIX.length).trim();
+    }
+    return value;
   }
 
   selectCategory(next: ReviewCategoryKey) {

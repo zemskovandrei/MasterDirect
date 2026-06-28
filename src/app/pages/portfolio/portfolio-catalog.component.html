@@ -46,7 +46,7 @@
           <p class="section-subtitle">{{ translation.t('portfolio.hub.reviewsLead') }}</p>
         </div>
         <div class="review-grid">
-          @for (review of visibleReviews(); track review.id) {
+          @for (review of visibleReviews(); track review.id + '-' + $index) {
             <article
               class="review-card"
               [ngClass]="reviewBackgroundClass(review)"

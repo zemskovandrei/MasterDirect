@@ -91,8 +91,13 @@ export class ModerationComponent implements OnInit, OnDestroy {
     this.loginError.set(false);
   }
 
-  publishReview(reviewId: string) {
-    void this.reviewStore.publishReview(reviewId);
+  async publishReview(reviewId: string): Promise<void> {
+    try {
+      console.info('Moderation: publish review clicked', { reviewId });
+      await this.reviewStore.publishReview(reviewId);
+    } catch (error) {
+      console.error('Moderation: failed to publish review', { reviewId, error });
+    }
   }
 
   deleteReview(reviewId: string) {

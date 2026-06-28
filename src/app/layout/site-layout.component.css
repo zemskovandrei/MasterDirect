@@ -94,6 +94,32 @@
 
 .site-layout .header-actions .menu-toggle {
   flex-shrink: 0;
+  border: none;
+  background: transparent;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.site-layout .header-actions .menu-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Полоски бургера — тёмные на светлом хедере */
+.site-layout .header .menu-toggle .menu-toggle-bar {
+  background: #2c3333;
+}
+
+/* Полоски бургера — белые на тёмном хедере */
+.site-layout .header.dark-header .menu-toggle .menu-toggle-bar {
+  background: #ffffff;
 }
 
 .header-profile {
@@ -253,6 +279,22 @@
   /* Боковая панель всегда тёмная — не наследуем светлый --header-text-color */
   .site-layout .nav.nav-open {
     color: rgba(255, 255, 255, 0.94);
+  }
+
+  /* Разрешаем перенос текста внутри открытой панели */
+  .site-layout .nav.nav-open a {
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  /* Пункты меню — вертикально одной колонкой */
+  .site-layout .nav.nav-open .nav-links {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+    width: 100% !important;
   }
 
   .site-layout .nav.nav-open .nav-mobile-intro {

@@ -1,1 +1,1 @@
-export const APP_BRAND_NAME = 'FlooringLeader';
+export const APP_BRAND_NAME = 'masterdirect';

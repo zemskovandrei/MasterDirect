@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="mastergradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1565C0"/>
+      <stop offset="100%" style="stop-color:#42A5F5"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="200" fill="white"/>
+  
+  <g transform="translate(40, 45)">
+    <path d="M 25 120 L 25 60 L 50 25 L 75 60 L 75 120" stroke="url(#mastergradient)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="50" y1="60" x2="50" y2="120" stroke="url(#mastergradient)" stroke-width="12" stroke-linecap="round"/>
+    <line x1="100" y1="120" x2="100" y2="60" stroke="url(#mastergradient)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 100 65 Q 135 60 140 90 Q 135 120 100 120" stroke="url(#mastergradient)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="25" y1="60" x2="100" y2="60" stroke="url(#mastergradient)" stroke-width="12" stroke-linecap="round"/>
+    <line x1="25" y1="120" x2="100" y2="120" stroke="url(#mastergradient)" stroke-width="12" stroke-linecap="round"/>
+    <g stroke="white" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 35 85 L 45 100 L 65 70"/>
+    </g>
+    <g stroke="url(#mastergradient)" stroke-width="8" fill="url(#mastergradient)" stroke-linecap="round">
+      <line x1="95" y1="105" x2="135" y2="55" stroke-width="8"/>
+      <polygon points="135,55 122,68 130,82" fill="url(#mastergradient)"/>
+    </g>
+    <circle cx="95" cy="125" r="4" fill="url(#mastergradient)"/>
+  </g>
+  
+  <text x="280" y="130" font-family="Arial, Helvetica, sans-serif" font-size="80" font-weight="700" fill="url(#mastergradient)" letter-spacing="3">MASTER</text>
+  <text x="910" y="130" font-family="Arial, Helvetica, sans-serif" font-size="80" font-weight="700" fill="#777777" letter-spacing="3">DIRECT</text>
+  <text x="280" y="175" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" fill="#333333" letter-spacing="0.5">Прямой доступ к мастерам</text>
+</svg>

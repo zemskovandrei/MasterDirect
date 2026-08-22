@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D47A1"/>
+      <stop offset="100%" style="stop-color:#42A5F5"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="180" fill="white"/>
+  
+  <g transform="translate(30, 30)">
+    <line x1="20" y1="100" x2="20" y2="40" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/>
+    <line x1="60" y1="100" x2="60" y2="40" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/>
+    <line x1="20" y1="40" x2="40" y2="10" stroke="url(#grad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="10" x2="60" y2="40" stroke="url(#grad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="85" y1="100" x2="85" y2="40" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 85 50 Q 110 40 115 70" stroke="url(#grad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M 115 70 Q 110 100 85 100" stroke="url(#grad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <line x1="20" y1="40" x2="85" y2="40" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/>
+    <line x1="20" y1="100" x2="85" y2="100" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/>
+    <polyline points="30,70 38,82 55,60" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <line x1="80" y1="85" x2="115" y2="50" stroke="url(#grad)" stroke-width="6" stroke-linecap="round"/>
+    <polygon points="115,50 105,65 110,72" fill="url(#grad)"/>
+  </g>
+  
+  <text x="160" y="120" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#000000" letter-spacing="1">MASTERDIRECT</text>
+  <text x="160" y="160" font-family="Arial, sans-serif" font-size="18" font-weight="normal" fill="#333333" letter-spacing="0.5">Прямой доступ к мастерам</text>
+</svg>

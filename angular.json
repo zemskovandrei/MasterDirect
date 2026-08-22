@@ -28,11 +28,6 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
-              },
-              {
-                "glob": "favicon.png",
-                "input": "src",
-                "output": ""
               }
             ],
             "styles": [
@@ -54,6 +49,9 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "fonts": false
+              },
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -80,7 +78,7 @@
               "sourceMap": true
             },
             "github-pages": {
-              "baseHref": "/FlooringLeader/",
+              "baseHref": "/masterdirect/",
               "outputMode": "static",
               "outputHashing": "all",
               "optimization": {
@@ -89,7 +87,7 @@
                   "minify": true,
                   "inlineCritical": false
                 },
-                "fonts": true
+                "fonts": false
               },
               "sourceMap": false,
               "extractLicenses": true,

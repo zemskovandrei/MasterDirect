@@ -81,11 +81,16 @@
   align-items: center;
   justify-content: flex-start;
   min-width: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
 }
 
 .site-layout .header-menu .nav {
-  flex: none;
+  flex: 1 1 auto;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .site-layout .header-menu .nav ul {
@@ -477,22 +482,32 @@
   display: flex;
   align-items: center;
   max-width: 100%;
-  line-height: 0;
+  line-height: 1;
   transition: opacity var(--transition);
+  position: relative;
+  z-index: 10;
 }
 
 .logo-wrapper {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   padding: 0;
+  height: 72px;
+  overflow: visible;
+  background: white;
+  position: relative;
+  z-index: 11;
+  flex-shrink: 0;
 }
 
 .navbar-logo {
   display: block;
-  height: 72px !important;
-  width: auto !important;
-  max-width: none !important;
+  height: 100%;
+  width: auto;
+  max-width: none;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .site-layout .nav-links {

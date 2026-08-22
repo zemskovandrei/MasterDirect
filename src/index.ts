@@ -13,7 +13,7 @@ const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 
 const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[FlooringLeader API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
+  console.error('[masterdirect API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
   process.exit(1);
 }
 
@@ -462,9 +462,9 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ ok: true, service: 'FlooringLeader API' });
+  res.json({ ok: true, service: 'masterdirect API' });
 });
 
 app.listen(PORT, () => {
-  console.log(`[FlooringLeader API] Server listening on http://localhost:${PORT}`);
+  console.log(`[masterdirect API] Server listening on http://localhost:${PORT}`);
 });

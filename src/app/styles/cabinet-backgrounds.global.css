@@ -127,8 +127,9 @@
 .register-page--brigade .register-form-side {
   background-color: #f4f7fb;
   background-image:
-    linear-gradient(180deg, rgba(244, 247, 251, 0.9) 0%, rgba(244, 247, 251, 0.82) 55%, rgba(236, 242, 248, 0.88) 100%),
-    url('https://images.unsplash.com/photo-1581094794329-cf1c4f5c8c2e?q=80&w=1920');
+    radial-gradient(ellipse 80% 70% at 80% 40%, rgba(0, 196, 224, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(244, 247, 251, 0.88) 0%, rgba(244, 247, 251, 0.78) 55%, rgba(236, 242, 248, 0.86) 100%),
+    url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1920');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;

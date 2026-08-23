@@ -72,6 +72,13 @@
   box-shadow: 0 4px 24px rgb(12 18 34 / 0.06);
 }
 
+.register-page--brigade .register-card {
+  box-shadow:
+    0 4px 24px rgb(12 18 34 / 0.08),
+    0 0 48px rgb(0 196 224 / 0.28),
+    0 16px 56px rgb(13 148 136 / 0.16);
+}
+
 .register-card__title {
   margin: 0;
   font-size: 1rem;
@@ -301,8 +308,11 @@ select.field-input {
 
 .role-option:has(:checked) {
   border-color: var(--register-accent);
-  background: rgb(0 196 224 / 0.08);
+  background: rgb(0 196 224 / 0.14);
   color: var(--register-navy);
+  box-shadow:
+    0 0 0 3px rgb(0 196 224 / 0.18),
+    0 8px 22px rgb(0 196 224 / 0.22);
 }
 
 .register-form__before-after {

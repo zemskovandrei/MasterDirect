@@ -1,1 +1,1 @@
-export const APP_BRAND_NAME = 'masterdirect';
+export const APP_BRAND_NAME = 'MASTERDIRECT';

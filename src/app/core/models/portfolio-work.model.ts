@@ -32,10 +32,7 @@ export function portfolioWorkRowToProject(row: PortfolioWorkRow): WorkProject {
       ? (normalizedStatus as WorkVerificationStatus)
       : 'not_requested';
 
-  const rawDescription = row.description?.trim() || '';
-  const [firstLine, ...rest] = rawDescription.split('\n');
-  const titleFromDescription = rest.length > 0 ? firstLine.trim() : '';
-  const description = rest.length > 0 ? rest.join('\n').trim() : rawDescription;
+  const { title: titleFromDescription, description } = splitFoldedWorkText(row.description);
 
   return {
     id: row.id,
@@ -59,19 +56,46 @@ export function portfolioWorkToInsertRow(input: {
   work: WorkProject;
 }): Record<string, unknown> {
   const status = input.work.verificationStatus || 'not_requested';
-  const description = [input.work.title?.trim(), input.work.description?.trim()]
-    .filter(Boolean)
-    .join('\n')
-    .trim();
 
   // Живая схема: specialist_id + owner_type. Лишние колонки ломают insert.
   return {
     id: input.work.id,
     specialist_id: input.ownerId,
     owner_type: input.ownerType,
-    description: description || null,
+    description: foldWorkTitleAndDescription(input.work.title, input.work.description),
     before_image_url: input.work.beforeImage,
     after_image_url: input.work.afterImage,
     status,
   };
+}
+
+/** Title is always the first line; a trailing newline marks title-only rows. */
+export function foldWorkTitleAndDescription(
+  title: string | null | undefined,
+  description: string | null | undefined,
+): string | null {
+  const trimmedTitle = title?.trim() ?? '';
+  const trimmedBody = description?.trim() ?? '';
+  if (trimmedTitle) {
+    return `${trimmedTitle}\n${trimmedBody}`;
+  }
+  return trimmedBody || null;
+}
+
+export function splitFoldedWorkText(raw: string | null | undefined): {
+  title: string;
+  description: string;
+} {
+  const value = raw ?? '';
+  const separator = value.indexOf('\n');
+  if (separator >= 0) {
+    return {
+      title: value.slice(0, separator).trim(),
+      description: value.slice(separator + 1).trim(),
+    };
+  }
+
+  // Legacy title-only rows were stored as a single line with no separator.
+  const line = value.trim();
+  return { title: line, description: '' };
 }

@@ -113,7 +113,11 @@ export class CabinetSessionService {
             item.dbId === profile.id ||
             (profile.slug != null && item.slug === profile.slug),
         );
-      const company = profileToFurnitureCompany(profile, local?.works ?? []);
+      const company = profileToFurnitureCompany(
+        profile,
+        local?.works ?? [],
+        local?.workVideos ?? [],
+      );
       this.furnitureStore.ensureCompany(company);
       this.furnitureStore.setSession(company.id);
       this.portfolioStore.signOut();
@@ -123,7 +127,7 @@ export class CabinetSessionService {
     const local = this.portfolioStore
       .performers()
       .find((item) => item.id === profile.id && item.type === profile.type);
-    const performer = profileToPerformer(profile, local?.works ?? []);
+    const performer = profileToPerformer(profile, local?.works ?? [], local?.workVideos ?? []);
     this.portfolioStore.ensurePerformer(performer);
     this.portfolioStore.setSession(performer.id);
     this.furnitureStore.signOut();

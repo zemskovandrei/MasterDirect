@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   afterNextRender,
   computed,
@@ -7,6 +8,7 @@ import {
   inject,
   signal,
   viewChild,
+  viewChildren,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -189,11 +191,28 @@ export class CabinetComponent {
   protected afterPreview = signal<string | null>(null);
   protected beforeDragging = signal(false);
   protected afterDragging = signal(false);
+  protected readonly videoTitle = signal('');
+  protected readonly videoPreviewUrl = signal<string | null>(null);
+  protected readonly videoUploading = signal(false);
+  protected readonly videoSuccess = signal(false);
+  protected readonly videoError = signal<string | null>(null);
+  private videoFile: File | null = null;
 
   private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
+  private readonly videoInputs = viewChildren<ElementRef<HTMLInputElement>>('videoInput');
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly currentWorkVideos = computed(
+    () =>
+      this.store.currentPerformer()?.workVideos ??
+      this.furnitureStore.currentCompany()?.workVideos ??
+      [],
+  );
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.revokeVideoPreview());
+
     afterNextRender(async () => {
       await this.auth.ensureInitialized();
       if (this.auth.session()) {
@@ -488,6 +507,106 @@ export class CabinetComponent {
     this.furnitureStore.deleteWork(company.id, workId);
   }
 
+  onVideoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('video/')) {
+      this.videoError.set(this.translation.t('cabinet.alertVideoOnly'));
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 80 * 1024 * 1024) {
+      this.videoError.set(this.translation.t('cabinet.alertVideoTooLarge'));
+      input.value = '';
+      return;
+    }
+
+    this.videoError.set(null);
+    this.videoFile = file;
+    this.revokeVideoPreview();
+    this.videoPreviewUrl.set(URL.createObjectURL(file));
+  }
+
+  async uploadWorkVideo() {
+    const performer = this.store.currentPerformer();
+    const company = this.furnitureStore.currentCompany();
+    const ownerId = performer?.id ?? company?.dbId ?? company?.id;
+    if (!ownerId) {
+      return;
+    }
+
+    const file = this.videoFile;
+    if (!file) {
+      this.videoError.set(this.translation.t('cabinet.alertVideoRequired'));
+      return;
+    }
+
+    this.videoUploading.set(true);
+    this.videoError.set(null);
+
+    try {
+      const result = await firstValueFrom(
+        this.supabase.saveWorkVideo({
+          ownerId,
+          title: this.videoTitle(),
+          file,
+        }),
+      );
+      if (result.error) {
+        this.videoError.set(result.error);
+        return;
+      }
+
+      this.videoSuccess.set(true);
+      this.resetVideoForm();
+      setTimeout(() => this.videoSuccess.set(false), 5000);
+    } finally {
+      this.videoUploading.set(false);
+    }
+  }
+
+  async deleteWorkVideo(videoId: string, videoTitle: string): Promise<void> {
+    if (!videoId.trim()) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      this.translation
+        .t('cabinet.deleteVideoConfirm')
+        .replace('{{title}}', videoTitle || '—'),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await firstValueFrom(this.supabase.deleteWorkVideo(videoId));
+    if (result.error) {
+      alert(result.error);
+    }
+  }
+
+  private revokeVideoPreview() {
+    const url = this.videoPreviewUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+    this.videoPreviewUrl.set(null);
+  }
+
+  private resetVideoForm() {
+    this.videoFile = null;
+    this.videoTitle.set('');
+    this.revokeVideoPreview();
+    for (const input of this.videoInputs()) {
+      input.nativeElement.value = '';
+    }
+  }
+
   verificationLink(work: {
     verificationToken?: string;
     verificationStatus?: string;
@@ -547,5 +666,9 @@ export class CabinetComponent {
 
   myWorksLabel(count: number): string {
     return this.translation.t('cabinet.myWorksCount').replace('{{count}}', String(count));
+  }
+
+  myVideosLabel(count: number): string {
+    return this.translation.t('cabinet.myVideosCount').replace('{{count}}', String(count));
   }
 }

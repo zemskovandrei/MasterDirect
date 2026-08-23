@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FurnitureCompany, FurnitureSession } from '../models/furniture.models';
-import { PerformerSocialLinks, WorkProject } from '../models/portfolio.models';
+import { PerformerSocialLinks, WorkProject, WorkVideo, normalizeWorkVideos } from '../models/portfolio.models';
 import { mergeSocialLinks, normalizeSocialLinks } from '../utils/social-links.util';
 import { isUuid } from '../utils/furniture-id.util';
 import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
@@ -71,6 +71,7 @@ export class FurnitureStoreService {
       city: data.city?.trim() ?? '',
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
       works: [],
+      workVideos: [],
     };
 
     this.companiesSignal.update((list) => {
@@ -106,6 +107,8 @@ export class FurnitureStoreService {
       const merged: FurnitureCompany = {
         ...company,
         works: existing.works.length > 0 ? existing.works : company.works,
+        workVideos:
+          existing.workVideos.length > 0 ? existing.workVideos : company.workVideos,
         socialLinks: mergeSocialLinks(company.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];
@@ -141,14 +144,66 @@ export class FurnitureStoreService {
     const merged = remote.map((company) => {
       const local = existing.find((item) => item.id === company.id || item.dbId === company.dbId);
       const works = company.works.length > 0 ? company.works : (local?.works ?? []);
+      const workVideos =
+        company.workVideos.length > 0 ? company.workVideos : (local?.workVideos ?? []);
       return {
         ...company,
         works,
+        workVideos,
         socialLinks: mergeSocialLinks(company.socialLinks, local?.socialLinks),
       };
     });
     this.companiesSignal.set(merged);
     this.persist();
+  }
+
+  setWorkVideosForCompany(companyId: string, workVideos: WorkVideo[]): void {
+    const company = this.companiesSignal().find(
+      (item) => item.id === companyId || item.dbId === companyId,
+    );
+    if (!company) {
+      return;
+    }
+
+    this.companiesSignal.update((list) =>
+      list.map((item) =>
+        item.id === company.id || item.dbId === companyId ? { ...item, workVideos } : item,
+      ),
+    );
+    this.persist();
+  }
+
+  addWorkVideo(companyId: string, video: WorkVideo): void {
+    this.companiesSignal.update((list) =>
+      list.map((item) =>
+        item.id === companyId || item.dbId === companyId
+          ? { ...item, workVideos: [video, ...item.workVideos] }
+          : item,
+      ),
+    );
+    this.persist();
+  }
+
+  deleteWorkVideo(companyId: string, videoId: string): boolean {
+    const company = this.companiesSignal().find(
+      (item) => item.id === companyId || item.dbId === companyId,
+    );
+    if (!company) {
+      return false;
+    }
+
+    const next = company.workVideos.filter((item) => item.id !== videoId);
+    if (next.length === company.workVideos.length) {
+      return false;
+    }
+
+    this.companiesSignal.update((list) =>
+      list.map((item) =>
+        item.id === company.id || item.dbId === companyId ? { ...item, workVideos: next } : item,
+      ),
+    );
+    this.persist();
+    return true;
   }
 
   setWorksForCompany(companyId: string, works: WorkProject[]): void {
@@ -268,6 +323,7 @@ export class FurnitureStoreService {
           .map((company) => ({
             ...company,
             socialLinks: normalizeSocialLinks(company.socialLinks),
+            workVideos: normalizeWorkVideos(company.workVideos),
           }));
         this.companiesSignal.set(companies);
       }

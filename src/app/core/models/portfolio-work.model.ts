@@ -4,15 +4,15 @@ export type PortfolioWorkOwnerType = 'worker' | 'brigade' | 'furniture';
 
 export interface PortfolioWorkRow {
   id: string;
-  owner_id: string;
-  owner_type: PortfolioWorkOwnerType;
+  /** Прод-схема: владелец работы. */
+  specialist_id?: string | null;
+  owner_id?: string | null;
+  owner_type?: PortfolioWorkOwnerType | string | null;
   title?: string | null;
   description: string | null;
   before_image_url: string;
   after_image_url: string;
-  /** Старое имя колонки в прод-схеме. */
   status?: string | null;
-  /** Новое имя колонки в расширенной схеме. */
   verification_status?: WorkVerificationStatus | null;
   client_contact?: string | null;
   verification_token?: string | null;
@@ -32,10 +32,15 @@ export function portfolioWorkRowToProject(row: PortfolioWorkRow): WorkProject {
       ? (normalizedStatus as WorkVerificationStatus)
       : 'not_requested';
 
+  const rawDescription = row.description?.trim() || '';
+  const [firstLine, ...rest] = rawDescription.split('\n');
+  const titleFromDescription = rest.length > 0 ? firstLine.trim() : '';
+  const description = rest.length > 0 ? rest.join('\n').trim() : rawDescription;
+
   return {
     id: row.id,
-    title: row.title?.trim() || 'Работа',
-    description: row.description?.trim() || '',
+    title: row.title?.trim() || titleFromDescription || 'Работа',
+    description,
     beforeImage: row.before_image_url,
     afterImage: row.after_image_url,
     createdAt: row.created_at,
@@ -52,21 +57,21 @@ export function portfolioWorkToInsertRow(input: {
   ownerId: string;
   ownerType: PortfolioWorkOwnerType;
   work: WorkProject;
-}): Omit<PortfolioWorkRow, 'created_at'> {
+}): Record<string, unknown> {
+  const status = input.work.verificationStatus || 'not_requested';
+  const description = [input.work.title?.trim(), input.work.description?.trim()]
+    .filter(Boolean)
+    .join('\n')
+    .trim();
+
+  // Живая схема: specialist_id + owner_type. Лишние колонки ломают insert.
   return {
     id: input.work.id,
-    owner_id: input.ownerId,
+    specialist_id: input.ownerId,
     owner_type: input.ownerType,
-    title: input.work.title || 'Работа',
-    description: input.work.description,
-    before_image_url: input.work.beforeImage || 'pending',
-    after_image_url: input.work.afterImage || 'pending',
-    status: input.work.verificationStatus,
-    verification_status: input.work.verificationStatus,
-    client_contact: input.work.clientContact ?? null,
-    verification_token: input.work.verificationToken ?? null,
-    verification_code: input.work.verificationCode ?? null,
-    verified_at: input.work.verifiedAt ?? null,
-    rejected_at: input.work.rejectedAt ?? null,
+    description: description || null,
+    before_image_url: input.work.beforeImage,
+    after_image_url: input.work.afterImage,
+    status,
   };
 }

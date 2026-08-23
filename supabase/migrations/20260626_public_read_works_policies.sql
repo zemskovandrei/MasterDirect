@@ -17,14 +17,14 @@ drop policy if exists "portfolio_works authenticated insert" on public.portfolio
 create policy "portfolio_works authenticated insert"
   on public.portfolio_works for insert
   to authenticated
-  with check (auth.uid() = owner_id);
+  with check (auth.uid() = specialist_id);
 
 drop policy if exists "portfolio_works authenticated update own" on public.portfolio_works;
 create policy "portfolio_works authenticated update own"
   on public.portfolio_works for update
   to authenticated
-  using (auth.uid() = owner_id)
-  with check (auth.uid() = owner_id);
+  using (auth.uid() = specialist_id)
+  with check (auth.uid() = specialist_id);
 
 -- ─── works (legacy table) ──────────────────────────────────────────────────
 alter table if exists public.works enable row level security;

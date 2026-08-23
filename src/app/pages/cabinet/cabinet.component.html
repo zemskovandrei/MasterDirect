@@ -335,6 +335,79 @@
                   }
                 </div>
               }
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.videoTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.videoLead') }}</p>
+              @if (videoSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.videoSuccess') }}
+                </p>
+              }
+              @if (videoError(); as err) {
+                <p class="cabinet-status" role="alert">{{ err }}</p>
+              }
+              <form class="register-form" (submit)="$event.preventDefault(); uploadWorkVideo()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.videoTitleField') }}</span>
+                  <input
+                    type="text"
+                    class="field-input"
+                    [value]="videoTitle()"
+                    (input)="videoTitle.set($any($event.target).value)"
+                    [placeholder]="translation.t('cabinet.videoTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.videoFile') }}</span>
+                  <label class="cabinet-photo-drop" [class.cabinet-photo-drop--filled]="!!videoPreviewUrl()">
+                    <input
+                      #videoInput
+                      type="file"
+                      class="hidden"
+                      accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v"
+                      (change)="onVideoSelected($event)"
+                    />
+                    @if (videoPreviewUrl(); as preview) {
+                      <video [src]="preview" controls playsinline></video>
+                    } @else {
+                      <span>{{ translation.t('cabinet.videoDropHint') }}</span>
+                    }
+                  </label>
+                </label>
+                <button type="submit" class="btn-primary" [disabled]="videoUploading()">
+                  {{
+                    videoUploading()
+                      ? translation.t('cabinet.videoUploading')
+                      : translation.t('cabinet.videoSubmit')
+                  }}
+                </button>
+              </form>
+              @if (currentWorkVideos().length > 0) {
+                <h2 class="register-card__title cabinet-section-title">
+                  {{ myVideosLabel(currentWorkVideos().length) }}
+                </h2>
+                <div class="cabinet-videos">
+                  @for (video of currentWorkVideos(); track video.id) {
+                    <div class="cabinet-videos__item">
+                      <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
+                      @if (video.title) {
+                        <p class="cabinet-videos__title">{{ video.title }}</p>
+                      }
+                      <button
+                        type="button"
+                        class="link-accent"
+                        (click)="deleteWorkVideo(video.id, video.title)"
+                      >
+                        {{ translation.t('admin.catalog.deleteWork') }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
               @if (premiumAccessUnlocked()) {
                 <div class="cabinet-status cabinet-status--ok" role="status">
                   Платная версия доступна
@@ -566,6 +639,78 @@
                     <div class="cabinet-works__item">
                       <app-before-after [work]="work" [showCaption]="false" />
                       <button type="button" class="link-accent" (click)="deleteFurnitureWork(work.id, work.title)">
+                        {{ translation.t('admin.catalog.deleteWork') }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.videoTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.videoLead') }}</p>
+              @if (videoSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.videoSuccess') }}
+                </p>
+              }
+              @if (videoError(); as err) {
+                <p class="cabinet-status" role="alert">{{ err }}</p>
+              }
+              <form class="register-form" (submit)="$event.preventDefault(); uploadWorkVideo()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.videoTitleField') }}</span>
+                  <input
+                    type="text"
+                    class="field-input"
+                    [value]="videoTitle()"
+                    (input)="videoTitle.set($any($event.target).value)"
+                    [placeholder]="translation.t('cabinet.videoTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.videoFile') }}</span>
+                  <label class="cabinet-photo-drop" [class.cabinet-photo-drop--filled]="!!videoPreviewUrl()">
+                    <input
+                      #videoInput
+                      type="file"
+                      class="hidden"
+                      accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v"
+                      (change)="onVideoSelected($event)"
+                    />
+                    @if (videoPreviewUrl(); as preview) {
+                      <video [src]="preview" controls playsinline></video>
+                    } @else {
+                      <span>{{ translation.t('cabinet.videoDropHint') }}</span>
+                    }
+                  </label>
+                </label>
+                <button type="submit" class="btn-primary" [disabled]="videoUploading()">
+                  {{
+                    videoUploading()
+                      ? translation.t('cabinet.videoUploading')
+                      : translation.t('cabinet.videoSubmit')
+                  }}
+                </button>
+              </form>
+              @if (currentWorkVideos().length > 0) {
+                <h2 class="register-card__title cabinet-section-title">
+                  {{ myVideosLabel(currentWorkVideos().length) }}
+                </h2>
+                <div class="cabinet-videos">
+                  @for (video of currentWorkVideos(); track video.id) {
+                    <div class="cabinet-videos__item">
+                      <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
+                      @if (video.title) {
+                        <p class="cabinet-videos__title">{{ video.title }}</p>
+                      }
+                      <button
+                        type="button"
+                        class="link-accent"
+                        (click)="deleteWorkVideo(video.id, video.title)"
+                      >
                         {{ translation.t('admin.catalog.deleteWork') }}
                       </button>
                     </div>

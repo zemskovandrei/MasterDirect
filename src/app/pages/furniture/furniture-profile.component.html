@@ -82,6 +82,26 @@
       }
     </div>
   </section>
+
+  @if (c.workVideos.length > 0) {
+    <section class="showcase-works work-videos-section">
+      <div class="showcase-inner">
+        <div class="showcase-intro">
+          <h2>{{ translation.t('furniture.videosTitle') }}</h2>
+        </div>
+        <div class="work-videos">
+          @for (video of c.workVideos; track video.id) {
+            <article class="work-video">
+              <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
+              @if (video.title) {
+                <p class="work-video__title">{{ video.title }}</p>
+              }
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+  }
 } @else {
   <section class="profile-not-found">
     <h1>{{ translation.t('furniture.notFoundTitle') }}</h1>

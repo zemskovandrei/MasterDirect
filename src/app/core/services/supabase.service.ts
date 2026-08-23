@@ -6,7 +6,7 @@ import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
 import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/profile.models';
-import { PerformerProfile, PerformerSocialLinks, WorkProject } from '../models/portfolio.models';
+import { PerformerProfile, PerformerSocialLinks, WorkProject, WorkVideo, normalizeWorkVideos } from '../models/portfolio.models';
 import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
   portfolioWorkRowToProject,
@@ -109,9 +109,11 @@ export class SupabaseService {
   private portfolioWorksTableMissing = false;
   private portfolioWorksStatusColumnMissing = false;
   private specialistAvatarColumnMissing = false;
+  private workVideosTableMissing = false;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly portfolioWorksByOwnerSignal = signal<Map<string, WorkProject[]>>(new Map());
+  private readonly workVideosByOwnerSignal = signal<Map<string, WorkVideo[]>>(new Map());
   private readonly loadedSignal = signal(false);
   private readonly loadingSignal = signal(false);
   /** Фильтр по городу в каталоге — по умолчанию выключен. */
@@ -861,6 +863,42 @@ export class SupabaseService {
     );
   }
 
+  saveWorkVideo(input: {
+    ownerId: string;
+    title: string;
+    file: File;
+  }): Observable<SupabaseMutationResult<WorkVideo>> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.saveWorkVideoRow(input)).pipe(
+      catchError((err) => {
+        logSupabaseError('saveWorkVideo', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Save failed',
+        });
+      }),
+    );
+  }
+
+  deleteWorkVideo(videoId: string): Observable<SupabaseMutationResult<null>> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ data: null, error: 'Browser only' });
+    }
+
+    return from(this.deleteWorkVideoRow(videoId)).pipe(
+      catchError((err) => {
+        logSupabaseError('deleteWorkVideo', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Delete failed',
+        });
+      }),
+    );
+  }
+
   savePortfolioWork(input: {
     ownerId: string;
     ownerType: PortfolioWorkOwnerType;
@@ -950,8 +988,7 @@ export class SupabaseService {
       after_image_url: urlAfter,
       description,
       specialist_id: trimmedSpecialistId,
-      owner_id: trimmedSpecialistId,
-      owner_type: 'specialist',
+      owner_type: 'worker',
       status: 'pending',
     };
 
@@ -2100,6 +2137,7 @@ export class SupabaseService {
 
       const remoteProfiles: Profile[] = [];
       const remoteWorks = await this.loadPortfolioWorksFromDatabase(client);
+      const remoteVideos = await this.loadWorkVideosFromDatabase(client);
       console.log('mapped works', remoteWorks);
 
       const specialistTable: any = await this.getTable(environment.supabase.specialistTable);
@@ -2141,7 +2179,11 @@ export class SupabaseService {
       }
 
       const merged = this.mergeCatalogProfiles(remoteProfiles, localProfiles);
-      this.syncPortfolioWorksToStores(this.buildWorksMapFromLocalStores(remoteWorks), merged);
+      this.syncPortfolioWorksToStores(
+        this.buildWorksMapFromLocalStores(remoteWorks),
+        this.buildWorkVideosMapFromLocalStores(remoteVideos),
+        merged,
+      );
 
       // console.info('[SupabaseService] catalog loaded', {
       //   remote: remoteProfiles.length,
@@ -2233,7 +2275,11 @@ export class SupabaseService {
     );
   }
 
-  private syncPortfolioWorksToStores(worksMap: Map<string, WorkProject[]>, profiles: Profile[]): void {
+  private syncPortfolioWorksToStores(
+    worksMap: Map<string, WorkProject[]>,
+    videosMap: Map<string, WorkVideo[]>,
+    profiles: Profile[],
+  ): void {
     const performers: PerformerProfile[] = [];
     const companies: FurnitureCompany[] = [];
 
@@ -2241,10 +2287,13 @@ export class SupabaseService {
       const remoteWorks = worksMap.get(profile.id) ?? [];
       const works =
         remoteWorks.length > 0 ? remoteWorks : this.resolveLocalWorks(profile.id);
+      const remoteVideos = videosMap.get(profile.id) ?? [];
+      const workVideos =
+        remoteVideos.length > 0 ? remoteVideos : this.resolveLocalWorkVideos(profile.id);
       if (profile.type === 'furniture') {
-        companies.push(profileToFurnitureCompany(profile, works));
+        companies.push(profileToFurnitureCompany(profile, works, workVideos));
       } else {
-        performers.push(profileToPerformer(profile, works));
+        performers.push(profileToPerformer(profile, works, workVideos));
       }
     }
 
@@ -2580,6 +2629,270 @@ export class SupabaseService {
     return company?.works ?? [];
   }
 
+  private resolveLocalWorkVideos(ownerId: string): WorkVideo[] {
+    const performer =
+      this.portfolioStore.getPerformer('worker', ownerId) ??
+      this.portfolioStore.getPerformer('brigade', ownerId) ??
+      this.portfolioStore.performers().find((item) => item.id === ownerId);
+    if (performer) {
+      return performer.workVideos ?? [];
+    }
+
+    const company =
+      this.furnitureStore.getCompany(ownerId) ??
+      this.furnitureStore.companies().find((item) => item.dbId === ownerId);
+    return company?.workVideos ?? [];
+  }
+
+  private buildWorkVideosMapFromLocalStores(
+    remoteVideos?: Map<string, WorkVideo[]>,
+  ): Map<string, WorkVideo[]> {
+    const map = new Map(remoteVideos ?? this.workVideosByOwnerSignal());
+
+    for (const performer of this.portfolioStore.performers()) {
+      const videos = performer.workVideos ?? [];
+      if (videos.length > 0) {
+        map.set(performer.id, this.mergeWorkVideoCollections(map.get(performer.id) ?? [], videos));
+      }
+    }
+
+    for (const company of this.furnitureStore.companies()) {
+      const videos = company.workVideos ?? [];
+      if (videos.length > 0) {
+        const ownerId = company.dbId ?? company.id;
+        map.set(ownerId, this.mergeWorkVideoCollections(map.get(ownerId) ?? [], videos));
+      }
+    }
+
+    this.workVideosByOwnerSignal.set(map);
+    return map;
+  }
+
+  private mergeWorkVideoCollections(remote: WorkVideo[], local: WorkVideo[]): WorkVideo[] {
+    const merged = new Map<string, WorkVideo>();
+    for (const item of local) {
+      merged.set(item.id, item);
+    }
+    for (const item of remote) {
+      merged.set(item.id, item);
+    }
+    return Array.from(merged.values()).sort(
+      (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+    );
+  }
+
+  private async saveWorkVideoRow(input: {
+    ownerId: string;
+    title: string;
+    file: File;
+  }): Promise<SupabaseMutationResult<WorkVideo>> {
+    const ownerId = input.ownerId.trim();
+    if (!ownerId) {
+      return { data: null, error: 'Missing specialist id' };
+    }
+
+    const file = input.file;
+    if (!file?.type.startsWith('video/')) {
+      return { data: null, error: 'Video file required' };
+    }
+
+    const client = await this.resolveClient();
+    if (!client) {
+      return { data: null, error: SUPABASE_NOT_CONFIGURED };
+    }
+
+    const id = crypto.randomUUID();
+    const ext = this.videoMimeTypeToExtension(file.type, file.name);
+    const path = `videos/${ownerIdToPathSegment(ownerId)}/${id}.${ext}`;
+
+    const { error: uploadError } = await client.storage.from(PORTFOLIO_BUCKET).upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type || 'video/mp4',
+    });
+
+    if (uploadError) {
+      logSupabaseError('saveWorkVideoRow.upload', uploadError);
+      return { data: null, error: formatStorageUploadError(uploadError, PORTFOLIO_BUCKET) };
+    }
+
+    const videoUrl = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path).data.publicUrl;
+    const video: WorkVideo = {
+      id,
+      title: input.title.trim(),
+      videoUrl,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (this.workVideosTableMissing) {
+      this.upsertWorkVideoInCaches(ownerId, video);
+      return { data: video, error: null };
+    }
+
+    const payload = {
+      id,
+      specialist_id: ownerId,
+      title: video.title || null,
+      video_url: videoUrl,
+      created_at: video.createdAt,
+    };
+
+    const { error } = await client.from('work_videos' as any).insert(payload as any);
+
+    if (error) {
+      if (isSupabaseMissingTableError(error, 'work_videos')) {
+        this.workVideosTableMissing = true;
+        this.upsertWorkVideoInCaches(ownerId, video);
+        return { data: video, error: null };
+      }
+      logSupabaseError('saveWorkVideoRow.insert', error);
+      return { data: null, error: error.message };
+    }
+
+    this.upsertWorkVideoInCaches(ownerId, video);
+    return { data: video, error: null };
+  }
+
+  private async deleteWorkVideoRow(videoId: string): Promise<SupabaseMutationResult<null>> {
+    const trimmedId = videoId.trim();
+    if (!trimmedId) {
+      return { data: null, error: 'Missing video id' };
+    }
+
+    const client = await this.resolveClient();
+    if (client && !this.workVideosTableMissing) {
+      const { error } = await client.from('work_videos' as any).delete().eq('id', trimmedId);
+      if (error && !isSupabaseMissingTableError(error, 'work_videos')) {
+        logSupabaseError('deleteWorkVideoRow', error);
+        return { data: null, error: error.message };
+      }
+      if (error && isSupabaseMissingTableError(error, 'work_videos')) {
+        this.workVideosTableMissing = true;
+      }
+    }
+
+    this.removeWorkVideoFromCaches(trimmedId);
+    return { data: null, error: null };
+  }
+
+  private upsertWorkVideoInCaches(ownerId: string, video: WorkVideo): void {
+    const next = this.mergeWorkVideoCollections(
+      this.workVideosByOwnerSignal().get(ownerId) ?? [],
+      [video],
+    );
+    const map = new Map(this.workVideosByOwnerSignal());
+    map.set(ownerId, next);
+    this.workVideosByOwnerSignal.set(map);
+
+    if (
+      this.portfolioStore.getPerformer('worker', ownerId) ||
+      this.portfolioStore.getPerformer('brigade', ownerId)
+    ) {
+      this.portfolioStore.setWorkVideosForPerformer(ownerId, next);
+      return;
+    }
+
+    const company =
+      this.furnitureStore.getCompany(ownerId) ??
+      this.furnitureStore.companies().find((item) => item.dbId === ownerId);
+    if (company) {
+      this.furnitureStore.setWorkVideosForCompany(company.id, next);
+    } else {
+      this.portfolioStore.setWorkVideosForPerformer(ownerId, next);
+    }
+  }
+
+  private removeWorkVideoFromCaches(videoId: string): void {
+    const map = new Map(this.workVideosByOwnerSignal());
+    for (const [ownerId, videos] of map.entries()) {
+      const next = videos.filter((item) => item.id !== videoId);
+      if (next.length === videos.length) {
+        continue;
+      }
+      map.set(ownerId, next);
+      this.portfolioStore.setWorkVideosForPerformer(ownerId, next);
+      const company =
+        this.furnitureStore.getCompany(ownerId) ??
+        this.furnitureStore.companies().find((item) => item.dbId === ownerId);
+      if (company) {
+        this.furnitureStore.setWorkVideosForCompany(company.id, next);
+      }
+    }
+    this.workVideosByOwnerSignal.set(map);
+
+    this.portfolioStore.performers().forEach((performer) => {
+      if (performer.workVideos?.some((item) => item.id === videoId)) {
+        this.portfolioStore.deleteWorkVideo(performer.id, videoId);
+      }
+    });
+    this.furnitureStore.companies().forEach((company) => {
+      if (company.workVideos?.some((item) => item.id === videoId)) {
+        this.furnitureStore.deleteWorkVideo(company.id, videoId);
+      }
+    });
+  }
+
+  private async loadWorkVideosFromDatabase(
+    client: SupabaseClient,
+  ): Promise<Map<string, WorkVideo[]>> {
+    const videosMap = new Map<string, WorkVideo[]>();
+    if (this.workVideosTableMissing) {
+      return videosMap;
+    }
+
+    const { data, error } = await client
+      .from('work_videos' as any)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (isSupabaseMissingTableError(error, 'work_videos')) {
+        this.workVideosTableMissing = true;
+        return videosMap;
+      }
+      logSupabaseError('loadWorkVideosFromDatabase', error);
+      return videosMap;
+    }
+
+    for (const row of (data ?? []) as Record<string, unknown>[]) {
+      const ownerId = String(row['specialist_id'] ?? row['owner_id'] ?? '').trim();
+      const videoUrl = String(row['video_url'] ?? row['videoUrl'] ?? '').trim();
+      if (!ownerId || !videoUrl) {
+        continue;
+      }
+      const video: WorkVideo = {
+        id: String(row['id'] ?? crypto.randomUUID()),
+        title: String(row['title'] ?? '').trim(),
+        videoUrl,
+        createdAt: String(row['created_at'] ?? row['createdAt'] ?? new Date().toISOString()),
+      };
+      const existing = videosMap.get(ownerId) ?? [];
+      videosMap.set(ownerId, [...existing, video]);
+    }
+
+    this.workVideosByOwnerSignal.set(videosMap);
+    return videosMap;
+  }
+
+  private videoMimeTypeToExtension(mimeType: string, fileName: string): string {
+    const fromName = fileName.split('.').pop()?.toLowerCase();
+    if (fromName && ['mp4', 'webm', 'mov', 'm4v', 'ogg'].includes(fromName)) {
+      return fromName === 'ogg' ? 'ogv' : fromName;
+    }
+    switch (mimeType.toLowerCase()) {
+      case 'video/webm':
+        return 'webm';
+      case 'video/quicktime':
+        return 'mov';
+      case 'video/x-m4v':
+        return 'm4v';
+      case 'video/ogg':
+        return 'ogv';
+      default:
+        return 'mp4';
+    }
+  }
+
   private async loadPortfolioWorksFromDatabase(
     client: SupabaseClient,
   ): Promise<Map<string, WorkProject[]>> {
@@ -2812,7 +3125,9 @@ export class SupabaseService {
             .performers()
             .find((item) => item.id === profile.id && item.type === profile.type);
     const works = dbWorks ?? local?.works ?? [];
-    const performer = profileToPerformer(profile, works);
+    const dbVideos = this.workVideosByOwnerSignal().get(profile.id);
+    const workVideos = dbVideos ?? local?.workVideos ?? [];
+    const performer = profileToPerformer(profile, works, workVideos);
     return {
       ...performer,
       socialLinks: mergeSocialLinks(performer.socialLinks, local?.socialLinks),
@@ -2830,7 +3145,9 @@ export class SupabaseService {
           (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
       );
     const works = dbWorks ?? local?.works ?? [];
-    const company = profileToFurnitureCompany(profile, works);
+    const dbVideos = this.workVideosByOwnerSignal().get(profile.id);
+    const workVideos = dbVideos ?? local?.workVideos ?? [];
+    const company = profileToFurnitureCompany(profile, works, workVideos);
     return {
       ...company,
       socialLinks: mergeSocialLinks(company.socialLinks, local?.socialLinks),

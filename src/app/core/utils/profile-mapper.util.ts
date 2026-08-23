@@ -185,6 +185,7 @@ export function performerToProfile(performer: PerformerProfile): Profile {
 export function profileToPerformer(
   profile: Profile,
   works: PerformerProfile['works'] = [],
+  workVideos: PerformerProfile['workVideos'] = [],
 ): PerformerProfile {
   const callOutFee =
     profile.type === 'furniture'
@@ -203,6 +204,7 @@ export function profileToPerformer(
     whatsapp_phone: profile.whatsapp_phone ?? profile.whatsapp,
     tg_username: profile.tg_username ?? profile.telegram,
     works,
+    workVideos,
     callOutFee,
     headerBg: profile.header_bg ?? null,
   };
@@ -211,6 +213,7 @@ export function profileToPerformer(
 export function profileToFurnitureCompany(
   profile: Profile,
   works: FurnitureCompany['works'] = [],
+  workVideos: FurnitureCompany['workVideos'] = [],
 ): FurnitureCompany {
   const dbId = isUuid(profile.id) ? profile.id : null;
   const slug = profile.slug?.trim() || (!isUuid(profile.id) ? profile.id : buildFurnitureSlug(profile.name));
@@ -227,6 +230,7 @@ export function profileToFurnitureCompany(
     whatsapp_phone: profile.whatsapp_phone ?? profile.whatsapp,
     tg_username: profile.tg_username ?? profile.telegram,
     works,
+    workVideos,
   };
 }
 

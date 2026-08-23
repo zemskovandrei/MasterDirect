@@ -3273,3 +3273,34 @@
     width: 100%;
   }
 }
+
+.cabinet-photo-drop video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  background: #0f172a;
+}
+
+.cabinet-videos {
+  display: grid;
+  gap: 1rem;
+}
+
+.cabinet-videos__item {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cabinet-videos__item video {
+  width: 100%;
+  max-height: 280px;
+  border-radius: 0.5rem;
+  background: #0f172a;
+}
+
+.cabinet-videos__title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #334155;
+}

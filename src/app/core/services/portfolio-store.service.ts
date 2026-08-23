@@ -6,7 +6,9 @@ import {
   PerformerSocialLinks,
   PerformerType,
   WorkProject,
+  WorkVideo,
   WorkVerificationStatus,
+  normalizeWorkVideos,
 } from '../models/portfolio.models';
 import { mergeSocialLinks, normalizeSocialLinks } from '../utils/social-links.util';
 import { normalizeCallOutFee } from '../utils/call-out-fee.util';
@@ -103,6 +105,7 @@ export class PortfolioStoreService {
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
       callOutFee,
       works: [],
+      workVideos: [],
     };
 
     this.performersSignal.update((list) => {
@@ -216,6 +219,8 @@ export class PortfolioStoreService {
       const merged: PerformerProfile = {
         ...performer,
         works: existing.works.length > 0 ? existing.works : performer.works,
+        workVideos:
+          existing.workVideos.length > 0 ? existing.workVideos : performer.workVideos,
         socialLinks: mergeSocialLinks(performer.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];
@@ -228,15 +233,56 @@ export class PortfolioStoreService {
     const merged = remote.map((performer) => {
       const local = existing.find((item) => item.id === performer.id);
       const works = performer.works.length > 0 ? performer.works : (local?.works ?? []);
+      const workVideos =
+        performer.workVideos.length > 0 ? performer.workVideos : (local?.workVideos ?? []);
       return {
         ...performer,
         works,
+        workVideos,
         socialLinks: mergeSocialLinks(performer.socialLinks, local?.socialLinks),
       };
     });
 
     this.performersSignal.set(merged);
     this.persist();
+  }
+
+  setWorkVideosForPerformer(performerId: string, workVideos: WorkVideo[]): void {
+    if (!this.performersSignal().some((item) => item.id === performerId)) {
+      return;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) => (item.id === performerId ? { ...item, workVideos } : item)),
+    );
+    this.persist();
+  }
+
+  addWorkVideo(performerId: string, video: WorkVideo): void {
+    this.performersSignal.update((list) =>
+      list.map((item) =>
+        item.id === performerId ? { ...item, workVideos: [video, ...item.workVideos] } : item,
+      ),
+    );
+    this.persist();
+  }
+
+  deleteWorkVideo(performerId: string, videoId: string): boolean {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return false;
+    }
+
+    const next = performer.workVideos.filter((item) => item.id !== videoId);
+    if (next.length === performer.workVideos.length) {
+      return false;
+    }
+
+    this.performersSignal.update((list) =>
+      list.map((item) => (item.id === performerId ? { ...item, workVideos: next } : item)),
+    );
+    this.persist();
+    return true;
   }
 
   setWorksForPerformer(performerId: string, works: WorkProject[]): void {
@@ -438,6 +484,7 @@ export class PortfolioStoreService {
           ...performer,
           socialLinks: normalizeSocialLinks(performer.socialLinks),
           works: performer.works.map((item) => this.normalizeWork(item)),
+          workVideos: normalizeWorkVideos(performer.workVideos),
         }));
 
       if (shouldWipeMasters()) {

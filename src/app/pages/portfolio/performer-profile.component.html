@@ -213,6 +213,26 @@
       </div>
     </section>
 
+    @if (p.workVideos.length > 0) {
+      <section class="showcase-works work-videos-section">
+        <div class="showcase-inner">
+          <div class="showcase-intro">
+            <h2>{{ translation.t('profile.videosTitle') }}</h2>
+          </div>
+          <div class="work-videos">
+            @for (video of p.workVideos; track video.id) {
+              <article class="work-video">
+                <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
+                @if (video.title) {
+                  <p class="work-video__title">{{ video.title }}</p>
+                }
+              </article>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
     @if (hasSocialLinks(p.socialLinks) && showContacts()) {
       <footer class="profile-footer">
         <div class="profile-footer__inner">

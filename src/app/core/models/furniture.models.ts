@@ -1,4 +1,4 @@
-import { PerformerSocialLinks, WorkProject } from './portfolio.models';
+import { PerformerSocialLinks, WorkProject, WorkVideo } from './portfolio.models';
 
 export interface FurnitureSession {
   companyId: string;
@@ -20,5 +20,6 @@ export interface FurnitureCompany {
   whatsapp_phone?: string | null;
   tg_username?: string | null;
   works: WorkProject[];
+  workVideos: WorkVideo[];
   isDemo?: boolean;
 }

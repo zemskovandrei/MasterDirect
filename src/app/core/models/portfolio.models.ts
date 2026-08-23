@@ -16,6 +16,40 @@ export interface PerformerSocialLinks {
   facebook?: string;
 }
 
+export interface WorkVideo {
+  id: string;
+  title: string;
+  videoUrl: string;
+  createdAt: string;
+}
+
+export function normalizeWorkVideos(value: unknown): WorkVideo[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const videos: WorkVideo[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+    const rec = item as Record<string, unknown>;
+    const videoUrl = String(rec['videoUrl'] ?? rec['video_url'] ?? '').trim();
+    if (!videoUrl) {
+      continue;
+    }
+    videos.push({
+      id: String(rec['id'] ?? '').trim() || `${Date.now()}-${videos.length}`,
+      title: String(rec['title'] ?? '').trim(),
+      videoUrl,
+      createdAt: String(rec['createdAt'] ?? rec['created_at'] ?? new Date().toISOString()),
+    });
+  }
+  return videos.sort(
+    (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+  );
+}
+
 export interface WorkProject {
   id: string;
   title: string;
@@ -47,6 +81,7 @@ export interface PerformerProfile {
   balance?: number | null;
   socialLinks?: PerformerSocialLinks;
   works: WorkProject[];
+  workVideos: WorkVideo[];
   isDemo?: boolean;
   /** Прямой контакт WhatsApp (колонка whatsapp_phone в Supabase). */
   whatsapp_phone?: string | null;

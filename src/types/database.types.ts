@@ -177,7 +177,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          owner_id: string | null
+          specialist_id: string | null
           owner_type: string | null
           status: string | null
         }
@@ -187,7 +187,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          owner_id?: string | null
+          specialist_id?: string | null
           owner_type?: string | null
           status?: string | null
         }
@@ -197,9 +197,33 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          owner_id?: string | null
+          specialist_id?: string | null
           owner_type?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      work_videos: {
+        Row: {
+          created_at: string
+          id: string
+          specialist_id: string
+          title: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          specialist_id: string
+          title?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          specialist_id?: string
+          title?: string | null
+          video_url?: string
         }
         Relationships: []
       }

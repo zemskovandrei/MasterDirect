@@ -267,3 +267,31 @@
     padding: 2.5rem 1rem 3.5rem;
   }
 }
+
+.work-videos {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.work-video {
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.work-video video {
+  display: block;
+  width: 100%;
+  max-height: 480px;
+  background: #000;
+}
+
+.work-video__title {
+  margin: 0;
+  padding: 0.7rem 1rem;
+  background: #fff;
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 600;
+}

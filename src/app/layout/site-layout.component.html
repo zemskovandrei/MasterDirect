@@ -4,6 +4,7 @@
     [ngClass]="{
       'dark-header': headerTheme === 'dark',
       'light-header': headerTheme === 'light',
+      'header--menu-open': mobileMenuOpen(),
     }"
     [style.background-color]="'var(--header-bg-color)'"
     [style.color]="'var(--header-text-color)'"
@@ -142,6 +143,7 @@
         <button
           type="button"
           class="menu-toggle"
+          [class.menu-toggle--open]="mobileMenuOpen()"
           (click)="toggleMobileMenu()"
           [attr.aria-expanded]="mobileMenuOpen()"
           aria-controls="main-nav"

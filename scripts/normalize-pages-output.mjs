@@ -1,4 +1,4 @@
-import { access, copyFile } from 'node:fs/promises';
+import { access, copyFile, cp, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const browserDir = path.join(process.cwd(), 'dist', 'pro-remont', 'browser');
@@ -28,7 +28,24 @@ if (await exists(publicNoJekyll)) {
   await copyFile(publicNoJekyll, outputNoJekyll);
 }
 
+const cnamePath = path.join(browserDir, 'CNAME');
+if (!(await exists(cnamePath))) {
+  await writeFile(cnamePath, 'masterdirect.ge\n');
+}
+
+const docsStaging = path.join(process.cwd(), 'dist', 'pro-remont', 'pages-docs');
+const docsDir = path.join(browserDir, 'docs');
+await rm(docsStaging, { recursive: true, force: true });
+await rm(docsDir, { recursive: true, force: true });
+await cp(browserDir, docsStaging, {
+  recursive: true,
+  filter: (src) => !src.split(path.sep).includes('.git'),
+});
+await cp(docsStaging, docsDir, { recursive: true });
+await rm(docsStaging, { recursive: true, force: true });
+
 console.log('[normalize-pages-output] Done:', {
   index: hasCsrIndex ? 'index.csr.html -> index.html' : 'index.html kept',
   fallback: 'index.html -> 404.html',
+  docs: 'browser -> browser/docs (GitHub Pages /docs folder)',
 });

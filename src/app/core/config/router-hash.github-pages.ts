@@ -1,2 +1,2 @@
-/** GitHub Pages requires hash routing for client-side navigation. */
-export const USE_HASH_ROUTING = true;
+/** GitHub Pages uses HTML5 paths; unknown URLs fall back to 404.html → index.html. */
+export const USE_HASH_ROUTING = false;

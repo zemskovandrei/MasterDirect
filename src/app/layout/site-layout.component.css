@@ -98,12 +98,12 @@
 }
 
 .site-layout .header-actions .menu-toggle {
+  display: none;
   flex-shrink: 0;
   border: none;
   background: transparent;
   width: 40px;
   height: 40px;
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -430,8 +430,16 @@
   .site-layout .header-menu {
     flex: 0 0 0 !important;
     width: 0 !important;
-    overflow: hidden !important;
+    height: 0 !important;
+    overflow: visible !important;
     margin: 0 !important;
+  }
+
+  .site-layout .header-menu .nav {
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    z-index: 200;
   }
 
   .site-layout .header-actions {
@@ -950,6 +958,13 @@
   flex-shrink: 0;
 }
 
+@media (min-width: 901px) {
+  .site-layout .header-actions .menu-toggle,
+  .site-layout .header-actions > .menu-toggle {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
   .site-layout .header {
     padding: 0 12px;
@@ -965,8 +980,16 @@
   .site-layout .header-menu {
     flex: 0 0 0 !important;
     width: 0 !important;
-    overflow: hidden !important;
+    height: 0 !important;
+    overflow: visible !important;
     margin: 0 !important;
+  }
+
+  .site-layout .header-menu .nav {
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    z-index: 200;
   }
 
   .site-layout .header-actions {
@@ -1022,4 +1045,111 @@
   border: none !important;
   border-radius: 0;
   padding: 0.35rem 0.15rem;
+}
+
+@media (max-width: 900px) {
+  .site-layout .header {
+    position: sticky;
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.86) !important;
+    border-bottom: none !important;
+    box-shadow: 0 8px 28px rgba(12, 18, 34, 0.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    backdrop-filter: blur(18px) saturate(1.35);
+  }
+
+  .site-layout .header::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, #00c4e0 20%, #00e5a8 80%, transparent);
+    pointer-events: none;
+  }
+
+  .site-layout .header.header--menu-open {
+    background: rgba(255, 255, 255, 0.96) !important;
+  }
+
+  .site-layout .header-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 58px !important;
+    padding: 0.35rem 0.85rem 0.45rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .site-layout .logo-wrapper {
+    height: 44px;
+    gap: 0.45rem;
+  }
+
+  .site-layout .navbar-logo {
+    height: 40px !important;
+    width: 40px !important;
+  }
+
+  .site-layout .logo-title {
+    font-size: 1.05rem;
+    letter-spacing: -0.04em;
+  }
+
+  .site-layout .header-actions {
+    gap: 0.4rem !important;
+  }
+
+  .site-layout .header-actions .menu-toggle {
+    display: flex;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(12, 18, 34, 0.08);
+    background: linear-gradient(180deg, #ffffff, #f3f7fb);
+    box-shadow: 0 4px 12px rgba(12, 18, 34, 0.08);
+    gap: 5px;
+  }
+
+  .site-layout .header-actions .menu-toggle:hover,
+  .site-layout .header-actions .menu-toggle:focus-visible {
+    background: #ffffff;
+    border-color: rgba(0, 196, 224, 0.45);
+    box-shadow: 0 0 0 3px rgba(0, 196, 224, 0.14);
+  }
+
+  .site-layout .header .menu-toggle .menu-toggle-bar {
+    width: 16px;
+    height: 2px;
+    border-radius: 999px;
+    background: #122036;
+    transition:
+      transform 0.22s ease,
+      opacity 0.22s ease,
+      background 0.22s ease;
+  }
+
+  .site-layout .header-actions .menu-toggle--open {
+    background: linear-gradient(135deg, #00c4e0, #00e5a8);
+    border-color: transparent;
+    box-shadow: 0 8px 18px rgba(0, 229, 168, 0.28);
+  }
+
+  .site-layout .header .menu-toggle--open .menu-toggle-bar {
+    background: #041018;
+  }
+
+  .site-layout .header .menu-toggle--open .menu-toggle-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .site-layout .header .menu-toggle--open .menu-toggle-bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .site-layout .header .menu-toggle--open .menu-toggle-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
 }

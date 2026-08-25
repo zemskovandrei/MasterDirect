@@ -30,14 +30,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync base href with repository name
+      - name: Use site-root base href for custom domain
         run: |
-          REPO="${{ github.event.repository.name }}"
           printf '%s\n' \
             '/**' \
-            " * GitHub Pages: https://${{ github.repository_owner }}.github.io/${REPO}/" \
+            ' * Custom domain: https://masterdirect.ge/' \
             ' */' \
-            "export const APP_BASE_HREF_VALUE = '/${REPO}/';" \
+            "export const APP_BASE_HREF_VALUE = '/';" \
             > src/app/core/config/base-href.github-pages.ts
 
       - name: Build for GitHub Pages

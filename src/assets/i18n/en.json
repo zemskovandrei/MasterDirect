@@ -306,6 +306,10 @@
       "title": "Work by performers",
       "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
       "empty": "No published work yet. Performers can add projects in their dashboard.",
+      "videosTitle": "Videos from sites",
+      "videosSubtitle": "Clips from performer portfolios — loaded from the database.",
+      "videosLoading": "Loading site videos...",
+      "videosEmpty": "No renovation videos yet.",
       "sampleTitle": "Sample completed order",
       "sampleDesc": "A performer publication from the catalog",
       "actions": {

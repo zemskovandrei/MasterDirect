@@ -237,6 +237,19 @@ section.hero-section {
   font-size: 0.95rem;
 }
 
+.videos-gallery-header {
+  margin-top: 2.5rem;
+}
+
+.videos-gallery-card__player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #0f172a;
+  border-radius: 0.75rem;
+}
+
 .teaser-sample {
   margin: 2.5rem 0;
 }

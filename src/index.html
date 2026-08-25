@@ -22,6 +22,14 @@
     />
   </head>
   <body>
+    <script>
+      (function () {
+        var hash = window.location.hash;
+        if (hash && hash.charAt(1) === '/') {
+          window.history.replaceState(null, '', hash.slice(1) + window.location.search);
+        }
+      })();
+    </script>
     <app-root></app-root>
   </body>
 </html>

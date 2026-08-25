@@ -57,12 +57,6 @@
                   </p>
                 }
 
-                @if (isProfileOwner()) {
-                  <p class="profile-meta profile-meta--balance">
-                    Ваш баланс: <strong>{{ currentBalance() ?? 0 }} руб.</strong>
-                  </p>
-                }
-
                 @if (hasSocialLinks(p.socialLinks) && showContacts()) {
                   <div class="profile-contact-icons">
                     <app-social-links [links]="p.socialLinks" variant="profile-icons" />

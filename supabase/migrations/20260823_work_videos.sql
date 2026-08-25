@@ -31,6 +31,10 @@ create policy "work_videos authenticated delete own"
   to authenticated
   using (auth.uid() = specialist_id);
 
+grant select on table public.work_videos to anon, authenticated;
+grant insert, delete on table public.work_videos to authenticated;
+notify pgrst, 'reload schema';
+
 update storage.buckets
 set file_size_limit = greatest(coalesce(file_size_limit, 0), 83886080)
 where id = 'portfolio';

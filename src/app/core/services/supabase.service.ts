@@ -33,6 +33,7 @@ import {
 } from '../../models/job.model';
 import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
+import { collectGalleryVideos } from '../utils/gallery-works.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
 import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint, formatStorageUploadError, isStorageBucketMissingError, isRlsPolicyError, formatSupabaseMutationError, isSupabaseMissingTableError, isSupabaseSchemaColumnError } from '../utils/supabase-error.util';
 import { compressWorkImageFile } from '../utils/compress-image.util';
@@ -188,6 +189,21 @@ export class SupabaseService {
       .filter((profile) => profile.type === 'furniture')
       .map((profile) => this.toFurnitureCompany(profile))
       .filter((company) => company.works.length > 0),
+  );
+
+  /** Публичная лента видео из `work_videos`, привязанная к карточкам каталога. */
+  readonly galleryVideos = computed(() =>
+    collectGalleryVideos({
+      workers: this.profilesSignal()
+        .filter((profile) => profile.type === 'worker')
+        .map((profile) => this.toPerformer(profile)),
+      brigades: this.profilesSignal()
+        .filter((profile) => profile.type === 'brigade')
+        .map((profile) => this.toPerformer(profile)),
+      furniture: this.profilesSignal()
+        .filter((profile) => profile.type === 'furniture')
+        .map((profile) => this.toFurnitureCompany(profile)),
+    }),
   );
 
   constructor() {
@@ -2138,7 +2154,6 @@ export class SupabaseService {
       const remoteProfiles: Profile[] = [];
       const remoteWorks = await this.loadPortfolioWorksFromDatabase(client);
       const remoteVideos = await this.loadWorkVideosFromDatabase(client);
-      console.log('mapped works', remoteWorks);
 
       const specialistTable: any = await this.getTable(environment.supabase.specialistTable);
       const specialistsResult = await specialistTable
@@ -2287,9 +2302,7 @@ export class SupabaseService {
       const remoteWorks = worksMap.get(profile.id) ?? [];
       const works =
         remoteWorks.length > 0 ? remoteWorks : this.resolveLocalWorks(profile.id);
-      const remoteVideos = videosMap.get(profile.id) ?? [];
-      const workVideos =
-        remoteVideos.length > 0 ? remoteVideos : this.resolveLocalWorkVideos(profile.id);
+      const workVideos = this.videosForProfile(profile, videosMap);
       if (profile.type === 'furniture') {
         companies.push(profileToFurnitureCompany(profile, works, workVideos));
       } else {
@@ -2832,6 +2845,23 @@ export class SupabaseService {
     });
   }
 
+  private videosForProfile(
+    profile: Profile,
+    videosMap: Map<string, WorkVideo[]> = this.workVideosByOwnerSignal(),
+  ): WorkVideo[] {
+    for (const key of [profile.id, profile.slug]) {
+      const id = key?.trim();
+      if (!id) {
+        continue;
+      }
+      const found = videosMap.get(id);
+      if (found && found.length > 0) {
+        return found;
+      }
+    }
+    return this.resolveLocalWorkVideos(profile.id);
+  }
+
   private async loadWorkVideosFromDatabase(
     client: SupabaseClient,
   ): Promise<Map<string, WorkVideo[]>> {
@@ -3125,8 +3155,8 @@ export class SupabaseService {
             .performers()
             .find((item) => item.id === profile.id && item.type === profile.type);
     const works = dbWorks ?? local?.works ?? [];
-    const dbVideos = this.workVideosByOwnerSignal().get(profile.id);
-    const workVideos = dbVideos ?? local?.workVideos ?? [];
+    const dbVideos = this.videosForProfile(profile);
+    const workVideos = dbVideos.length > 0 ? dbVideos : (local?.workVideos ?? []);
     const performer = profileToPerformer(profile, works, workVideos);
     return {
       ...performer,
@@ -3145,8 +3175,8 @@ export class SupabaseService {
           (profile.slug != null && (item.slug === profile.slug || item.id === profile.slug)),
       );
     const works = dbWorks ?? local?.works ?? [];
-    const dbVideos = this.workVideosByOwnerSignal().get(profile.id);
-    const workVideos = dbVideos ?? local?.workVideos ?? [];
+    const dbVideos = this.videosForProfile(profile);
+    const workVideos = dbVideos.length > 0 ? dbVideos : (local?.workVideos ?? []);
     const company = profileToFurnitureCompany(profile, works, workVideos);
     return {
       ...company,

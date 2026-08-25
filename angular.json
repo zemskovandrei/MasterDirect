@@ -79,7 +79,7 @@
               "sourceMap": true
             },
             "github-pages": {
-              "baseHref": "/masterdirect/",
+              "baseHref": "/",
               "outputMode": "static",
               "outputHashing": "all",
               "optimization": {

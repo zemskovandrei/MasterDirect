@@ -142,6 +142,38 @@
   min-height: 44px;
 }
 
+@media (max-width: 900px) {
+  .lang-switcher-trigger {
+    gap: 0;
+    min-height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid rgba(12, 18, 34, 0.08);
+    background: linear-gradient(180deg, #ffffff, #f3f7fb);
+    box-shadow: 0 4px 12px rgba(12, 18, 34, 0.08);
+    color: #122036;
+  }
+
+  .lang-switcher-trigger:hover,
+  .lang-switcher--open .lang-switcher-trigger {
+    background: #ffffff;
+    border-color: rgba(0, 196, 224, 0.45);
+    box-shadow: 0 0 0 3px rgba(0, 196, 224, 0.14);
+  }
+
+  .lang-code {
+    display: inline-flex;
+    min-width: 2rem;
+    min-height: 1.7rem;
+    font-size: 0.68rem;
+  }
+
+  .lang-chevron {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .lang-dropdown {
     right: 0;

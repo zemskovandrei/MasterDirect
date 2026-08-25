@@ -92,17 +92,6 @@
   color: #b91c1c;
 }
 
-.performer-balance {
-  margin: 0.35rem 0 0;
-  color: var(--color-navy);
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.performer-balance strong {
-  color: #0f766e;
-}
-
 .performer-busy-status {
   margin: 0.35rem 0 0;
   color: var(--color-navy);

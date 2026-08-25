@@ -17,7 +17,7 @@ import { ThemeService } from '../../core/services/theme.service';
 import { PerformerProfile, PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
-import { hasSocialLinks } from '../../core/utils/social-links.util';
+import { hasSocialLinks, mergeSocialLinks } from '../../core/utils/social-links.util';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import {
@@ -44,7 +44,6 @@ export class PerformerProfileComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly contactsRevealed = signal(false);
-  protected readonly currentBalance = signal<number | null>(null);
 
   protected readonly headerColor = signal('#0c7489');
 
@@ -65,12 +64,19 @@ export class PerformerProfileComponent {
     }
 
     const local = this.store.getPerformer(type, id);
-    if (local) {
-      return local;
+    const catalog = type === 'brigade' ? this.supabase.brigades() : this.supabase.workers();
+    const remote = catalog.find((item) => item.id === id);
+    if (local && remote) {
+      return {
+        ...local,
+        ...remote,
+        socialLinks: mergeSocialLinks(remote.socialLinks, local.socialLinks),
+        works: remote.works.length > 0 ? remote.works : local.works,
+        workVideos: remote.workVideos.length > 0 ? remote.workVideos : local.workVideos,
+      };
     }
 
-    const catalog = type === 'brigade' ? this.supabase.brigades() : this.supabase.workers();
-    return catalog.find((item) => item.id === id);
+    return remote ?? local;
   });
 
   protected readonly isProfileOwner = computed(() => {
@@ -123,17 +129,6 @@ export class PerformerProfileComponent {
       }
 
       this.contactsRevealed.set(matchesCatalogSelection(type as CatalogSelectionType, id));
-    });
-
-    effect(() => {
-      const performer = this.performer();
-      if (!performer || !this.isProfileOwner()) {
-        this.currentBalance.set(null);
-        return;
-      }
-
-      const profile = this.supabase.profiles().find((item) => item.id === performer.id);
-      this.currentBalance.set(profile?.balance ?? null);
     });
   }
 

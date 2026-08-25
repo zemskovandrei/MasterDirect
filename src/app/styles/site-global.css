@@ -104,7 +104,7 @@
 }
 
 .menu-toggle {
-  display: none;
+  display: none !important;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
@@ -518,7 +518,7 @@
 /* Header mobile */
 @media (max-width: 900px) {
   .menu-toggle {
-    display: flex;
+    display: flex !important;
   }
 
   .nav {

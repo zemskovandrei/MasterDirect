@@ -84,7 +84,7 @@ h2 {
   }
 
   .menu-toggle {
-    display: flex;
+    display: flex !important;
   }
 }
 

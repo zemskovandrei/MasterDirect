@@ -140,20 +140,22 @@
           }
         </div>
         <app-language-switcher />
-        <button
-          type="button"
-          class="menu-toggle"
-          [class.menu-toggle--open]="mobileMenuOpen()"
-          (click)="toggleMobileMenu()"
-          [attr.aria-expanded]="mobileMenuOpen()"
-          aria-controls="main-nav"
-          [attr.aria-label]="translation.t('app.actions.openMenu')"
-          title="{{ translation.t('app.actions.openMenu') }}"
-        >
-          <span class="menu-toggle-bar"></span>
-          <span class="menu-toggle-bar"></span>
-          <span class="menu-toggle-bar"></span>
-        </button>
+        @if (isMobileViewport()) {
+          <button
+            type="button"
+            class="menu-toggle"
+            [class.menu-toggle--open]="mobileMenuOpen()"
+            (click)="toggleMobileMenu()"
+            [attr.aria-expanded]="mobileMenuOpen()"
+            aria-controls="main-nav"
+            [attr.aria-label]="translation.t('app.actions.openMenu')"
+            title="{{ translation.t('app.actions.openMenu') }}"
+          >
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+          </button>
+        }
       </div>
     </div>
 

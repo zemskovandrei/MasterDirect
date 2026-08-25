@@ -58,6 +58,7 @@ export class SiteLayoutComponent {
   protected readonly title = signal(APP_BRAND_NAME);
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
+  protected readonly isMobileViewport = signal(false);
 
   protected readonly isLoggedIn = computed(
     () =>
@@ -106,6 +107,7 @@ export class SiteLayoutComponent {
     }
 
     afterNextRender(() => {
+      this.syncMobileViewport();
       this.supabase.prefetchActiveJobs();
       this.supabase.ensureProfilesLoaded().subscribe({
         next: () => {
@@ -114,6 +116,23 @@ export class SiteLayoutComponent {
         error: (err) => logSupabaseError('SiteLayout.loadProfiles', err),
       });
     });
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.syncMobileViewport();
+  }
+
+  private syncMobileViewport(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    this.isMobileViewport.set(isMobile);
+    if (!isMobile) {
+      this.closeMobileMenu();
+    }
   }
 
   @HostListener('document:keydown.escape')

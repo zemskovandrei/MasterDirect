@@ -118,39 +118,6 @@
       <p class="works-gallery-empty">{{ translation.t('home.portfolio.empty') }}</p>
     }
 
-    <div class="section-header videos-gallery-header">
-      <h2>{{ translation.t('home.portfolio.videosTitle') }}</h2>
-      <p class="section-subtitle">{{ translation.t('home.portfolio.videosSubtitle') }}</p>
-    </div>
-
-    @if (supabase.loading() && supabase.galleryVideos().length === 0) {
-      <p class="works-gallery-empty">{{ translation.t('home.portfolio.videosLoading') }}</p>
-    } @else if (supabase.galleryVideos().length > 0) {
-      <div class="works-gallery-grid videos-gallery-grid">
-        @for (item of supabase.galleryVideos(); track item.video.id) {
-          <article class="works-gallery-card videos-gallery-card">
-            <video
-              class="videos-gallery-card__player"
-              [src]="item.video.videoUrl"
-              controls
-              playsinline
-              preload="metadata"
-            ></video>
-            <div class="works-gallery-card__meta">
-              <a [routerLink]="item.performerRoute" class="works-gallery-card__performer">{{
-                item.performerName
-              }}</a>
-              @if (item.video.title) {
-                <p class="works-gallery-card__title">{{ item.video.title }}</p>
-              }
-            </div>
-          </article>
-        }
-      </div>
-    } @else {
-      <p class="works-gallery-empty">{{ translation.t('home.portfolio.videosEmpty') }}</p>
-    }
-
     <div class="teaser-actions">
       <a routerLink="/cabinet" class="btn-secondary btn-large">{{
         translation.t('home.portfolio.actions.place')

@@ -150,23 +150,47 @@ section.hero-section {
 .portfolio-teaser {
   padding: clamp(3.5rem, 6vw, 5.5rem) 2rem 5.5rem;
   margin-top: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(248, 250, 252, 0.72) 0%,
-    var(--color-bg-elevated, #f8fafc) 18%,
-    var(--color-bg, #f1f5f9) 55%,
-    var(--color-bg, #f1f5f9) 100%
-  );
+  background-color: #0c1222;
+  background-size: cover;
+  background-position: center 40%;
+  background-repeat: no-repeat;
   position: relative;
   z-index: 2;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .portfolio-teaser::before {
-  display: none;
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 16, 32, 0.78) 0%,
+      rgba(12, 22, 42, 0.58) 38%,
+      rgba(10, 18, 36, 0.72) 72%,
+      rgba(8, 14, 28, 0.88) 100%
+    ),
+    radial-gradient(ellipse 70% 45% at 50% 8%, rgba(0, 196, 224, 0.22), transparent 62%);
+}
+
+.portfolio-teaser::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  z-index: 1;
+  background: linear-gradient(90deg, #00c4e0, #00e5a8);
 }
 
 .portfolio-teaser .portfolio-container {
+  position: relative;
+  z-index: 1;
   max-width: 1120px;
   margin: 0 auto;
 }
@@ -233,21 +257,8 @@ section.hero-section {
 .works-gallery-empty {
   margin: 2rem 0 2.5rem;
   text-align: center;
-  color: var(--color-text-muted, #64748b);
+  color: rgba(226, 232, 240, 0.88);
   font-size: 0.95rem;
-}
-
-.videos-gallery-header {
-  margin-top: 2.5rem;
-}
-
-.videos-gallery-card__player {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  background: #0f172a;
-  border-radius: 0.75rem;
 }
 
 .teaser-sample {
@@ -282,9 +293,9 @@ section.hero-section {
   min-width: 120px;
   padding: 1.25rem 2rem;
   border-radius: var(--radius-md);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xs);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 28px rgba(8, 14, 28, 0.22);
   transition:
     transform var(--transition),
     box-shadow var(--transition);
@@ -547,6 +558,13 @@ section.hero-section {
   line-height: 1.2;
   overflow: visible;
   overflow-wrap: anywhere;
+  color: #f8fafc;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+.portfolio-teaser .section-subtitle {
+  color: rgba(226, 232, 240, 0.9);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
 }
 
 /* ——— Преимущества — подзаголовок внутри баннера с фоном ——— */

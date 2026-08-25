@@ -86,9 +86,7 @@
   @if (c.workVideos.length > 0) {
     <section class="showcase-works work-videos-section">
       <div class="showcase-inner">
-        <div class="showcase-intro">
-          <h2>{{ translation.t('furniture.videosTitle') }}</h2>
-        </div>
+        <p class="work-videos-caption">{{ translation.t('furniture.videosTitle') }}</p>
         <div class="work-videos">
           @for (video of c.workVideos; track video.id) {
             <article class="work-video">

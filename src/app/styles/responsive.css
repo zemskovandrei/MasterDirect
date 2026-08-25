@@ -288,6 +288,10 @@ h2 {
   background-image: url('../../assets/fon2.jpeg');
 }
 
+.portfolio-teaser {
+  background-image: url('../../assets/portfolio-01.jpg');
+}
+
 /* ——— Регистрация: тип аккаунта ——— */
 .register-panel {
   overflow-x: clip;

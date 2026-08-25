@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 300" role="img" aria-label="masterdirect" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="mastergradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1565C0"/>
+      <stop offset="100%" style="stop-color:#42A5F5"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="280" height="300" fill="white"/>
+
+  <g transform="translate(25, 30)">
+    <path d="M 20 100 L 20 50 L 40 20 L 60 50 L 60 100" stroke="url(#mastergradient)" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="50" x2="40" y2="100" stroke="url(#mastergradient)" stroke-width="10" stroke-linecap="round"/>
+    <line x1="80" y1="100" x2="80" y2="50" stroke="url(#mastergradient)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 80 55 Q 105 50 110 75 Q 105 100 80 100" stroke="url(#mastergradient)" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="20" y1="50" x2="80" y2="50" stroke="url(#mastergradient)" stroke-width="10" stroke-linecap="round"/>
+    <line x1="20" y1="100" x2="80" y2="100" stroke="url(#mastergradient)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 28 70 L 35 82 L 52 60" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="76" y1="85" x2="110" y2="55" stroke="url(#mastergradient)" stroke-width="6" stroke-linecap="round"/>
+    <polygon points="110,55 102,66 108,76" fill="url(#mastergradient)"/>
+    <circle cx="76" cy="102" r="3" fill="url(#mastergradient)"/>
+  </g>
+</svg>

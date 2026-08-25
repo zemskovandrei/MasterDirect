@@ -1,0 +1,588 @@
+{
+  "locale": {
+    "ru": "Russian",
+    "en": "English",
+    "ge": "Georgian"
+  },
+  "app": {
+    "tagline": "Professional renovation and finishing",
+    "nav": {
+      "catalog": "Catalog",
+      "jobsBoard": "Job board",
+      "worksGallery": "Work gallery",
+      "features": "Benefits",
+      "services": "Masters",
+      "brigades": "Teams",
+      "masters": "Masters",
+      "furniture": "Furniture",
+      "reviews": "Reviews",
+      "reviewsDesc": "Specialist reviews and site feedback",
+      "portfolio": "Portfolio",
+      "cabinet": "Dashboard",
+      "moderation": "Moderation",
+      "estimate": "Estimate",
+      "jobs": "Jobs",
+      "menuIntro": "Site navigation",
+      "featuresDesc": "Why choose MASTERDIRECT",
+      "catalogDesc": "Masters, teams, and furniture makers",
+      "jobsBoardDesc": "Open renovation jobs",
+      "worksGalleryDesc": "Before and after project photos"
+    },
+    "actions": {
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "getEstimate": "Get estimate",
+      "enableDarkTheme": "Enable dark theme",
+      "enableLightTheme": "Enable light theme",
+      "headerThemeAuto": "Header theme: auto",
+      "headerThemeLight": "Header theme: light",
+      "headerThemeDark": "Header theme: dark"
+    },
+    "header": {
+      "langSelector": "Language selection",
+      "tagline": "Find performers",
+      "primaryNav": "Catalog and benefits"
+    },
+    "auth": {
+      "login": "Sign in",
+      "register": "Register",
+      "cabinet": "Dashboard"
+    },
+    "footer": {
+      "brand": "Renovation, finishing and custom furniture. Teams and masters publish before/after work in the catalog.",
+      "sections": "Sections",
+      "moderation": "Review moderation",
+      "copyright": "© 2026 MASTERDIRECT",
+      "rightsReserved": "All rights reserved",
+      "catalog": "Catalog of teams and masters"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Find performers",
+      "primary": "Teams",
+      "secondary": "Masters",
+      "estimate": "Get an estimate",
+      "jobs": "Browse jobs",
+      "tagsAria": "Main services",
+      "tags": {
+        "0": "Tiling",
+        "1": "Plumbing",
+        "2": "Electrical",
+        "3": "Finishing",
+        "4": "Custom furniture",
+        "5": "Turnkey"
+      }
+    },
+    "calculator": {
+      "eyebrow": "Calculator",
+      "title": "Smart renovation calculator",
+      "subtitle": "A short survey shows which works your project needs. The team prepares an exact quote only after a site visit.",
+      "progressAria": "Calculator progress",
+      "back": "← Back",
+      "continue": "Continue",
+      "steps": {
+        "roomType": "Choose property type",
+        "renovationType": "What kind of renovation is planned?",
+        "area": "Enter approximate area",
+        "estimate": "Select work from the checklist",
+        "performers": "Choose performers to receive your estimate",
+        "contacts": "Where should we send offers from masters?"
+      },
+      "roomTypes": {
+        "newBuild": "New build",
+        "secondary": "Resale apartment",
+        "house": "House / Cottage",
+        "commercial": "Commercial property"
+      },
+      "renovationTypes": {
+        "cosmetic": "Cosmetic",
+        "capital": "Major (turnkey)",
+        "design": "Designer",
+        "furniture": "Custom furniture"
+      },
+      "defaultCity": "Batumi / Tbilisi",
+      "cities": {
+        "batumi": "Batumi",
+        "tbilisi": "Tbilisi",
+        "both": "Batumi or Tbilisi"
+      },
+      "cityLabel": "Property city",
+      "experienceProjects": "{{count}} projects in catalog",
+      "performersHint": "You can pick one or several performers — your request goes to them directly",
+      "performersEmpty": "No performers in this category yet. Continue — your request will go to all available specialists.",
+      "selectPerformer": "Select",
+      "contactsDirected": "Your request and estimate will be sent directly to: {{names}}",
+      "areaLabel": "Area (sq.m)",
+      "areaPlaceholder": "e.g. 65",
+      "areaError": "Enter an area between 5 and 5000 sq.m",
+      "estimateHint": "Check what you need — it helps the team prepare for the site visit. We don't show prices here: a fair quote is only possible after inspection.",
+      "checklistHint": "Mark the main renovation stages first. Additional services (mounting, small installs) are in a separate block at the top — optional.",
+      "checklistTurnkeyHint": "Turnkey renovation: only the standard turnkey work package is shown below. Items are pre-selected — uncheck anything you do not need.",
+      "checklistDesignHint": "Designer renovation: only the standard designer work package is shown below. Items are pre-selected — uncheck anything you do not need.",
+      "checklistScopeCount": "{{count}} items selected",
+      "checklistNote": "This is not a final price but a detailed work plan. The total depends on site condition, materials, and on-site decisions.",
+      "checklistEmptyError": "Select at least one item, add your own work below, or tap Recommended.",
+      "checklistActions": {
+        "selectRecommended": "Recommended",
+        "selectAll": "Select all",
+        "clear": "Clear all"
+      },
+      "checklistSearchLabel": "Search work items",
+      "checklistSearchPlaceholder": "Search main work: tile, wiring, screed…",
+      "checklistExtraTitle": "Additional services",
+      "checklistExtraHint": "Optional — mounting, small installs, household details. Select only what you need.",
+      "checklistExtraEmpty": "No additional services match your search.",
+      "checklistMainTitle": "Main renovation stages",
+      "checklistSearchClear": "Clear",
+      "checklistSearchResults": "{{count}} items found",
+      "checklistSearchEmpty": "Nothing found. Try another word — e.g. \"tile\" or \"sockets\".",
+      "checklistCustomTitle": "Custom task",
+      "checklistCustomHint": "If you don't see the service you need, describe it here.",
+      "checklistCustomPlaceholder": "e.g. install a balcony curtain rod",
+      "checklistCustomAdd": "Add",
+      "checklistCustomRemove": "Remove item",
+      "checklistCustomTooShort": "Please describe the work in more detail — at least 3 characters.",
+      "checklistCustomDuplicate": "This item is already on your list.",
+      "checklistCustomSectionTitle": "Additional work requested by client",
+      "estimateAfterMeasure": "Quote after site visit",
+      "estimateLead": "You see a work list — no numbers, no pressure. The team visits the site, clarifies details, then sends an exact quote.",
+      "estimateFlowAria": "How the quote is prepared",
+      "estimateFlow": {
+        "request": "Request",
+        "measure": "Site visit",
+        "quote": "Exact quote"
+      },
+      "estimateScopeCount": "{{count}} work items included in your project",
+      "continueToPerformers": "Choose a team for site visit",
+      "contactsEstimateNote": "Your work list is saved. After the site visit, the team will send an exact quote.",
+      "estimateNote": "This is not a final price, but a work plan. The total depends on the property condition, materials, and on-site decisions.",
+      "estimate": {
+        "categories": {
+          "preparation": "Site preparation",
+          "rough": "Rough work",
+          "engineering": "Engineering systems",
+          "finishing": "Finishing",
+          "installations": "Installation",
+          "materials": "Materials & logistics",
+          "services": "Service & supervision"
+        },
+        "items": {
+          "measurement": "Site visit & planning",
+          "demolition": "Demolition of old finishes",
+          "wasteRemoval": "Construction waste removal",
+          "wallPlaster": "Wall plaster & leveling",
+          "floorScreed": "Floor screed",
+          "electrical": "Electrical: wiring, panel, outlets",
+          "plumbingRough": "Plumbing: piping, risers",
+          "waterproofing": "Wet area waterproofing",
+          "ventilation": "Ventilation / AC preparation",
+          "tileWork": "Tile installation",
+          "flooring": "Flooring (laminate / parquet)",
+          "painting": "Wall & ceiling painting",
+          "ceiling": "Ceiling (paint / stretch)",
+          "doorsTrim": "Doors, skirting, architraves",
+          "plumbingFixtures": "Plumbing fixtures install",
+          "kitchenHookup": "Kitchen hook-up",
+          "customFurniture": "Custom furniture",
+          "materialsDelivery": "Materials & delivery",
+          "designProject": "Design project",
+          "authorSupervision": "Author supervision",
+          "cleaning": "Post-renovation cleaning"
+        }
+      },
+      "contactsLead": "Leave your contacts — the team will reach out, visit the site, and send an exact quote for your property.",
+      "nameLabel": "Your name",
+      "namePlaceholder": "How should we address you",
+      "nameError": "Enter your name (at least 2 characters)",
+      "contactLabel": "Phone or Telegram",
+      "contactPlaceholder": "+995 555 00 00 00 or @username",
+      "contactError": "Enter a phone number or Telegram",
+      "clientPhoneLabel": "Phone",
+      "clientPhonePlaceholder": "+995555000000",
+      "clientPhoneRequired": "Phone number is required",
+      "clientPhoneFormat": "Phone must contain 7–15 digits and may start with +",
+      "fileLabel": "Attach a file (JPG, PNG, or PDF)",
+      "fileRequiredError": "Please attach a property file",
+      "fileTypeError": "Only JPG, PNG, or PDF files are allowed",
+      "fileError": "Invalid file",
+      "measurementNotice": "The master's site visit for measurement may be paid (check the specialist's profile). If you proceed with the renovation, the measurement fee is often deducted from the estimate.",
+      "photoLabel": "Attach property photo",
+      "photoPlaceholder": "Photo link (Google Drive, Dropbox, etc.)",
+      "paidCallOutConsent": "I agree to a paid site visit for measurement",
+      "callOutFeeLabel": "Site visit fee",
+      "callOutNotSpecified": "not specified",
+      "submit": "Get offers from masters",
+      "submitting": "Sending request…",
+      "successTitle": "Your job is published!",
+      "successText": "Your order is saved and listed on Jobs. Send it to the performer — the message is already written.",
+      "successContactLead": "Message the performer:",
+      "successContactHint": "Tap the green or blue button — WhatsApp or Telegram opens with your request ready. Just hit Send.",
+      "messengerWhatsApp": "Message on WhatsApp",
+      "messengerTelegram": "Message on Telegram",
+      "messengerUnavailableWhatsApp": "WhatsApp not listed",
+      "messengerUnavailableTelegram": "Telegram not listed",
+      "messengerMissingWhatsApp": "{{name}} has no WhatsApp listed. Try Telegram or another performer.",
+      "messengerMissingTelegram": "{{name}} has no Telegram listed. Try WhatsApp or another performer.",
+      "orderMessage": {
+        "directed": "Directed to",
+        "customer": "Customer",
+        "contact": "Contact",
+        "room": "Property",
+        "renovation": "Renovation",
+        "area": "Area",
+        "city": "City",
+        "scope": "Scope of work",
+        "photo": "Photo link",
+        "callOut": "Site visit fee"
+      },
+      "successViewJobs": "View my job",
+      "errorText": "Could not publish your job. Check your connection and try again.",
+      "reset": "Post another job"
+    },
+    "features": {
+      "eyebrow": "Benefits",
+      "title": "Platform",
+      "subtitle": "A neutral marketplace — customers and performers connect without a middleman",
+      "cards": {
+        "0": {
+          "title": "Reviews",
+          "desc": "Real client feedback — choose your pro with confidence"
+        },
+        "1": {
+          "title": "Team selection",
+          "desc": "We will find a team for full renovation of an apartment, house or room"
+        },
+        "2": {
+          "title": "Individual masters",
+          "desc": "A specialist for your task: tiling, electrical, plumbing or finishing"
+        },
+        "3": {
+          "title": "Before and after work",
+          "desc": "The catalog features real projects with before and after photos"
+        },
+        "4": {
+          "title": "Active jobs",
+          "desc": "Post a request via the calculator — it appears instantly for performers"
+        },
+        "5": {
+          "title": "Custom furniture",
+          "desc": "Kitchens, wardrobes and built-in furniture from verified catalog companies"
+        }
+      }
+    },
+    "services": {
+      "eyebrow": "Categories",
+      "title": "Work categories",
+      "subtitle": "Popular specializations of performers",
+      "items": {
+        "turnkey": {
+          "title": "Turnkey renovation master",
+          "desc": "Coordinates the entire process: demolition, rough work, finishing and handover."
+        },
+        "tiler": {
+          "title": "Tiler",
+          "desc": "Experienced tiler for bathroom, kitchen, hallway and other areas."
+        },
+        "electrician": {
+          "title": "Electrician",
+          "desc": "Specialist in wiring, panels, lighting and safe installation."
+        },
+        "plumber": {
+          "title": "Plumber",
+          "desc": "Plumbing installation, pipe replacement and leak testing."
+        },
+        "finisher": {
+          "title": "Finisher",
+          "desc": "Plastering, painting, wallpaper and finishing solutions for your project."
+        },
+        "furniture": {
+          "title": "Furniture master",
+          "desc": "Custom furniture: kitchens, wardrobes, closets and built-in solutions."
+        }
+      }
+    },
+    "portfolio": {
+      "title": "Work by performers",
+      "subtitle": "Public feed of projects from teams, masters and furniture companies — with before/after photos.",
+      "empty": "No published work yet. Performers can add projects in their dashboard.",
+      "sampleTitle": "Sample completed order",
+      "sampleDesc": "A performer publication from the catalog",
+      "actions": {
+        "place": "Publish work"
+      },
+      "stats": {
+        "brigades": "teams",
+        "workers": "masters",
+        "furniture": "companies"
+      }
+    },
+    "estimate": {
+      "eyebrow": "Request",
+      "title": "Get estimate",
+      "subtitle": "Leave a request — we will call back and discuss the scope of work",
+      "form": {
+        "successTitle": "Request sent",
+        "successText": "We will contact you shortly.",
+        "reset": "Send another request",
+        "name": "Name *",
+        "namePlaceholder": "How should we address you",
+        "invalidName": "Enter a name (at least 2 characters)",
+        "phone": "Phone *",
+        "phonePlaceholder": "+1 (555) 123-4567",
+        "invalidPhone": "Enter a valid phone number",
+        "email": "Email",
+        "emailPlaceholder": "email@example.com",
+        "invalidEmail": "Invalid email",
+        "message": "Comment",
+        "messagePlaceholder": "Property type, area, timeline...",
+        "submit": "Send request",
+        "note": "By clicking the button, you agree to the processing of personal data"
+      }
+    }
+  },
+  "portfolio": {
+    "hub": {
+      "eyebrow": "Performer catalog",
+      "title": "Catalog",
+      "subtitle": "Choose a team, master or furniture company — browse real before/after work and client reviews.",
+      "cta": "Publish your work",
+      "reviewsEyebrow": "Reviews",
+      "reviewsTitle": "What clients say",
+      "reviewsLead": "Verified reviews about teams and masters."
+    },
+    "jump": {
+      "brigades": "Teams",
+      "brigadesLead": "Full apartment and house renovation — from rough work to turnkey handover.",
+      "workers": "Masters",
+      "workersLead": "Tiling, electrical, plumbing and finishing — focused specialists for each task.",
+      "furniture": "Furniture companies",
+      "furnitureLead": "Custom kitchens, wardrobes and built-in furniture with photos of real projects.",
+      "smeta": "Estimate",
+      "smetaHint": "after choosing a team",
+      "furnitureHint": "kitchens, wardrobes, built-in furniture",
+      "inCatalog": "in catalog",
+      "tabsAria": "Portfolio sections"
+    }
+  },
+  "catalog": {
+    "select": "Select",
+    "selected": "Selected",
+    "contactsTitle": "Contacts"
+  },
+  "brigades": {
+    "listTitle": "Teams catalog",
+    "listLead": "Construction crews for turnkey renovation — with project photos and direct contact.",
+    "inCatalog": "teams in catalog",
+    "badge": "Team",
+    "allWorks": "All work",
+    "empty": "No published teams yet.",
+    "estimateFor": "Estimate request for team «{{name}}»"
+  },
+  "masters": {
+    "title": "Masters",
+    "subtitle": "Specialists for individual tasks: tiling, electrical, plumbing, finishing.",
+    "cta": "Publish profile",
+    "listTitle": "Masters catalog",
+    "listLead": "Trusted specialists for specific trades — pick by skill and browse portfolios.",
+    "inCatalog": "masters in catalog",
+    "badge": "Master",
+    "allWorks": "All work",
+    "empty": "No published masters yet.",
+    "emptyCta": {
+      "title": "Looking for finishing, electrical, or plumbing jobs?",
+      "desc": "Create your master profile on the platform. Get direct client contacts with no middlemen or hidden fees. The first 30 masters get lifetime PRO status and search priority — completely free.",
+      "btn": "List your profile"
+    }
+  },
+  "furniture": {
+    "title": "Furniture companies",
+    "subtitle": "Kitchens, wardrobes, closets and custom built-in furniture.",
+    "cta": "Publish company",
+    "listTitle": "Company catalog",
+    "listLead": "Furniture workshops with real projects — kitchens, wardrobes and custom built-ins.",
+    "inCatalog": "companies in catalog",
+    "badge": "Furniture",
+    "allWorks": "All projects",
+    "empty": "No published companies yet.",
+    "emptyCta": {
+      "title": "Do you make custom furniture?",
+      "desc": "Show your kitchens, wardrobes, and design projects to hundreds of potential clients. Register your factory or workshop on the platform for free. The first 10 furniture companies get lifetime PRO status and search priority — completely free.",
+      "btn": "List your company"
+    },
+    "back": "Back to furniture catalog",
+    "projects": "projects",
+    "worksEyebrow": "Portfolio",
+    "worksTitle": "Company work",
+    "worksLead": "Real custom furniture projects.",
+    "moreProjects": "More projects",
+    "noWorksTitle": "No projects yet",
+    "noWorksLead": "The company has not published work in the catalog yet.",
+    "videosTitle": "Work videos",
+    "notFoundTitle": "Company not found",
+    "notFoundLead": "The profile may have been removed or is not published yet."
+  },
+  "reviews": {
+    "performerType": {
+      "brigade": "Team",
+      "master": "Master",
+      "furniture": "Furniture",
+      "renovation": "Renovation",
+      "site": "Site"
+    },
+    "countOne": "review",
+    "countMany": "reviews",
+    "samples": {
+      "0": {
+        "text": "The team finished the bathroom on time — tiling and plumbing with no issues.",
+        "category": "Bathroom renovation"
+      },
+      "1": {
+        "text": "Clear estimate, weekly photo updates, and the result matched the contract.",
+        "category": "Turnkey apartment"
+      },
+      "2": {
+        "text": "The master quickly fixed the panel and wiring — neat work and up to code.",
+        "category": "Electrical work"
+      },
+      "3": {
+        "text": "Even grout lines, clean joints — the kitchen looks exactly like the design.",
+        "category": "Tiling"
+      }
+    }
+  },
+  "profile": {
+    "reviews": {
+      "eyebrow": "Reviews",
+      "titleBrigade": "What clients say about the team",
+      "titleMaster": "What clients say about the master",
+      "lead": "Approved reviews are published alongside real before/after work."
+    }
+  },
+  "admin": {
+    "badge": "Administrator mode",
+    "logout": "Log out",
+    "footerLogin": "Sign in as admin",
+    "gate": {
+      "lead": "Enter the administrator password to manage the catalog."
+    },
+    "login": {
+      "eyebrow": "Admin",
+      "title": "Administrator sign-in",
+      "lead": "Sign in with your Supabase admin email to manage the catalog and jobs.",
+      "email": "Email",
+      "emailPlaceholder": "admin@smartbuild.tech",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "error": "Incorrect email or password, or this account is not an administrator.",
+      "submit": "Sign in",
+      "submitting": "Signing in…"
+    },
+    "masters": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this master?",
+      "editTitle": "Edit master profile",
+      "nameLabel": "Name",
+      "nameError": "Enter a name (at least 2 characters)",
+      "specialtyLabel": "Specialty",
+      "specialtyError": "Enter a specialty",
+      "descriptionLabel": "Description",
+      "descriptionError": "Enter a description (at least 4 characters)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "catalog": {
+      "deleteProfileConfirm": "Remove \"{{name}}\" from the catalog? This cannot be undone.",
+      "deleteWork": "Delete photos",
+      "deleteWorkConfirm": "Delete the before/after project \"{{title}}\"?",
+      "editTitle": "Edit profile"
+    },
+    "jobs": {
+      "toolbarLead": "You can close completed jobs or remove them from the public list.",
+      "complete": "Completed",
+      "delete": "Delete",
+      "completeConfirm": "Mark job \"{{title}}\" as completed? It will disappear from the public list.",
+      "deleteConfirm": "Delete job \"{{title}}\" permanently? This cannot be undone.",
+      "actionError": "Could not update the job. Check your connection and try again."
+    }
+  },
+  "jobs": {
+    "title": "Active jobs",
+    "lead": "Fresh renovation and finishing requests.",
+    "galleryEyebrow": "Current order gallery",
+    "loading": "Loading jobs…",
+    "errorTitle": "Could not load jobs",
+    "errorDefault": "Check your internet connection and try again.",
+    "retry": "Try again",
+    "emptyTitle": "No active jobs yet",
+    "emptyText": "Be the first — post a request via the calculator below.",
+    "emptyAction": "Post a job",
+    "publishBadge": "For customers",
+    "publishTitle": "Need renovation? Post your job for free",
+    "publishText": "Answer 5 questions in the calculator — your request appears here for teams and masters.",
+    "publishAction": "Post a job",
+    "noDescription": "No description provided",
+    "noTitle": "Untitled",
+    "activeBadge": "Active job",
+    "statusNew": "New",
+    "statusActive": "Active",
+    "budgetUnknown": "Budget not specified",
+    "areaValue": "{{value}} sq.m",
+    "directedTo": "Sent to performers",
+    "viewPhoto": "View photo",
+    "openPhoto": "Open in new tab",
+    "closePhoto": "Close",
+    "callCustomer": "Call",
+    "messageCustomer": "Message on Telegram",
+    "scopeToggle": "Scope of work",
+    "scopeItems": "{{count}} items",
+    "scopeEmpty": "No work list provided",
+    "posted": "Posted",
+    "contactInDescription": "Contact details are in the description",
+    "fields": {
+      "customer": "Customer",
+      "contact": "Contact",
+      "area": "Area",
+      "photo": "Photo",
+      "directedTo": "Directed to",
+      "callOut": "Site visit",
+      "paidCallOutYes": "Paid site visit agreed: yes",
+      "estimate": "Work scope",
+      "estimateTotal": "Preliminary total"
+    }
+  },
+  "moderation": {
+    "title": "Review moderation",
+    "subtitle": "Review and publish client feedback on the site",
+    "adminBadge": "Administrator mode",
+    "logout": "Sign out",
+    "login": {
+      "eyebrow": "Access",
+      "title": "Administrator sign-in",
+      "lead": "The moderation section is available to the site administrator only. Sign in via Supabase Auth.",
+      "email": "Email",
+      "emailPlaceholder": "admin@smartbuild.tech",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "error": "Incorrect email or password, or this account is not an administrator.",
+      "submit": "Sign in",
+      "submitting": "Signing in…"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Newly published reviews"
+    },
+    "panel": {
+      "eyebrow": "Queue",
+      "title": "New reviews pending approval",
+      "subtitle": "Approve reviews to publish them in the portfolio.",
+      "empty": "No new reviews yet."
+    },
+    "actions": {
+      "delete": "Delete",
+      "publish": "Publish"
+    }
+  }
+}

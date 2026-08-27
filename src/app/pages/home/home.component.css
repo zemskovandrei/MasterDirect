@@ -361,35 +361,6 @@ section.hero-section {
   margin: 0;
 }
 
-.works-gallery-card__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0 0.15rem;
-}
-
-.works-gallery-card__performer {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--color-accent-dark, #0099b3);
-  text-decoration: none;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.works-gallery-card__performer:hover {
-  text-decoration: underline;
-}
-
-.works-gallery-card__title {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: var(--color-text-muted, #64748b);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
 .works-gallery-empty {
   margin: 2rem 0 2.5rem;
   text-align: center;

@@ -7,7 +7,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CatalogAdminService } from '../../core/services/catalog-admin.service';
@@ -23,6 +23,7 @@ import {
   readCatalogSelection,
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
+import { normalizeSearchText, specialtySearchHaystack } from '../../core/utils/catalog-filter.util';
 
 @Component({
   selector: 'app-furniture-companies-page',
@@ -40,20 +41,37 @@ export class FurnitureCompaniesPageComponent implements OnInit {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly hasSocialLinks = hasSocialLinks;
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly pageBackground = catalogTabBackgroundStyle('furniture');
   protected readonly selectedCompanyId = signal<string | null>(null);
   protected readonly hiddenCompanyIds = signal<Set<string>>(new Set());
+  protected readonly searchQuery = signal('');
 
   protected readonly visibleCompanies = computed(() => {
     const hidden = this.hiddenCompanyIds();
-    return this.supabase.furnitureCompanies().filter((company) => !hidden.has(company.id));
+    const query = normalizeSearchText(this.searchQuery());
+    return this.supabase.furnitureCompanies().filter((company) => {
+      if (hidden.has(company.id)) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return normalizeSearchText(
+        `${company.name} ${company.description ?? ''} ${company.city ?? ''} ${specialtySearchHaystack(company.specialty ?? '', this.catalogL10n.localizeSpecialtyField(company.specialty ?? ''))}`,
+      ).includes(query);
+    });
   });
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.supabase.loadProfiles().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.searchQuery.set(params.get('q') ?? '');
+    });
 
     const selection = readCatalogSelection();
     if (selection?.type === 'furniture') {

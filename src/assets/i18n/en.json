@@ -65,6 +65,13 @@
       "estimate": "Get an estimate",
       "jobs": "Browse jobs",
       "tagsAria": "Main services",
+      "searchAria": "Search the site",
+      "searchPlaceholder": "Master, team, furniture, or job…",
+      "searchEmpty": "Nothing found",
+      "searchMasters": "Masters",
+      "searchBrigades": "Teams",
+      "searchFurniture": "Furniture",
+      "searchJobs": "Jobs",
       "tags": {
         "0": "Tiling",
         "1": "Plumbing",

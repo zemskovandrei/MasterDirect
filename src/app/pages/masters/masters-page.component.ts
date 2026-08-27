@@ -7,7 +7,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CatalogAdminService } from '../../core/services/catalog-admin.service';
@@ -26,6 +26,7 @@ import {
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { isPerformerBusy, getPerformerBusyStatus } from '../../core/utils/performer-busy.util';
+import { normalizeSearchText, specialtySearchHaystack } from '../../core/utils/catalog-filter.util';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -45,6 +46,7 @@ import { firstValueFrom } from 'rxjs';
 export class MastersPageComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   protected readonly supabase = inject(SupabaseService);
   private readonly dataService = inject(DataService);
@@ -62,6 +64,7 @@ export class MastersPageComponent implements OnInit {
   protected readonly selectedPerformerId = signal<string | null>(null);
   protected readonly hiddenPerformerIds = signal<Set<string>>(new Set());
   protected readonly specialtySearchQuery = signal('');
+  protected readonly specialtyFilter = signal('');
   protected recommendationRequested = false;
   protected isLoading = false;
   protected relatedMasters: Specialist[] = [];
@@ -69,15 +72,22 @@ export class MastersPageComponent implements OnInit {
   protected readonly visibleWorkers = computed(() => {
     const hidden = this.hiddenPerformerIds();
     const filtered = this.supabase.workers().filter((worker) => !hidden.has(worker.id));
-    const query = this.normalizeSearchText(this.specialtySearchQuery());
+    const query = normalizeSearchText(this.specialtySearchQuery());
+    const specialty = this.specialtyFilter();
 
-    if (!query) {
+    if (!query && !specialty) {
       return filtered;
     }
 
     return filtered.filter((worker) => {
-      const haystack = this.normalizeSearchText(
-        `${worker.name} ${worker.specialty ?? ''} ${worker.description ?? ''}`,
+      if (specialty && !this.catalogL10n.matchesSpecialtyFilter(worker.specialty ?? '', specialty)) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      const haystack = normalizeSearchText(
+        `${worker.name} ${worker.description ?? ''} ${specialtySearchHaystack(worker.specialty ?? '', this.catalogL10n.performerSpecialty(worker))}`,
       );
       return haystack.includes(query);
     });
@@ -93,6 +103,11 @@ export class MastersPageComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.supabase.loadProfiles().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.specialtySearchQuery.set(params.get('q') ?? '');
+      this.specialtyFilter.set(params.get('specialty') ?? '');
+    });
 
     const selection = readCatalogSelection();
     if (selection?.type === 'worker') {
@@ -279,9 +294,5 @@ export class MastersPageComponent implements OnInit {
 
   protected updateSpecialtySearchQuery(value: string): void {
     this.specialtySearchQuery.set(value ?? '');
-  }
-
-  private normalizeSearchText(value: string): string {
-    return value.toLowerCase().replace(/\s+/g, ' ').trim();
   }
 }

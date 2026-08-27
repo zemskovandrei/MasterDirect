@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -20,6 +20,7 @@ import {
 } from '../../core/constants/catalog-tab-backgrounds';
 import { CatalogOrderCalculatorSectionComponent } from '../../shared/components/catalog-order-calculator-section/catalog-order-calculator-section.component';
 import { logSupabaseError } from '../../core/utils/supabase-error.util';
+import { normalizeSearchText } from '../../core/utils/catalog-filter.util';
 
 @Component({
   selector: 'app-jobs-list',
@@ -34,6 +35,7 @@ export class JobsListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   protected readonly adminAuth = inject(AdminAuthService);
   protected readonly translation = inject(TranslationService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly pageBackground = catalogTabBackgroundStyle('jobs');
 
@@ -49,9 +51,21 @@ export class JobsListComponent implements OnInit {
   readonly error = this.supabase.jobsError;
   readonly jobs = this.supabase.activeJobs;
   protected readonly hiddenJobIds = signal<Set<string>>(new Set());
+  protected readonly searchQuery = signal('');
   protected readonly visibleJobs = computed(() => {
     const hidden = this.hiddenJobIds();
-    return this.jobs().filter((job) => !hidden.has(job.id));
+    const query = normalizeSearchText(this.searchQuery());
+    return this.jobs().filter((job) => {
+      if (hidden.has(job.id)) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return normalizeSearchText(
+        `${job.title} ${job.category} ${job.description} ${job.city}`,
+      ).includes(query);
+    });
   });
 
   protected readonly adminActionJobId = signal<string | null>(null);
@@ -59,6 +73,10 @@ export class JobsListComponent implements OnInit {
   protected readonly photoPreview = signal<{ src: string; title: string } | null>(null);
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      this.searchQuery.set(params.get('q') ?? '');
+    });
+
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }

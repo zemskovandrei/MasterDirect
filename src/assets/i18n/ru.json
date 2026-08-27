@@ -65,6 +65,13 @@
       "estimate": "Получить смету",
       "jobs": "Смотреть заказы",
       "tagsAria": "Основные услуги",
+      "searchAria": "Поиск по сайту",
+      "searchPlaceholder": "Мастер, бригада, мебель или заказ…",
+      "searchEmpty": "Ничего не найдено",
+      "searchMasters": "Мастера",
+      "searchBrigades": "Бригады",
+      "searchFurniture": "Мебель",
+      "searchJobs": "Заказы",
       "tags": {
         "0": "Плитка",
         "1": "Сантехника",

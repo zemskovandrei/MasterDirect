@@ -62,3 +62,30 @@ export function isCatalogPerformerVisible(performer: PerformerProfile): boolean 
 export function isCatalogFurnitureCompanyVisible(company: FurnitureCompany): boolean {
   return !!(company.name?.trim() || company.socialLinks?.phone?.trim() || company.whatsapp_phone?.trim());
 }
+
+export function normalizeSearchText(value: string): string {
+  return value.toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
+}
+
+const SPECIALTY_SEARCH_ALIASES: Record<string, string> = {
+  tiler: 'плитка плиточник tiling tile',
+  plumber: 'сантехника сантехник plumbing',
+  electrician: 'электрика электрик electrical',
+  painter: 'отделка маляр штукатур finishing',
+  drywall: 'гипсокартон drywall отделка',
+  turnkey: 'под ключ turnkey ремонт',
+  renovation_turnkey: 'под ключ ремонт под ключ turnkey',
+  furnitureAssembly: 'мебель сборка furniture',
+  kitchenInstall: 'кухня мебель kitchen',
+  cabinetMaking: 'мебель шкаф гардероб furniture',
+  commercialInstall: 'мебель торговое оборудование furniture',
+};
+
+export function specialtySearchHaystack(raw: string, localized = ''): string {
+  const extras = raw
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .map((part) => SPECIALTY_SEARCH_ALIASES[part] ?? '')
+    .join(' ');
+  return `${raw} ${localized} ${extras}`;
+}

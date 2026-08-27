@@ -95,11 +95,16 @@ export class CatalogLocalizationService {
 
   private specialtyKeyFromLabel(label: string): string | null {
     const map: Record<string, string> = {
+      Плитка: 'tiler',
       Плиточник: 'tiler',
+      Электрика: 'electrician',
       Электрик: 'electrician',
+      Сантехника: 'plumber',
       Сантехник: 'plumber',
+      Отделка: 'painter',
       'Маляр-штукатур': 'painter',
       Гипсокартонщик: 'drywall',
+      'Под ключ': 'renovation_turnkey',
       'Ремонт под ключ': 'renovation_turnkey',
       'Сборка и монтаж мебели': 'furnitureAssembly',
       'Установка кухонь и встроенной техники': 'kitchenInstall',
@@ -123,6 +128,25 @@ export class CatalogLocalizationService {
     }
 
     return this.specialtyKeyFromLabel(first);
+  }
+
+  matchesSpecialtyFilter(value: string, filterKey: string): boolean {
+    const wanted = filterKey.trim();
+    if (!wanted) {
+      return true;
+    }
+
+    const aliases: Record<string, string[]> = {
+      painter: ['painter', 'drywall'],
+      turnkey: ['turnkey', 'renovation_turnkey'],
+    };
+    const accepted = new Set(aliases[wanted] ?? [wanted]);
+    const parts = value.split(',').map((part) => part.trim()).filter(Boolean);
+
+    return parts.some((part) => {
+      const key = this.primarySpecialtyKey(part) ?? part;
+      return accepted.has(key);
+    });
   }
 
   private t(key: string, fallback: string): string {

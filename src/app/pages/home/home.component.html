@@ -5,6 +5,52 @@
       {{ translation.t('home.hero.title') }}
     </h1>
 
+    <form
+      class="hero-search"
+      role="search"
+      [attr.aria-label]="translation.t('home.hero.searchAria')"
+      (submit)="submitSearch($event)"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="hero-search__field">
+        <input
+          class="hero-search__input"
+          type="search"
+          autocomplete="off"
+          [attr.aria-label]="translation.t('home.hero.searchAria')"
+          [placeholder]="translation.t('home.hero.searchPlaceholder')"
+          [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value ?? '')"
+          (focus)="onSearchFocus()"
+        />
+        <button
+          type="submit"
+          class="hero-search__submit"
+          [attr.aria-label]="translation.t('home.hero.searchAria')"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" />
+            <path d="M16.2 16.2 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      @if (searchOpen()) {
+        <div class="hero-search__results" role="listbox">
+          @for (hit of searchHits(); track hit.kind + hit.id) {
+            <button type="button" class="hero-search__hit" (click)="goToHit(hit)">
+              <span class="hero-search__hit-kind">{{ translation.t(hit.kindLabelKey) }}</span>
+              <span class="hero-search__hit-title">{{ hit.title }}</span>
+              @if (hit.subtitle) {
+                <span class="hero-search__hit-sub">{{ hit.subtitle }}</span>
+              }
+            </button>
+          } @empty {
+            <p class="hero-search__empty">{{ translation.t('home.hero.searchEmpty') }}</p>
+          }
+        </div>
+      }
+    </form>
+
     <div class="hero-section__actions">
       <a class="btn-primary btn-large" routerLink="/brigades">{{
         translation.t('home.hero.primary')
@@ -15,12 +61,15 @@
     </div>
 
     <div class="hero-section__tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">
-      <span>{{ translation.t('home.hero.tags.0') }}</span>
-      <span>{{ translation.t('home.hero.tags.1') }}</span>
-      <span>{{ translation.t('home.hero.tags.2') }}</span>
-      <span>{{ translation.t('home.hero.tags.3') }}</span>
-      <span>{{ translation.t('home.hero.tags.4') }}</span>
-      <span>{{ translation.t('home.hero.tags.5') }}</span>
+      @for (tag of heroTags; track tag.labelKey) {
+        <a
+          class="hero-section__tag"
+          [routerLink]="tag.path"
+          [queryParams]="tag.queryParams ?? {}"
+        >
+          {{ translation.t(tag.labelKey) }}
+        </a>
+      }
     </div>
   </div>
 </section>

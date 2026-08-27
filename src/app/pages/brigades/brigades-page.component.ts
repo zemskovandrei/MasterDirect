@@ -26,6 +26,7 @@ import {
 } from '../../core/utils/catalog-selection.util';
 import { catalogTabBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { isPerformerBusy, getPerformerBusyStatus } from '../../core/utils/performer-busy.util';
+import { normalizeSearchText, specialtySearchHaystack } from '../../core/utils/catalog-filter.util';
 
 @Component({
   selector: 'app-brigades-page',
@@ -60,10 +61,27 @@ export class BrigadesPageComponent implements OnInit {
   protected readonly editingPerformer = signal<PerformerProfile | null>(null);
   protected readonly adminSaving = signal(false);
   protected readonly hiddenPerformerIds = signal<Set<string>>(new Set());
+  protected readonly searchQuery = signal('');
+  protected readonly specialtyFilter = signal('');
 
   protected readonly visibleBrigades = computed(() => {
     const hidden = this.hiddenPerformerIds();
-    return this.supabase.brigades().filter((brigade) => !hidden.has(brigade.id));
+    const query = normalizeSearchText(this.searchQuery());
+    const specialty = this.specialtyFilter();
+    return this.supabase.brigades().filter((brigade) => {
+      if (hidden.has(brigade.id)) {
+        return false;
+      }
+      if (specialty && !this.catalogL10n.matchesSpecialtyFilter(brigade.specialty ?? '', specialty)) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return normalizeSearchText(
+        `${brigade.name} ${brigade.description ?? ''} ${specialtySearchHaystack(brigade.specialty ?? '', this.catalogL10n.performerSpecialty(brigade))}`,
+      ).includes(query);
+    });
   });
 
   protected readonly editForm = this.fb.nonNullable.group({
@@ -76,6 +94,11 @@ export class BrigadesPageComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.supabase.loadProfiles().subscribe();
     }
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.searchQuery.set(params.get('q') ?? '');
+      this.specialtyFilter.set(params.get('specialty') ?? '');
+    });
 
     const selection = readCatalogSelection();
     if (selection?.type === 'brigade') {

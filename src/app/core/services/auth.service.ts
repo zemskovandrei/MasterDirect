@@ -1,5 +1,6 @@
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
 import type { AuthSignUpMetadata } from '../models/master.model';
 import { isDuplicateSignupUser, isInvalidAuthSessionError } from '../utils/auth-error.util';
@@ -47,6 +48,7 @@ export interface RegisterResult extends AuthResult {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
   private readonly supabase = inject(SupabaseService);
   private readonly data = inject(DataService);
 
@@ -418,6 +420,7 @@ export class AuthService {
     const url = new URL(href);
     const code = url.searchParams.get('code');
     const errorDescription = url.searchParams.get('error_description');
+    let confirmed = false;
 
     if (errorDescription) {
       logSupabaseError('AuthService.authCallback', new Error(errorDescription));
@@ -434,8 +437,12 @@ export class AuthService {
         this.userSignal.set(data.session.user ?? null);
         this.emailConfirmationPendingSignal.set(false);
         void this.supabase.syncAuthProfileFromUser(data.session.user);
+        confirmed = true;
       }
       window.history.replaceState({}, '', stripAuthParamsFromUrl(href));
+      if (confirmed) {
+        await this.router.navigateByUrl('/cabinet');
+      }
       return;
     }
 
@@ -447,10 +454,15 @@ export class AuthService {
       this.userSignal.set(data.session.user ?? null);
       this.emailConfirmationPendingSignal.set(false);
       void this.supabase.syncAuthProfileFromUser(data.session.user);
+      confirmed = true;
     }
 
-    if (window.location.hash.includes('access_token')) {
+    if (window.location.hash.includes('access_token') || window.location.hash.includes('type=')) {
       window.history.replaceState({}, '', stripAuthParamsFromUrl(href));
+    }
+
+    if (confirmed) {
+      await this.router.navigateByUrl('/cabinet');
     }
   }
 

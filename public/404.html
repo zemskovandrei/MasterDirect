@@ -3,8 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <title>MASTERDIRECT</title>
+    <script>
+      // GitHub Pages SPA fallback: send unknown paths to index.html while keeping query/hash
+      // (needed for Supabase email confirmation links).
+      (function () {
+        var path = location.pathname || '/';
+        if (path !== '/' && path !== '/index.html') {
+          var search = location.search || '';
+          var hash = location.hash || '';
+          location.replace('/' + search + hash);
+        }
+      })();
+    </script>
+    <meta http-equiv="refresh" content="0; url=/" />
   </head>
   <body>
-    <p>Not found</p>
+    <p>Redirecting…</p>
   </body>
 </html>

@@ -6,7 +6,9 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'masters', renderMode: RenderMode.Client },
   { path: 'masters/**', renderMode: RenderMode.Client },
   { path: 'furniture', renderMode: RenderMode.Client },
-  { path: 'cabinet', renderMode: RenderMode.Prerender },
+  // Client-only: email confirm / password reset land on /cabinet with ?code= or #access_token=
+  // and must boot the SPA (prerendered /cabinet/ breaks relative assets on GitHub Pages).
+  { path: 'cabinet', renderMode: RenderMode.Client },
   { path: 'reviews', renderMode: RenderMode.Prerender },
   { path: 'moderation', renderMode: RenderMode.Prerender },
   { path: 'admin', renderMode: RenderMode.Prerender },

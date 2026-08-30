@@ -62,7 +62,9 @@ export class SupabaseClientService {
               persistSession: true,
               autoRefreshToken: true,
               detectSessionInUrl: true,
-              flowType: 'pkce',
+              // implicit: письмо подтверждения открывается в другом браузере/телефоне
+              // (в отличие от PKCE, которому нужен code_verifier с устройства регистрации).
+              flowType: 'implicit',
             },
             global: {
               fetch: (...args: Parameters<typeof fetch>) => fetch(...args),

@@ -286,6 +286,13 @@ select.field-input {
   margin-top: 0.25rem;
 }
 
+.register-form__specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.35rem;
+}
+
 .role-option {
   display: inline-flex;
   align-items: center;

@@ -93,7 +93,7 @@ type RegisterFormControls = {
   phone: string;
   email: string;
   proRole: ProRole;
-  specialty: SpecialtyKey;
+  specialty: SpecialtyKey[];
   city: CityId;
   telegram: string;
   whatsapp: string;
@@ -169,7 +169,10 @@ export class RegisterPageComponent {
       phone: ['', [Validators.required, Validators.minLength(6)]],
       email: ['', [Validators.required, Validators.email]],
       proRole: ['master' as ProRole, Validators.required],
-      specialty: ['electrician' as SpecialtyKey, Validators.required],
+      specialty: this.fb.nonNullable.control<SpecialtyKey[]>(
+        ['electrician'],
+        [this.atLeastOneSpecialtyValidator],
+      ),
       city: ['batumi' as CityId, Validators.required],
       telegram: [''],
       whatsapp: [''],
@@ -217,7 +220,7 @@ export class RegisterPageComponent {
     }
     const title =
       this.form.controls.workTitle.value.trim() ||
-      this.specialtyLabel(this.form.controls.specialty.value);
+      this.specialtyLabels(this.form.controls.specialty.value);
     return beforeAfterWork('register-preview', before, after, title);
   });
 
@@ -283,9 +286,28 @@ export class RegisterPageComponent {
     return this.translation.t(`cabinet.specialties.${key}`);
   }
 
+  protected specialtyLabels(keys: SpecialtyKey[]): string {
+    return keys.map((key) => this.specialtyLabel(key)).join(', ');
+  }
+
   protected specialtyDescription(key: SpecialtyKey): string {
     const value = this.translation.t(`cabinet.specialtyDescriptions.${key}`);
     return value !== `cabinet.specialtyDescriptions.${key}` ? value : '';
+  }
+
+  protected isSpecialtySelected(key: SpecialtyKey): boolean {
+    return this.form.controls.specialty.value.includes(key);
+  }
+
+  protected toggleSpecialty(key: SpecialtyKey, checked: boolean): void {
+    const current = this.form.controls.specialty.value;
+    const next = checked
+      ? current.includes(key)
+        ? current
+        : [...current, key]
+      : current.filter((item) => item !== key);
+    this.form.controls.specialty.setValue(next);
+    this.form.controls.specialty.markAsTouched();
   }
 
   protected proRoleDescription(role: ProRole): string {
@@ -308,7 +330,7 @@ export class RegisterPageComponent {
   protected onRoleChange(): void {
     const role = this.form.controls.proRole.value;
     this.registerUi.selectedProRole.set(role);
-    this.form.controls.specialty.setValue(defaultSpecialtyForRole(role));
+    this.form.controls.specialty.setValue([defaultSpecialtyForRole(role)]);
   }
 
   protected togglePassword(field: 'password' | 'confirm'): void {
@@ -514,8 +536,13 @@ export class RegisterPageComponent {
     const accountType = mapProRoleToAccountType(proRole);
     const displayName = `${v.firstName.trim()} ${v.lastName.trim()}`;
     const roleLabel = this.translation.t(`cabinet.proRoles.${proRole}`);
-    const specialtyLabel = this.specialtyLabel(v.specialty);
-    const specialtyDesc = this.specialtyDescription(v.specialty);
+    const specialtyKeys = v.specialty;
+    const specialtyValue = specialtyKeys.join(',');
+    const specialtyLabel = this.specialtyLabels(specialtyKeys);
+    const specialtyDesc = specialtyKeys
+      .map((key) => this.specialtyDescription(key))
+      .filter(Boolean)
+      .join(' ');
     const description =
       specialtyDesc ||
       `${roleLabel}. ${specialtyLabel}. ${displayName}. ${this.translation.t('cabinet.defaultDescriptionSuffix')}`;
@@ -551,7 +578,7 @@ export class RegisterPageComponent {
           phone: v.phone.trim(),
           avatarUrl: this.profilePreview(),
           city: v.city,
-          specialty: v.specialty,
+          specialty: specialtyValue,
           description,
           pro_role: proRole,
           account_type:
@@ -573,7 +600,7 @@ export class RegisterPageComponent {
           phone: v.phone.trim(),
           avatarUrl: this.profilePreview(),
           city: v.city,
-          specialty: v.specialty,
+          specialty: specialtyValue,
           proRole,
           whatsapp: socialLinks.whatsapp,
           telegram: socialLinks.telegram,
@@ -624,7 +651,7 @@ export class RegisterPageComponent {
         const slug = buildFurnitureSlug(displayName);
         this.furnitureStore.registerCompanyWithId(slug, {
           name: displayName,
-          specialty: v.specialty,
+          specialty: specialtyValue,
           description,
           city: v.city,
           socialLinks,
@@ -635,7 +662,7 @@ export class RegisterPageComponent {
         this.store.registerPerformerWithId(authResult.user.id, {
           type: accountType as PerformerType,
           name: displayName,
-          specialty: v.specialty,
+          specialty: specialtyValue,
           description,
           socialLinks,
         });
@@ -853,7 +880,7 @@ export class RegisterPageComponent {
   private resetForm(): void {
     this.form.reset({
       proRole: 'master',
-      specialty: 'electrician',
+      specialty: ['electrician'],
       city: 'batumi',
       acceptTerms: false,
     });
@@ -862,6 +889,11 @@ export class RegisterPageComponent {
     this.profileFile.set(null);
     this.beforePreview.set(null);
     this.afterPreview.set(null);
+  }
+
+  private atLeastOneSpecialtyValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    return Array.isArray(value) && value.length > 0 ? null : { required: true };
   }
 
   private beforeAfterPairError(): string | null {

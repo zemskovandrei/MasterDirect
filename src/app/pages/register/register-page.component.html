@@ -447,22 +447,29 @@
                 }
               </fieldset>
 
-              <div class="register-form__row">
-                <label class="field">
-                  <span class="field__label">{{ translation.t('cabinet.specialtyLabel') }} *</span>
-                  <select
-                    formControlName="specialty"
-                    class="field-input"
-                    [class.field-input--error]="fieldInvalid('specialty')"
-                  >
-                    @for (key of specialties; track key) {
-                      <option [value]="key">{{ specialtyLabel(key) }}</option>
-                    }
-                  </select>
-                  @if (specialtyDescription(form.controls.specialty.value); as specDesc) {
-                    <p class="register-form__field-hint">{{ specDesc }}</p>
+              <fieldset class="field">
+                <legend class="field__label">{{ translation.t('cabinet.specialtyLabel') }} *</legend>
+                <p class="register-form__section-hint">
+                  {{ translation.t('cabinet.specialtyPlaceholder') }}
+                </p>
+                <div class="register-form__specialties">
+                  @for (key of specialties; track key) {
+                    <label class="role-option">
+                      <input
+                        type="checkbox"
+                        [checked]="isSpecialtySelected(key)"
+                        (change)="toggleSpecialty(key, $any($event.target).checked)"
+                      />
+                      <span>{{ specialtyLabel(key) }}</span>
+                    </label>
                   }
-                </label>
+                </div>
+                @if (fieldInvalid('specialty')) {
+                  <span class="field__error">{{ translation.t('cabinet.specialtyError') }}</span>
+                }
+              </fieldset>
+
+              <div class="register-form__row">
                 <label class="field">
                   <span class="field__label">{{ translation.t('cabinet.cityLabel') }} *</span>
                   <select

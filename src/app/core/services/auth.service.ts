@@ -494,7 +494,7 @@ export class AuthService {
       last_name: clip(metadata.last_name, 64),
       phone: clip(metadata.phone, 32),
       city: clip(metadata.city, 64),
-      specialty: clip(metadata.specialty, 64),
+      specialty: clip(metadata.specialty, 280),
       description: clip(metadata.description, 500),
       account_type: clip(metadata.account_type ?? null, 32),
       pro_role: clip(metadata.pro_role, 32),

@@ -33,6 +33,8 @@ Optional Telegram catalog bot (see `TELEGRAM_BOT.md`):
 
 When `TELEGRAM_BOT_TOKEN` is set, the API also runs long-polling for the catalog bot.
 
+Production host for API + bot: see `RAILWAY.md` (`Dockerfile` + `railway.toml`).
+
 ## Required Environment Variables
 
 - `PORT`

@@ -5,27 +5,69 @@ import express, { NextFunction, Request, Response, RequestHandler } from 'expres
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { startCatalogTelegramBot } from './bot/catalog-bot';
 
-const PORT = Number(process.env.PORT) || 3000;
-const SUPABASE_URL = process.env.SUPABASE_URL?.trim() ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
+function sanitizeEnv(value: string | undefined): string {
+  return (value ?? '').trim().replace(/^['"]|['"]$/g, '');
+}
+
+const PORT = Number(sanitizeEnv(process.env.PORT)) || 3000;
+const SUPABASE_URL = sanitizeEnv(process.env.SUPABASE_URL).replace(/\/$/, '');
+const SUPABASE_SERVICE_ROLE_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const ADMIN_EMAILS = parseCsv(process.env.ADMIN_EMAILS).map((item) => item.toLowerCase());
 const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
 const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '';
-const SITE_ORIGIN = (process.env.SITE_ORIGIN?.trim() || 'https://masterdirect.ge').replace(/\/$/, '');
+const TELEGRAM_BOT_TOKEN = sanitizeEnv(process.env.TELEGRAM_BOT_TOKEN);
+const SITE_ORIGIN = (sanitizeEnv(process.env.SITE_ORIGIN) || 'https://masterdirect.ge').replace(/\/$/, '');
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('[masterdirect API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
   process.exit(1);
 }
 
+if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)) {
+  console.warn(
+    `[masterdirect API] SUPABASE_URL looks unusual: "${SUPABASE_URL}". Expected https://YOUR_PROJECT.supabase.co`,
+  );
+}
+
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
+    detectSessionInUrl: false,
   },
 });
+
+async function probeSupabaseConnectivity(): Promise<void> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/specialist?select=id&limit=1`, {
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        Accept: 'application/json',
+      },
+    });
+    const body = (await response.text()).trimStart();
+    if (body.startsWith('<')) {
+      console.error(
+        `[masterdirect API] Supabase probe got HTML (HTTP ${response.status}). Fix SUPABASE_URL / SERVICE_ROLE_KEY on Railway.`,
+      );
+      return;
+    }
+    if (!response.ok) {
+      console.error(
+        `[masterdirect API] Supabase probe failed (HTTP ${response.status}): ${body.slice(0, 200)}`,
+      );
+      return;
+    }
+    console.log('[masterdirect API] Supabase connectivity OK');
+  } catch (error) {
+    console.error(
+      '[masterdirect API] Supabase probe error:',
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
 
 const app = express();
 
@@ -470,6 +512,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 app.listen(PORT, () => {
   console.log(`[masterdirect API] Server listening on http://localhost:${PORT}`);
+  void probeSupabaseConnectivity();
 
   if (TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
     startCatalogTelegramBot({

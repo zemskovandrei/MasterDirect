@@ -38,18 +38,38 @@ function extensionFromMime(mime: string): string {
   return 'jpg';
 }
 
+async function parseJsonResponse<T>(
+  response: Response,
+  label: string,
+): Promise<T> {
+  const text = await response.text();
+  const trimmed = text.trimStart();
+  if (!trimmed || trimmed.startsWith('<')) {
+    throw new Error(
+      `${label}: сервер вернул HTML вместо JSON (HTTP ${response.status}). Проверьте URL/токен в Variables на Railway.`,
+    );
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`${label}: неверный JSON (HTTP ${response.status}): ${trimmed.slice(0, 120)}`);
+  }
+}
+
 async function downloadTelegramFile(
   botToken: string,
   fileId: string,
 ): Promise<{ bytes: Buffer; contentType: string; ext: string }> {
-  const fileRes = await fetch(
-    `https://api.telegram.org/bot${botToken}/getFile?file_id=${encodeURIComponent(fileId)}`,
-  );
-  const fileJson = (await fileRes.json()) as {
+  const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_id: fileId }),
+  });
+  const fileJson = await parseJsonResponse<{
     ok: boolean;
     description?: string;
     result?: { file_path?: string };
-  };
+  }>(fileRes, 'Telegram getFile');
   if (!fileJson.ok || !fileJson.result?.file_path) {
     throw new Error(fileJson.description || 'Не удалось получить файл из Telegram');
   }
@@ -57,7 +77,10 @@ async function downloadTelegramFile(
   const downloadUrl = `https://api.telegram.org/file/bot${botToken}/${fileJson.result.file_path}`;
   const blobRes = await fetch(downloadUrl);
   if (!blobRes.ok) {
-    throw new Error(`Скачивание фото не удалось (${blobRes.status})`);
+    const hint = (await blobRes.text()).trimStart().slice(0, 80);
+    throw new Error(
+      `Скачивание фото не удалось (${blobRes.status})${hint.startsWith('<') ? ' — пришёл HTML' : ''}`,
+    );
   }
 
   const contentType = blobRes.headers.get('content-type') || 'image/jpeg';
@@ -76,15 +99,32 @@ async function uploadPortfolioImage(
   file: { bytes: Buffer; contentType: string; ext: string },
 ): Promise<string> {
   const path = `bot/${specialistId}/${Date.now()}_${index}.${file.ext}`;
-  const { error } = await supabase.storage.from(PORTFOLIO_BUCKET).upload(path, file.bytes, {
-    contentType: file.contentType,
-    upsert: false,
-    cacheControl: '3600',
-  });
+  const { error } = await supabase.storage
+    .from(PORTFOLIO_BUCKET)
+    .upload(path, new Uint8Array(file.bytes), {
+      contentType: file.contentType,
+      upsert: false,
+      cacheControl: '3600',
+    });
   if (error) {
-    throw new Error(error.message);
+    throw new Error(`Storage upload (${PORTFOLIO_BUCKET}): ${error.message}`);
   }
   return supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+function formatCaughtError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'Не удалось опубликовать карточку';
+  }
+  const message = error.message || 'Неизвестная ошибка';
+  if (message.includes("Unexpected token '<'") || message.includes('is not valid JSON')) {
+    return (
+      'Supabase вернул HTML вместо JSON. В Railway Variables проверьте SUPABASE_URL ' +
+      '(должен быть https://….supabase.co) и SUPABASE_SERVICE_ROLE_KEY ' +
+      '(лучше legacy service_role, начинается с eyJ).'
+    );
+  }
+  return message;
 }
 
 export async function publishCatalogCard(options: {
@@ -168,9 +208,10 @@ export async function publishCatalogCard(options: {
       profileUrl: `${origin}/masters/${specialistId}`,
     };
   } catch (error) {
+    console.error('[catalog-bot] publishCatalogCard failed:', error);
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Не удалось опубликовать карточку',
+      error: formatCaughtError(error),
     };
   }
 }

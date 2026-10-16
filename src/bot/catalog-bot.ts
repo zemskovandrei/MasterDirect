@@ -1,15 +1,25 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   CITY_OPTIONS,
+  MAX_JOB_PHOTOS,
   MAX_PHOTOS,
+  MIN_JOB_PHOTOS,
   MIN_PHOTOS,
+  MIN_REVIEW_CHARS,
   SPECIALTY_OPTIONS,
   createEmptySession,
+  specialtyLabel,
   specialtyLabels,
+  startJobSession,
+  startMasterSession,
+  startReviewSession,
   type BotSession,
   type CityId,
+  type ReviewKind,
 } from './catalog-bot-types';
 import { formatSessionPreview, publishCatalogCard } from './publish-catalog-card';
+import { formatJobPreview, publishJobOrder } from './publish-job';
+import { formatReviewPreview, publishSiteReview } from './publish-review';
 
 interface TelegramUser {
   id: number;
@@ -99,51 +109,80 @@ async function answerCallback(token: string, callbackId: string, text?: string):
   });
 }
 
-function specialtyKeyboard(session: BotSession): InlineKeyboard {
+function menuKeyboard(): InlineKeyboard {
+  return [
+    [{ text: '👷 Я мастер — в каталог', callback_data: 'menu:master' }],
+    [{ text: '📋 Разместить заказ', callback_data: 'menu:job' }],
+    [{ text: '⭐ Оставить отзыв', callback_data: 'menu:review' }],
+  ];
+}
+
+function specialtyKeyboard(session: BotSession, multi: boolean): InlineKeyboard {
   const rows: InlineKeyboard = [];
   for (let i = 0; i < SPECIALTY_OPTIONS.length; i += 2) {
     const left = SPECIALTY_OPTIONS[i];
     const right = SPECIALTY_OPTIONS[i + 1];
+    const prefix = multi ? 'spec' : 'jobcat';
     const row: InlineKeyboardButton[] = [
       {
-        text: `${session.specialties.includes(left.key) ? '✅ ' : ''}${left.label}`,
-        callback_data: `spec:${left.key}`,
+        text: `${multi && session.specialties.includes(left.key) ? '✅ ' : ''}${left.label}`,
+        callback_data: `${prefix}:${left.key}`,
       },
     ];
     if (right) {
       row.push({
-        text: `${session.specialties.includes(right.key) ? '✅ ' : ''}${right.label}`,
-        callback_data: `spec:${right.key}`,
+        text: `${multi && session.specialties.includes(right.key) ? '✅ ' : ''}${right.label}`,
+        callback_data: `${prefix}:${right.key}`,
       });
     }
     rows.push(row);
   }
-  rows.push([{ text: 'Далее →', callback_data: 'spec:next' }]);
+  if (multi) {
+    rows.push([{ text: 'Далее →', callback_data: 'spec:next' }]);
+  }
   return rows;
 }
 
-function cityKeyboard(): InlineKeyboard {
+function cityKeyboard(prefix: 'city' | 'jobcity'): InlineKeyboard {
   return [
     CITY_OPTIONS.map((city) => ({
       text: city.label,
-      callback_data: `city:${city.key}`,
+      callback_data: `${prefix}:${city.key}`,
     })),
   ];
 }
 
-function photosKeyboard(count: number): InlineKeyboard {
+function photosKeyboard(count: number, min: number, doneData: string): InlineKeyboard {
   const rows: InlineKeyboard = [];
-  if (count >= MIN_PHOTOS) {
-    rows.push([{ text: 'Готово, проверить анкету', callback_data: 'photos:done' }]);
+  if (count >= min) {
+    rows.push([{ text: 'Готово', callback_data: doneData }]);
   }
-  rows.push([{ text: 'Начать заново', callback_data: 'flow:restart' }]);
+  if (min === 0) {
+    rows.push([{ text: 'Пропустить фото', callback_data: doneData }]);
+  }
+  rows.push([{ text: 'В меню', callback_data: 'flow:menu' }]);
   return rows;
 }
 
-function confirmKeyboard(): InlineKeyboard {
+function confirmKeyboard(publishData: string): InlineKeyboard {
   return [
-    [{ text: '📢 Опубликовать в каталог', callback_data: 'flow:publish' }],
-    [{ text: 'Изменить / начать заново', callback_data: 'flow:restart' }],
+    [{ text: '📢 Опубликовать', callback_data: publishData }],
+    [{ text: 'В меню', callback_data: 'flow:menu' }],
+  ];
+}
+
+function reviewKindKeyboard(): InlineKeyboard {
+  return [
+    [{ text: '⭐ Отзыв о работе', callback_data: 'revkind:review' }],
+    [{ text: '💡 Идея / улучшение сайта', callback_data: 'revkind:site' }],
+    [{ text: 'В меню', callback_data: 'flow:menu' }],
+  ];
+}
+
+function budgetKeyboard(): InlineKeyboard {
+  return [
+    [{ text: 'Пропустить бюджет', callback_data: 'jobbudget:skip' }],
+    [{ text: 'В меню', callback_data: 'flow:menu' }],
   ];
 }
 
@@ -160,22 +199,23 @@ function getSession(chatId: number, username?: string | null): BotSession {
   return created;
 }
 
-function resetSession(chatId: number, username?: string | null): BotSession {
-  const created = createEmptySession(username);
-  sessions.set(chatId, created);
-  return created;
+function setSession(chatId: number, session: BotSession): BotSession {
+  sessions.set(chatId, session);
+  return session;
 }
 
-async function askName(token: string, chatId: number): Promise<void> {
+async function showMenu(token: string, chatId: number, username?: string | null): Promise<void> {
+  setSession(chatId, createEmptySession(username));
   await sendMessage(
     token,
     chatId,
     [
       'Привет! Я бот MasterDirect.',
-      'Соберу вашу карточку и сразу поставлю её в каталог на сайте — регистрация не нужна.',
+      'Регистрация на сайте не нужна.',
       '',
-      'Как вас зовут? (имя и фамилия)',
+      'Выберите действие:',
     ].join('\n'),
+    menuKeyboard(),
   );
 }
 
@@ -184,29 +224,15 @@ async function handleStart(
   chatId: number,
   username?: string | null,
 ): Promise<void> {
-  resetSession(chatId, username);
-  await askName(token, chatId);
+  await showMenu(token, chatId, username);
 }
 
-async function handleText(
+async function handleMasterText(
   token: string,
   chatId: number,
-  text: string,
-  username?: string | null,
+  session: BotSession,
+  trimmed: string,
 ): Promise<void> {
-  const trimmed = text.trim();
-  if (trimmed === '/start' || trimmed === '/new') {
-    await handleStart(token, chatId, username);
-    return;
-  }
-  if (trimmed === '/cancel') {
-    sessions.delete(chatId);
-    await sendMessage(token, chatId, 'Ок, анкету отменил. Напишите /start чтобы начать снова.');
-    return;
-  }
-
-  const session = getSession(chatId, username);
-
   switch (session.step) {
     case 'name': {
       if (trimmed.length < 2) {
@@ -234,13 +260,13 @@ async function handleText(
         token,
         chatId,
         'Выберите виды работ (можно несколько), затем нажмите «Далее»:',
-        specialtyKeyboard(session),
+        specialtyKeyboard(session, true),
       );
       return;
     }
     case 'district': {
       if (trimmed.length < 2) {
-        await sendMessage(token, chatId, 'Напишите район работы, например: Старый Батуми / Хелвачаури');
+        await sendMessage(token, chatId, 'Напишите район работы, например: Старый Батуми');
         return;
       }
       session.district = trimmed;
@@ -249,8 +275,8 @@ async function handleText(
       await sendMessage(
         token,
         chatId,
-        `Пришлите от ${MIN_PHOTOS} до ${MAX_PHOTOS} фото работ (по одному сообщению).\nКогда закончите — нажмите «Готово».`,
-        photosKeyboard(0),
+        `Пришлите от ${MIN_PHOTOS} до ${MAX_PHOTOS} фото работ.\nКогда закончите — нажмите «Готово».`,
+        photosKeyboard(0, MIN_PHOTOS, 'photos:done'),
       );
       return;
     }
@@ -258,22 +284,211 @@ async function handleText(
       await sendMessage(
         token,
         chatId,
-        `Сейчас жду фото. Уже ${session.photos.length} из ${MAX_PHOTOS}. Пришлите фото или нажмите «Готово».`,
-        photosKeyboard(session.photos.length),
+        `Сейчас жду фото. Уже ${session.photos.length} из ${MAX_PHOTOS}.`,
+        photosKeyboard(session.photos.length, MIN_PHOTOS, 'photos:done'),
       );
       return;
     }
     case 'confirm': {
-      await sendMessage(token, chatId, formatSessionPreview(session), confirmKeyboard());
-      return;
-    }
-    default: {
       await sendMessage(
         token,
         chatId,
-        'Используйте кнопки ниже или напишите /start чтобы начать заново.',
+        formatSessionPreview(session),
+        confirmKeyboard('flow:publish'),
       );
+      return;
     }
+    default:
+      await sendMessage(token, chatId, 'Используйте кнопки или /start');
+  }
+}
+
+async function handleJobText(
+  token: string,
+  chatId: number,
+  session: BotSession,
+  trimmed: string,
+): Promise<void> {
+  switch (session.step) {
+    case 'job_name': {
+      if (trimmed.length < 2) {
+        await sendMessage(token, chatId, 'Напишите, как к вам обращаться');
+        return;
+      }
+      session.name = trimmed;
+      session.step = 'job_phone';
+      await sendMessage(token, chatId, 'Ваш телефон, например: +995 5XX XXX XXX');
+      return;
+    }
+    case 'job_phone': {
+      const digits = trimmed.replace(/\D/g, '');
+      if (digits.length < 8) {
+        await sendMessage(token, chatId, 'Нужен номер телефона, минимум 8 цифр.');
+        return;
+      }
+      session.phone = trimmed;
+      session.step = 'job_city';
+      await sendMessage(token, chatId, 'Выберите город:', cityKeyboard('jobcity'));
+      return;
+    }
+    case 'job_description': {
+      if (trimmed.length < 10) {
+        await sendMessage(token, chatId, 'Опишите подробнее, что нужно сделать (минимум 10 символов).');
+        return;
+      }
+      session.description = trimmed;
+      session.step = 'job_budget';
+      await sendMessage(
+        token,
+        chatId,
+        'Бюджет в лари? Напишите число (например 800) или нажмите «Пропустить».',
+        budgetKeyboard(),
+      );
+      return;
+    }
+    case 'job_budget': {
+      const digits = trimmed.replace(/[^\d.]/g, '');
+      const value = Number(digits);
+      if (!Number.isFinite(value) || value <= 0) {
+        await sendMessage(
+          token,
+          chatId,
+          'Напишите сумму числом или нажмите «Пропустить».',
+          budgetKeyboard(),
+        );
+        return;
+      }
+      session.budget = Math.round(value);
+      session.step = 'job_photos';
+      session.photos = [];
+      await sendMessage(
+        token,
+        chatId,
+        `Можно прислать до ${MAX_JOB_PHOTOS} фото объекта (необязательно).`,
+        photosKeyboard(0, MIN_JOB_PHOTOS, 'jobphotos:done'),
+      );
+      return;
+    }
+    case 'job_photos': {
+      await sendMessage(
+        token,
+        chatId,
+        `Фото: ${session.photos.length}/${MAX_JOB_PHOTOS}. Пришлите ещё или нажмите «Готово».`,
+        photosKeyboard(session.photos.length, MIN_JOB_PHOTOS, 'jobphotos:done'),
+      );
+      return;
+    }
+    case 'job_confirm': {
+      await sendMessage(
+        token,
+        chatId,
+        formatJobPreview(session),
+        confirmKeyboard('flow:publish_job'),
+      );
+      return;
+    }
+    default:
+      await sendMessage(token, chatId, 'Используйте кнопки или /start');
+  }
+}
+
+async function handleReviewText(
+  token: string,
+  chatId: number,
+  session: BotSession,
+  trimmed: string,
+): Promise<void> {
+  switch (session.step) {
+    case 'review_name': {
+      if (trimmed.length < 2) {
+        await sendMessage(token, chatId, 'Напишите ваше имя');
+        return;
+      }
+      session.name = trimmed;
+      session.step = 'review_kind';
+      await sendMessage(token, chatId, 'Что хотите оставить?', reviewKindKeyboard());
+      return;
+    }
+    case 'review_text': {
+      if (trimmed.length < MIN_REVIEW_CHARS) {
+        await sendMessage(
+          token,
+          chatId,
+          `Напишите чуть подробнее (минимум ${MIN_REVIEW_CHARS} символов).`,
+        );
+        return;
+      }
+      session.reviewText = trimmed;
+      session.step = 'review_confirm';
+      await sendMessage(
+        token,
+        chatId,
+        formatReviewPreview(session),
+        confirmKeyboard('flow:publish_review'),
+      );
+      return;
+    }
+    case 'review_confirm': {
+      await sendMessage(
+        token,
+        chatId,
+        formatReviewPreview(session),
+        confirmKeyboard('flow:publish_review'),
+      );
+      return;
+    }
+    default:
+      await sendMessage(token, chatId, 'Используйте кнопки или /start');
+  }
+}
+
+async function handleText(
+  token: string,
+  chatId: number,
+  text: string,
+  username?: string | null,
+): Promise<void> {
+  const trimmed = text.trim();
+  if (trimmed === '/start' || trimmed === '/new' || trimmed === '/menu') {
+    await handleStart(token, chatId, username);
+    return;
+  }
+  if (trimmed === '/master') {
+    setSession(chatId, startMasterSession(username));
+    await sendMessage(token, chatId, 'Как вас зовут? (имя и фамилия)');
+    return;
+  }
+  if (trimmed === '/job') {
+    setSession(chatId, startJobSession(username));
+    await sendMessage(token, chatId, 'Размещаем заказ.\nКак к вам обращаться?');
+    return;
+  }
+  if (trimmed === '/review') {
+    setSession(chatId, startReviewSession(username));
+    await sendMessage(token, chatId, 'Оставляем отзыв.\nКак вас зовут?');
+    return;
+  }
+  if (trimmed === '/cancel') {
+    sessions.delete(chatId);
+    await sendMessage(token, chatId, 'Ок, отменил. Напишите /start');
+    return;
+  }
+
+  const session = getSession(chatId, username);
+  if (session.flow === 'menu' || session.step === 'menu') {
+    await showMenu(token, chatId, username);
+    return;
+  }
+  if (session.flow === 'master') {
+    await handleMasterText(token, chatId, session, trimmed);
+    return;
+  }
+  if (session.flow === 'job') {
+    await handleJobText(token, chatId, session, trimmed);
+    return;
+  }
+  if (session.flow === 'review') {
+    await handleReviewText(token, chatId, session, trimmed);
   }
 }
 
@@ -284,17 +499,24 @@ async function handlePhoto(
   username?: string | null,
 ): Promise<void> {
   const session = getSession(chatId, username);
-  if (session.step !== 'photos') {
-    await sendMessage(token, chatId, 'Сначала заполним анкету. Напишите /start');
+  const isMasterPhotos = session.flow === 'master' && session.step === 'photos';
+  const isJobPhotos = session.flow === 'job' && session.step === 'job_photos';
+
+  if (!isMasterPhotos && !isJobPhotos) {
+    await sendMessage(token, chatId, 'Сейчас фото не нужны. Напишите /start');
     return;
   }
 
-  if (session.photos.length >= MAX_PHOTOS) {
+  const max = isJobPhotos ? MAX_JOB_PHOTOS : MAX_PHOTOS;
+  const min = isJobPhotos ? MIN_JOB_PHOTOS : MIN_PHOTOS;
+  const doneData = isJobPhotos ? 'jobphotos:done' : 'photos:done';
+
+  if (session.photos.length >= max) {
     await sendMessage(
       token,
       chatId,
-      `Уже ${MAX_PHOTOS} фото — этого достаточно. Нажмите «Готово».`,
-      photosKeyboard(session.photos.length),
+      `Уже ${max} фото. Нажмите «Готово».`,
+      photosKeyboard(session.photos.length, min, doneData),
     );
     return;
   }
@@ -315,13 +537,24 @@ async function handlePhoto(
     fileUniqueId: best.file_unique_id,
   });
 
-  if (session.photos.length >= MAX_PHOTOS) {
+  if (isMasterPhotos && session.photos.length >= MAX_PHOTOS) {
     session.step = 'confirm';
     await sendMessage(
       token,
       chatId,
       `Принял ${session.photos.length} фото.\n\n${formatSessionPreview(session)}`,
-      confirmKeyboard(),
+      confirmKeyboard('flow:publish'),
+    );
+    return;
+  }
+
+  if (isJobPhotos && session.photos.length >= MAX_JOB_PHOTOS) {
+    session.step = 'job_confirm';
+    await sendMessage(
+      token,
+      chatId,
+      `Принял ${session.photos.length} фото.\n\n${formatJobPreview(session)}`,
+      confirmKeyboard('flow:publish_job'),
     );
     return;
   }
@@ -329,8 +562,8 @@ async function handlePhoto(
   await sendMessage(
     token,
     chatId,
-    `Фото ${session.photos.length}/${MAX_PHOTOS} принято. Пришлите ещё или нажмите «Готово».`,
-    photosKeyboard(session.photos.length),
+    `Фото ${session.photos.length}/${max} принято.`,
+    photosKeyboard(session.photos.length, min, doneData),
   );
 }
 
@@ -351,9 +584,34 @@ async function handleCallback(
   const session = getSession(chatId, username);
   const data = query.data;
 
-  if (data === 'flow:restart') {
-    await answerCallback(token, query.id, 'Начинаем заново');
-    await handleStart(token, chatId, username);
+  if (data === 'flow:menu' || data === 'flow:restart') {
+    await answerCallback(token, query.id);
+    await showMenu(token, chatId, username);
+    return;
+  }
+
+  if (data === 'menu:master') {
+    await answerCallback(token, query.id);
+    setSession(chatId, startMasterSession(username));
+    await sendMessage(
+      token,
+      chatId,
+      'Соберу карточку для каталога.\nКак вас зовут? (имя и фамилия)',
+    );
+    return;
+  }
+
+  if (data === 'menu:job') {
+    await answerCallback(token, query.id);
+    setSession(chatId, startJobSession(username));
+    await sendMessage(token, chatId, 'Размещаем заказ на сайте.\nКак к вам обращаться?');
+    return;
+  }
+
+  if (data === 'menu:review') {
+    await answerCallback(token, query.id);
+    setSession(chatId, startReviewSession(username));
+    await sendMessage(token, chatId, 'Отзыв сначала проверит админ, потом появится на сайте.\nКак вас зовут?');
     return;
   }
 
@@ -366,38 +624,81 @@ async function handleCallback(
       }
       session.step = 'city';
       await answerCallback(token, query.id);
-      await sendMessage(token, chatId, 'Выберите город:', cityKeyboard());
+      await sendMessage(token, chatId, 'Выберите город:', cityKeyboard('city'));
       return;
     }
-
+    if (!SPECIALTY_OPTIONS.some((item) => item.key === key)) {
+      await answerCallback(token, query.id, 'Неизвестная специальность');
+      return;
+    }
     if (session.specialties.includes(key)) {
       session.specialties = session.specialties.filter((item) => item !== key);
     } else {
-      session.specialties = [...session.specialties, key];
+      session.specialties.push(key);
     }
-    await answerCallback(token, query.id, specialtyLabels(session.specialties) || 'Выбрано');
+    await answerCallback(token, query.id);
     await sendMessage(
       token,
       chatId,
-      `Выбрано: ${specialtyLabels(session.specialties) || 'пока ничего'}\nМожно отметить ещё или нажать «Далее».`,
-      specialtyKeyboard(session),
+      `Выбрано: ${specialtyLabels(session.specialties) || 'ничего'}\nМожно выбрать ещё или «Далее».`,
+      specialtyKeyboard(session, true),
+    );
+    return;
+  }
+
+  if (data.startsWith('jobcat:')) {
+    const key = data.slice(7);
+    if (!SPECIALTY_OPTIONS.some((item) => item.key === key)) {
+      await answerCallback(token, query.id, 'Неизвестная категория');
+      return;
+    }
+    session.category = key;
+    session.step = 'job_description';
+    await answerCallback(token, query.id, specialtyLabel(key));
+    await sendMessage(
+      token,
+      chatId,
+      `Категория: ${specialtyLabel(key)}\n\nОпишите, что нужно сделать (объём, сроки, детали):`,
     );
     return;
   }
 
   if (data.startsWith('city:')) {
-    const city = data.slice(5) as CityId;
-    if (!CITY_OPTIONS.some((item) => item.key === city)) {
+    const key = data.slice(5) as CityId;
+    if (!CITY_OPTIONS.some((item) => item.key === key)) {
       await answerCallback(token, query.id, 'Неизвестный город');
       return;
     }
-    session.city = city;
+    session.city = key;
     session.step = 'district';
+    await answerCallback(token, query.id);
+    await sendMessage(token, chatId, 'Напишите район работы:');
+    return;
+  }
+
+  if (data.startsWith('jobcity:')) {
+    const key = data.slice(8) as CityId;
+    if (!CITY_OPTIONS.some((item) => item.key === key)) {
+      await answerCallback(token, query.id, 'Неизвестный город');
+      return;
+    }
+    session.city = key;
+    session.step = 'job_category';
+    await answerCallback(token, query.id);
+    await sendMessage(token, chatId, 'Какой вид работ нужен?', specialtyKeyboard(session, false));
+    return;
+  }
+
+  if (data === 'jobbudget:skip') {
+    session.budget = null;
+    session.step = 'job_photos';
+    session.photos = [];
     await answerCallback(token, query.id);
     await sendMessage(
       token,
       chatId,
-      'Напишите район работы текстом (например: Центр, Хелвачаури, Старый Батуми):',
+      `Можно прислать до ${MAX_JOB_PHOTOS} фото объекта (необязательно).`,
+      photosKeyboard(0, MIN_JOB_PHOTOS, 'jobphotos:done'),
     );
     return;
   }
@@ -409,7 +710,43 @@ async function handleCallback(
     }
     session.step = 'confirm';
     await answerCallback(token, query.id);
-    await sendMessage(token, chatId, formatSessionPreview(session), confirmKeyboard());
+    await sendMessage(
+      token,
+      chatId,
+      formatSessionPreview(session),
+      confirmKeyboard('flow:publish'),
+    );
+    return;
+  }
+
+  if (data === 'jobphotos:done') {
+    session.step = 'job_confirm';
+    await answerCallback(token, query.id);
+    await sendMessage(
+      token,
+      chatId,
+      formatJobPreview(session),
+      confirmKeyboard('flow:publish_job'),
+    );
+    return;
+  }
+
+  if (data.startsWith('revkind:')) {
+    const kind = data.slice(8) as ReviewKind;
+    if (kind !== 'review' && kind !== 'site') {
+      await answerCallback(token, query.id, 'Неизвестный тип');
+      return;
+    }
+    session.reviewKind = kind;
+    session.step = 'review_text';
+    await answerCallback(token, query.id);
+    await sendMessage(
+      token,
+      chatId,
+      kind === 'site'
+        ? 'Напишите идею или что улучшить на сайте:'
+        : 'Напишите текст отзыва (минимум 20 символов):',
+    );
     return;
   }
 
@@ -429,7 +766,7 @@ async function handleCallback(
       await sendMessage(
         token,
         chatId,
-        `Не получилось опубликовать: ${result.error ?? 'ошибка'}\nПопробуйте /start ещё раз или напишите админу.`,
+        `Не получилось опубликовать: ${result.error ?? 'ошибка'}\nПопробуйте /start ещё раз.`,
       );
       return;
     }
@@ -443,11 +780,77 @@ async function handleCallback(
         result.profileUrl ? `Ссылка: ${result.profileUrl}` : '',
         result.warning ? `\n⚠️ ${result.warning}` : '',
         '',
-        'Пароль и регистрация на сайте не нужны.',
-        'Новую анкету: /start',
+        'Меню: /start',
       ]
         .filter(Boolean)
         .join('\n'),
+      menuKeyboard(),
+    );
+    return;
+  }
+
+  if (data === 'flow:publish_job') {
+    await answerCallback(token, query.id, 'Публикую…');
+    await sendMessage(token, chatId, 'Публикую заказ, подождите…');
+    const result = await publishJobOrder({
+      supabase,
+      supabaseUrl,
+      serviceRoleKey,
+      botToken: token,
+      session,
+      siteOrigin,
+    });
+
+    if (!result.ok) {
+      await sendMessage(
+        token,
+        chatId,
+        `Не получилось опубликовать заказ: ${result.error ?? 'ошибка'}\nПопробуйте /start.`,
+      );
+      return;
+    }
+
+    sessions.delete(chatId);
+    await sendMessage(
+      token,
+      chatId,
+      [
+        'Готово! Заказ уже на сайте.',
+        result.jobsUrl ? `Смотреть заказы: ${result.jobsUrl}` : '',
+        result.warning ? `\n⚠️ ${result.warning}` : '',
+        '',
+        'Меню: /start',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      menuKeyboard(),
+    );
+    return;
+  }
+
+  if (data === 'flow:publish_review') {
+    await answerCallback(token, query.id, 'Отправляю…');
+    const result = await publishSiteReview({ supabase, session });
+    if (!result.ok) {
+      await sendMessage(
+        token,
+        chatId,
+        `Не получилось отправить отзыв: ${result.error ?? 'ошибка'}\nПопробуйте /start.`,
+      );
+      return;
+    }
+
+    sessions.delete(chatId);
+    await sendMessage(
+      token,
+      chatId,
+      [
+        'Спасибо! Отзыв отправлен на модерацию.',
+        'После проверки администратором он появится на сайте.',
+        '',
+        'Меню: /start',
+      ].join('\n'),
+      menuKeyboard(),
     );
   }
 }

@@ -102,17 +102,22 @@ async function uploadPortfolioImage(
   index: number,
   file: { bytes: Buffer; contentType: string; ext: string },
 ): Promise<string> {
-  const path = `bot/${specialistId}/${Date.now()}_${index}.${file.ext}`;
-  // Avoid non-ASCII in HTTP headers (Node Headers / ByteString).
-  const { error } = await supabase.storage
-    .from(PORTFOLIO_BUCKET)
-    .upload(path, new Uint8Array(file.bytes), {
-      contentType: file.contentType,
-      upsert: false,
-      cacheControl: '3600',
-    });
+  // Same layout as the site cabinet uploads (public/...), ASCII-only path.
+  const safeId = specialistId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32) || 'bot';
+  const path = `public/bot_${safeId}_${Date.now()}_${index}.${file.ext}`;
+  const blob = new Blob([new Uint8Array(file.bytes)], { type: file.contentType });
+
+  const { error } = await supabase.storage.from(PORTFOLIO_BUCKET).upload(path, blob, {
+    contentType: file.contentType,
+    upsert: false,
+    cacheControl: '3600',
+  });
   if (error) {
-    throw new Error(`Storage upload (${PORTFOLIO_BUCKET}): ${error.message}`);
+    const hint =
+      error.message.includes('Invalid path')
+        ? ' Проверьте SUPABASE_URL на Railway: только https://….supabase.co без /rest/v1.'
+        : '';
+    throw new Error(`Storage upload (${PORTFOLIO_BUCKET}/${path}): ${error.message}.${hint}`);
   }
   return supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path).data.publicUrl;
 }

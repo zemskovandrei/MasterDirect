@@ -9,8 +9,22 @@ function sanitizeEnv(value: string | undefined): string {
   return (value ?? '').trim().replace(/^['"]|['"]$/g, '');
 }
 
+/** Project origin only — strips /rest/v1, /storage/v1, trailing slash, etc. */
+function normalizeSupabaseUrl(raw: string): string {
+  const cleaned = sanitizeEnv(raw);
+  if (!cleaned) {
+    return '';
+  }
+  try {
+    const parsed = new URL(cleaned);
+    return parsed.origin;
+  } catch {
+    return cleaned.replace(/\/+$/, '').replace(/\/(rest|storage|auth|functions)\/v1$/i, '');
+  }
+}
+
 const PORT = Number(sanitizeEnv(process.env.PORT)) || 3000;
-const SUPABASE_URL = sanitizeEnv(process.env.SUPABASE_URL).replace(/\/$/, '');
+const SUPABASE_URL = normalizeSupabaseUrl(process.env.SUPABASE_URL ?? '');
 const SUPABASE_SERVICE_ROLE_KEY = sanitizeEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const ADMIN_EMAILS = parseCsv(process.env.ADMIN_EMAILS).map((item) => item.toLowerCase());
 const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
@@ -46,6 +60,8 @@ if (
     '[masterdirect API] SUPABASE_SERVICE_ROLE_KEY should start with eyJ (legacy service_role) or sb_secret_.',
   );
 }
+
+console.log(`[masterdirect API] SUPABASE_URL=${SUPABASE_URL}`);
 
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {

@@ -20,7 +20,7 @@
 |-----|--------|
 | `TELEGRAM_BOT_TOKEN` | токен от BotFather |
 | `SITE_ORIGIN` | `https://masterdirect.ge` |
-| `SUPABASE_URL` | только `https://ВАШ_PROJECT.supabase.co` (без слэша в конце, не сайт masterdirect.ge) |
+| `SUPABASE_URL` | только `https://ВАШ_PROJECT.supabase.co` — **без** `/rest/v1`, без слэша в конце, не сайт masterdirect.ge |
 | `SUPABASE_SERVICE_ROLE_KEY` | Dashboard → **Settings → API Keys** → legacy **`service_role`** (Reveal). Должен начинаться с `eyJ…`. Ключ `sb_secret_…` тоже можно, но при ошибках JSON надёжнее `eyJ` |
 | `ALLOWED_ORIGINS` | `https://masterdirect.ge,https://www.masterdirect.ge` |
 | `ADMIN_EMAILS` | ваш admin email |

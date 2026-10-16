@@ -30,6 +30,23 @@ if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)) {
   );
 }
 
+if (/[^\x00-\x7F]/.test(SUPABASE_SERVICE_ROLE_KEY)) {
+  console.error(
+    '[masterdirect API] SUPABASE_SERVICE_ROLE_KEY contains non-ASCII characters (e.g. Cyrillic). ' +
+      'Paste the legacy service_role JWT from Supabase → Settings → API Keys (starts with eyJ).',
+  );
+  process.exit(1);
+}
+
+if (
+  !SUPABASE_SERVICE_ROLE_KEY.startsWith('eyJ') &&
+  !SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_secret_')
+) {
+  console.warn(
+    '[masterdirect API] SUPABASE_SERVICE_ROLE_KEY should start with eyJ (legacy service_role) or sb_secret_.',
+  );
+}
+
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {
     autoRefreshToken: false,

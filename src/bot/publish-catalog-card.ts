@@ -83,7 +83,11 @@ async function downloadTelegramFile(
     );
   }
 
-  const contentType = blobRes.headers.get('content-type') || 'image/jpeg';
+  const rawType = (blobRes.headers.get('content-type') || 'image/jpeg').split(';')[0].trim().toLowerCase();
+  const contentType =
+    rawType === 'image/png' || rawType === 'image/webp' || rawType === 'image/gif'
+      ? rawType
+      : 'image/jpeg';
   const bytes = Buffer.from(await blobRes.arrayBuffer());
   return {
     bytes,
@@ -99,6 +103,7 @@ async function uploadPortfolioImage(
   file: { bytes: Buffer; contentType: string; ext: string },
 ): Promise<string> {
   const path = `bot/${specialistId}/${Date.now()}_${index}.${file.ext}`;
+  // Avoid non-ASCII in HTTP headers (Node Headers / ByteString).
   const { error } = await supabase.storage
     .from(PORTFOLIO_BUCKET)
     .upload(path, new Uint8Array(file.bytes), {
@@ -117,6 +122,12 @@ function formatCaughtError(error: unknown): string {
     return 'Не удалось опубликовать карточку';
   }
   const message = error.message || 'Неизвестная ошибка';
+  if (message.includes('ByteString') || message.includes('greater than 255')) {
+    return (
+      'В Railway в SUPABASE_SERVICE_ROLE_KEY попали русские буквы. ' +
+      'Вставьте legacy service_role (Settings → API Keys → Reveal), ключ должен начинаться с eyJ.'
+    );
+  }
   if (message.includes("Unexpected token '<'") || message.includes('is not valid JSON')) {
     return (
       'Supabase вернул HTML вместо JSON. В Railway Variables проверьте SUPABASE_URL ' +

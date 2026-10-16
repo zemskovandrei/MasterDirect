@@ -26,6 +26,13 @@ npm run start:api
 
 Required env vars are in `.env.example`.
 
+Optional Telegram catalog bot (see `TELEGRAM_BOT.md`):
+
+- `TELEGRAM_BOT_TOKEN`
+- `SITE_ORIGIN`
+
+When `TELEGRAM_BOT_TOKEN` is set, the API also runs long-polling for the catalog bot.
+
 ## Required Environment Variables
 
 - `PORT`
@@ -35,6 +42,8 @@ Required env vars are in `.env.example`.
 - `ADMIN_EMAILS`
 - `API_RATE_LIMIT_WINDOW_MS`
 - `API_RATE_LIMIT_MAX`
+- `TELEGRAM_BOT_TOKEN` (optional)
+- `SITE_ORIGIN` (optional, default `https://masterdirect.ge`)
 
 ## Production Smoke Test
 

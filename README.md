@@ -62,6 +62,7 @@ Release docs:
 
 - `DEPLOYMENT.md`
 - `RELEASE_CHECKLIST.md`
+- `TELEGRAM_BOT.md` — бот для публикации анкет мастеров в каталог без регистрации
 
 ## Running unit tests
 

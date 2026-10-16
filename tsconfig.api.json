@@ -17,6 +17,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/index.ts"],
+  "include": ["src/index.ts", "src/bot/**/*.ts"],
   "exclude": ["node_modules", "dist", "dist-api"]
 }

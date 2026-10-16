@@ -47,8 +47,10 @@ export function splitPersonName(fullName: string, firstName?: string, lastName?:
 }
 
 export function skillsFromSpecialty(specialty: string): string[] {
-  const value = specialty.trim();
-  return value ? [value] : [];
+  return specialty
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 export function specialtyFromSkills(skills: string[] | null | undefined): string {

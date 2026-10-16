@@ -8,6 +8,7 @@
     "build:api": "tsc -p tsconfig.api.json",
     "build:pages": "ng build --configuration=github-pages && node scripts/normalize-pages-output.mjs",
     "start:api": "node dist-api/index.js",
+    "start:bot": "npm run build:api && npm run start:api",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "postinstall": "node scripts/fix-rxjs-tsconfig.mjs",

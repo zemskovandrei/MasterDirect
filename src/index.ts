@@ -3,6 +3,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import express, { NextFunction, Request, Response, RequestHandler } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { startCatalogTelegramBot } from './bot/catalog-bot';
 
 const PORT = Number(process.env.PORT) || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL?.trim() ?? '';
@@ -11,6 +12,8 @@ const ADMIN_EMAILS = parseCsv(process.env.ADMIN_EMAILS).map((item) => item.toLow
 const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
 const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '';
+const SITE_ORIGIN = (process.env.SITE_ORIGIN?.trim() || 'https://masterdirect.ge').replace(/\/$/, '');
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('[masterdirect API] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
@@ -467,4 +470,14 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 app.listen(PORT, () => {
   console.log(`[masterdirect API] Server listening on http://localhost:${PORT}`);
+
+  if (TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
+    startCatalogTelegramBot({
+      token: TELEGRAM_BOT_TOKEN,
+      supabase,
+      siteOrigin: SITE_ORIGIN,
+    });
+  } else {
+    console.log('[masterdirect API] Telegram catalog bot disabled (set TELEGRAM_BOT_TOKEN)');
+  }
 });

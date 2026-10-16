@@ -338,6 +338,8 @@ async function handleCallback(
   token: string,
   supabase: SupabaseClient,
   siteOrigin: string,
+  supabaseUrl: string,
+  serviceRoleKey: string,
   query: TelegramCallbackQuery,
 ): Promise<void> {
   const chatId = query.message?.chat.id;
@@ -416,6 +418,8 @@ async function handleCallback(
     await sendMessage(token, chatId, 'Публикую карточку в каталог, подождите…');
     const result = await publishCatalogCard({
       supabase,
+      supabaseUrl,
+      serviceRoleKey,
       botToken: token,
       session,
       siteOrigin,
@@ -437,6 +441,7 @@ async function handleCallback(
       [
         'Готово! Карточка уже в каталоге MasterDirect.',
         result.profileUrl ? `Ссылка: ${result.profileUrl}` : '',
+        result.warning ? `\n⚠️ ${result.warning}` : '',
         '',
         'Пароль и регистрация на сайте не нужны.',
         'Новую анкету: /start',
@@ -451,10 +456,19 @@ async function processUpdate(
   token: string,
   supabase: SupabaseClient,
   siteOrigin: string,
+  supabaseUrl: string,
+  serviceRoleKey: string,
   update: TelegramUpdate,
 ): Promise<void> {
   if (update.callback_query) {
-    await handleCallback(token, supabase, siteOrigin, update.callback_query);
+    await handleCallback(
+      token,
+      supabase,
+      siteOrigin,
+      supabaseUrl,
+      serviceRoleKey,
+      update.callback_query,
+    );
     return;
   }
 
@@ -480,8 +494,10 @@ export function startCatalogTelegramBot(options: {
   token: string;
   supabase: SupabaseClient;
   siteOrigin: string;
+  supabaseUrl: string;
+  serviceRoleKey: string;
 }): void {
-  const { token, supabase, siteOrigin } = options;
+  const { token, supabase, siteOrigin, supabaseUrl, serviceRoleKey } = options;
   let offset = 0;
   let stopped = false;
 
@@ -497,7 +513,14 @@ export function startCatalogTelegramBot(options: {
         for (const update of updates) {
           offset = update.update_id + 1;
           try {
-            await processUpdate(token, supabase, siteOrigin, update);
+            await processUpdate(
+              token,
+              supabase,
+              siteOrigin,
+              supabaseUrl,
+              serviceRoleKey,
+              update,
+            );
           } catch (error) {
             console.error('[catalog-bot] update failed:', error);
           }

@@ -9,12 +9,15 @@ import {
 } from './catalog-bot-types';
 
 const PORTFOLIO_BUCKET = 'portfolio';
+/** Bumped when publish/storage logic changes — shown in /api/health and bot errors. */
+export const CATALOG_BOT_BUILD = 'storage-raw-v2';
 
 export interface PublishCatalogCardResult {
   ok: boolean;
   specialistId?: string;
   profileUrl?: string;
   error?: string;
+  warning?: string;
 }
 
 function splitName(fullName: string): { name: string; surname: string } {
@@ -96,30 +99,43 @@ async function downloadTelegramFile(
   };
 }
 
-async function uploadPortfolioImage(
-  supabase: SupabaseClient,
+/** Direct Storage REST upload — avoids supabase-js URL/path quirks. */
+async function uploadPortfolioImageRaw(
+  supabaseUrl: string,
+  serviceKey: string,
   specialistId: string,
   index: number,
   file: { bytes: Buffer; contentType: string; ext: string },
 ): Promise<string> {
-  // Same layout as the site cabinet uploads (public/...), ASCII-only path.
   const safeId = specialistId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32) || 'bot';
-  const path = `public/bot_${safeId}_${Date.now()}_${index}.${file.ext}`;
-  const blob = new Blob([new Uint8Array(file.bytes)], { type: file.contentType });
+  const objectPath = `public/bot_${safeId}_${Date.now()}_${index}.${file.ext}`;
+  const uploadUrl = `${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${objectPath}`;
 
-  const { error } = await supabase.storage.from(PORTFOLIO_BUCKET).upload(path, blob, {
-    contentType: file.contentType,
-    upsert: false,
-    cacheControl: '3600',
+  const response = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${serviceKey}`,
+      apikey: serviceKey,
+      'Content-Type': file.contentType,
+      'x-upsert': 'false',
+      'cache-control': 'max-age=3600',
+    },
+    body: new Uint8Array(file.bytes),
   });
-  if (error) {
-    const hint =
-      error.message.includes('Invalid path')
-        ? ' Проверьте SUPABASE_URL на Railway: только https://….supabase.co без /rest/v1.'
-        : '';
-    throw new Error(`Storage upload (${PORTFOLIO_BUCKET}/${path}): ${error.message}.${hint}`);
+
+  const bodyText = (await response.text()).trim();
+  if (!response.ok) {
+    console.error('[catalog-bot] storage upload failed', {
+      status: response.status,
+      uploadUrl,
+      body: bodyText.slice(0, 300),
+    });
+    throw new Error(
+      `Storage HTTP ${response.status} [${CATALOG_BOT_BUILD}] ${objectPath}: ${bodyText.slice(0, 160) || response.statusText}`,
+    );
   }
-  return supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path).data.publicUrl;
+
+  return `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${objectPath}`;
 }
 
 function formatCaughtError(error: unknown): string {
@@ -140,16 +156,23 @@ function formatCaughtError(error: unknown): string {
       '(лучше legacy service_role, начинается с eyJ).'
     );
   }
-  return message;
+  if (message.includes('Invalid path')) {
+    return (
+      `${message} — SUPABASE_URL должен быть только https://….supabase.co (без /rest/v1). Билд ${CATALOG_BOT_BUILD}.`
+    );
+  }
+  return `${message} [${CATALOG_BOT_BUILD}]`;
 }
 
 export async function publishCatalogCard(options: {
   supabase: SupabaseClient;
+  supabaseUrl: string;
+  serviceRoleKey: string;
   botToken: string;
   session: BotSession;
   siteOrigin: string;
 }): Promise<PublishCatalogCardResult> {
-  const { supabase, botToken, session, siteOrigin } = options;
+  const { supabase, supabaseUrl, serviceRoleKey, botToken, session, siteOrigin } = options;
 
   if (!session.name?.trim() || !session.phone?.trim() || !session.city) {
     return { ok: false, error: 'Не хватает имени, телефона или города' };
@@ -170,22 +193,17 @@ export async function publishCatalogCard(options: {
   const skills = session.specialties
     .map((key) => SPECIALTY_OPTIONS.find((item) => item.key === key)?.key ?? key)
     .filter(Boolean);
+  const origin = siteOrigin.replace(/\/$/, '');
+  const profileUrl = `${origin}/masters/${specialistId}`;
 
   try {
-    const uploadedUrls: string[] = [];
-    for (let i = 0; i < session.photos.length; i += 1) {
-      const file = await downloadTelegramFile(botToken, session.photos[i].fileId);
-      const url = await uploadPortfolioImage(supabase, specialistId, i, file);
-      uploadedUrls.push(url);
-    }
-
-    const avatarUrl = uploadedUrls[0] ?? null;
-    const specialistPayload = {
+    // 1) Create catalog row first (proves REST URL/key are OK).
+    const { error: insertError } = await supabase.from('specialist').insert({
       id: specialistId,
       name,
       surname,
       phone,
-      avatar_url: avatarUrl,
+      avatar_url: null,
       skills,
       city: cityValue,
       role: 'master',
@@ -195,33 +213,68 @@ export async function publishCatalogCard(options: {
       is_verified: false,
       is_archive: false,
       is_pro: false,
-    };
-
-    const { error: insertError } = await supabase.from('specialist').insert(specialistPayload);
+    });
     if (insertError) {
-      return { ok: false, error: insertError.message };
+      return { ok: false, error: `БД specialist: ${insertError.message} [${CATALOG_BOT_BUILD}]` };
     }
 
-    const workRows = uploadedUrls.map((url, index) => ({
-      before_image_url: url,
-      after_image_url: url,
-      description: `${specialtyLabels(session.specialties)} — фото ${index + 1}`,
-      specialist_id: specialistId,
-      owner_type: 'worker',
-      status: 'verified',
-    }));
-
-    const { error: worksError } = await supabase.from('portfolio_works').insert(workRows);
-    if (worksError) {
-      // Profile already visible; photos are best-effort.
-      console.error('[catalog-bot] portfolio_works insert failed:', worksError.message);
+    // 2) Upload photos via Storage REST.
+    const uploadedUrls: string[] = [];
+    let photoError: string | undefined;
+    for (let i = 0; i < session.photos.length; i += 1) {
+      try {
+        const file = await downloadTelegramFile(botToken, session.photos[i].fileId);
+        const url = await uploadPortfolioImageRaw(
+          supabaseUrl,
+          serviceRoleKey,
+          specialistId,
+          i,
+          file,
+        );
+        uploadedUrls.push(url);
+      } catch (error) {
+        photoError = formatCaughtError(error);
+        console.error('[catalog-bot] photo upload stopped:', photoError);
+        break;
+      }
     }
 
-    const origin = siteOrigin.replace(/\/$/, '');
+    if (uploadedUrls.length > 0) {
+      await supabase
+        .from('specialist')
+        .update({ avatar_url: uploadedUrls[0] })
+        .eq('id', specialistId);
+
+      const workRows = uploadedUrls.map((url, index) => ({
+        before_image_url: url,
+        after_image_url: url,
+        description: `${specialtyLabels(session.specialties)} — фото ${index + 1}`,
+        specialist_id: specialistId,
+        owner_type: 'worker',
+        status: 'verified',
+      }));
+      const { error: worksError } = await supabase.from('portfolio_works').insert(workRows);
+      if (worksError) {
+        console.error('[catalog-bot] portfolio_works insert failed:', worksError.message);
+      }
+    }
+
+    if (uploadedUrls.length === 0) {
+      return {
+        ok: true,
+        specialistId,
+        profileUrl,
+        warning: photoError
+          ? `Анкета создана без фото: ${photoError}`
+          : 'Анкета создана без фото',
+      };
+    }
+
     return {
       ok: true,
       specialistId,
-      profileUrl: `${origin}/masters/${specialistId}`,
+      profileUrl,
+      warning: photoError ? `Часть фото не загрузилась: ${photoError}` : undefined,
     };
   } catch (error) {
     console.error('[catalog-bot] publishCatalogCard failed:', error);

@@ -4,6 +4,7 @@ import cors from 'cors';
 import express, { NextFunction, Request, Response, RequestHandler } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { startCatalogTelegramBot } from './bot/catalog-bot';
+import { CATALOG_BOT_BUILD } from './bot/publish-catalog-card';
 
 function sanitizeEnv(value: string | undefined): string {
   return (value ?? '').trim().replace(/^['"]|['"]$/g, '');
@@ -540,11 +541,18 @@ app.get('/api/catalog', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ ok: true, service: 'masterdirect API' });
+  res.json({
+    ok: true,
+    service: 'masterdirect API',
+    build: CATALOG_BOT_BUILD,
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA ?? null,
+    supabaseUrl: SUPABASE_URL,
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`[masterdirect API] Server listening on http://localhost:${PORT}`);
+  console.log(`[masterdirect API] build=${CATALOG_BOT_BUILD}`);
   void probeSupabaseConnectivity();
 
   if (TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
@@ -552,6 +560,8 @@ app.listen(PORT, () => {
       token: TELEGRAM_BOT_TOKEN,
       supabase,
       siteOrigin: SITE_ORIGIN,
+      supabaseUrl: SUPABASE_URL,
+      serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
     });
   } else {
     console.log('[masterdirect API] Telegram catalog bot disabled (set TELEGRAM_BOT_TOKEN)');

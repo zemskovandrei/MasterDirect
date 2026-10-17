@@ -14,10 +14,11 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'reviews', renderMode: RenderMode.Prerender },
   { path: 'privacy', renderMode: RenderMode.Prerender },
   { path: 'terms', renderMode: RenderMode.Prerender },
-  // Client-only: auth return URLs and private tools
-  { path: 'cabinet', renderMode: RenderMode.Client },
-  { path: 'moderation', renderMode: RenderMode.Client },
-  { path: 'admin', renderMode: RenderMode.Client },
+  // Prerender shell so GitHub Pages returns HTTP 200 (not 404) for crawlers.
+  // SeoService marks these noindex — they must not appear in Google search.
+  { path: 'cabinet', renderMode: RenderMode.Prerender },
+  { path: 'moderation', renderMode: RenderMode.Prerender },
+  { path: 'admin', renderMode: RenderMode.Prerender },
   { path: 'verify/**', renderMode: RenderMode.Client },
   { path: 'masters/**', renderMode: RenderMode.Client },
   { path: 'brigades/**', renderMode: RenderMode.Client },

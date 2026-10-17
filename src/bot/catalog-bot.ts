@@ -57,10 +57,23 @@ interface TelegramUpdate {
 
 interface InlineKeyboardButton {
   text: string;
-  callback_data: string;
+  callback_data?: string;
+  url?: string;
 }
 
 type InlineKeyboard = InlineKeyboardButton[][];
+
+const MENU_TEXT_ALIASES = new Set([
+  '/start',
+  '/new',
+  '/menu',
+  'меню',
+  '☰ меню',
+  'в меню',
+  'menu',
+]);
+
+const CANCEL_TEXT_ALIASES = new Set(['/cancel', 'отмена', '❌ отмена', 'cancel']);
 
 const sessions = new Map<number, BotSession>();
 
@@ -109,11 +122,14 @@ async function answerCallback(token: string, callbackId: string, text?: string):
   });
 }
 
-function menuKeyboard(): InlineKeyboard {
+function menuKeyboard(siteOrigin: string): InlineKeyboard {
+  const origin = siteOrigin.replace(/\/$/, '');
   return [
-    [{ text: '👷 Я мастер — в каталог', callback_data: 'menu:master' }],
     [{ text: '📋 Разместить заказ', callback_data: 'menu:job' }],
     [{ text: '⭐ Оставить отзыв', callback_data: 'menu:review' }],
+    [{ text: '👀 Смотреть мастеров', url: `${origin}/masters` }],
+    [{ text: '📌 Смотреть заказы', url: `${origin}/jobs` }],
+    [{ text: '👷 Я мастер — в каталог', callback_data: 'menu:master' }],
   ];
 }
 
@@ -140,6 +156,7 @@ function specialtyKeyboard(session: BotSession, multi: boolean): InlineKeyboard 
   if (multi) {
     rows.push([{ text: 'Далее →', callback_data: 'spec:next' }]);
   }
+  rows.push([{ text: '« В меню', callback_data: 'flow:menu' }]);
   return rows;
 }
 
@@ -149,6 +166,7 @@ function cityKeyboard(prefix: 'city' | 'jobcity'): InlineKeyboard {
       text: city.label,
       callback_data: `${prefix}:${city.key}`,
     })),
+    [{ text: '« В меню', callback_data: 'flow:menu' }],
   ];
 }
 
@@ -160,14 +178,14 @@ function photosKeyboard(count: number, min: number, doneData: string): InlineKey
   if (min === 0) {
     rows.push([{ text: 'Пропустить фото', callback_data: doneData }]);
   }
-  rows.push([{ text: 'В меню', callback_data: 'flow:menu' }]);
+  rows.push([{ text: '« В меню', callback_data: 'flow:menu' }]);
   return rows;
 }
 
 function confirmKeyboard(publishData: string): InlineKeyboard {
   return [
     [{ text: '📢 Опубликовать', callback_data: publishData }],
-    [{ text: 'В меню', callback_data: 'flow:menu' }],
+    [{ text: '« В меню', callback_data: 'flow:menu' }],
   ];
 }
 
@@ -175,15 +193,19 @@ function reviewKindKeyboard(): InlineKeyboard {
   return [
     [{ text: '⭐ Отзыв о работе', callback_data: 'revkind:review' }],
     [{ text: '💡 Идея / улучшение сайта', callback_data: 'revkind:site' }],
-    [{ text: 'В меню', callback_data: 'flow:menu' }],
+    [{ text: '« В меню', callback_data: 'flow:menu' }],
   ];
 }
 
 function budgetKeyboard(): InlineKeyboard {
   return [
     [{ text: 'Пропустить бюджет', callback_data: 'jobbudget:skip' }],
-    [{ text: 'В меню', callback_data: 'flow:menu' }],
+    [{ text: '« В меню', callback_data: 'flow:menu' }],
   ];
+}
+
+function backToMenuKeyboard(): InlineKeyboard {
+  return [[{ text: '« В меню', callback_data: 'flow:menu' }]];
 }
 
 function getSession(chatId: number, username?: string | null): BotSession {
@@ -204,7 +226,12 @@ function setSession(chatId: number, session: BotSession): BotSession {
   return session;
 }
 
-async function showMenu(token: string, chatId: number, username?: string | null): Promise<void> {
+async function showMenu(
+  token: string,
+  chatId: number,
+  siteOrigin: string,
+  username?: string | null,
+): Promise<void> {
   setSession(chatId, createEmptySession(username));
   await sendMessage(
     token,
@@ -213,18 +240,22 @@ async function showMenu(token: string, chatId: number, username?: string | null)
       'Привет! Я бот MasterDirect.',
       'Регистрация на сайте не нужна.',
       '',
+      'Клиентам: заказ, отзыв или просто посмотреть каталог.',
+      'Мастерам: анкета в каталог.',
+      '',
       'Выберите действие:',
     ].join('\n'),
-    menuKeyboard(),
+    menuKeyboard(siteOrigin),
   );
 }
 
 async function handleStart(
   token: string,
   chatId: number,
+  siteOrigin: string,
   username?: string | null,
 ): Promise<void> {
-  await showMenu(token, chatId, username);
+  await showMenu(token, chatId, siteOrigin, username);
 }
 
 async function handleMasterText(
@@ -245,13 +276,19 @@ async function handleMasterText(
         token,
         chatId,
         'Телефон для клиентов (WhatsApp тоже ок), например: +995 5XX XXX XXX',
+        backToMenuKeyboard(),
       );
       return;
     }
     case 'phone': {
       const digits = trimmed.replace(/\D/g, '');
       if (digits.length < 8) {
-        await sendMessage(token, chatId, 'Нужен номер телефона, минимум 8 цифр.');
+        await sendMessage(
+          token,
+          chatId,
+          'Нужен номер телефона, минимум 8 цифр.',
+          backToMenuKeyboard(),
+        );
         return;
       }
       session.phone = trimmed;
@@ -266,7 +303,12 @@ async function handleMasterText(
     }
     case 'district': {
       if (trimmed.length < 2) {
-        await sendMessage(token, chatId, 'Напишите район работы, например: Старый Батуми');
+        await sendMessage(
+          token,
+          chatId,
+          'Напишите район работы, например: Старый Батуми',
+          backToMenuKeyboard(),
+        );
         return;
       }
       session.district = trimmed;
@@ -312,18 +354,33 @@ async function handleJobText(
   switch (session.step) {
     case 'job_name': {
       if (trimmed.length < 2) {
-        await sendMessage(token, chatId, 'Напишите, как к вам обращаться');
+        await sendMessage(
+          token,
+          chatId,
+          'Напишите, как к вам обращаться',
+          backToMenuKeyboard(),
+        );
         return;
       }
       session.name = trimmed;
       session.step = 'job_phone';
-      await sendMessage(token, chatId, 'Ваш телефон, например: +995 5XX XXX XXX');
+      await sendMessage(
+        token,
+        chatId,
+        'Ваш телефон, например: +995 5XX XXX XXX',
+        backToMenuKeyboard(),
+      );
       return;
     }
     case 'job_phone': {
       const digits = trimmed.replace(/\D/g, '');
       if (digits.length < 8) {
-        await sendMessage(token, chatId, 'Нужен номер телефона, минимум 8 цифр.');
+        await sendMessage(
+          token,
+          chatId,
+          'Нужен номер телефона, минимум 8 цифр.',
+          backToMenuKeyboard(),
+        );
         return;
       }
       session.phone = trimmed;
@@ -446,37 +503,55 @@ async function handleText(
   token: string,
   chatId: number,
   text: string,
+  siteOrigin: string,
   username?: string | null,
 ): Promise<void> {
   const trimmed = text.trim();
-  if (trimmed === '/start' || trimmed === '/new' || trimmed === '/menu') {
-    await handleStart(token, chatId, username);
+  const normalized = trimmed.toLowerCase();
+
+  if (MENU_TEXT_ALIASES.has(normalized) || trimmed === '/start' || trimmed === '/new' || trimmed === '/menu') {
+    await handleStart(token, chatId, siteOrigin, username);
+    return;
+  }
+  if (CANCEL_TEXT_ALIASES.has(normalized) || trimmed === '/cancel') {
+    sessions.delete(chatId);
+    await sendMessage(token, chatId, 'Ок, отменил. Напишите /start или «Меню».');
     return;
   }
   if (trimmed === '/master') {
     setSession(chatId, startMasterSession(username));
-    await sendMessage(token, chatId, 'Как вас зовут? (имя и фамилия)');
+    await sendMessage(
+      token,
+      chatId,
+      'Анкета мастера.\n\nКак вас зовут? (имя и фамилия)',
+      backToMenuKeyboard(),
+    );
     return;
   }
   if (trimmed === '/job') {
     setSession(chatId, startJobSession(username));
-    await sendMessage(token, chatId, 'Размещаем заказ.\nКак к вам обращаться?');
+    await sendMessage(
+      token,
+      chatId,
+      'Размещаем заказ.\n\nКак к вам обращаться?',
+      backToMenuKeyboard(),
+    );
     return;
   }
   if (trimmed === '/review') {
     setSession(chatId, startReviewSession(username));
-    await sendMessage(token, chatId, 'Оставляем отзыв.\nКак вас зовут?');
-    return;
-  }
-  if (trimmed === '/cancel') {
-    sessions.delete(chatId);
-    await sendMessage(token, chatId, 'Ок, отменил. Напишите /start');
+    await sendMessage(
+      token,
+      chatId,
+      'Оставляем отзыв.\n\nКак вас зовут?',
+      backToMenuKeyboard(),
+    );
     return;
   }
 
   const session = getSession(chatId, username);
   if (session.flow === 'menu' || session.step === 'menu') {
-    await showMenu(token, chatId, username);
+    await showMenu(token, chatId, siteOrigin, username);
     return;
   }
   if (session.flow === 'master') {
@@ -586,7 +661,7 @@ async function handleCallback(
 
   if (data === 'flow:menu' || data === 'flow:restart') {
     await answerCallback(token, query.id);
-    await showMenu(token, chatId, username);
+    await showMenu(token, chatId, siteOrigin, username);
     return;
   }
 
@@ -596,7 +671,8 @@ async function handleCallback(
     await sendMessage(
       token,
       chatId,
-      'Соберу карточку для каталога.\nКак вас зовут? (имя и фамилия)',
+      'Анкета мастера в каталог.\n\nКак вас зовут? (имя и фамилия)',
+      backToMenuKeyboard(),
     );
     return;
   }
@@ -604,14 +680,24 @@ async function handleCallback(
   if (data === 'menu:job') {
     await answerCallback(token, query.id);
     setSession(chatId, startJobSession(username));
-    await sendMessage(token, chatId, 'Размещаем заказ на сайте.\nКак к вам обращаться?');
+    await sendMessage(
+      token,
+      chatId,
+      'Размещаем заказ на сайте.\n\nКак к вам обращаться?',
+      backToMenuKeyboard(),
+    );
     return;
   }
 
   if (data === 'menu:review') {
     await answerCallback(token, query.id);
     setSession(chatId, startReviewSession(username));
-    await sendMessage(token, chatId, 'Отзыв сначала проверит админ, потом появится на сайте.\nКак вас зовут?');
+    await sendMessage(
+      token,
+      chatId,
+      'Отзыв сначала проверит админ, потом появится на сайте.\n\nКак вас зовут?',
+      backToMenuKeyboard(),
+    );
     return;
   }
 
@@ -784,7 +870,7 @@ async function handleCallback(
       ]
         .filter(Boolean)
         .join('\n'),
-      menuKeyboard(),
+      menuKeyboard(siteOrigin),
     );
     return;
   }
@@ -823,7 +909,7 @@ async function handleCallback(
       ]
         .filter(Boolean)
         .join('\n'),
-      menuKeyboard(),
+      menuKeyboard(siteOrigin),
     );
     return;
   }
@@ -850,7 +936,7 @@ async function handleCallback(
         '',
         'Меню: /start',
       ].join('\n'),
-      menuKeyboard(),
+      menuKeyboard(siteOrigin),
     );
   }
 }
@@ -889,7 +975,7 @@ async function processUpdate(
   }
 
   if (message.text) {
-    await handleText(token, chatId, message.text, username);
+    await handleText(token, chatId, message.text, siteOrigin, username);
   }
 }
 

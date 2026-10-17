@@ -941,7 +941,7 @@ async function handleCallback(
   }
 }
 
-async function processUpdate(
+export async function handleCatalogTelegramUpdate(
   token: string,
   supabase: SupabaseClient,
   siteOrigin: string,
@@ -979,19 +979,61 @@ async function processUpdate(
   }
 }
 
+export async function setCatalogTelegramWebhook(
+  token: string,
+  webhookUrl: string,
+  secretToken?: string,
+): Promise<void> {
+  await telegramCall(token, 'setWebhook', {
+    url: webhookUrl,
+    allowed_updates: ['message', 'callback_query'],
+    drop_pending_updates: true,
+    ...(secretToken ? { secret_token: secretToken } : {}),
+  });
+  console.log('[catalog-bot] webhook set:', webhookUrl);
+}
+
+export async function deleteCatalogTelegramWebhook(token: string): Promise<void> {
+  await telegramCall(token, 'deleteWebhook', { drop_pending_updates: true });
+  console.log('[catalog-bot] webhook deleted');
+}
+
 export function startCatalogTelegramBot(options: {
   token: string;
   supabase: SupabaseClient;
   siteOrigin: string;
   supabaseUrl: string;
   serviceRoleKey: string;
+  /** If true, do not long-poll — updates arrive via HTTP webhook. */
+  webhookMode?: boolean;
 }): void {
-  const { token, supabase, siteOrigin, supabaseUrl, serviceRoleKey } = options;
+  const { token, supabase, siteOrigin, supabaseUrl, serviceRoleKey, webhookMode } = options;
+
+  void telegramCall(token, 'getMe')
+    .then((me) => {
+      console.log('[catalog-bot] Telegram bot started:', me);
+      if (webhookMode) {
+        console.log('[catalog-bot] webhook mode — polling disabled');
+        return;
+      }
+      void startPollingLoop(token, supabase, siteOrigin, supabaseUrl, serviceRoleKey);
+    })
+    .catch((error) => {
+      console.error('[catalog-bot] failed to start:', error);
+    });
+}
+
+function startPollingLoop(
+  token: string,
+  supabase: SupabaseClient,
+  siteOrigin: string,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): void {
   let offset = 0;
-  let stopped = false;
 
   const loop = async (): Promise<void> => {
-    while (!stopped) {
+    for (;;) {
       try {
         const updates = await telegramCall<TelegramUpdate[]>(token, 'getUpdates', {
           offset,
@@ -1002,7 +1044,7 @@ export function startCatalogTelegramBot(options: {
         for (const update of updates) {
           offset = update.update_id + 1;
           try {
-            await processUpdate(
+            await handleCatalogTelegramUpdate(
               token,
               supabase,
               siteOrigin,
@@ -1021,13 +1063,5 @@ export function startCatalogTelegramBot(options: {
     }
   };
 
-  void telegramCall(token, 'getMe')
-    .then((me) => {
-      console.log('[catalog-bot] Telegram bot started:', me);
-      void loop();
-    })
-    .catch((error) => {
-      console.error('[catalog-bot] failed to start:', error);
-      stopped = true;
-    });
+  void loop();
 }

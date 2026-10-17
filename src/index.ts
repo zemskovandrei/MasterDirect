@@ -3,7 +3,11 @@ import 'dotenv/config';
 import cors from 'cors';
 import express, { NextFunction, Request, Response, RequestHandler } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { startCatalogTelegramBot } from './bot/catalog-bot';
+import {
+  handleCatalogTelegramUpdate,
+  setCatalogTelegramWebhook,
+  startCatalogTelegramBot,
+} from './bot/catalog-bot';
 import { CATALOG_BOT_BUILD } from './bot/publish-catalog-card';
 
 function sanitizeEnv(value: string | undefined): string {
@@ -32,6 +36,8 @@ const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
 const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
 const TELEGRAM_BOT_TOKEN = sanitizeEnv(process.env.TELEGRAM_BOT_TOKEN);
+const TELEGRAM_WEBHOOK_URL = sanitizeEnv(process.env.TELEGRAM_WEBHOOK_URL);
+const TELEGRAM_WEBHOOK_SECRET = sanitizeEnv(process.env.TELEGRAM_WEBHOOK_SECRET);
 const SITE_ORIGIN = (sanitizeEnv(process.env.SITE_ORIGIN) || 'https://masterdirect.ge').replace(/\/$/, '');
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -547,7 +553,38 @@ app.get('/api/health', (_req: Request, res: Response) => {
     build: CATALOG_BOT_BUILD,
     commit: process.env.RAILWAY_GIT_COMMIT_SHA ?? null,
     supabaseUrl: SUPABASE_URL,
+    telegramMode: TELEGRAM_WEBHOOK_URL ? 'webhook' : 'polling',
   });
+});
+
+app.post('/api/telegram/webhook', async (req: Request, res: Response) => {
+  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
+    res.status(503).json({ ok: false, error: 'bot disabled' });
+    return;
+  }
+
+  if (TELEGRAM_WEBHOOK_SECRET) {
+    const header = String(req.headers['x-telegram-bot-api-secret-token'] ?? '');
+    if (header !== TELEGRAM_WEBHOOK_SECRET) {
+      res.status(401).json({ ok: false, error: 'unauthorized' });
+      return;
+    }
+  }
+
+  res.json({ ok: true });
+
+  try {
+    await handleCatalogTelegramUpdate(
+      TELEGRAM_BOT_TOKEN,
+      supabase,
+      SITE_ORIGIN,
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
+      req.body,
+    );
+  } catch (error) {
+    console.error('[POST /api/telegram/webhook] update failed:', error);
+  }
 });
 
 app.listen(PORT, () => {
@@ -556,13 +593,25 @@ app.listen(PORT, () => {
   void probeSupabaseConnectivity();
 
   if (TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
+    const webhookMode = Boolean(TELEGRAM_WEBHOOK_URL);
     startCatalogTelegramBot({
       token: TELEGRAM_BOT_TOKEN,
       supabase,
       siteOrigin: SITE_ORIGIN,
       supabaseUrl: SUPABASE_URL,
       serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
+      webhookMode,
     });
+
+    if (webhookMode) {
+      void setCatalogTelegramWebhook(
+        TELEGRAM_BOT_TOKEN,
+        TELEGRAM_WEBHOOK_URL,
+        TELEGRAM_WEBHOOK_SECRET || undefined,
+      ).catch((error) => {
+        console.error('[catalog-bot] setWebhook failed:', error);
+      });
+    }
   } else {
     console.log('[masterdirect API] Telegram catalog bot disabled (set TELEGRAM_BOT_TOKEN)');
   }

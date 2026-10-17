@@ -1,0 +1,11 @@
+# https://masterdirect.ge
+User-agent: *
+Allow: /
+
+# App / auth (no value for search)
+Disallow: /cabinet
+Disallow: /admin
+Disallow: /moderation
+Disallow: /verify
+
+Sitemap: https://masterdirect.ge/sitemap.xml

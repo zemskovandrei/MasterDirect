@@ -2,15 +2,49 @@
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <title>MASTERDIRECT — Профессиональный ремонт и отделка</title>
+    <title>MASTERDIRECT — мастера и ремонт в Батуми и Тбилиси</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="MASTERDIRECT — биржа мастеров и заказов. Каталог бригад, мастеров и мебельных компаний. Прямой контакт без посредника."
+      content="MASTERDIRECT — мастера, бригады и мебель в Батуми и Тбилиси. Заказы на ремонт, прямой контакт без посредников и комиссии."
     />
-    <link rel="icon" type="image/png" href="favicon.png?v=4" />
-    <link rel="apple-touch-icon" href="favicon.png?v=4" />
+    <meta
+      name="keywords"
+      content="ремонт Батуми, ремонт Тбилиси, мастера Грузия, бригада ремонт, плиточник, электрик, сантехник, мебель на заказ, MASTERDIRECT"
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="MASTERDIRECT" />
+    <meta name="theme-color" content="#0c7489" />
+    <link rel="canonical" href="https://masterdirect.ge/" />
+    <link rel="alternate" hreflang="ru" href="https://masterdirect.ge/" />
+    <link rel="alternate" hreflang="ka" href="https://masterdirect.ge/" />
+    <link rel="alternate" hreflang="en" href="https://masterdirect.ge/" />
+    <link rel="alternate" hreflang="x-default" href="https://masterdirect.ge/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MASTERDIRECT" />
+    <meta property="og:locale" content="ru_GE" />
+    <meta property="og:locale:alternate" content="ka_GE" />
+    <meta property="og:title" content="MASTERDIRECT — мастера и ремонт в Батуми и Тбилиси" />
+    <meta
+      property="og:description"
+      content="Биржа мастеров и заказов в Грузии. Найдите исполнителя или разместите заказ — прямой контакт без посредника."
+    />
+    <meta property="og:url" content="https://masterdirect.ge/" />
+    <meta property="og:image" content="https://masterdirect.ge/assets/logo-mark.png" />
+    <meta property="og:image:alt" content="MASTERDIRECT" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MASTERDIRECT — мастера и ремонт в Батуми и Тбилиси" />
+    <meta
+      name="twitter:description"
+      content="Мастера, бригады и заказы на ремонт в Батуми и Тбилиси. Прямой контакт без комиссии."
+    />
+    <meta name="twitter:image" content="https://masterdirect.ge/assets/logo-mark.png" />
+
+    <link rel="icon" type="image/png" href="favicon.png?v=5" />
+    <link rel="apple-touch-icon" href="favicon.png?v=5" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://xixafoznxsupsxotdjqx.supabase.co" />
@@ -20,6 +54,53 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://masterdirect.ge/#organization",
+            "name": "MASTERDIRECT",
+            "url": "https://masterdirect.ge/",
+            "logo": "https://masterdirect.ge/assets/logo-mark.png",
+            "description": "Площадка мастеров, бригад и заказов на ремонт в Батуми и Тбилиси. Прямой контакт без посредников.",
+            "areaServed": [
+              { "@type": "City", "name": "Batumi" },
+              { "@type": "City", "name": "Tbilisi" },
+              { "@type": "Country", "name": "Georgia" }
+            ],
+            "sameAs": []
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://masterdirect.ge/#website",
+            "url": "https://masterdirect.ge/",
+            "name": "MASTERDIRECT",
+            "publisher": { "@id": "https://masterdirect.ge/#organization" },
+            "inLanguage": ["ru", "ka", "en"],
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://masterdirect.ge/masters?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "MASTERDIRECT",
+            "url": "https://masterdirect.ge/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "GEL"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <script>
@@ -28,6 +109,15 @@
         if (hash && hash.charAt(1) === '/') {
           window.history.replaceState(null, '', hash.slice(1) + window.location.search);
         }
+        try {
+          var saved = sessionStorage.getItem('md_spa_path');
+          if (saved) {
+            sessionStorage.removeItem('md_spa_path');
+            if (saved.charAt(0) === '/' && saved.indexOf('//') !== 0) {
+              window.history.replaceState(null, '', saved);
+            }
+          }
+        } catch (e) {}
       })();
     </script>
     <app-root></app-root>

@@ -1,4 +1,4 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -7,6 +7,7 @@ import { FurnitureStoreService } from '../../core/services/furniture-store.servi
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
 import { TranslationService } from '../../core/services/translation.service';
+import { SeoService } from '../../core/services/seo.service';
 import { mergeSocialLinks } from '../../core/utils/social-links.util';
 
 @Component({
@@ -22,10 +23,32 @@ export class FurnitureProfileComponent {
   private readonly store = inject(FurnitureStoreService);
   private readonly supabase = inject(SupabaseService);
   protected readonly translation = inject(TranslationService);
+  private readonly seo = inject(SeoService);
 
   private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id') ?? '')), {
     initialValue: '',
   });
+
+  constructor() {
+    effect(() => {
+      const company = this.company();
+      const id = this.id();
+      if (!company || !id) {
+        return;
+      }
+      const city = company.city?.trim() || 'Батуми / Тбилиси';
+      const desc =
+        (company.description?.trim() ||
+          `${company.name} — мебель на заказ. Кухни, шкафы, корпусная мебель.`) + ` ${city}.`;
+      this.seo.setPage({
+        title: `${company.name} — мебель на заказ | MASTERDIRECT`,
+        description: desc.slice(0, 320),
+        path: `/furniture/${company.slug || id}`,
+        image: company.works?.[0]?.afterImage ?? null,
+        type: 'profile',
+      });
+    });
+  }
 
   protected readonly company = computed(() => {
     const id = this.id();

@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <title>MASTERDIRECT</title>
+    <meta name="robots" content="noindex" />
     <script>
-      // GitHub Pages SPA fallback: send unknown paths to index.html while keeping query/hash
-      // (needed for Supabase email confirmation links).
+      // GitHub Pages SPA fallback: keep path for client router (build also overwrites with index.html).
       (function () {
-        var path = location.pathname || '/';
+        var l = window.location;
+        var path = l.pathname || '/';
         if (path !== '/' && path !== '/index.html') {
-          var search = location.search || '';
-          var hash = location.hash || '';
-          location.replace('/' + search + hash);
+          sessionStorage.setItem('md_spa_path', path + (l.search || '') + (l.hash || ''));
         }
+        l.replace('/' + (l.search || '') + (l.hash || ''));
       })();
     </script>
     <meta http-equiv="refresh" content="0; url=/" />

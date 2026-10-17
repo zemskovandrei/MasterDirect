@@ -20,6 +20,7 @@ import { SocialLinksComponent } from '../../shared/components/social-links/socia
 import { hasSocialLinks, mergeSocialLinks } from '../../core/utils/social-links.util';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
+import { SeoService } from '../../core/services/seo.service';
 import {
   matchesCatalogSelection,
   saveCatalogSelection,
@@ -42,6 +43,7 @@ export class PerformerProfileComponent {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly theme = inject(ThemeService);
+  private readonly seo = inject(SeoService);
   protected readonly hasSocialLinks = hasSocialLinks;
   protected readonly contactsRevealed = signal(false);
 
@@ -129,6 +131,28 @@ export class PerformerProfileComponent {
       }
 
       this.contactsRevealed.set(matchesCatalogSelection(type as CatalogSelectionType, id));
+    });
+
+    effect(() => {
+      const performer = this.performer();
+      const type = this.type();
+      const id = this.id();
+      if (!performer || !id) {
+        return;
+      }
+      const role = type === 'brigade' ? 'бригада' : 'мастер';
+      const specialty = performer.specialty?.trim() || 'ремонт';
+      const path = type === 'brigade' ? `/brigades/${id}` : `/masters/${id}`;
+      const desc =
+        performer.description?.trim() ||
+        `${performer.name} — ${role}, ${specialty}. Ремонт в Батуми и Тбилиси. Прямой контакт на MASTERDIRECT.`;
+      this.seo.setPage({
+        title: `${performer.name} — ${role} (${specialty}) | MASTERDIRECT`,
+        description: desc.slice(0, 320),
+        path,
+        image: performer.works?.[0]?.afterImage ?? null,
+        type: 'profile',
+      });
     });
   }
 

@@ -6,45 +6,49 @@
 
 Коммит с ботом должен быть в `main` на GitHub.
 
-## 2. Создать проект на Railway
+## 2. Создать / обновить проект на Railway
 
-1. Откройте https://railway.app → войти через GitHub.  
-2. **New Project** → **Deploy from GitHub repo** → выберите `zemskovandrei/MasterDirect`.  
-3. Railway подхватит `Dockerfile` + `railway.toml`.
+1. https://railway.app → GitHub → репо `zemskovandrei/MasterDirect`.  
+2. Railway подхватит `Dockerfile` + `railway.toml`.  
+3. **Settings → Networking → Generate Domain** (публичный HTTPS обязателен для webhook).
 
 ## 3. Переменные окружения
-
-В сервисе: **Variables** → добавить:
 
 | Key | Value |
 |-----|--------|
 | `TELEGRAM_BOT_TOKEN` | токен от BotFather |
 | `SITE_ORIGIN` | `https://masterdirect.ge` |
-| `SUPABASE_URL` | только `https://ВАШ_PROJECT.supabase.co` — **без** `/rest/v1`, без слэша в конце, не сайт masterdirect.ge |
-| `SUPABASE_SERVICE_ROLE_KEY` | Dashboard → **Settings → API Keys** → legacy **`service_role`** (Reveal). Должен начинаться с `eyJ…`. Ключ `sb_secret_…` тоже можно, но при ошибках JSON надёжнее `eyJ` |
+| `SUPABASE_URL` | только `https://ВАШ_PROJECT.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | legacy **`service_role`** (`eyJ…`) |
 | `ALLOWED_ORIGINS` | `https://masterdirect.ge,https://www.masterdirect.ge` |
 | `ADMIN_EMAILS` | ваш admin email |
-| `PORT` | `3000` (Railway часто ставит сам) |
+| `PORT` | `3000` (часто ставит сам) |
+| `TELEGRAM_WEBHOOK_SECRET` | любая длинная случайная строка (рекомендуется) |
 
-**Не** копируйте `.env` в git. Только через Variables в Railway.
+Webhook URL **не обязателен**: при наличии `RAILWAY_PUBLIC_DOMAIN` бот сам поставит  
+`https://<домен>/api/telegram/webhook`.
 
-## 4. Дождаться деплоя
+Или задайте явно:
 
-В **Deployments** статус должен стать Success.  
-В логах ищите:
+`TELEGRAM_WEBHOOK_URL=https://ВАШ-ДОМЕН.up.railway.app/api/telegram/webhook`
+
+## 4. Деплой
+
+В логах должно быть:
 
 ```text
 [masterdirect API] Server listening
+[masterdirect API] telegramMode=webhook url=https://...
 [catalog-bot] Telegram bot started
+[catalog-bot] webhook set: https://...
 ```
 
 ## 5. Проверка
 
-1. Откройте URL сервиса Railway + `/api/health` → `{"ok":true,...}`  
-2. Напишите боту: https://t.me/master_direct_bot → `/start`
+1. `https://ВАШ-URL.up.railway.app/api/health`  
+   → `"ok":true`, `"build":"bot-stable-v5"`, `"telegramMode":"webhook"`  
+2. https://t.me/master_direct_bot → `/start` → меню с **Разместить заказ**
 
-## Если билд падает
+## Если бот снова «только анкета мастера»
 
-- В Settings → Build убедитесь, что Dockerfile = `Dockerfile`.  
-- Node 22 уже в образе.  
-- Логи Build / Deploy смотрите во вкладке Deployments.
+Значит отвечает **старый** инстанс. Сделайте **Redeploy** последнего деплоя и убедитесь, что локально `npm run start:api` / туннель **не** запущены с тем же токеном.

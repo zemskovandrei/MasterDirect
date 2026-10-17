@@ -4,6 +4,7 @@ import cors from 'cors';
 import express, { NextFunction, Request, Response, RequestHandler } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
+  deleteCatalogTelegramWebhook,
   handleCatalogTelegramUpdate,
   setCatalogTelegramWebhook,
   startCatalogTelegramBot,
@@ -12,6 +13,19 @@ import { CATALOG_BOT_BUILD } from './bot/publish-catalog-card';
 
 function sanitizeEnv(value: string | undefined): string {
   return (value ?? '').trim().replace(/^['"]|['"]$/g, '');
+}
+
+/** Explicit URL, or auto from Railway public domain. */
+function resolveTelegramWebhookUrl(): string {
+  const explicit = sanitizeEnv(process.env.TELEGRAM_WEBHOOK_URL);
+  if (explicit) {
+    return explicit;
+  }
+  const domain = sanitizeEnv(process.env.RAILWAY_PUBLIC_DOMAIN).replace(/^https?:\/\//i, '');
+  if (domain) {
+    return `https://${domain.replace(/\/$/, '')}/api/telegram/webhook`;
+  }
+  return '';
 }
 
 /** Project origin only — strips /rest/v1, /storage/v1, trailing slash, etc. */
@@ -36,7 +50,7 @@ const ALLOWED_ORIGINS = parseCsv(process.env.ALLOWED_ORIGINS);
 const API_RATE_LIMIT_WINDOW_MS = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const API_RATE_LIMIT_MAX = Number(process.env.API_RATE_LIMIT_MAX ?? 120);
 const TELEGRAM_BOT_TOKEN = sanitizeEnv(process.env.TELEGRAM_BOT_TOKEN);
-const TELEGRAM_WEBHOOK_URL = sanitizeEnv(process.env.TELEGRAM_WEBHOOK_URL);
+const TELEGRAM_WEBHOOK_URL = resolveTelegramWebhookUrl();
 const TELEGRAM_WEBHOOK_SECRET = sanitizeEnv(process.env.TELEGRAM_WEBHOOK_SECRET);
 const SITE_ORIGIN = (sanitizeEnv(process.env.SITE_ORIGIN) || 'https://masterdirect.ge').replace(/\/$/, '');
 
@@ -127,7 +141,15 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(setSecurityHeaders());
-app.use('/api', createInMemoryRateLimiter(API_RATE_LIMIT_WINDOW_MS, API_RATE_LIMIT_MAX));
+const apiRateLimiter = createInMemoryRateLimiter(API_RATE_LIMIT_WINDOW_MS, API_RATE_LIMIT_MAX);
+// Telegram can burst updates — never rate-limit the webhook endpoint.
+app.use('/api', (req, res, next) => {
+  if (req.path === '/telegram/webhook' || req.path.startsWith('/telegram/webhook')) {
+    next();
+    return;
+  }
+  return apiRateLimiter(req, res, next);
+});
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
@@ -594,6 +616,11 @@ app.listen(PORT, () => {
 
   if (TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.includes('YOUR_TELEGRAM')) {
     const webhookMode = Boolean(TELEGRAM_WEBHOOK_URL);
+    console.log(
+      `[masterdirect API] telegramMode=${webhookMode ? 'webhook' : 'polling'}` +
+        (webhookMode ? ` url=${TELEGRAM_WEBHOOK_URL}` : ''),
+    );
+
     startCatalogTelegramBot({
       token: TELEGRAM_BOT_TOKEN,
       supabase,
@@ -610,6 +637,11 @@ app.listen(PORT, () => {
         TELEGRAM_WEBHOOK_SECRET || undefined,
       ).catch((error) => {
         console.error('[catalog-bot] setWebhook failed:', error);
+      });
+    } else {
+      // Clear any leftover webhook (e.g. dead tunnel) so polling can receive updates.
+      void deleteCatalogTelegramWebhook(TELEGRAM_BOT_TOKEN).catch((error) => {
+        console.error('[catalog-bot] deleteWebhook failed:', error);
       });
     }
   } else {

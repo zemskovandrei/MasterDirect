@@ -240,10 +240,10 @@ async function showMenu(
       'Привет! Я бот MasterDirect.',
       'Регистрация на сайте не нужна.',
       '',
-      'Клиентам: заказ, отзыв или просто посмотреть каталог.',
-      'Мастерам: анкета в каталог.',
+      'Чтобы разместить заказ на сайте — нажмите «📋 Разместить заказ»',
+      'или напишите /job',
       '',
-      'Выберите действие:',
+      'Также можно оставить отзыв, открыть каталог или добавить карточку мастера.',
     ].join('\n'),
     menuKeyboard(siteOrigin),
   );
@@ -528,12 +528,17 @@ async function handleText(
     );
     return;
   }
-  if (trimmed === '/job') {
+  if (
+    trimmed === '/job' ||
+    normalized === 'заказ' ||
+    normalized === 'разместить заказ' ||
+    normalized === '📋 разместить заказ'
+  ) {
     setSession(chatId, startJobSession(username));
     await sendMessage(
       token,
       chatId,
-      'Размещаем заказ.\n\nКак к вам обращаться?',
+      'Размещаем заказ на сайте (появится в разделе «Заказы»).\n\nКак к вам обращаться?',
       backToMenuKeyboard(),
     );
     return;
@@ -745,6 +750,7 @@ async function handleCallback(
       token,
       chatId,
       `Категория: ${specialtyLabel(key)}\n\nОпишите, что нужно сделать (объём, сроки, детали):`,
+      backToMenuKeyboard(),
     );
     return;
   }
@@ -758,7 +764,12 @@ async function handleCallback(
     session.city = key;
     session.step = 'district';
     await answerCallback(token, query.id);
-    await sendMessage(token, chatId, 'Напишите район работы:');
+    await sendMessage(
+      token,
+      chatId,
+      'Напишите район работы:',
+      backToMenuKeyboard(),
+    );
     return;
   }
 
@@ -1010,8 +1021,22 @@ export function startCatalogTelegramBot(options: {
   const { token, supabase, siteOrigin, supabaseUrl, serviceRoleKey, webhookMode } = options;
 
   void telegramCall(token, 'getMe')
-    .then((me) => {
+    .then(async (me) => {
       console.log('[catalog-bot] Telegram bot started:', me);
+      try {
+        await telegramCall(token, 'setMyCommands', {
+          commands: [
+            { command: 'start', description: 'Меню' },
+            { command: 'job', description: 'Разместить заказ' },
+            { command: 'review', description: 'Оставить отзыв' },
+            { command: 'master', description: 'Анкета мастера в каталог' },
+            { command: 'menu', description: 'Вернуться в меню' },
+            { command: 'cancel', description: 'Отменить текущий шаг' },
+          ],
+        });
+      } catch (error) {
+        console.error('[catalog-bot] setMyCommands failed:', error);
+      }
       if (webhookMode) {
         console.log('[catalog-bot] webhook mode — polling disabled');
         return;

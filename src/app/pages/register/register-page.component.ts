@@ -668,9 +668,11 @@ export class RegisterPageComponent {
         });
       }
 
-      const beforeImage = this.beforePreview();
-      const afterImage = this.afterPreview();
-      if (beforeImage && afterImage) {
+      const beforeRaw = this.beforePreview();
+      const afterRaw = this.afterPreview();
+      if (beforeRaw || afterRaw) {
+        const beforeImage = beforeRaw || afterRaw!;
+        const afterImage = afterRaw || beforeRaw!;
         const workTitle = v.workTitle.trim() || specialtyLabel;
         const ownerId = authResult.user.id;
         const ownerType =

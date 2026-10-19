@@ -182,7 +182,7 @@ export class CabinetComponent {
   });
 
   protected readonly workForm = this.fb.nonNullable.group({
-    title: ['', Validators.required],
+    title: [''],
     description: ['', [maxWordsValidator()]],
     clientContact: [''],
   });
@@ -390,18 +390,25 @@ export class CabinetComponent {
       return;
     }
 
-    const before = this.beforePreview();
-    const after = this.afterPreview();
-    if (!before || !after) {
-      alert(this.translation.t('cabinet.alertBothPhotos'));
+    const beforeRaw = this.beforePreview();
+    const afterRaw = this.afterPreview();
+    if (!beforeRaw && !afterRaw) {
+      alert(this.translation.t('cabinet.alertAtLeastOnePhoto'));
       return;
     }
 
+    // One photo is enough after registration — mirror for before/after UI if needed.
+    const before = beforeRaw || afterRaw!;
+    const after = afterRaw || beforeRaw!;
     const v = this.workForm.getRawValue();
+    const title =
+      v.title.trim() ||
+      this.translation.t('cabinet.defaultWorkTitle') ||
+      'Работа';
 
     if (company) {
       const work = this.furnitureStore.addWork(company.id, {
-        title: v.title,
+        title,
         description: v.description,
         beforeImage: before,
         afterImage: after,
@@ -436,7 +443,7 @@ export class CabinetComponent {
     }
 
     const result = this.store.addWork(performer!.id, {
-      title: v.title,
+      title,
       description: v.description,
       beforeImage: before,
       afterImage: after,

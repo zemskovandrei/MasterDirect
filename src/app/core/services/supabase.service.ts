@@ -2421,7 +2421,8 @@ export class SupabaseService {
   }): Promise<{ imageRef: string; error: string | null }> {
     const value = input.imageRef?.trim();
     if (!value) {
-      return { imageRef: '', error: 'Missing portfolio image' };
+      // Allow saving a work with only one side filled (before or after).
+      return { imageRef: '', error: null };
     }
 
     if (!value.startsWith('data:image/')) {

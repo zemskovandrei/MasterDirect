@@ -101,7 +101,8 @@ export function startJobSession(tgUsername?: string | null): BotSession {
   return {
     ...createEmptySession(tgUsername),
     flow: 'job',
-    step: 'job_name',
+    // Сначала суть заказа, контакты — в конце (логичнее для клиента).
+    step: 'job_city',
   };
 }
 

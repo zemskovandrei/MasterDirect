@@ -352,6 +352,26 @@ async function handleJobText(
   trimmed: string,
 ): Promise<void> {
   switch (session.step) {
+    case 'job_description': {
+      if (trimmed.length < 10) {
+        await sendMessage(
+          token,
+          chatId,
+          'Опишите подробнее, что нужно сделать (минимум 10 символов).',
+          backToMenuKeyboard(),
+        );
+        return;
+      }
+      session.description = trimmed;
+      session.step = 'job_name';
+      await sendMessage(
+        token,
+        chatId,
+        'Как к вам обращаться? (имя)',
+        backToMenuKeyboard(),
+      );
+      return;
+    }
     case 'job_name': {
       if (trimmed.length < 2) {
         await sendMessage(
@@ -367,7 +387,7 @@ async function handleJobText(
       await sendMessage(
         token,
         chatId,
-        'Ваш телефон, например: +995 5XX XXX XXX',
+        'Ваш телефон для связи, например: +995 5XX XXX XXX',
         backToMenuKeyboard(),
       );
       return;
@@ -384,16 +404,6 @@ async function handleJobText(
         return;
       }
       session.phone = trimmed;
-      session.step = 'job_city';
-      await sendMessage(token, chatId, 'Выберите город:', cityKeyboard('jobcity'));
-      return;
-    }
-    case 'job_description': {
-      if (trimmed.length < 10) {
-        await sendMessage(token, chatId, 'Опишите подробнее, что нужно сделать (минимум 10 символов).');
-        return;
-      }
-      session.description = trimmed;
       session.step = 'job_budget';
       await sendMessage(
         token,
@@ -444,6 +454,10 @@ async function handleJobText(
       );
       return;
     }
+    case 'job_city':
+    case 'job_category':
+      await sendMessage(token, chatId, 'Выберите вариант кнопкой ниже.', backToMenuKeyboard());
+      return;
     default:
       await sendMessage(token, chatId, 'Используйте кнопки или /start');
   }
@@ -538,8 +552,8 @@ async function handleText(
     await sendMessage(
       token,
       chatId,
-      'Размещаем заказ на сайте (появится в разделе «Заказы»).\n\nКак к вам обращаться?',
-      backToMenuKeyboard(),
+      'Размещаем заказ на сайте.\n\nСначала выберите город:',
+      cityKeyboard('jobcity'),
     );
     return;
   }
@@ -688,8 +702,8 @@ async function handleCallback(
     await sendMessage(
       token,
       chatId,
-      'Размещаем заказ на сайте.\n\nКак к вам обращаться?',
-      backToMenuKeyboard(),
+      'Размещаем заказ на сайте.\n\nСначала выберите город:',
+      cityKeyboard('jobcity'),
     );
     return;
   }
@@ -707,6 +721,10 @@ async function handleCallback(
   }
 
   if (data.startsWith('spec:')) {
+    if (session.flow !== 'master') {
+      await answerCallback(token, query.id, 'Сначала откройте «Я мастер» или /start');
+      return;
+    }
     const key = data.slice(5);
     if (key === 'next') {
       if (!session.specialties.length) {
@@ -738,6 +756,10 @@ async function handleCallback(
   }
 
   if (data.startsWith('jobcat:')) {
+    if (session.flow !== 'job') {
+      await answerCallback(token, query.id, 'Сначала нажмите «Разместить заказ»');
+      return;
+    }
     const key = data.slice(7);
     if (!SPECIALTY_OPTIONS.some((item) => item.key === key)) {
       await answerCallback(token, query.id, 'Неизвестная категория');
@@ -774,6 +796,10 @@ async function handleCallback(
   }
 
   if (data.startsWith('jobcity:')) {
+    if (session.flow !== 'job') {
+      await answerCallback(token, query.id, 'Сначала нажмите «Разместить заказ»');
+      return;
+    }
     const key = data.slice(8) as CityId;
     if (!CITY_OPTIONS.some((item) => item.key === key)) {
       await answerCallback(token, query.id, 'Неизвестный город');
@@ -782,11 +808,20 @@ async function handleCallback(
     session.city = key;
     session.step = 'job_category';
     await answerCallback(token, query.id);
-    await sendMessage(token, chatId, 'Какой вид работ нужен?', specialtyKeyboard(session, false));
+    await sendMessage(
+      token,
+      chatId,
+      'Какой вид работ нужен? (выберите один)',
+      specialtyKeyboard(session, false),
+    );
     return;
   }
 
   if (data === 'jobbudget:skip') {
+    if (session.flow !== 'job') {
+      await answerCallback(token, query.id);
+      return;
+    }
     session.budget = null;
     session.step = 'job_photos';
     session.photos = [];

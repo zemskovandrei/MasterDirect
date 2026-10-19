@@ -46,9 +46,14 @@ Webhook URL **не обязателен**: при наличии `RAILWAY_PUBLIC
 ## 5. Проверка
 
 1. `https://ВАШ-URL.up.railway.app/api/health`  
-   → `"ok":true`, `"build":"bot-stable-v5"`, `"telegramMode":"webhook"`  
-2. https://t.me/master_direct_bot → `/start` → меню с **Разместить заказ**
+   → `"ok":true`, `"build":"job-flow-v7"`  
+2. https://t.me/master_direct_bot → `/start` → должно быть **`Версия: job-flow-v7`** и меню с **Разместить заказ**
 
-## Если бот снова «только анкета мастера»
+## Если бот снова «только анкета мастера» / без версии
 
-Значит отвечает **старый** инстанс. Сделайте **Redeploy** последнего деплоя и убедитесь, что локально `npm run start:api` / туннель **не** запущены с тем же токеном.
+Это **старый контейнер** на Railway.
+
+1. Stop всех лишних сервисов с тем же `TELEGRAM_BOT_TOKEN`  
+2. Deployments → **Redeploy** (при необходимости Clear build cache)  
+3. Локально `node dist-api` / туннели **не** запускать  
+4. В логах ищите `build=job-flow-v7`

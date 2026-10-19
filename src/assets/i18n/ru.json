@@ -26,7 +26,11 @@
       "featuresDesc": "Почему выбирают MASTERDIRECT",
       "catalogDesc": "Мастера, бригады и мебельные компании",
       "jobsBoardDesc": "Актуальные заказы на ремонт",
-      "worksGalleryDesc": "Фото работ до и после"
+      "worksGalleryDesc": "Фото работ до и после",
+      "telegramChat": "Telegram-чат",
+      "telegramChatDesc": "Заказ, анкета мастера или отзыв в боте",
+      "addPortfolio": "Добавить портфолио",
+      "addPortfolioDesc": "Загрузить фото работ в кабинете"
     },
     "actions": {
       "openMenu": "Открыть меню",
@@ -62,6 +66,7 @@
       "title": "Найти исполнителей",
       "primary": "Бригады",
       "secondary": "Мастера",
+      "telegramChat": "Telegram-чат",
       "estimate": "Получить смету",
       "jobs": "Смотреть заказы",
       "tagsAria": "Основные услуги",

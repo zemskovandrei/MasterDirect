@@ -26,7 +26,11 @@
       "featuresDesc": "Why choose MASTERDIRECT",
       "catalogDesc": "Masters, teams, and furniture makers",
       "jobsBoardDesc": "Open renovation jobs",
-      "worksGalleryDesc": "Before and after project photos"
+      "worksGalleryDesc": "Before and after project photos",
+      "telegramChat": "Telegram chat",
+      "telegramChatDesc": "Place an order, master profile, or review in the bot",
+      "addPortfolio": "Add portfolio",
+      "addPortfolioDesc": "Upload work photos in your dashboard"
     },
     "actions": {
       "openMenu": "Open menu",
@@ -62,6 +66,7 @@
       "title": "Find performers",
       "primary": "Teams",
       "secondary": "Masters",
+      "telegramChat": "Telegram chat",
       "estimate": "Get an estimate",
       "jobs": "Browse jobs",
       "tagsAria": "Main services",

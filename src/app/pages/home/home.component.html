@@ -58,6 +58,20 @@
       <a class="btn-secondary btn-large" routerLink="/masters">{{
         translation.t('home.hero.secondary')
       }}</a>
+      <a
+        class="btn-telegram btn-large"
+        [href]="telegramBotUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg class="btn-telegram__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M21.9 4.3c.3-.1.6 0 .7.3.1.2.1.5 0 .7L18.2 20c-.1.4-.5.6-.9.5l-5-1.6-2.7 2.6c-.3.3-.8.1-.9-.3l-.1-4.4L18 7.4c.1-.1 0-.2-.1-.2l-9.6 5.9-4.1-1.3c-.5-.2-.5-.8.1-1L21.9 4.3z"
+          />
+        </svg>
+        {{ translation.t('home.hero.telegramChat') }}
+      </a>
     </div>
 
     <div class="hero-section__tags" [attr.aria-label]="translation.t('home.hero.tagsAria')">

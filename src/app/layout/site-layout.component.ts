@@ -11,7 +11,7 @@ import {
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AdminAuthService } from '../core/services/admin-auth.service';
-import { APP_BRAND_NAME } from '../core/constants/brand';
+import { APP_BRAND_NAME, TELEGRAM_BOT_URL } from '../core/constants/brand';
 import { AuthService } from '../core/services/auth.service';
 import { FurnitureStoreService } from '../core/services/furniture-store.service';
 import { PortfolioStoreService } from '../core/services/portfolio-store.service';
@@ -56,6 +56,7 @@ export class SiteLayoutComponent {
   headerTheme: HeaderTheme = 'auto';
 
   protected readonly title = signal(APP_BRAND_NAME);
+  protected readonly telegramBotUrl = TELEGRAM_BOT_URL;
   protected readonly mobileMenuOpen = signal(false);
   protected readonly adminLoginOpen = signal(false);
   protected readonly isMobileViewport = signal(false);

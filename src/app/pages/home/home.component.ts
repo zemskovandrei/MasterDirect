@@ -15,6 +15,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { collectGalleryWorks } from '../../core/utils/gallery-works.util';
+import { TELEGRAM_BOT_URL } from '../../core/constants/brand';
 import { homeHeroBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 import { normalizeSearchText, specialtySearchHaystack } from '../../core/utils/catalog-filter.util';
@@ -55,6 +56,7 @@ export class HomeComponent implements OnInit {
   protected readonly translation = inject(TranslationService);
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly heroBackground = homeHeroBackgroundStyle();
+  protected readonly telegramBotUrl = TELEGRAM_BOT_URL;
 
   protected readonly searchQuery = signal('');
   protected readonly searchOpen = signal(false);

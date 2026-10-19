@@ -27,7 +27,11 @@
       "featuresDesc": "რატომ აირჩიეთ MASTERDIRECT",
       "catalogDesc": "ოსტატები, გუნდები და ავეჯის მწარმოებლები",
       "jobsBoardDesc": "გახსენით სარემონტო სამუშაოები",
-      "worksGalleryDesc": "ფოტოები პროექტის დაწყებამდე და მის შემდეგ"
+      "worksGalleryDesc": "ფოტოები პროექტის დაწყებამდე და მის შემდეგ",
+      "telegramChat": "Telegram ჩატი",
+      "telegramChatDesc": "შეკვეთა, ოსტატის ანკეტა ან გამოხმაურება ბოტში",
+      "addPortfolio": "პორტფოლიოს დამატება",
+      "addPortfolioDesc": "სამუშაოების ფოტოების ატვირთვა კაბინეტში"
     },
     "actions": {
       "openMenu": "მენიუს გახსნა",
@@ -63,6 +67,7 @@
       "title": "მოძებნეთ შემსრულებლები",
       "primary": "გუნდები",
       "secondary": "ოსტატები",
+      "telegramChat": "Telegram ჩატი",
       "estimate": "მიიღეთ შეფასება",
       "jobs": "დაათვალიერეთ სამუშაოები",
       "tagsAria": "ძირითადი სერვისები",

@@ -80,6 +80,25 @@
               <span class="nav-link-title">{{ translation.t('app.nav.worksGallery') }}</span>
               <span class="nav-link-desc">{{ translation.t('app.nav.worksGalleryDesc') }}</span>
             </a>
+            <a
+              class="nav-link-item nav-link-item--telegram"
+              [href]="telegramBotUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.telegramChat') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.telegramChatDesc') }}</span>
+            </a>
+            <a
+              routerLink="/cabinet"
+              class="nav-link-item"
+              routerLinkActive="active"
+              (click)="onNavClick()"
+            >
+              <span class="nav-link-title">{{ translation.t('app.nav.addPortfolio') }}</span>
+              <span class="nav-link-desc">{{ translation.t('app.nav.addPortfolioDesc') }}</span>
+            </a>
             @if (mobileMenuOpen()) {
               <div class="nav-auth-mobile">
                 <div class="nav-auth-mobile__inner">
@@ -113,6 +132,22 @@
       </div>
 
       <div class="header-actions">
+        <a
+          class="header-telegram"
+          [href]="telegramBotUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          [attr.aria-label]="translation.t('app.nav.telegramChat')"
+          [attr.title]="translation.t('app.nav.telegramChat')"
+        >
+          <svg class="header-telegram__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              fill="currentColor"
+              d="M21.9 4.3c.3-.1.6 0 .7.3.1.2.1.5 0 .7L18.2 20c-.1.4-.5.6-.9.5l-5-1.6-2.7 2.6c-.3.3-.8.1-.9-.3l-.1-4.4L18 7.4c.1-.1 0-.2-.1-.2l-9.6 5.9-4.1-1.3c-.5-.2-.5-.8.1-1L21.9 4.3z"
+            />
+          </svg>
+          <span class="header-telegram__label">{{ translation.t('app.nav.telegramChat') }}</span>
+        </a>
         <div class="header-auth">
           @if (isLoggedIn()) {
             <a
@@ -189,6 +224,10 @@
           <a routerLink="/jobs" (mouseenter)="prefetchJobs()" (focus)="prefetchJobs()">{{ translation.t('jobs.title') }}</a>
           <a routerLink="/reviews">{{ translation.t('app.nav.reviews') }}</a>
           <a routerLink="/" fragment="catalog">{{ translation.t('app.nav.worksGallery') }}</a>
+          <a [href]="telegramBotUrl" target="_blank" rel="noopener noreferrer">{{
+            translation.t('app.nav.telegramChat')
+          }}</a>
+          <a routerLink="/cabinet">{{ translation.t('app.nav.addPortfolio') }}</a>
           <a routerLink="/privacy">Политика конфиденциальности</a>
           <a routerLink="/terms">Условия использования</a>
         </div>

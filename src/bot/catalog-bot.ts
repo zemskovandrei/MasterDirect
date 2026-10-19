@@ -17,7 +17,7 @@ import {
   type CityId,
   type ReviewKind,
 } from './catalog-bot-types';
-import { formatSessionPreview, publishCatalogCard } from './publish-catalog-card';
+import { CATALOG_BOT_BUILD, formatSessionPreview, publishCatalogCard } from './publish-catalog-card';
 import { formatJobPreview, publishJobOrder } from './publish-job';
 import { formatReviewPreview, publishSiteReview } from './publish-review';
 
@@ -238,12 +238,12 @@ async function showMenu(
     chatId,
     [
       'Привет! Я бот MasterDirect.',
+      `Версия: ${CATALOG_BOT_BUILD}`,
       'Регистрация на сайте не нужна.',
       '',
-      'Чтобы разместить заказ на сайте — нажмите «📋 Разместить заказ»',
-      'или напишите /job',
+      'Чтобы разместить заказ — нажмите «📋 Разместить заказ» или /job',
       '',
-      'Также можно оставить отзыв, открыть каталог или добавить карточку мастера.',
+      'Также: отзыв, каталог на сайте или анкета мастера.',
     ].join('\n'),
     menuKeyboard(siteOrigin),
   );

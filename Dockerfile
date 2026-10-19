@@ -12,7 +12,10 @@ COPY tsconfig.api.json ./
 COPY src/index.ts ./src/index.ts
 COPY src/bot ./src/bot
 
-RUN npm run build:api \
+# Bust Railway/Docker layer cache when bot logic changes.
+ARG BOT_BUILD=job-flow-v7
+RUN echo "BOT_BUILD=${BOT_BUILD}" \
+  && npm run build:api \
   && npm prune --omit=dev
 
 ENV NODE_ENV=production

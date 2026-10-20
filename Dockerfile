@@ -13,7 +13,7 @@ COPY src/index.ts ./src/index.ts
 COPY src/bot ./src/bot
 
 # Bust Railway/Docker layer cache when bot logic changes.
-ARG BOT_BUILD=job-flow-v7
+ARG BOT_BUILD=job-flow-v8
 RUN echo "BOT_BUILD=${BOT_BUILD}" \
   && npm run build:api \
   && npm prune --omit=dev

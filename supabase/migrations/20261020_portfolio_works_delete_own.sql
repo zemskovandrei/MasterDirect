@@ -10,3 +10,6 @@ create policy "portfolio_works authenticated delete own"
 
 grant delete on table public.portfolio_works to authenticated;
 notify pgrst, 'reload schema';
+
+-- Optional: run this in Supabase → SQL Editor if hard-delete still fails.
+-- Soft-delete via status='rejected' already works with the update policy.

@@ -2544,45 +2544,58 @@ export class SupabaseService {
       return { data: null, error: 'Missing work id' };
     }
 
-    // Prefer direct Supabase delete (works on GitHub Pages). Same pattern as work_videos.
     const client = await this.resolveClient();
     if (client && !this.portfolioWorksTableMissing) {
-      const { error } = await client.from('portfolio_works' as any).delete().eq('id', trimmedId);
-      if (error) {
-        if (isSupabaseMissingTableError(error, 'portfolio_works')) {
+      // Hard delete — verify a row was actually removed (RLS can silently match 0 rows).
+      const hard = await client
+        .from('portfolio_works' as any)
+        .delete()
+        .eq('id', trimmedId)
+        .select('id');
+
+      if (hard.error) {
+        if (isSupabaseMissingTableError(hard.error, 'portfolio_works')) {
           this.portfolioWorksTableMissing = true;
           this.removeWorkFromCaches(trimmedId);
           return { data: null, error: null };
         }
-        // Fallback to Railway API (service role) when RLS blocks the anon client.
-        const apiError = await this.deleteViaApi(
-          `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
-        );
-        if (apiError === null) {
-          this.removeWorkFromCaches(trimmedId);
-          return { data: null, error: null };
-        }
-        logSupabaseError('deletePortfolioWorkRow', error);
-        return {
-          data: null,
-          error: apiError || error.message,
-        };
-      }
-    } else {
-      const apiError = await this.deleteViaApi(
-        `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
-      );
-      if (apiError === null) {
+        logSupabaseError('deletePortfolioWorkRow.hard', hard.error);
+      } else if (Array.isArray(hard.data) && hard.data.length > 0) {
         this.removeWorkFromCaches(trimmedId);
         return { data: null, error: null };
       }
-      if (apiError) {
-        return { data: null, error: apiError };
+
+      // Soft-delete via UPDATE (allowed by existing RLS) — hides work from catalog.
+      const soft = await client
+        .from('portfolio_works' as any)
+        .update({ status: 'rejected' } as any)
+        .eq('id', trimmedId)
+        .select('id');
+
+      if (!soft.error && Array.isArray(soft.data) && soft.data.length > 0) {
+        this.removeWorkFromCaches(trimmedId);
+        return { data: null, error: null };
+      }
+      if (soft.error) {
+        logSupabaseError('deletePortfolioWorkRow.soft', soft.error);
       }
     }
 
-    this.removeWorkFromCaches(trimmedId);
-    return { data: null, error: null };
+    // Railway API with service role (absolute URL on GitHub Pages).
+    const apiError = await this.deleteViaApi(
+      `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
+    );
+    if (apiError === null) {
+      this.removeWorkFromCaches(trimmedId);
+      return { data: null, error: null };
+    }
+
+    return {
+      data: null,
+      error:
+        apiError ||
+        'Не удалось удалить работу. Проверьте вход в аккаунт или выполните SQL-политику удаления в Supabase.',
+    };
   }
 
   private resolveApiUrl(path: string): string {
@@ -3098,6 +3111,14 @@ export class SupabaseService {
           reason: 'missing owner_id/specialist_id',
           row,
         });
+        continue;
+      }
+
+      const status = String(row.status ?? row.verification_status ?? '')
+        .trim()
+        .toLowerCase();
+      // Soft-deleted works stay in DB but must not appear in catalog/cabinet.
+      if (status === 'rejected' || status === 'deleted') {
         continue;
       }
 

@@ -132,9 +132,33 @@
     <ol class="how-block__steps">
       @for (step of howSteps; track step.titleKey; let i = $index) {
         <li class="how-block__step">
-          <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
-          <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
-          <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
+          @if (step.external) {
+            <a
+              class="how-block__card"
+              [href]="step.link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
+              <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
+              <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
+              <span class="how-block__cta">{{ translation.t(step.ctaKey) }}</span>
+            </a>
+          } @else if (step.fragment) {
+            <a class="how-block__card" routerLink="/" [fragment]="step.fragment">
+              <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
+              <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
+              <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
+              <span class="how-block__cta">{{ translation.t(step.ctaKey) }}</span>
+            </a>
+          } @else {
+            <a class="how-block__card" [routerLink]="step.link">
+              <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
+              <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
+              <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
+              <span class="how-block__cta">{{ translation.t(step.ctaKey) }}</span>
+            </a>
+          }
         </li>
       }
     </ol>

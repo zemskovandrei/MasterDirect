@@ -177,32 +177,34 @@
         }
       </div>
 
-      <div class="ba-lightbox__meta">
-        <span class="ba-lightbox__title">{{ displayTitle() }}</span>
-        @if (albumImages().length > 1) {
-          <span class="ba-lightbox__counter">{{
-            translation
-              .t('beforeAfter.photoOf')
-              .replace('{{current}}', '' + (albumIndex() + 1))
-              .replace('{{total}}', '' + albumImages().length)
-          }}</span>
-        }
-      </div>
-
-      @if (albumImages().length > 1) {
-        <div class="ba-lightbox__thumbs" role="listbox">
-          @for (image of albumImages(); track $index) {
-            <button
-              type="button"
-              class="ba-lightbox__thumb"
-              [class.ba-lightbox__thumb--active]="$index === albumIndex()"
-              (click)="selectAlbumImage($index)"
-            >
-              <img [src]="image" [alt]="'' + ($index + 1)" loading="lazy" />
-            </button>
+      <div class="ba-lightbox__chrome">
+        <div class="ba-lightbox__meta">
+          <span class="ba-lightbox__title">{{ displayTitle() }}</span>
+          @if (albumImages().length > 1) {
+            <span class="ba-lightbox__counter">{{
+              translation
+                .t('beforeAfter.photoOf')
+                .replace('{{current}}', '' + (albumIndex() + 1))
+                .replace('{{total}}', '' + albumImages().length)
+            }}</span>
           }
         </div>
-      }
+
+        @if (albumImages().length > 1) {
+          <div class="ba-lightbox__thumbs" role="listbox">
+            @for (image of albumImages(); track $index) {
+              <button
+                type="button"
+                class="ba-lightbox__thumb"
+                [class.ba-lightbox__thumb--active]="$index === albumIndex()"
+                (click)="selectAlbumImage($index)"
+              >
+                <img [src]="image" [alt]="'' + ($index + 1)" loading="lazy" />
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
   </div>
 }

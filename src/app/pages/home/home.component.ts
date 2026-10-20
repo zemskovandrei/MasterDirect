@@ -63,12 +63,44 @@ export class HomeComponent implements OnInit {
     'home.hero.trust.3',
   ] as const;
 
-  protected readonly howSteps = [
-    { titleKey: 'home.how.steps.0.title', descKey: 'home.how.steps.0.desc' },
-    { titleKey: 'home.how.steps.1.title', descKey: 'home.how.steps.1.desc' },
-    { titleKey: 'home.how.steps.2.title', descKey: 'home.how.steps.2.desc' },
-    { titleKey: 'home.how.steps.3.title', descKey: 'home.how.steps.3.desc' },
-  ] as const;
+  protected readonly howSteps: Array<{
+    titleKey: string;
+    descKey: string;
+    ctaKey: string;
+    link: string;
+    external: boolean;
+    fragment?: string;
+  }> = [
+    {
+      titleKey: 'home.how.steps.0.title',
+      descKey: 'home.how.steps.0.desc',
+      ctaKey: 'home.how.steps.0.cta',
+      link: '/brigades',
+      external: false,
+    },
+    {
+      titleKey: 'home.how.steps.1.title',
+      descKey: 'home.how.steps.1.desc',
+      ctaKey: 'home.how.steps.1.cta',
+      link: '/',
+      fragment: 'catalog',
+      external: false,
+    },
+    {
+      titleKey: 'home.how.steps.2.title',
+      descKey: 'home.how.steps.2.desc',
+      ctaKey: 'home.how.steps.2.cta',
+      link: TELEGRAM_BOT_URL,
+      external: true,
+    },
+    {
+      titleKey: 'home.how.steps.3.title',
+      descKey: 'home.how.steps.3.desc',
+      ctaKey: 'home.how.steps.3.cta',
+      link: '/jobs',
+      external: false,
+    },
+  ];
 
   protected readonly galleryWorks = computed(() =>
     collectGalleryWorks({

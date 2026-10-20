@@ -102,19 +102,23 @@
       "steps": {
         "0": {
           "title": "Find a performer",
-          "desc": "Open the catalog or message Telegram — we’ll point you to the right match."
+          "desc": "Open the catalog or message Telegram — we’ll point you to the right match.",
+          "cta": "Open catalog"
         },
         "1": {
           "title": "Review their work",
-          "desc": "Browse before/after and finished albums — real projects only."
+          "desc": "Browse before/after and finished albums — real projects only.",
+          "cta": "View gallery"
         },
         "2": {
           "title": "Talk directly",
-          "desc": "Agree on a site visit and quote with no middlemen or hidden fees."
+          "desc": "Agree on a site visit and quote with no middlemen or hidden fees.",
+          "cta": "Message on Telegram"
         },
         "3": {
           "title": "Start the job",
-          "desc": "Lock scope and timeline with the master or team you chose."
+          "desc": "Lock scope and timeline with the master or team you chose.",
+          "cta": "Job board"
         }
       }
     },

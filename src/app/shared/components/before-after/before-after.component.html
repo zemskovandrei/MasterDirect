@@ -14,28 +14,63 @@
   <div class="ba-card">
     @if (isAlbum()) {
       @if (activeAlbumImage(); as active) {
-        <div class="ba-album-hero">
-          <img
-            [src]="active"
-            [alt]="displayTitle()"
-            [title]="displayTitle()"
-            loading="lazy"
-          />
+        <div
+          class="ba-album-hero"
+          (touchstart)="onAlbumTouchStart($event)"
+          (touchend)="onAlbumTouchEnd($event)"
+        >
+          <button
+            type="button"
+            class="ba-album-hero__open"
+            (click)="openLightbox(albumIndex())"
+            [attr.aria-label]="translation.t('beforeAfter.openGallery')"
+          >
+            <img
+              [src]="active"
+              [alt]="displayTitle()"
+              [title]="displayTitle()"
+              loading="lazy"
+            />
+          </button>
+
           @if (albumImages().length > 1) {
+            <button
+              type="button"
+              class="ba-album-nav ba-album-nav--prev"
+              (click)="prevAlbumImage($event)"
+              [attr.aria-label]="translation.t('beforeAfter.prevPhoto')"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              class="ba-album-nav ba-album-nav--next"
+              (click)="nextAlbumImage($event)"
+              [attr.aria-label]="translation.t('beforeAfter.nextPhoto')"
+            >
+              ›
+            </button>
             <span class="ba-album-count">{{
-              translation.t('beforeAfter.albumCount').replace('{{count}}', '' + albumImages().length)
+              translation
+                .t('beforeAfter.photoOf')
+                .replace('{{current}}', '' + (albumIndex() + 1))
+                .replace('{{total}}', '' + albumImages().length)
             }}</span>
           }
         </div>
       }
-      @if ((featured() || showCaption()) && albumImages().length > 1) {
-        <div class="ba-album" [attr.aria-label]="displayTitle()">
+
+      @if (albumImages().length > 1) {
+        <div class="ba-album" [attr.aria-label]="displayTitle()" role="listbox">
           @for (image of albumImages(); track $index) {
             <button
               type="button"
               class="ba-album__item"
+              role="option"
               [class.ba-album__item--active]="$index === albumIndex()"
+              [attr.aria-selected]="$index === albumIndex()"
               (click)="selectAlbumImage($index)"
+              (dblclick)="openLightbox($index)"
             >
               <img
                 [src]="image"
@@ -88,3 +123,83 @@
     </figcaption>
   }
 </figure>
+
+@if (lightboxOpen()) {
+  <div
+    class="ba-lightbox"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="displayTitle()"
+    (click)="closeLightbox()"
+  >
+    <div
+      class="ba-lightbox__stage"
+      (click)="$event.stopPropagation()"
+      (touchstart)="onAlbumTouchStart($event)"
+      (touchend)="onLightboxTouchEnd($event)"
+    >
+      <button
+        type="button"
+        class="ba-lightbox__close"
+        (click)="closeLightbox()"
+        [attr.aria-label]="translation.t('beforeAfter.closeLightbox')"
+      >
+        ×
+      </button>
+
+      @if (albumImages().length > 1) {
+        <button
+          type="button"
+          class="ba-lightbox__nav ba-lightbox__nav--prev"
+          (click)="prevAlbumImage($event)"
+          [attr.aria-label]="translation.t('beforeAfter.prevPhoto')"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="ba-lightbox__nav ba-lightbox__nav--next"
+          (click)="nextAlbumImage($event)"
+          [attr.aria-label]="translation.t('beforeAfter.nextPhoto')"
+        >
+          ›
+        </button>
+      }
+
+      @if (activeAlbumImage(); as active) {
+        <img
+          class="ba-lightbox__image"
+          [src]="active"
+          [alt]="displayTitle()"
+        />
+      }
+
+      <div class="ba-lightbox__meta">
+        <span class="ba-lightbox__title">{{ displayTitle() }}</span>
+        @if (albumImages().length > 1) {
+          <span class="ba-lightbox__counter">{{
+            translation
+              .t('beforeAfter.photoOf')
+              .replace('{{current}}', '' + (albumIndex() + 1))
+              .replace('{{total}}', '' + albumImages().length)
+          }}</span>
+        }
+      </div>
+
+      @if (albumImages().length > 1) {
+        <div class="ba-lightbox__thumbs" role="listbox">
+          @for (image of albumImages(); track $index) {
+            <button
+              type="button"
+              class="ba-lightbox__thumb"
+              [class.ba-lightbox__thumb--active]="$index === albumIndex()"
+              (click)="selectAlbumImage($index)"
+            >
+              <img [src]="image" [alt]="'' + ($index + 1)" loading="lazy" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

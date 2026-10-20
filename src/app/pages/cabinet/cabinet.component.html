@@ -410,7 +410,7 @@
                 <div class="cabinet-works">
                   @for (work of performer.works; track work.id) {
                     <div class="cabinet-works__item">
-                      <app-before-after [work]="work" [showCaption]="false" />
+                      <app-before-after [work]="work" [showCaption]="true" />
                       <div class="cabinet-works__actions">
                         <button
                           type="button"
@@ -836,7 +836,7 @@
                 <div class="cabinet-works">
                   @for (work of company.works; track work.id) {
                     <div class="cabinet-works__item">
-                      <app-before-after [work]="work" [showCaption]="false" />
+                      <app-before-after [work]="work" [showCaption]="true" />
                       <div class="cabinet-works__actions">
                         <button
                           type="button"

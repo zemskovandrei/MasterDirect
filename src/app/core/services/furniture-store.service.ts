@@ -1,7 +1,12 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FurnitureCompany, FurnitureSession } from '../models/furniture.models';
-import { PerformerSocialLinks, WorkProject, WorkVideo, normalizeWorkVideos } from '../models/portfolio.models';
+import {
+  PerformerSocialLinks,
+  WorkProject,
+  WorkVideo,
+  normalizeWorkVideos,
+} from '../models/portfolio.models';
 import { mergeSocialLinks, normalizeSocialLinks } from '../utils/social-links.util';
 import { isUuid } from '../utils/furniture-id.util';
 import { shouldWipeCatalog, wipeCatalogStorage } from '../utils/catalog-wipe.util';
@@ -107,8 +112,7 @@ export class FurnitureStoreService {
       const merged: FurnitureCompany = {
         ...company,
         works: existing.works.length > 0 ? existing.works : company.works,
-        workVideos:
-          existing.workVideos.length > 0 ? existing.workVideos : company.workVideos,
+        workVideos: existing.workVideos.length > 0 ? existing.workVideos : company.workVideos,
         socialLinks: mergeSocialLinks(company.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];
@@ -295,6 +299,36 @@ export class FurnitureStoreService {
     return true;
   }
 
+  updateWork(companyId: string, workId: string, patch: Partial<WorkProject>): WorkProject | null {
+    const company = this.companiesSignal().find((item) => item.id === companyId);
+    if (!company) {
+      return null;
+    }
+
+    let updated: WorkProject | null = null;
+    this.companiesSignal.update((list) =>
+      list.map((item) => {
+        if (item.id !== companyId) {
+          return item;
+        }
+        return {
+          ...item,
+          works: item.works.map((work) => {
+            if (work.id !== workId) {
+              return work;
+            }
+            updated = { ...work, ...patch, id: work.id };
+            return updated;
+          }),
+        };
+      }),
+    );
+    if (updated) {
+      this.persist();
+    }
+    return updated;
+  }
+
   signOut(): void {
     this.sessionSignal.set(null);
     this.persistSession();
@@ -364,7 +398,10 @@ export class FurnitureStoreService {
       this.persistSession();
       return true;
     } catch (error) {
-      console.warn('Не удалось сохранить мебельный каталог в браузере (лимит localStorage).', error);
+      console.warn(
+        'Не удалось сохранить мебельный каталог в браузере (лимит localStorage).',
+        error,
+      );
       return false;
     }
   }

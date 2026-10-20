@@ -34,6 +34,7 @@ import { MAX_TEXT_WORDS, countWords, maxWordsValidator } from '../../core/utils/
 import { APP_BRAND_NAME } from '../../core/constants/brand';
 import { WORK_VERIFICATION_ENABLED } from '../../core/constants/features';
 import { type CabinetTabBackgroundKey } from '../../core/constants/catalog-tab-backgrounds';
+import { isAlbumWork, resolveAlbumImages, type WorkProject } from '../../core/models/portfolio.models';
 
 @Component({
   selector: 'app-cabinet',
@@ -207,7 +208,7 @@ export class CabinetComponent {
   protected readonly videoError = signal<string | null>(null);
   private videoFile: File | null = null;
 
-  private readonly maxFinishedPhotos = 12;
+  private readonly maxFinishedPhotos = 50;
 
   private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
@@ -230,6 +231,7 @@ export class CabinetComponent {
       if (this.auth.session()) {
         await this.cabinetSession.restoreForCurrentUser();
         await this.refreshPremiumAccess();
+        await this.consolidateSameTitleAlbums();
       }
     });
 
@@ -267,7 +269,11 @@ export class CabinetComponent {
   }
 
   protected profileAvatarUrl(): string | null {
-    return this.store.currentPerformer()?.avatarUrl ?? this.furnitureStore.currentCompany()?.avatarUrl ?? null;
+    return (
+      this.store.currentPerformer()?.avatarUrl ??
+      this.furnitureStore.currentCompany()?.avatarUrl ??
+      null
+    );
   }
 
   private async refreshPremiumAccess(): Promise<void> {
@@ -413,10 +419,7 @@ export class CabinetComponent {
     const before = beforeRaw || afterRaw!;
     const after = afterRaw || beforeRaw!;
     const v = this.workForm.getRawValue();
-    const title =
-      v.title.trim() ||
-      this.translation.t('cabinet.defaultWorkTitle') ||
-      'Работа';
+    const title = v.title.trim() || this.translation.t('cabinet.defaultWorkTitle') || 'Работа';
 
     if (company) {
       const work = this.furnitureStore.addWork(company.id, {
@@ -601,19 +604,53 @@ export class CabinetComponent {
       this.translation.t('cabinet.defaultFinishedWorkTitle') ||
       this.translation.t('cabinet.defaultWorkTitle') ||
       'Готовая работа';
-    const cover = photos[0];
+
+    const existingWorks = company?.works ?? performer?.works ?? [];
+    const sameTitleAlbums = existingWorks.filter(
+      (work) =>
+        isAlbumWork(work) && work.title.trim().toLowerCase() === title.trim().toLowerCase(),
+    );
+    const primaryAlbum =
+      sameTitleAlbums.slice().sort((a, b) => resolveAlbumImages(b).length - resolveAlbumImages(a).length)[0] ??
+      null;
+
+    const existingImages = primaryAlbum ? resolveAlbumImages(primaryAlbum) : [];
+    const room = this.maxFinishedPhotos - existingImages.length;
+    if (room <= 0) {
+      alert(this.translation.t('cabinet.alertFinishedAlbumFull'));
+      return;
+    }
+
+    const photosToAdd = photos.slice(0, room);
+    if (photos.length > room) {
+      alert(this.translation.t('cabinet.alertFinishedAlbumFull'));
+    }
+
+    const mergedImages = [...existingImages, ...photosToAdd];
+    const cover = mergedImages[0];
+    const description = v.description.trim() || primaryAlbum?.description || '';
+    const duplicatesToRemove = sameTitleAlbums.filter((work) => work.id !== primaryAlbum?.id);
 
     this.finishedUploading.set(true);
     try {
       if (company) {
-        const work = this.furnitureStore.addWork(company.id, {
-          title,
-          description: v.description,
-          beforeImage: cover,
-          afterImage: cover,
-          kind: 'album',
-          albumImages: photos,
-        });
+        const work = primaryAlbum
+          ? this.furnitureStore.updateWork(company.id, primaryAlbum.id, {
+              title,
+              description,
+              beforeImage: cover,
+              afterImage: cover,
+              kind: 'album',
+              albumImages: mergedImages,
+            })
+          : this.furnitureStore.addWork(company.id, {
+              title,
+              description,
+              beforeImage: cover,
+              afterImage: cover,
+              kind: 'album',
+              albumImages: mergedImages,
+            });
         if (!work) {
           return;
         }
@@ -628,20 +665,38 @@ export class CabinetComponent {
         );
 
         if (saveResult.error) {
-          this.furnitureStore.deleteWork(company.id, work.id);
+          if (!primaryAlbum) {
+            this.furnitureStore.deleteWork(company.id, work.id);
+          }
           alert(saveResult.error);
           return;
         }
-      } else {
-        const result = this.store.addWork(performer!.id, {
-          title,
-          description: v.description,
-          beforeImage: cover,
-          afterImage: cover,
-          kind: 'album',
-          albumImages: photos,
+
+        await this.removeDuplicateFinishedAlbums(duplicatesToRemove, {
+          kind: 'furniture',
+          ownerKey: company.id,
         });
-        if (!result) {
+      } else {
+        const result = primaryAlbum
+          ? {
+              work: this.store.updateWork(performer!.id, primaryAlbum.id, {
+                title,
+                description,
+                beforeImage: cover,
+                afterImage: cover,
+                kind: 'album',
+                albumImages: mergedImages,
+              }),
+            }
+          : this.store.addWork(performer!.id, {
+              title,
+              description,
+              beforeImage: cover,
+              afterImage: cover,
+              kind: 'album',
+              albumImages: mergedImages,
+            });
+        if (!result?.work) {
           return;
         }
 
@@ -655,10 +710,17 @@ export class CabinetComponent {
         );
 
         if (saveResult.error) {
-          this.store.deleteWork(performer!.id, result.work.id);
+          if (!primaryAlbum) {
+            this.store.deleteWork(performer!.id, result.work.id);
+          }
           alert(saveResult.error);
           return;
         }
+
+        await this.removeDuplicateFinishedAlbums(duplicatesToRemove, {
+          kind: 'performer',
+          ownerKey: performer!.id,
+        });
       }
 
       this.finishedUploadSuccess.set(true);
@@ -671,6 +733,114 @@ export class CabinetComponent {
     }
   }
 
+  private async removeDuplicateFinishedAlbums(
+    duplicates: WorkProject[],
+    owner: { kind: 'performer' | 'furniture'; ownerKey: string },
+  ): Promise<void> {
+    for (const duplicate of duplicates) {
+      const result = await firstValueFrom(this.supabase.deletePortfolioWork(duplicate.id));
+      if (result.error) {
+        continue;
+      }
+      if (owner.kind === 'furniture') {
+        this.furnitureStore.deleteWork(owner.ownerKey, duplicate.id);
+      } else {
+        this.store.deleteWork(owner.ownerKey, duplicate.id);
+      }
+    }
+  }
+
+  /** Merge same-title finished albums (e.g. 12 + 6 uploaded separately). */
+  private async consolidateSameTitleAlbums(): Promise<void> {
+    const performer = this.store.currentPerformer();
+    const company = this.furnitureStore.currentCompany();
+    const works = company?.works ?? performer?.works ?? [];
+    if (!works.length) {
+      return;
+    }
+
+    const albumsByTitle = new Map<string, WorkProject[]>();
+    for (const work of works) {
+      if (!isAlbumWork(work)) {
+        continue;
+      }
+      const key = work.title.trim().toLowerCase() || '__default__';
+      const list = albumsByTitle.get(key) ?? [];
+      list.push(work);
+      albumsByTitle.set(key, list);
+    }
+
+    for (const group of albumsByTitle.values()) {
+      if (group.length < 2) {
+        continue;
+      }
+
+      const primary = group
+        .slice()
+        .sort((a, b) => resolveAlbumImages(b).length - resolveAlbumImages(a).length)[0];
+      const mergedImages = [
+        ...new Set(group.flatMap((work) => resolveAlbumImages(work))),
+      ].slice(0, this.maxFinishedPhotos);
+      const cover = mergedImages[0] || primary.beforeImage;
+      const description =
+        group.map((work) => work.description?.trim()).find(Boolean) || primary.description || '';
+      const duplicates = group.filter((work) => work.id !== primary.id);
+
+      if (company) {
+        const work = this.furnitureStore.updateWork(company.id, primary.id, {
+          description,
+          beforeImage: cover,
+          afterImage: cover,
+          kind: 'album',
+          albumImages: mergedImages,
+        });
+        if (!work) {
+          continue;
+        }
+        const saveResult = await firstValueFrom(
+          this.supabase.savePortfolioWork({
+            ownerId: company.dbId ?? company.id,
+            ownerType: 'furniture',
+            work,
+          }),
+        );
+        if (saveResult.error) {
+          continue;
+        }
+        await this.removeDuplicateFinishedAlbums(duplicates, {
+          kind: 'furniture',
+          ownerKey: company.id,
+        });
+      } else if (performer) {
+        const work = this.store.updateWork(performer.id, primary.id, {
+          description,
+          beforeImage: cover,
+          afterImage: cover,
+          kind: 'album',
+          albumImages: mergedImages,
+        });
+        if (!work) {
+          continue;
+        }
+        const ownerType = performer.type === 'brigade' ? 'brigade' : 'worker';
+        const saveResult = await firstValueFrom(
+          this.supabase.savePortfolioWork({
+            ownerId: performer.id,
+            ownerType,
+            work,
+          }),
+        );
+        if (saveResult.error) {
+          continue;
+        }
+        await this.removeDuplicateFinishedAlbums(duplicates, {
+          kind: 'performer',
+          ownerKey: performer.id,
+        });
+      }
+    }
+  }
+
   async deletePerformerWork(workId: string, workTitle: string): Promise<void> {
     const performer = this.store.currentPerformer();
     if (!performer || !workId.trim()) {
@@ -678,9 +848,7 @@ export class CabinetComponent {
     }
 
     const confirmed = window.confirm(
-      this.translation
-        .t('cabinet.deleteWorkConfirm')
-        .replace('{{title}}', workTitle || '—'),
+      this.translation.t('cabinet.deleteWorkConfirm').replace('{{title}}', workTitle || '—'),
     );
     if (!confirmed) {
       return;
@@ -701,9 +869,7 @@ export class CabinetComponent {
     }
 
     const confirmed = window.confirm(
-      this.translation
-        .t('cabinet.deleteWorkConfirm')
-        .replace('{{title}}', workTitle || '—'),
+      this.translation.t('cabinet.deleteWorkConfirm').replace('{{title}}', workTitle || '—'),
     );
     if (!confirmed) {
       return;
@@ -786,9 +952,7 @@ export class CabinetComponent {
     }
 
     const confirmed = window.confirm(
-      this.translation
-        .t('cabinet.deleteVideoConfirm')
-        .replace('{{title}}', videoTitle || '—'),
+      this.translation.t('cabinet.deleteVideoConfirm').replace('{{title}}', videoTitle || '—'),
     );
     if (!confirmed) {
       return;

@@ -149,9 +149,7 @@ export class PortfolioStoreService {
     }
 
     this.performersSignal.update((list) =>
-      list.map((item) =>
-        item.id === performerId ? { ...item, headerBg: headerBg.trim() } : item,
-      ),
+      list.map((item) => (item.id === performerId ? { ...item, headerBg: headerBg.trim() } : item)),
     );
     this.persist();
     return true;
@@ -192,6 +190,36 @@ export class PortfolioStoreService {
     return true;
   }
 
+  updateWork(performerId: string, workId: string, patch: Partial<WorkProject>): WorkProject | null {
+    const performer = this.performersSignal().find((item) => item.id === performerId);
+    if (!performer) {
+      return null;
+    }
+
+    let updated: WorkProject | null = null;
+    this.performersSignal.update((list) =>
+      list.map((item) => {
+        if (item.id !== performerId) {
+          return item;
+        }
+        return {
+          ...item,
+          works: item.works.map((work) => {
+            if (work.id !== workId) {
+              return work;
+            }
+            updated = { ...work, ...patch, id: work.id };
+            return updated;
+          }),
+        };
+      }),
+    );
+    if (updated) {
+      this.persist();
+    }
+    return updated;
+  }
+
   removePerformerIfExists(performerId: string): void {
     if (!this.performersSignal().some((item) => item.id === performerId)) {
       return;
@@ -219,8 +247,7 @@ export class PortfolioStoreService {
       const merged: PerformerProfile = {
         ...performer,
         works: existing.works.length > 0 ? existing.works : performer.works,
-        workVideos:
-          existing.workVideos.length > 0 ? existing.workVideos : performer.workVideos,
+        workVideos: existing.workVideos.length > 0 ? existing.workVideos : performer.workVideos,
         socialLinks: mergeSocialLinks(performer.socialLinks, existing.socialLinks),
       };
       return [...list.slice(0, index), merged, ...list.slice(index + 1)];

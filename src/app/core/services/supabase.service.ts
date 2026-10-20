@@ -6,7 +6,13 @@ import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FurnitureCompany } from '../models/furniture.models';
 import { Profile, ProfileInsert, ProfileType, ProfileUpdate } from '../models/profile.models';
-import { PerformerProfile, PerformerSocialLinks, WorkProject, WorkVideo, normalizeWorkVideos } from '../models/portfolio.models';
+import {
+  PerformerProfile,
+  PerformerSocialLinks,
+  WorkProject,
+  WorkVideo,
+  normalizeWorkVideos,
+} from '../models/portfolio.models';
 import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
   portfolioWorkRowToProject,
@@ -39,9 +45,23 @@ import type { FurnitureOrderInsert, MasterRow } from '../models/master.model';
 import { profileMatchesCatalogCity } from '../utils/catalog-filter.util';
 import { collectGalleryVideos } from '../utils/gallery-works.util';
 import { buildFurnitureSlug } from '../utils/furniture-id.util';
-import { logSupabaseError, supabaseErrorMessage, isSupabaseNetworkError, supabaseNetworkErrorHint, formatStorageUploadError, isStorageBucketMissingError, isRlsPolicyError, formatSupabaseMutationError, isSupabaseMissingTableError, isSupabaseSchemaColumnError } from '../utils/supabase-error.util';
+import {
+  logSupabaseError,
+  supabaseErrorMessage,
+  isSupabaseNetworkError,
+  supabaseNetworkErrorHint,
+  formatStorageUploadError,
+  isStorageBucketMissingError,
+  isRlsPolicyError,
+  formatSupabaseMutationError,
+  isSupabaseMissingTableError,
+  isSupabaseSchemaColumnError,
+} from '../utils/supabase-error.util';
 import { compressWorkImageFile } from '../utils/compress-image.util';
-import { specialistRowToWritePayload, profilePatchToSpecialistRow } from '../utils/specialist-db.util';
+import {
+  specialistRowToWritePayload,
+  profilePatchToSpecialistRow,
+} from '../utils/specialist-db.util';
 import { mergeSocialLinks } from '../utils/social-links.util';
 import { isUuid, normalizeUuid } from '../utils/furniture-id.util';
 import { mapJobklientInsertToOrderInsert, mapOrderRowsToJobs } from '../utils/order-db.util';
@@ -110,7 +130,7 @@ export class SupabaseService {
   private jobsFetchPromise: Promise<Job[]> | null = null;
   private memoryJobsCache: { at: number; jobs: Job[] } | null = null;
   private profilesRefreshPromise: Promise<Profile[]> | null = null;
-    private profilesInitialized = false;
+  private profilesInitialized = false;
   private portfolioWorksTableMissing = false;
   private portfolioWorksStatusColumnMissing = false;
   private specialistAvatarColumnMissing = false;
@@ -594,9 +614,7 @@ export class SupabaseService {
         .maybeSingle();
 
       let result = existing
-        ? await specialistTable
-          .update(payload)
-          .eq('id', input.userId)
+        ? await specialistTable.update(payload).eq('id', input.userId)
         : await specialistTable.upsert(payload as any, { onConflict: 'id' as any });
 
       if (result.error && this.isMissingAvatarColumnError(result.error)) {
@@ -604,9 +622,7 @@ export class SupabaseService {
         const fallbackPayload = { ...(payload as Record<string, unknown>) };
         delete fallbackPayload['avatar_url'];
         result = existing
-          ? await specialistTable
-            .update(fallbackPayload)
-            .eq('id', input.userId)
+          ? await specialistTable.update(fallbackPayload).eq('id', input.userId)
           : await specialistTable.upsert(fallbackPayload as any, { onConflict: 'id' as any });
       }
 
@@ -741,7 +757,11 @@ export class SupabaseService {
   private async ensureSpecialistRow(dbId: string): Promise<{ error: string | null }> {
     const client = await this.resolveClient();
     if (!client) {
-      return { error: this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED };
+      return {
+        error: this.isConfigured()
+          ? 'Supabase client failed to initialize'
+          : SUPABASE_NOT_CONFIGURED,
+      };
     }
 
     const specialistTable = client.from(environment.supabase.specialistTable as any);
@@ -999,7 +1019,8 @@ export class SupabaseService {
       });
 
     if (uploadErrorBefore || uploadErrorAfter || !fileDataBefore?.path || !fileDataAfter?.path) {
-      const uploadError = uploadErrorBefore || uploadErrorAfter || new Error('Storage path missing');
+      const uploadError =
+        uploadErrorBefore || uploadErrorAfter || new Error('Storage path missing');
       console.error('Ошибка при загрузке фото:', uploadError);
       logSupabaseError('uploadWork.upload', uploadError);
       return {
@@ -1008,8 +1029,10 @@ export class SupabaseService {
       };
     }
 
-    const urlBefore = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataBefore.path).data.publicUrl;
-    const urlAfter = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataAfter.path).data.publicUrl;
+    const urlBefore = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataBefore.path)
+      .data.publicUrl;
+    const urlAfter = client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(fileDataAfter.path)
+      .data.publicUrl;
 
     const payload = {
       before_image_url: urlBefore,
@@ -1043,10 +1066,7 @@ export class SupabaseService {
     return this.dataService.countCompletedOrdersByUser(userId);
   }
 
-  async updateMasterHeaderBg(
-    masterId: string,
-    headerBg: string,
-  ): Promise<SupabaseMutationResult> {
+  async updateMasterHeaderBg(masterId: string, headerBg: string): Promise<SupabaseMutationResult> {
     const trimmedId = masterId?.trim();
     const color = headerBg?.trim();
     if (!trimmedId || !color) {
@@ -1112,9 +1132,9 @@ export class SupabaseService {
       return { data: null, error: 'Profile not found' };
     }
 
-    const performer = this.portfolioStore.performers().find(
-      (item) => item.id === trimmedId || item.id === dbId,
-    );
+    const performer = this.portfolioStore
+      .performers()
+      .find((item) => item.id === trimmedId || item.id === dbId);
     if (performer) {
       this.portfolioStore.updateSocialLinks(performer.id, links);
     }
@@ -1129,7 +1149,12 @@ export class SupabaseService {
     try {
       const client = await this.resolveClient();
       if (!client) {
-        return { data: null, error: this.isConfigured() ? 'Supabase client failed to initialize' : SUPABASE_NOT_CONFIGURED };
+        return {
+          data: null,
+          error: this.isConfigured()
+            ? 'Supabase client failed to initialize'
+            : SUPABASE_NOT_CONFIGURED,
+        };
       }
 
       const ensure = await this.ensureSpecialistRow(dbId);
@@ -1217,7 +1242,18 @@ export class SupabaseService {
 
       const { data, error } = await client
         .from(environment.supabase.specialistTable)
-        .update(profilePatchToSpecialistRow({ name, specialty, city: patch.city, phone: patch.phone, whatsapp: patch.whatsapp, telegram: patch.telegram, instagram: patch.instagram, facebook: patch.facebook }))
+        .update(
+          profilePatchToSpecialistRow({
+            name,
+            specialty,
+            city: patch.city,
+            phone: patch.phone,
+            whatsapp: patch.whatsapp,
+            telegram: patch.telegram,
+            instagram: patch.instagram,
+            facebook: patch.facebook,
+          }),
+        )
         .eq('id', dbId)
         .select('*')
         .maybeSingle();
@@ -1306,11 +1342,13 @@ export class SupabaseService {
   }
 
   private furnitureCompanyKeys(company: FurnitureCompany): string[] {
-    return [...new Set(
-      [company.dbId, company.slug, company.id]
-        .filter((value): value is string => !!value?.trim())
-        .map((value) => value.trim()),
-    )];
+    return [
+      ...new Set(
+        [company.dbId, company.slug, company.id]
+          .filter((value): value is string => !!value?.trim())
+          .map((value) => value.trim()),
+      ),
+    ];
   }
 
   private findLocalFurnitureCompany(ref: string): FurnitureCompany | undefined {
@@ -1319,12 +1357,9 @@ export class SupabaseService {
       return undefined;
     }
 
-    return this.furnitureStore.companies().find(
-      (company) =>
-        company.id === key ||
-        company.dbId === key ||
-        company.slug === key,
-    );
+    return this.furnitureStore
+      .companies()
+      .find((company) => company.id === key || company.dbId === key || company.slug === key);
   }
 
   private hasLocalFurnitureReference(ref: string, company?: FurnitureCompany): boolean {
@@ -1338,8 +1373,7 @@ export class SupabaseService {
     }
 
     return this.profilesSignal().some(
-      (profile) =>
-        profile.type === 'furniture' && (profile.id === key || profile.slug === key),
+      (profile) => profile.type === 'furniture' && (profile.id === key || profile.slug === key),
     );
   }
 
@@ -1748,7 +1782,11 @@ export class SupabaseService {
 
       if (error) {
         logSupabaseError('uploadOrderFile', error);
-        return { path: '', publicUrl: null, error: formatStorageUploadError(error, ORDER_FILES_BUCKET) };
+        return {
+          path: '',
+          publicUrl: null,
+          error: formatStorageUploadError(error, ORDER_FILES_BUCKET),
+        };
       }
 
       const { data } = client.storage.from(ORDER_FILES_BUCKET).getPublicUrl(path);
@@ -2261,7 +2299,9 @@ export class SupabaseService {
     return Array.from(byId.values());
   }
 
-  private buildWorksMapFromLocalStores(remoteWorks?: Map<string, WorkProject[]>): Map<string, WorkProject[]> {
+  private buildWorksMapFromLocalStores(
+    remoteWorks?: Map<string, WorkProject[]>,
+  ): Map<string, WorkProject[]> {
     const map = new Map(remoteWorks ?? this.portfolioWorksByOwnerSignal());
 
     for (const performer of this.portfolioStore.performers()) {
@@ -2312,8 +2352,7 @@ export class SupabaseService {
 
     for (const profile of profiles) {
       const remoteWorks = worksMap.get(profile.id) ?? [];
-      const works =
-        remoteWorks.length > 0 ? remoteWorks : this.resolveLocalWorks(profile.id);
+      const works = remoteWorks.length > 0 ? remoteWorks : this.resolveLocalWorks(profile.id);
       const workVideos = this.videosForProfile(profile, videosMap);
       if (profile.type === 'furniture') {
         companies.push(profileToFurnitureCompany(profile, works, workVideos));
@@ -2465,12 +2504,35 @@ export class SupabaseService {
     }
 
     try {
-      // Table policies allow insert/delete only (no update).
-      const { data, error } = await client
+      const existing = await client
         .from('works_portfolio' as any)
-        .insert(payload as any)
-        .select('*')
+        .select('id')
+        .eq('id', workForSave.id)
         .maybeSingle();
+
+      if (existing.error && isSupabaseMissingTableError(existing.error, 'works_portfolio')) {
+        this.worksPortfolioTableMissing = true;
+        this.upsertWorkInCaches(ownerIdForCache, workForSave);
+        if (ownerIdForCache !== ownerIdForDb) {
+          this.upsertWorkInCaches(ownerIdForDb, workForSave);
+        }
+        return { data: workForSave, error: null };
+      }
+
+      const write = existing.data
+        ? client
+            .from('works_portfolio' as any)
+            .update(payload as any)
+            .eq('id', workForSave.id)
+            .select('*')
+            .maybeSingle()
+        : client
+            .from('works_portfolio' as any)
+            .insert(payload as any)
+            .select('*')
+            .maybeSingle();
+
+      const { data, error } = await write;
 
       if (error) {
         if (isSupabaseMissingTableError(error, 'works_portfolio')) {
@@ -2515,9 +2577,10 @@ export class SupabaseService {
   ): Promise<{ work: WorkProject; error: string | null }> {
     const albumSources =
       work.kind === 'album' || (work.albumImages && work.albumImages.length > 0)
-        ? (work.albumImages?.length ? work.albumImages : [work.beforeImage || work.afterImage]).filter(
-            (url) => !!url?.trim(),
-          )
+        ? (work.albumImages?.length
+            ? work.albumImages
+            : [work.beforeImage || work.afterImage]
+          ).filter((url) => !!url?.trim())
         : [];
 
     if (albumSources.length > 0) {
@@ -2684,7 +2747,9 @@ export class SupabaseService {
       } else if (finished.data) {
         const session = await client.auth.getSession();
         const userId = session.data.session?.user?.id?.trim() ?? '';
-        const ownerId = String((finished.data as { specialist_id?: string }).specialist_id ?? '').trim();
+        const ownerId = String(
+          (finished.data as { specialist_id?: string }).specialist_id ?? '',
+        ).trim();
         if (userId && ownerId && userId !== ownerId) {
           return {
             data: null,
@@ -2731,7 +2796,9 @@ export class SupabaseService {
 
       const session = await client.auth.getSession();
       const userId = session.data.session?.user?.id?.trim() ?? '';
-      const ownerId = String((existing.data as { specialist_id?: string }).specialist_id ?? '').trim();
+      const ownerId = String(
+        (existing.data as { specialist_id?: string }).specialist_id ?? '',
+      ).trim();
       if (userId && ownerId && userId !== ownerId) {
         return {
           data: null,
@@ -2786,9 +2853,7 @@ export class SupabaseService {
     return {
       data: null,
       error:
-        (typeof apiError === 'string' && apiError !== 'Forbidden'
-          ? apiError
-          : null) ||
+        (typeof apiError === 'string' && apiError !== 'Forbidden' ? apiError : null) ||
         'Не удалось удалить работу с сайта. Обновите страницу (Ctrl+F5) и попробуйте ещё раз под тем же аккаунтом.',
     };
   }
@@ -2802,7 +2867,11 @@ export class SupabaseService {
     }
     const host = window.location.hostname;
     // Site is on GitHub Pages; API+bot live on Railway.
-    if (host === 'masterdirect.ge' || host === 'www.masterdirect.ge' || host.endsWith('.github.io')) {
+    if (
+      host === 'masterdirect.ge' ||
+      host === 'www.masterdirect.ge' ||
+      host.endsWith('.github.io')
+    ) {
       return `https://masterdirect-production.up.railway.app${path.startsWith('/') ? path : `/${path}`}`;
     }
     return path;
@@ -2822,9 +2891,10 @@ export class SupabaseService {
         },
       });
 
-      const body = (await response.json().catch(() => null)) as
-        | { error?: string; message?: string }
-        | null;
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+        message?: string;
+      } | null;
 
       if (!response.ok) {
         return body?.error ?? body?.message ?? response.statusText;
@@ -2852,7 +2922,10 @@ export class SupabaseService {
     worksMap.set(ownerId, ownerWorks);
     this.portfolioWorksByOwnerSignal.set(worksMap);
 
-    if (this.portfolioStore.getPerformer('worker', ownerId) || this.portfolioStore.getPerformer('brigade', ownerId)) {
+    if (
+      this.portfolioStore.getPerformer('worker', ownerId) ||
+      this.portfolioStore.getPerformer('brigade', ownerId)
+    ) {
       this.portfolioStore.setWorksForPerformer(ownerId, ownerWorks);
       return;
     }
@@ -2873,7 +2946,10 @@ export class SupabaseService {
         continue;
       }
       worksMap.set(ownerId, nextWorks);
-      if (this.portfolioStore.getPerformer('worker', ownerId) || this.portfolioStore.getPerformer('brigade', ownerId)) {
+      if (
+        this.portfolioStore.getPerformer('worker', ownerId) ||
+        this.portfolioStore.getPerformer('brigade', ownerId)
+      ) {
         this.portfolioStore.setWorksForPerformer(ownerId, nextWorks);
       } else {
         const company =
@@ -3059,7 +3135,10 @@ export class SupabaseService {
 
     const client = await this.resolveClient();
     if (client && !this.workVideosTableMissing) {
-      const { error } = await client.from('work_videos' as any).delete().eq('id', trimmedId);
+      const { error } = await client
+        .from('work_videos' as any)
+        .delete()
+        .eq('id', trimmedId);
       if (error && !isSupabaseMissingTableError(error, 'work_videos')) {
         logSupabaseError('deleteWorkVideoRow', error);
         return { data: null, error: error.message };
@@ -3074,10 +3153,9 @@ export class SupabaseService {
   }
 
   private upsertWorkVideoInCaches(ownerId: string, video: WorkVideo): void {
-    const next = this.mergeWorkVideoCollections(
-      this.workVideosByOwnerSignal().get(ownerId) ?? [],
-      [video],
-    );
+    const next = this.mergeWorkVideoCollections(this.workVideosByOwnerSignal().get(ownerId) ?? [], [
+      video,
+    ]);
     const map = new Map(this.workVideosByOwnerSignal());
     map.set(ownerId, next);
     this.workVideosByOwnerSignal.set(map);
@@ -3298,9 +3376,7 @@ export class SupabaseService {
     for (const row of (data ?? []) as Array<
       PortfolioWorkRow & { performer_id?: string | null; specialist_id?: string | null }
     >) {
-      const ownerId = String(
-        row?.owner_id ?? row?.specialist_id ?? row?.performer_id ?? '',
-      ).trim();
+      const ownerId = String(row?.owner_id ?? row?.specialist_id ?? row?.performer_id ?? '').trim();
       if (!ownerId) {
         console.log('work skipped because...', {
           reason: 'missing owner_id/specialist_id',
@@ -3381,7 +3457,9 @@ export class SupabaseService {
     }
   }
 
-  private async loadWorksTableFallback(client: SupabaseClient): Promise<Map<string, WorkProject[]>> {
+  private async loadWorksTableFallback(
+    client: SupabaseClient,
+  ): Promise<Map<string, WorkProject[]>> {
     const worksMap = new Map<string, WorkProject[]>();
     const fallbackQuery = "from('works').select('*').order('created_at', { ascending: false })";
 

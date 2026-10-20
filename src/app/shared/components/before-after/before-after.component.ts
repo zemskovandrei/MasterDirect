@@ -7,7 +7,12 @@ import {
   ChangeDetectionStrategy,
   HostListener,
   OnDestroy,
+  PLATFORM_ID,
+  afterRenderEffect,
+  viewChild,
+  ElementRef,
 } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { WORK_VERIFICATION_ENABLED } from '../../../core/constants/features';
 import { isAlbumWork, resolveAlbumImages, WorkProject } from '../../../core/models/portfolio.models';
 import { CatalogLocalizationService } from '../../../core/services/catalog-localization.service';
@@ -29,6 +34,8 @@ interface VerificationBadge {
 export class BeforeAfterComponent implements OnDestroy {
   protected readonly translation = inject(TranslationService);
   private readonly catalogL10n = inject(CatalogLocalizationService);
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly work = input.required<WorkProject>();
   readonly featured = input(false);
@@ -38,6 +45,7 @@ export class BeforeAfterComponent implements OnDestroy {
 
   protected readonly albumIndex = signal(0);
   protected readonly lightboxOpen = signal(false);
+  private readonly lightboxRoot = viewChild<ElementRef<HTMLElement>>('lightboxRoot');
 
   private touchStartX = 0;
   private touchStartY = 0;
@@ -55,7 +63,21 @@ export class BeforeAfterComponent implements OnDestroy {
     return images[index] ?? images[0];
   });
 
+  constructor() {
+    // Escape overflow/transform ancestors so fullscreen overlay covers the viewport.
+    afterRenderEffect(() => {
+      if (!isPlatformBrowser(this.platformId) || !this.lightboxOpen()) {
+        return;
+      }
+      const root = this.lightboxRoot()?.nativeElement;
+      if (root && root.parentElement !== this.document.body) {
+        this.document.body.appendChild(root);
+      }
+    });
+  }
+
   ngOnDestroy(): void {
+    this.detachLightboxFromBody();
     this.unlockBodyScroll();
   }
 
@@ -113,6 +135,7 @@ export class BeforeAfterComponent implements OnDestroy {
 
   protected closeLightbox(): void {
     this.lightboxOpen.set(false);
+    this.detachLightboxFromBody();
     this.unlockBodyScroll();
   }
 
@@ -204,17 +227,27 @@ export class BeforeAfterComponent implements OnDestroy {
     this.stepAlbum(dx < 0 ? 1 : -1);
   }
 
-  private lockBodyScroll(): void {
-    if (typeof document === 'undefined') {
+  private detachLightboxFromBody(): void {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    document.body.style.overflow = 'hidden';
+    const root = this.lightboxRoot()?.nativeElement;
+    if (root?.parentElement === this.document.body) {
+      root.remove();
+    }
+  }
+
+  private lockBodyScroll(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.document.body.style.overflow = 'hidden';
   }
 
   private unlockBodyScroll(): void {
-    if (typeof document === 'undefined') {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    document.body.style.overflow = '';
+    this.document.body.style.overflow = '';
   }
 }

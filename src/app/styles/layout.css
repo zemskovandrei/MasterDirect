@@ -18,7 +18,7 @@
 }
 
 /* Общие настройки секций */
-section:not(.hero-section):not(.features-block):not(.services-block):not(.portfolio-teaser) {
+section:not(.hero-section):not(.features-block):not(.services-block):not(.portfolio-teaser):not(.how-block) {
   padding: 100px 0;
 }
 

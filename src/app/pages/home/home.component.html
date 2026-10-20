@@ -85,25 +85,6 @@
   </div>
 </section>
 
-<section class="how-block" id="how" aria-labelledby="home-how-title">
-  <div class="how-block__inner">
-    <div class="how-block__heading">
-      <p class="how-block__eyebrow">{{ translation.t('home.how.eyebrow') }}</p>
-      <h2 id="home-how-title" class="how-block__title">{{ translation.t('home.how.title') }}</h2>
-      <p class="how-block__lead">{{ translation.t('home.how.lead') }}</p>
-    </div>
-    <ol class="how-block__steps">
-      @for (step of howSteps; track step.titleKey; let i = $index) {
-        <li class="how-block__step">
-          <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
-          <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
-          <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
-        </li>
-      }
-    </ol>
-  </div>
-</section>
-
 <section class="features-block" id="features">
   <div class="features">
     <div class="features-container">
@@ -138,6 +119,25 @@
         </a>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="how-block" id="how" aria-labelledby="home-how-title">
+  <div class="how-block__inner">
+    <div class="how-block__heading">
+      <p class="how-block__eyebrow">{{ translation.t('home.how.eyebrow') }}</p>
+      <h2 id="home-how-title" class="how-block__title">{{ translation.t('home.how.title') }}</h2>
+      <p class="how-block__lead">{{ translation.t('home.how.lead') }}</p>
+    </div>
+    <ol class="how-block__steps">
+      @for (step of howSteps; track step.titleKey; let i = $index) {
+        <li class="how-block__step">
+          <span class="how-block__num" aria-hidden="true">{{ i + 1 }}</span>
+          <h3 class="how-block__step-title">{{ translation.t(step.titleKey) }}</h3>
+          <p class="how-block__step-desc">{{ translation.t(step.descKey) }}</p>
+        </li>
+      }
+    </ol>
   </div>
 </section>
 

@@ -679,13 +679,18 @@ export class CabinetComponent {
 
     const confirmed = window.confirm(
       this.translation
-        .t('admin.catalog.deleteWorkConfirm')
+        .t('cabinet.deleteWorkConfirm')
         .replace('{{title}}', workTitle || '—'),
     );
     if (!confirmed) {
       return;
     }
 
+    const result = await firstValueFrom(this.supabase.deletePortfolioWork(workId));
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
     this.store.deleteWork(performer.id, workId);
   }
 
@@ -697,13 +702,18 @@ export class CabinetComponent {
 
     const confirmed = window.confirm(
       this.translation
-        .t('admin.catalog.deleteWorkConfirm')
+        .t('cabinet.deleteWorkConfirm')
         .replace('{{title}}', workTitle || '—'),
     );
     if (!confirmed) {
       return;
     }
 
+    const result = await firstValueFrom(this.supabase.deletePortfolioWork(workId));
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
     this.furnitureStore.deleteWork(company.id, workId);
   }
 

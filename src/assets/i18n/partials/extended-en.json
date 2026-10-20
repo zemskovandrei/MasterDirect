@@ -355,6 +355,8 @@
     "defaultWorkTitle": "Work",
     "workPhotosHint": "After registration one photo is enough. Title and the second photo are optional.",
     "finishedUploadTitle": "Finished works",
+    "deleteWork": "Delete work",
+    "deleteWorkConfirm": "Delete work “{{title}}”? Photos will be removed from the catalog.",
     "finishedUploadLead": "Upload finished job photos as one album — not before/after. Title is optional.",
     "finishedPhotosLabel": "Finished work photos",
     "finishedDropHint": "JPG, PNG, WebP · up to 12 photos at once",

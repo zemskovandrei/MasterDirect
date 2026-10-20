@@ -317,7 +317,7 @@ async function canDeletePortfolioWork(
 
   const { data, error } = await supabase
     .from('portfolio_works')
-    .select('id,owner_id')
+    .select('id,owner_id,specialist_id')
     .eq('id', workId)
     .maybeSingle();
 
@@ -325,7 +325,9 @@ async function canDeletePortfolioWork(
     return false;
   }
 
-  return String((data as { owner_id?: string | null }).owner_id ?? '').trim() === user.id;
+  const row = data as { owner_id?: string | null; specialist_id?: string | null };
+  const owner = String(row.specialist_id ?? row.owner_id ?? '').trim();
+  return !!owner && owner === user.id;
 }
 
 app.post('/api/jobklient', async (req: Request, res: Response) => {

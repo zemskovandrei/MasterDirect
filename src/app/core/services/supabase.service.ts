@@ -940,8 +940,15 @@ export class SupabaseService {
       return of({ data: null, error: 'Browser only' });
     }
 
-    this.removeWorkFromCaches(workId);
-    return of({ data: null, error: null });
+    return from(this.deletePortfolioWorkRow(workId)).pipe(
+      catchError((err) => {
+        logSupabaseError('deletePortfolioWork', err);
+        return of({
+          data: null,
+          error: err instanceof Error ? err.message : 'Delete failed',
+        });
+      }),
+    );
   }
 
   async uploadWork(
@@ -2537,28 +2544,60 @@ export class SupabaseService {
       return { data: null, error: 'Missing work id' };
     }
 
-    const apiError = await this.deleteViaApi(`/api/portfolio-works/${encodeURIComponent(trimmedId)}`);
-    if (apiError === null) {
-      this.removeWorkFromCaches(trimmedId);
-      return { data: null, error: null };
-    }
-
+    // Prefer direct Supabase delete (works on GitHub Pages). Same pattern as work_videos.
     const client = await this.resolveClient();
     if (client && !this.portfolioWorksTableMissing) {
-      const { error } = await client.from('portfolio_works').delete().eq('id', trimmedId);
+      const { error } = await client.from('portfolio_works' as any).delete().eq('id', trimmedId);
       if (error) {
         if (isSupabaseMissingTableError(error, 'portfolio_works')) {
           this.portfolioWorksTableMissing = true;
           this.removeWorkFromCaches(trimmedId);
           return { data: null, error: null };
         }
+        // Fallback to Railway API (service role) when RLS blocks the anon client.
+        const apiError = await this.deleteViaApi(
+          `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
+        );
+        if (apiError === null) {
+          this.removeWorkFromCaches(trimmedId);
+          return { data: null, error: null };
+        }
         logSupabaseError('deletePortfolioWorkRow', error);
-        return { data: null, error: error.message };
+        return {
+          data: null,
+          error: apiError || error.message,
+        };
+      }
+    } else {
+      const apiError = await this.deleteViaApi(
+        `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
+      );
+      if (apiError === null) {
+        this.removeWorkFromCaches(trimmedId);
+        return { data: null, error: null };
+      }
+      if (apiError) {
+        return { data: null, error: apiError };
       }
     }
 
     this.removeWorkFromCaches(trimmedId);
     return { data: null, error: null };
+  }
+
+  private resolveApiUrl(path: string): string {
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+    if (typeof window === 'undefined') {
+      return path;
+    }
+    const host = window.location.hostname;
+    // Site is on GitHub Pages; API+bot live on Railway.
+    if (host === 'masterdirect.ge' || host === 'www.masterdirect.ge' || host.endsWith('.github.io')) {
+      return `https://masterdirect-production.up.railway.app${path.startsWith('/') ? path : `/${path}`}`;
+    }
+    return path;
   }
 
   private async deleteViaApi(path: string): Promise<string | null | undefined> {
@@ -2568,7 +2607,7 @@ export class SupabaseService {
     }
 
     try {
-      const response = await fetch(path, {
+      const response = await fetch(this.resolveApiUrl(path), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

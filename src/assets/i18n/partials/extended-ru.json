@@ -357,6 +357,8 @@
     "defaultWorkTitle": "Работа",
     "workPhotosHint": "После регистрации достаточно одного фото. Название и второе фото — по желанию.",
     "finishedUploadTitle": "Готовые работы",
+    "deleteWork": "Удалить работу",
+    "deleteWorkConfirm": "Удалить работу «{{title}}»? Фото исчезнут из каталога.",
     "finishedUploadLead": "Загрузите фото уже выполненных работ одним альбомом — без «до / после». Название необязательно.",
     "finishedPhotosLabel": "Фото готовых работ",
     "finishedDropHint": "JPG, PNG, WebP · до 12 фото за раз",

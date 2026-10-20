@@ -10,7 +10,7 @@ import {
 
 const PORTFOLIO_BUCKET = 'portfolio';
 /** Bumped when publish/storage logic changes — shown in /api/health and bot errors. */
-export const CATALOG_BOT_BUILD = 'job-flow-v8';
+export const CATALOG_BOT_BUILD = 'job-flow-v9';
 
 export interface PublishCatalogCardResult {
   ok: boolean;

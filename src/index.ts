@@ -315,18 +315,22 @@ async function canDeletePortfolioWork(
     return true;
   }
 
+  // Live schema has specialist_id only (no owner_id column).
   const { data, error } = await supabase
     .from('portfolio_works')
-    .select('id,owner_id,specialist_id')
+    .select('id,specialist_id')
     .eq('id', workId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    console.error('[canDeletePortfolioWork]', error.message);
+    return false;
+  }
+  if (!data) {
     return false;
   }
 
-  const row = data as { owner_id?: string | null; specialist_id?: string | null };
-  const owner = String(row.specialist_id ?? row.owner_id ?? '').trim();
+  const owner = String((data as { specialist_id?: string | null }).specialist_id ?? '').trim();
   return !!owner && owner === user.id;
 }
 

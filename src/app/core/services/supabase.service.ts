@@ -2622,7 +2622,7 @@ export class SupabaseService {
     // Old Railway builds return Forbidden when owner_id column is missing.
     // If API is broken, still drop local cache so cabinet stays consistent,
     // and ask the user to redeploy / run delete RLS for catalog cleanup.
-    if (apiError === 'Forbidden' || /forbidden/i.test(apiError)) {
+    if (apiError === 'Forbidden' || (typeof apiError === 'string' && /forbidden/i.test(apiError))) {
       this.removeWorkFromCaches(trimmedId);
       return {
         data: null,

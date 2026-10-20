@@ -596,54 +596,53 @@ export class CabinetComponent {
     }
 
     const v = this.finishedWorkForm.getRawValue();
-    const baseTitle =
+    const title =
       v.title.trim() ||
       this.translation.t('cabinet.defaultFinishedWorkTitle') ||
       this.translation.t('cabinet.defaultWorkTitle') ||
       'Готовая работа';
+    const cover = photos[0];
 
     this.finishedUploading.set(true);
     try {
-      for (let i = 0; i < photos.length; i++) {
-        const photo = photos[i];
-        const title = photos.length > 1 ? `${baseTitle} (${i + 1})` : baseTitle;
-
-        if (company) {
-          const work = this.furnitureStore.addWork(company.id, {
-            title,
-            description: v.description,
-            beforeImage: photo,
-            afterImage: photo,
-          });
-          if (!work) {
-            continue;
-          }
-
-          const ownerId = company.dbId ?? company.id;
-          const saveResult = await firstValueFrom(
-            this.supabase.savePortfolioWork({
-              ownerId,
-              ownerType: 'furniture',
-              work,
-            }),
-          );
-
-          if (saveResult.error) {
-            this.furnitureStore.deleteWork(company.id, work.id);
-            alert(saveResult.error);
-            return;
-          }
-          continue;
+      if (company) {
+        const work = this.furnitureStore.addWork(company.id, {
+          title,
+          description: v.description,
+          beforeImage: cover,
+          afterImage: cover,
+          kind: 'album',
+          albumImages: photos,
+        });
+        if (!work) {
+          return;
         }
 
+        const ownerId = company.dbId ?? company.id;
+        const saveResult = await firstValueFrom(
+          this.supabase.savePortfolioWork({
+            ownerId,
+            ownerType: 'furniture',
+            work,
+          }),
+        );
+
+        if (saveResult.error) {
+          this.furnitureStore.deleteWork(company.id, work.id);
+          alert(saveResult.error);
+          return;
+        }
+      } else {
         const result = this.store.addWork(performer!.id, {
           title,
           description: v.description,
-          beforeImage: photo,
-          afterImage: photo,
+          beforeImage: cover,
+          afterImage: cover,
+          kind: 'album',
+          albumImages: photos,
         });
         if (!result) {
-          continue;
+          return;
         }
 
         const ownerType = performer!.type === 'brigade' ? 'brigade' : 'worker';

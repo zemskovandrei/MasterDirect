@@ -321,6 +321,8 @@ export class PortfolioStoreService {
       beforeImage: string;
       afterImage: string;
       clientContact?: string;
+      kind?: WorkProject['kind'];
+      albumImages?: string[];
     },
   ): AddWorkResult | null {
     const performer = this.performersSignal().find((p) => p.id === performerId);
@@ -332,13 +334,18 @@ export class PortfolioStoreService {
     const wantsVerification = !!clientContact;
     const verificationToken = wantsVerification ? generateVerificationToken() : undefined;
     const verificationCode = wantsVerification ? generateVerificationCode() : undefined;
+    const albumImages = (data.albumImages ?? []).map((url) => url.trim()).filter(Boolean);
+    const kind = data.kind ?? (albumImages.length > 0 ? 'album' : 'before_after');
+    const cover = albumImages[0] || data.beforeImage || data.afterImage;
 
     const work: WorkProject = {
       id: crypto.randomUUID(),
       title: data.title.trim(),
       description: data.description.trim(),
-      beforeImage: data.beforeImage,
-      afterImage: data.afterImage,
+      beforeImage: kind === 'album' ? cover : data.beforeImage,
+      afterImage: kind === 'album' ? cover : data.afterImage,
+      kind,
+      albumImages: kind === 'album' ? albumImages : undefined,
       createdAt: new Date().toISOString(),
       verificationStatus: wantsVerification ? 'pending' : 'not_requested',
       clientContact,

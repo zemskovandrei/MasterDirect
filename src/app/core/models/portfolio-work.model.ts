@@ -1,6 +1,10 @@
 import type { WorkProject, WorkVerificationStatus } from './portfolio.models';
+import { isAlbumWork, resolveAlbumImages } from './portfolio.models';
 
 export type PortfolioWorkOwnerType = 'worker' | 'brigade' | 'furniture';
+
+/** Packed into description so albums work without a new DB column. */
+export const ALBUM_DESCRIPTION_MARKER = '__MD_ALBUM__';
 
 export interface PortfolioWorkRow {
   id: string;
@@ -32,14 +36,26 @@ export function portfolioWorkRowToProject(row: PortfolioWorkRow): WorkProject {
       ? (normalizedStatus as WorkVerificationStatus)
       : 'not_requested';
 
-  const { title: titleFromDescription, description } = splitFoldedWorkText(row.description);
+  const { title: titleFromDescription, description: rawDescription } = splitFoldedWorkText(row.description);
+  const { description, albumImages } = splitAlbumFromDescription(rawDescription);
+  const beforeImage = row.before_image_url;
+  const afterImage = row.after_image_url;
+  const resolvedAlbum =
+    albumImages.length > 0
+      ? albumImages
+      : beforeImage && afterImage && beforeImage === afterImage
+        ? [beforeImage]
+        : [];
+  const kind = resolvedAlbum.length > 0 ? 'album' : 'before_after';
 
   return {
     id: row.id,
     title: row.title?.trim() || titleFromDescription || 'Работа',
     description,
-    beforeImage: row.before_image_url,
-    afterImage: row.after_image_url,
+    beforeImage,
+    afterImage,
+    kind,
+    albumImages: resolvedAlbum.length > 0 ? resolvedAlbum : undefined,
     createdAt: row.created_at,
     verificationStatus,
     clientContact: row.client_contact ?? undefined,
@@ -56,16 +72,62 @@ export function portfolioWorkToInsertRow(input: {
   work: WorkProject;
 }): Record<string, unknown> {
   const status = input.work.verificationStatus || 'not_requested';
+  const album = isAlbumWork(input.work) ? resolveAlbumImages(input.work) : [];
+  const cover = album[0] || input.work.beforeImage || input.work.afterImage || '';
+  const folded = foldWorkTitleAndDescription(input.work.title, input.work.description);
+  const description =
+    album.length > 0 ? foldAlbumIntoDescription(folded, album) : folded;
 
   // Живая схема: specialist_id + owner_type. Лишние колонки ломают insert.
   return {
     id: input.work.id,
     specialist_id: input.ownerId,
     owner_type: input.ownerType,
-    description: foldWorkTitleAndDescription(input.work.title, input.work.description),
-    before_image_url: input.work.beforeImage,
-    after_image_url: input.work.afterImage,
+    description,
+    before_image_url: album.length > 0 ? cover : input.work.beforeImage,
+    after_image_url: album.length > 0 ? cover : input.work.afterImage,
     status,
+  };
+}
+
+export function foldAlbumIntoDescription(
+  foldedTitleAndBody: string | null,
+  albumImages: string[],
+): string {
+  const urls = albumImages.map((url) => url.trim()).filter(Boolean);
+  const head = foldedTitleAndBody?.trimEnd() ?? '';
+  if (!urls.length) {
+    return head;
+  }
+  return `${head}\n${ALBUM_DESCRIPTION_MARKER}\n${urls.join('\n')}`;
+}
+
+export function splitAlbumFromDescription(rawDescription: string): {
+  description: string;
+  albumImages: string[];
+} {
+  const marker = `\n${ALBUM_DESCRIPTION_MARKER}\n`;
+  const idx = rawDescription.indexOf(marker);
+  if (idx < 0) {
+    // Also accept marker at start of body.
+    if (rawDescription.startsWith(`${ALBUM_DESCRIPTION_MARKER}\n`)) {
+      const urls = rawDescription
+        .slice(ALBUM_DESCRIPTION_MARKER.length + 1)
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+      return { description: '', albumImages: urls };
+    }
+    return { description: rawDescription, albumImages: [] };
+  }
+
+  return {
+    description: rawDescription.slice(0, idx).trim(),
+    albumImages: rawDescription
+      .slice(idx + marker.length)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean),
   };
 }
 

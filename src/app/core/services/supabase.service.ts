@@ -2381,6 +2381,43 @@ export class SupabaseService {
     ownerId: string,
     work: WorkProject,
   ): Promise<{ work: WorkProject; error: string | null }> {
+    const albumSources =
+      work.kind === 'album' || (work.albumImages && work.albumImages.length > 0)
+        ? (work.albumImages?.length ? work.albumImages : [work.beforeImage || work.afterImage]).filter(
+            (url) => !!url?.trim(),
+          )
+        : [];
+
+    if (albumSources.length > 0) {
+      const uploadedAlbum: string[] = [];
+      for (let i = 0; i < albumSources.length; i++) {
+        const upload = await this.uploadPortfolioImageIfNeeded({
+          ownerId,
+          workId: work.id,
+          side: `album_${i}`,
+          imageRef: albumSources[i],
+        });
+        if (upload.error) {
+          return { work, error: upload.error };
+        }
+        if (upload.imageRef) {
+          uploadedAlbum.push(upload.imageRef);
+        }
+      }
+
+      const cover = uploadedAlbum[0] || '';
+      return {
+        work: {
+          ...work,
+          kind: 'album',
+          albumImages: uploadedAlbum,
+          beforeImage: cover,
+          afterImage: cover,
+        },
+        error: null,
+      };
+    }
+
     const beforeUpload = await this.uploadPortfolioImageIfNeeded({
       ownerId,
       workId: work.id,
@@ -2416,7 +2453,7 @@ export class SupabaseService {
   private async uploadPortfolioImageIfNeeded(input: {
     ownerId: string;
     workId: string;
-    side: 'before' | 'after';
+    side: string;
     imageRef: string;
   }): Promise<{ imageRef: string; error: string | null }> {
     const value = input.imageRef?.trim();

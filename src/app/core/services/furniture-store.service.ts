@@ -245,6 +245,8 @@ export class FurnitureStoreService {
       description: string;
       beforeImage: string;
       afterImage: string;
+      kind?: WorkProject['kind'];
+      albumImages?: string[];
     },
   ): WorkProject | null {
     const company = this.companiesSignal().find((c) => c.id === companyId);
@@ -252,12 +254,18 @@ export class FurnitureStoreService {
       return null;
     }
 
+    const albumImages = (data.albumImages ?? []).map((url) => url.trim()).filter(Boolean);
+    const kind = data.kind ?? (albumImages.length > 0 ? 'album' : 'before_after');
+    const cover = albumImages[0] || data.beforeImage || data.afterImage;
+
     const work: WorkProject = {
       id: crypto.randomUUID(),
       title: data.title.trim(),
       description: data.description.trim(),
-      beforeImage: data.beforeImage,
-      afterImage: data.afterImage,
+      beforeImage: kind === 'album' ? cover : data.beforeImage,
+      afterImage: kind === 'album' ? cover : data.afterImage,
+      kind,
+      albumImages: kind === 'album' ? albumImages : undefined,
       createdAt: new Date().toISOString(),
       verificationStatus: 'not_requested',
     };

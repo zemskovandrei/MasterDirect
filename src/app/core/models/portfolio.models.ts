@@ -50,6 +50,8 @@ export function normalizeWorkVideos(value: unknown): WorkVideo[] {
   );
 }
 
+export type WorkDisplayKind = 'before_after' | 'album';
+
 export interface WorkProject {
   id: string;
   title: string;
@@ -57,6 +59,10 @@ export interface WorkProject {
   beforeImage: string;
   afterImage: string;
   createdAt: string;
+  /** before/after pair, or a single finished-works album. */
+  kind?: WorkDisplayKind;
+  /** Finished-work gallery images (used when kind === 'album'). */
+  albumImages?: string[];
   /** Set when the performer requests client confirmation. */
   verificationStatus: WorkVerificationStatus;
   /** Phone or email entered by the performer (not shown publicly). */
@@ -69,6 +75,33 @@ export interface WorkProject {
   rejectedAt?: string;
   /** Demo work translations: seeds.performers.{id}.works.{workId} */
   i18nKey?: string;
+}
+
+/** True when the work should render as a photo album, not before/after. */
+export function isAlbumWork(work: Pick<WorkProject, 'kind' | 'albumImages' | 'beforeImage' | 'afterImage'>): boolean {
+  if (work.kind === 'album') {
+    return true;
+  }
+  if (work.albumImages && work.albumImages.length > 0) {
+    return true;
+  }
+  const before = work.beforeImage?.trim() ?? '';
+  const after = work.afterImage?.trim() ?? '';
+  return !!before && !!after && before === after;
+}
+
+export function resolveAlbumImages(
+  work: Pick<WorkProject, 'albumImages' | 'beforeImage' | 'afterImage'>,
+): string[] {
+  if (work.albumImages?.length) {
+    return work.albumImages.filter((url) => !!url?.trim());
+  }
+  const before = work.beforeImage?.trim() ?? '';
+  const after = work.afterImage?.trim() ?? '';
+  if (before && after && before === after) {
+    return [before];
+  }
+  return [before, after].filter(Boolean);
 }
 
 export interface PerformerProfile {

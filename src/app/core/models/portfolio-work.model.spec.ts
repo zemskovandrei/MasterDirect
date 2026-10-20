@@ -63,4 +63,40 @@ describe('portfolio work title folding', () => {
       description: 'Плитка и электрика',
     });
   });
+
+  it('stores finished works as a single album without before/after labels', () => {
+    const payload = portfolioWorkToInsertRow({
+      ownerId: 'specialist-1',
+      ownerType: 'worker',
+      work: work({
+        title: 'Готовые работы',
+        description: 'Плитка',
+        kind: 'album',
+        albumImages: [
+          'https://example.com/a.jpg',
+          'https://example.com/b.jpg',
+        ],
+        beforeImage: 'https://example.com/a.jpg',
+        afterImage: 'https://example.com/a.jpg',
+      }),
+    });
+
+    expect(payload['before_image_url']).toBe('https://example.com/a.jpg');
+    expect(payload['after_image_url']).toBe('https://example.com/a.jpg');
+    expect(String(payload['description'])).toContain('__MD_ALBUM__');
+
+    const loaded = portfolioWorkRowToProject(
+      row({
+        description: payload['description'] as string,
+        before_image_url: payload['before_image_url'] as string,
+        after_image_url: payload['after_image_url'] as string,
+      }),
+    );
+    expect(loaded.kind).toBe('album');
+    expect(loaded.description).toBe('Плитка');
+    expect(loaded.albumImages).toEqual([
+      'https://example.com/a.jpg',
+      'https://example.com/b.jpg',
+    ]);
+  });
 });

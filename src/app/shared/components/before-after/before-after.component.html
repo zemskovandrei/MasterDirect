@@ -2,6 +2,7 @@
   class="before-after"
   [class.ba-featured]="featured()"
   [class.ba-no-caption]="!showCaption()"
+  [class.before-after--album]="isAlbum()"
 >
   @if (verificationBadge(); as badge) {
     <div class="work-verify-badge" [class]="badge.className" role="status">
@@ -11,36 +12,75 @@
   }
 
   <div class="ba-card">
-    <div class="ba-images">
-      <div class="ba-side ba-side-before">
-        <span class="ba-label">{{ translation.t('beforeAfter.before') }}</span>
-        <img
-          [src]="work().beforeImage"
-          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
-          title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.before') }}"
-          loading="lazy"
-        />
+    @if (isAlbum()) {
+      @if (activeAlbumImage(); as active) {
+        <div class="ba-album-hero">
+          <img
+            [src]="active"
+            [alt]="displayTitle()"
+            [title]="displayTitle()"
+            loading="lazy"
+          />
+          @if (albumImages().length > 1) {
+            <span class="ba-album-count">{{
+              translation.t('beforeAfter.albumCount').replace('{{count}}', '' + albumImages().length)
+            }}</span>
+          }
+        </div>
+      }
+      @if ((featured() || showCaption()) && albumImages().length > 1) {
+        <div class="ba-album" [attr.aria-label]="displayTitle()">
+          @for (image of albumImages(); track $index) {
+            <button
+              type="button"
+              class="ba-album__item"
+              [class.ba-album__item--active]="$index === albumIndex()"
+              (click)="selectAlbumImage($index)"
+            >
+              <img
+                [src]="image"
+                [alt]="displayTitle() + ' — ' + ($index + 1)"
+                [title]="displayTitle()"
+                loading="lazy"
+              />
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="ba-images">
+        <div class="ba-side ba-side-before">
+          <span class="ba-label">{{ translation.t('beforeAfter.before') }}</span>
+          <img
+            [src]="work().beforeImage"
+            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.before')"
+            title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.before') }}"
+            loading="lazy"
+          />
+        </div>
+        <div class="ba-divider" aria-hidden="true">
+          <span class="ba-arrow">→</span>
+        </div>
+        <div class="ba-side ba-side-after">
+          <span class="ba-label ba-label-after">{{ translation.t('beforeAfter.after') }}</span>
+          <img
+            [src]="work().afterImage"
+            [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
+            title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.after') }}"
+            loading="lazy"
+          />
+        </div>
       </div>
-      <div class="ba-divider" aria-hidden="true">
-        <span class="ba-arrow">→</span>
-      </div>
-      <div class="ba-side ba-side-after">
-        <span class="ba-label ba-label-after">{{ translation.t('beforeAfter.after') }}</span>
-        <img
-          [src]="work().afterImage"
-          [alt]="displayTitle() + ' — ' + translation.t('beforeAfter.after')"
-          title="{{ displayTitle() + ' — ' + translation.t('beforeAfter.after') }}"
-          loading="lazy"
-        />
-      </div>
-    </div>
+    }
   </div>
 
   @if (showCaption()) {
     <figcaption class="ba-caption">
       <div class="ba-caption-top">
         <h4>{{ displayTitle() }}</h4>
-        <span class="ba-tag">{{ translation.t('beforeAfter.tag') }}</span>
+        <span class="ba-tag">{{
+          isAlbum() ? translation.t('beforeAfter.albumTag') : translation.t('beforeAfter.tag')
+        }}</span>
       </div>
       @if (displayDescription(); as desc) {
         <p>{{ desc }}</p>

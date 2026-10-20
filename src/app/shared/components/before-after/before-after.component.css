@@ -135,8 +135,69 @@
   color: var(--color-navy);
 }
 
+.ba-album-hero {
+  position: relative;
+  background: #e8eef5;
+  line-height: 0;
+}
+
+.ba-album-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(70vh, 560px);
+  object-fit: cover;
+}
+
+.ba-album-count {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.65rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: rgba(12, 18, 34, 0.78);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ba-album {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  gap: 0.35rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ba-album__item {
+  display: block;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: #e8eef5;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.ba-album__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.ba-album__item--active {
+  border-color: #00c4e0;
+}
+
 .ba-no-caption .ba-caption {
   display: none;
+}
+
+.before-after--album:hover .ba-side img {
+  transform: none;
 }
 
 /* ——— Caption ——— */

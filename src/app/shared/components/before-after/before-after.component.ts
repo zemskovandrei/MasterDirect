@@ -1,6 +1,6 @@
-import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { WORK_VERIFICATION_ENABLED } from '../../../core/constants/features';
-import { WorkProject } from '../../../core/models/portfolio.models';
+import { isAlbumWork, resolveAlbumImages, WorkProject } from '../../../core/models/portfolio.models';
 import { CatalogLocalizationService } from '../../../core/services/catalog-localization.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
@@ -26,6 +26,25 @@ export class BeforeAfterComponent {
   readonly showCaption = input(true);
   readonly titleOverride = input<string | null>(null);
   readonly descriptionOverride = input<string | null>(null);
+
+  protected readonly albumIndex = signal(0);
+
+  protected readonly isAlbum = computed(() => isAlbumWork(this.work()));
+
+  protected readonly albumImages = computed(() => resolveAlbumImages(this.work()));
+
+  protected readonly activeAlbumImage = computed(() => {
+    const images = this.albumImages();
+    if (!images.length) {
+      return null;
+    }
+    const index = Math.min(Math.max(this.albumIndex(), 0), images.length - 1);
+    return images[index] ?? images[0];
+  });
+
+  protected selectAlbumImage(index: number): void {
+    this.albumIndex.set(index);
+  }
 
   protected displayTitle(): string {
     return this.titleOverride() ?? this.catalogL10n.workTitle(this.work());

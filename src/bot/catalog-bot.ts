@@ -2,7 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   CITY_OPTIONS,
   MAX_JOB_PHOTOS,
+  MAX_JOB_VIDEOS,
   MAX_PHOTOS,
+  MAX_VIDEOS,
   MIN_JOB_PHOTOS,
   MIN_PHOTOS,
   MIN_REVIEW_CHARS,
@@ -34,12 +36,29 @@ interface TelegramPhotoSize {
   height: number;
 }
 
+interface TelegramVideo {
+  file_id: string;
+  file_unique_id: string;
+  file_name?: string;
+  mime_type?: string;
+  duration?: number;
+}
+
+interface TelegramDocument {
+  file_id: string;
+  file_unique_id: string;
+  file_name?: string;
+  mime_type?: string;
+}
+
 interface TelegramMessage {
   message_id: number;
   chat: { id: number; type: string };
   from?: TelegramUser;
   text?: string;
   photo?: TelegramPhotoSize[];
+  video?: TelegramVideo;
+  document?: TelegramDocument;
 }
 
 interface TelegramCallbackQuery {
@@ -314,10 +333,11 @@ async function handleMasterText(
       session.district = trimmed;
       session.step = 'photos';
       session.photos = [];
+      session.videos = [];
       await sendMessage(
         token,
         chatId,
-        `Пришлите от ${MIN_PHOTOS} до ${MAX_PHOTOS} фото работ.\nКогда закончите — нажмите «Готово».`,
+        `Пришлите от ${MIN_PHOTOS} до ${MAX_PHOTOS} фото и до ${MAX_VIDEOS} видео работ.\nКогда закончите — нажмите «Готово».`,
         photosKeyboard(0, MIN_PHOTOS, 'photos:done'),
       );
       return;
@@ -326,7 +346,7 @@ async function handleMasterText(
       await sendMessage(
         token,
         chatId,
-        `Сейчас жду фото. Уже ${session.photos.length} из ${MAX_PHOTOS}.`,
+        `Сейчас жду фото или видео. Фото: ${session.photos.length}/${MAX_PHOTOS}, видео: ${session.videos.length}/${MAX_VIDEOS}.`,
         photosKeyboard(session.photos.length, MIN_PHOTOS, 'photos:done'),
       );
       return;
@@ -428,10 +448,11 @@ async function handleJobText(
       session.budget = Math.round(value);
       session.step = 'job_photos';
       session.photos = [];
+      session.videos = [];
       await sendMessage(
         token,
         chatId,
-        `Можно прислать до ${MAX_JOB_PHOTOS} фото объекта (необязательно).`,
+        `Можно прислать до ${MAX_JOB_PHOTOS} фото и до ${MAX_JOB_VIDEOS} видео объекта (необязательно).`,
         photosKeyboard(0, MIN_JOB_PHOTOS, 'jobphotos:done'),
       );
       return;
@@ -440,7 +461,7 @@ async function handleJobText(
       await sendMessage(
         token,
         chatId,
-        `Фото: ${session.photos.length}/${MAX_JOB_PHOTOS}. Пришлите ещё или нажмите «Готово».`,
+        `Фото: ${session.photos.length}/${MAX_JOB_PHOTOS}, видео: ${session.videos.length}/${MAX_JOB_VIDEOS}. Пришлите ещё или «Готово».`,
         photosKeyboard(session.photos.length, MIN_JOB_PHOTOS, 'jobphotos:done'),
       );
       return;
@@ -586,6 +607,58 @@ async function handleText(
   }
 }
 
+async function handleVideo(
+  token: string,
+  chatId: number,
+  video: TelegramVideo | TelegramDocument,
+  username?: string | null,
+): Promise<void> {
+  const session = getSession(chatId, username);
+  const isMasterPhotos = session.flow === 'master' && session.step === 'photos';
+  const isJobPhotos = session.flow === 'job' && session.step === 'job_photos';
+
+  if (!isMasterPhotos && !isJobPhotos) {
+    await sendMessage(token, chatId, 'Сейчас видео не нужно. Напишите /start');
+    return;
+  }
+
+  if (!session.videos) {
+    session.videos = [];
+  }
+
+  const max = isJobPhotos ? MAX_JOB_VIDEOS : MAX_VIDEOS;
+  const min = isJobPhotos ? MIN_JOB_PHOTOS : MIN_PHOTOS;
+  const doneData = isJobPhotos ? 'jobphotos:done' : 'photos:done';
+
+  if (session.videos.length >= max) {
+    await sendMessage(
+      token,
+      chatId,
+      `Уже ${max} видео. Можно добавить фото или нажать «Готово».`,
+      photosKeyboard(session.photos.length, min, doneData),
+    );
+    return;
+  }
+
+  if (session.videos.some((item) => item.fileUniqueId === video.file_unique_id)) {
+    await sendMessage(token, chatId, 'Это видео уже добавлено.');
+    return;
+  }
+
+  session.videos.push({
+    fileId: video.file_id,
+    fileUniqueId: video.file_unique_id,
+    fileName: video.file_name,
+  });
+
+  await sendMessage(
+    token,
+    chatId,
+    `Видео ${session.videos.length}/${max} принято. Фото: ${session.photos.length}.`,
+    photosKeyboard(session.photos.length, min, doneData),
+  );
+}
+
 async function handlePhoto(
   token: string,
   chatId: number,
@@ -599,6 +672,10 @@ async function handlePhoto(
   if (!isMasterPhotos && !isJobPhotos) {
     await sendMessage(token, chatId, 'Сейчас фото не нужны. Напишите /start');
     return;
+  }
+
+  if (!session.videos) {
+    session.videos = [];
   }
 
   const max = isJobPhotos ? MAX_JOB_PHOTOS : MAX_PHOTOS;
@@ -825,11 +902,12 @@ async function handleCallback(
     session.budget = null;
     session.step = 'job_photos';
     session.photos = [];
+    session.videos = [];
     await answerCallback(token, query.id);
     await sendMessage(
       token,
       chatId,
-      `Можно прислать до ${MAX_JOB_PHOTOS} фото объекта (необязательно).`,
+      `Можно прислать до ${MAX_JOB_PHOTOS} фото и до ${MAX_JOB_VIDEOS} видео объекта (необязательно).`,
       photosKeyboard(0, MIN_JOB_PHOTOS, 'jobphotos:done'),
     );
     return;
@@ -1017,6 +1095,17 @@ export async function handleCatalogTelegramUpdate(
 
   if (message.photo?.length) {
     await handlePhoto(token, chatId, message.photo, username);
+    return;
+  }
+
+  if (message.video) {
+    await handleVideo(token, chatId, message.video, username);
+    return;
+  }
+
+  const doc = message.document;
+  if (doc?.mime_type?.startsWith('video/')) {
+    await handleVideo(token, chatId, doc, username);
     return;
   }
 

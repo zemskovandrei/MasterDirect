@@ -213,6 +213,17 @@
       <p class="works-gallery-empty">{{ translation.t('home.portfolio.empty') }}</p>
     }
 
+    @if (galleryVideos().length > 0) {
+      <h3 class="works-gallery-videos-title">{{ translation.t('home.portfolio.videosTitle') }}</h3>
+      <div class="works-gallery-grid works-gallery-grid--videos">
+        @for (item of galleryVideos(); track item.video.id + item.performerRoute) {
+          <article class="works-gallery-card works-gallery-card--video">
+            <app-work-video-player [video]="item.video" />
+          </article>
+        }
+      </div>
+    }
+
     <div class="teaser-actions">
       <a routerLink="/cabinet" class="btn-secondary btn-large">{{
         translation.t('home.portfolio.actions.place')

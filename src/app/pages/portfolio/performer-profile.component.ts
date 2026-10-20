@@ -16,6 +16,7 @@ import { ReviewStoreService } from '../../core/services/review-store.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { PerformerProfile, PerformerType } from '../../core/models/portfolio.models';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { WorkVideoPlayerComponent } from '../../shared/components/work-video-player/work-video-player.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { hasSocialLinks, mergeSocialLinks } from '../../core/utils/social-links.util';
 import { TranslationService } from '../../core/services/translation.service';
@@ -30,7 +31,7 @@ import {
 @Component({
   selector: 'app-performer-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent, SocialLinksComponent],
+  imports: [CommonModule, RouterLink, BeforeAfterComponent, WorkVideoPlayerComponent, SocialLinksComponent],
   templateUrl: './performer-profile.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./performer-profile.component.css'],

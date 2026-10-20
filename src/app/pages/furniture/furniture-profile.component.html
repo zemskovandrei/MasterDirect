@@ -89,12 +89,7 @@
         <p class="work-videos-caption">{{ translation.t('furniture.videosTitle') }}</p>
         <div class="work-videos">
           @for (video of c.workVideos; track video.id) {
-            <article class="work-video">
-              <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
-              @if (video.title) {
-                <p class="work-video__title">{{ video.title }}</p>
-              }
-            </article>
+            <app-work-video-player [video]="video" />
           }
         </div>
       </div>

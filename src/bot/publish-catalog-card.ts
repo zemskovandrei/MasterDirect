@@ -10,7 +10,7 @@ import {
 
 const PORTFOLIO_BUCKET = 'portfolio';
 /** Bumped when publish/storage logic changes — shown in /api/health and bot errors. */
-export const CATALOG_BOT_BUILD = 'job-flow-v9';
+export const CATALOG_BOT_BUILD = 'job-flow-v10';
 
 export interface PublishCatalogCardResult {
   ok: boolean;
@@ -38,6 +38,10 @@ function extensionFromMime(mime: string): string {
   if (mime.includes('png')) return 'png';
   if (mime.includes('webp')) return 'webp';
   if (mime.includes('gif')) return 'gif';
+  if (mime.includes('webm')) return 'webm';
+  if (mime.includes('quicktime') || mime.includes('mov')) return 'mov';
+  if (mime.includes('mp4') || mime.includes('m4v')) return 'mp4';
+  if (mime.startsWith('video/')) return 'mp4';
   return 'jpg';
 }
 
@@ -62,6 +66,7 @@ async function parseJsonResponse<T>(
 async function downloadTelegramFile(
   botToken: string,
   fileId: string,
+  kind: 'image' | 'video' = 'image',
 ): Promise<{ bytes: Buffer; contentType: string; ext: string }> {
   const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
     method: 'POST',
@@ -82,15 +87,25 @@ async function downloadTelegramFile(
   if (!blobRes.ok) {
     const hint = (await blobRes.text()).trimStart().slice(0, 80);
     throw new Error(
-      `Скачивание фото не удалось (${blobRes.status})${hint.startsWith('<') ? ' — пришёл HTML' : ''}`,
+      `Скачивание ${kind === 'video' ? 'видео' : 'фото'} не удалось (${blobRes.status})${hint.startsWith('<') ? ' — пришёл HTML' : ''}`,
     );
   }
 
-  const rawType = (blobRes.headers.get('content-type') || 'image/jpeg').split(';')[0].trim().toLowerCase();
-  const contentType =
-    rawType === 'image/png' || rawType === 'image/webp' || rawType === 'image/gif'
-      ? rawType
-      : 'image/jpeg';
+  const rawType = (blobRes.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  const pathHint = fileJson.result.file_path.toLowerCase();
+  let contentType = rawType;
+  if (kind === 'video') {
+    if (!contentType.startsWith('video/')) {
+      if (pathHint.endsWith('.webm')) contentType = 'video/webm';
+      else if (pathHint.endsWith('.mov')) contentType = 'video/quicktime';
+      else contentType = 'video/mp4';
+    }
+  } else {
+    contentType =
+      contentType === 'image/png' || contentType === 'image/webp' || contentType === 'image/gif'
+        ? contentType
+        : 'image/jpeg';
+  }
   const bytes = Buffer.from(await blobRes.arrayBuffer());
   return {
     bytes,
@@ -100,15 +115,16 @@ async function downloadTelegramFile(
 }
 
 /** Direct Storage REST upload — avoids supabase-js URL/path quirks. */
-async function uploadPortfolioImageRaw(
+async function uploadPortfolioFileRaw(
   supabaseUrl: string,
   serviceKey: string,
   specialistId: string,
   index: number,
   file: { bytes: Buffer; contentType: string; ext: string },
+  folder: 'public' | 'videos' = 'public',
 ): Promise<string> {
   const safeId = specialistId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32) || 'bot';
-  const objectPath = `public/bot_${safeId}_${Date.now()}_${index}.${file.ext}`;
+  const objectPath = `${folder}/bot_${safeId}_${Date.now()}_${index}.${file.ext}`;
   const uploadUrl = `${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${objectPath}`;
 
   const response = await fetch(uploadUrl, {
@@ -224,12 +240,13 @@ export async function publishCatalogCard(options: {
     for (let i = 0; i < session.photos.length; i += 1) {
       try {
         const file = await downloadTelegramFile(botToken, session.photos[i].fileId);
-        const url = await uploadPortfolioImageRaw(
+        const url = await uploadPortfolioFileRaw(
           supabaseUrl,
           serviceRoleKey,
           specialistId,
           i,
           file,
+          'public',
         );
         uploadedUrls.push(url);
       } catch (error) {
@@ -259,22 +276,59 @@ export async function publishCatalogCard(options: {
       }
     }
 
-    if (uploadedUrls.length === 0) {
+    const videos = session.videos ?? [];
+    let videoError: string | undefined;
+    let uploadedVideos = 0;
+    for (let i = 0; i < videos.length; i += 1) {
+      try {
+        const file = await downloadTelegramFile(botToken, videos[i].fileId, 'video');
+        const url = await uploadPortfolioFileRaw(
+          supabaseUrl,
+          serviceRoleKey,
+          specialistId,
+          i,
+          file,
+          'videos',
+        );
+        const { error: videoInsertError } = await supabase.from('work_videos').insert({
+          id: randomUUID(),
+          specialist_id: specialistId,
+          title: `${specialtyLabels(session.specialties)} — видео ${i + 1}`,
+          video_url: url,
+          created_at: new Date().toISOString(),
+        });
+        if (videoInsertError) {
+          throw new Error(videoInsertError.message);
+        }
+        uploadedVideos += 1;
+      } catch (error) {
+        videoError = formatCaughtError(error);
+        console.error('[catalog-bot] video upload stopped:', videoError);
+        break;
+      }
+    }
+
+    if (uploadedUrls.length === 0 && uploadedVideos === 0) {
       return {
         ok: true,
         specialistId,
         profileUrl,
-        warning: photoError
-          ? `Анкета создана без фото: ${photoError}`
-          : 'Анкета создана без фото',
+        warning: photoError || videoError
+          ? `Анкета создана без медиа: ${photoError || videoError}`
+          : 'Анкета создана без медиа',
       };
     }
+
+    const warnings = [
+      photoError ? `Часть фото не загрузилась: ${photoError}` : '',
+      videoError ? `Часть видео не загрузилась: ${videoError}` : '',
+    ].filter(Boolean);
 
     return {
       ok: true,
       specialistId,
       profileUrl,
-      warning: photoError ? `Часть фото не загрузилась: ${photoError}` : undefined,
+      warning: warnings.length ? warnings.join(' ') : undefined,
     };
   } catch (error) {
     console.error('[catalog-bot] publishCatalogCard failed:', error);
@@ -295,6 +349,7 @@ export function formatSessionPreview(session: BotSession): string {
     `Город: ${session.city ? cityLabel(session.city) : '—'}`,
     `Район: ${session.district?.trim() || '—'}`,
     `Фото: ${session.photos.length}`,
+    `Видео: ${(session.videos ?? []).length}`,
   ];
   return lines.join('\n');
 }

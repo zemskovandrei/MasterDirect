@@ -34,6 +34,12 @@ export interface BotPhoto {
   fileUniqueId: string;
 }
 
+export interface BotVideo {
+  fileId: string;
+  fileUniqueId: string;
+  fileName?: string;
+}
+
 export interface BotSession {
   flow: BotFlow;
   step: BotStep;
@@ -43,6 +49,7 @@ export interface BotSession {
   city?: CityId;
   district?: string;
   photos: BotPhoto[];
+  videos: BotVideo[];
   tgUsername?: string | null;
   /** Client job */
   category?: string;
@@ -72,8 +79,10 @@ export const CITY_OPTIONS: Array<{ key: CityId; label: string }> = [
 
 export const MAX_PHOTOS = 5;
 export const MIN_PHOTOS = 1;
+export const MAX_VIDEOS = 3;
 export const MAX_JOB_PHOTOS = 3;
 export const MIN_JOB_PHOTOS = 0;
+export const MAX_JOB_VIDEOS = 2;
 export const MIN_REVIEW_CHARS = 20;
 
 export const SITE_FEEDBACK_TEXT_PREFIX = '【site-feedback】';
@@ -84,6 +93,7 @@ export function createEmptySession(tgUsername?: string | null): BotSession {
     step: 'menu',
     specialties: [],
     photos: [],
+    videos: [],
     tgUsername: tgUsername?.trim() || null,
     budget: null,
   };

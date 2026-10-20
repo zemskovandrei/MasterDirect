@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { FurnitureStoreService } from '../../core/services/furniture-store.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { WorkVideoPlayerComponent } from '../../shared/components/work-video-player/work-video-player.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { SeoService } from '../../core/services/seo.service';
 import { mergeSocialLinks } from '../../core/utils/social-links.util';
@@ -13,7 +14,7 @@ import { mergeSocialLinks } from '../../core/utils/social-links.util';
 @Component({
   selector: 'app-furniture-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, BeforeAfterComponent],
+  imports: [CommonModule, RouterLink, BeforeAfterComponent, WorkVideoPlayerComponent],
   templateUrl: './furniture-profile.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./furniture-profile.component.css'],

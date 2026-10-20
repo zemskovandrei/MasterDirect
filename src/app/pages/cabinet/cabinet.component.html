@@ -498,10 +498,7 @@
                 <div class="cabinet-videos">
                   @for (video of currentWorkVideos(); track video.id) {
                     <div class="cabinet-videos__item">
-                      <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
-                      @if (video.title) {
-                        <p class="cabinet-videos__title">{{ video.title }}</p>
-                      }
+                      <app-work-video-player [video]="video" />
                       <button
                         type="button"
                         class="link-accent"
@@ -914,10 +911,7 @@
                 <div class="cabinet-videos">
                   @for (video of currentWorkVideos(); track video.id) {
                     <div class="cabinet-videos__item">
-                      <video [src]="video.videoUrl" controls playsinline preload="metadata"></video>
-                      @if (video.title) {
-                        <p class="cabinet-videos__title">{{ video.title }}</p>
-                      }
+                      <app-work-video-player [video]="video" />
                       <button
                         type="button"
                         class="link-accent"

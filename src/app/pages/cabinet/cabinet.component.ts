@@ -25,6 +25,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { firstValueFrom } from 'rxjs';
 import { compressWorkImageFile } from '../../core/utils/compress-image.util';
 import { BeforeAfterComponent } from '../../shared/components/before-after/before-after.component';
+import { WorkVideoPlayerComponent } from '../../shared/components/work-video-player/work-video-player.component';
 import { SocialLinksComponent } from '../../shared/components/social-links/social-links.component';
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
@@ -45,6 +46,7 @@ import { isAlbumWork, resolveAlbumImages, type WorkProject } from '../../core/mo
     RouterLink,
     RegisterPageComponent,
     BeforeAfterComponent,
+    WorkVideoPlayerComponent,
     SocialLinksComponent,
   ],
   templateUrl: './cabinet.component.html',

@@ -19,6 +19,7 @@ export interface PublishJobResult {
 async function downloadTelegramFile(
   botToken: string,
   fileId: string,
+  kind: 'image' | 'video' = 'image',
 ): Promise<{ bytes: Buffer; contentType: string; ext: string }> {
   const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
     method: 'POST',
@@ -37,21 +38,39 @@ async function downloadTelegramFile(
   const downloadUrl = `https://api.telegram.org/file/bot${botToken}/${fileJson.result.file_path}`;
   const blobRes = await fetch(downloadUrl);
   if (!blobRes.ok) {
-    throw new Error(`Скачивание фото не удалось (${blobRes.status})`);
+    throw new Error(`Скачивание ${kind === 'video' ? 'видео' : 'фото'} не удалось (${blobRes.status})`);
   }
 
-  const rawType = (blobRes.headers.get('content-type') || 'image/jpeg').split(';')[0].trim().toLowerCase();
-  const contentType =
-    rawType === 'image/png' || rawType === 'image/webp' || rawType === 'image/gif'
-      ? rawType
-      : 'image/jpeg';
-  const ext = contentType.includes('png')
-    ? 'png'
-    : contentType.includes('webp')
-      ? 'webp'
-      : contentType.includes('gif')
-        ? 'gif'
-        : 'jpg';
+  const rawType = (blobRes.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  const pathHint = fileJson.result.file_path.toLowerCase();
+  let contentType = rawType;
+  let ext = 'jpg';
+  if (kind === 'video') {
+    if (!contentType.startsWith('video/')) {
+      contentType = pathHint.endsWith('.webm')
+        ? 'video/webm'
+        : pathHint.endsWith('.mov')
+          ? 'video/quicktime'
+          : 'video/mp4';
+    }
+    ext = contentType.includes('webm')
+      ? 'webm'
+      : contentType.includes('quicktime') || contentType.includes('mov')
+        ? 'mov'
+        : 'mp4';
+  } else {
+    contentType =
+      contentType === 'image/png' || contentType === 'image/webp' || contentType === 'image/gif'
+        ? contentType
+        : 'image/jpeg';
+    ext = contentType.includes('png')
+      ? 'png'
+      : contentType.includes('webp')
+        ? 'webp'
+        : contentType.includes('gif')
+          ? 'gif'
+          : 'jpg';
+  }
 
   return {
     bytes: Buffer.from(await blobRes.arrayBuffer()),
@@ -60,7 +79,7 @@ async function downloadTelegramFile(
   };
 }
 
-async function uploadOrderPhoto(
+async function uploadOrderFile(
   supabaseUrl: string,
   serviceKey: string,
   index: number,
@@ -104,6 +123,7 @@ export function formatJobPreview(session: BotSession): string {
     `Описание: ${session.description ?? '—'}`,
     `Бюджет: ${session.budget != null ? `${session.budget} ₾` : 'не указан'}`,
     `Фото: ${session.photos.length}`,
+    `Видео: ${(session.videos ?? []).length}`,
   ].join('\n');
 }
 
@@ -138,8 +158,8 @@ export async function publishJobOrder(options: {
 
     for (let i = 0; i < session.photos.length; i += 1) {
       try {
-        const file = await downloadTelegramFile(botToken, session.photos[i].fileId);
-        const uploaded = await uploadOrderPhoto(supabaseUrl, serviceRoleKey, i, file);
+        const file = await downloadTelegramFile(botToken, session.photos[i].fileId, 'image');
+        const uploaded = await uploadOrderFile(supabaseUrl, serviceRoleKey, i, file);
         photoUrls.push(uploaded.publicUrl);
         photoPaths.push(uploaded.path);
       } catch (error) {
@@ -150,12 +170,35 @@ export async function publishJobOrder(options: {
       }
     }
 
+    const videoUrls: string[] = [];
+    let videoWarning: string | undefined;
+    const videos = session.videos ?? [];
+    for (let i = 0; i < videos.length; i += 1) {
+      try {
+        const file = await downloadTelegramFile(botToken, videos[i].fileId, 'video');
+        const uploaded = await uploadOrderFile(
+          supabaseUrl,
+          serviceRoleKey,
+          session.photos.length + i,
+          file,
+        );
+        videoUrls.push(uploaded.publicUrl);
+        photoPaths.push(uploaded.path);
+      } catch (error) {
+        videoWarning =
+          error instanceof Error ? error.message : 'Не удалось загрузить часть видео';
+        console.error('[catalog-bot] job video upload failed:', videoWarning);
+        break;
+      }
+    }
+
     const description = [
       `Заказчик: ${name}`,
       `Контакт: ${phone}`,
       session.tgUsername ? `Telegram: @${session.tgUsername}` : '',
       `Состав работ:\n${session.description.trim()}`,
       ...photoUrls.map((url) => `Фото объекта: ${url}`),
+      ...videoUrls.map((url) => `Видео объекта: ${url}`),
       'Направлено: Telegram-бот',
     ]
       .filter(Boolean)
@@ -197,7 +240,13 @@ export async function publishJobOrder(options: {
       ok: true,
       orderId,
       jobsUrl,
-      warning: photoWarning ? `Заказ создан, но фото: ${photoWarning}` : undefined,
+      warning: (() => {
+        const parts = [
+          photoWarning ? `фото: ${photoWarning}` : '',
+          videoWarning ? `видео: ${videoWarning}` : '',
+        ].filter(Boolean);
+        return parts.length ? `Заказ создан, но ${parts.join('; ')}` : undefined;
+      })(),
     };
   } catch (error) {
     console.error('[catalog-bot] publishJobOrder failed:', error);

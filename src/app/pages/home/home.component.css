@@ -589,6 +589,23 @@ section.hero-section {
   font-size: 0.95rem;
 }
 
+.works-gallery-videos-title {
+  margin: 2.25rem 0 1rem;
+  color: #f8fafc;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+.works-gallery-grid--videos {
+  margin-top: 0;
+}
+
+.works-gallery-card--video {
+  color: #0f172a;
+}
+
 .teaser-sample {
   margin: 2.5rem 0;
 }

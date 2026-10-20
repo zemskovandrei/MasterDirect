@@ -1,0 +1,54 @@
+<article class="wv-card">
+  <button
+    type="button"
+    class="wv-card__open"
+    (click)="openLightbox()"
+    [attr.aria-label]="translation.t('beforeAfter.openGallery')"
+  >
+    <video
+      class="wv-card__preview"
+      [src]="video().videoUrl"
+      muted
+      playsinline
+      preload="metadata"
+      [attr.title]="video().title || ''"
+    ></video>
+    <span class="wv-card__play" aria-hidden="true">▶</span>
+  </button>
+  @if (showTitle() && video().title) {
+    <p class="wv-card__title">{{ video().title }}</p>
+  }
+</article>
+
+@if (lightboxOpen()) {
+  <div
+    #lightboxRoot
+    class="wv-lightbox"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="video().title || translation.t('profile.videosTitle')"
+    (click)="closeLightbox()"
+  >
+    <div class="wv-lightbox__stage" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="wv-lightbox__close"
+        (click)="closeLightbox()"
+        [attr.aria-label]="translation.t('beforeAfter.closeLightbox')"
+      >
+        ×
+      </button>
+      <video
+        #lightboxVideo
+        class="wv-lightbox__video"
+        [src]="video().videoUrl"
+        controls
+        playsinline
+        preload="metadata"
+      ></video>
+      @if (video().title) {
+        <p class="wv-lightbox__title">{{ video().title }}</p>
+      }
+    </div>
+  </div>
+}

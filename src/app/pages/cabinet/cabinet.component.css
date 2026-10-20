@@ -3222,6 +3222,46 @@
   background: rgb(0 196 224 / 0.06);
 }
 
+.cabinet-finished-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.65rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.cabinet-finished-grid__item {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.cabinet-finished-grid__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.cabinet-finished-grid__remove {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+}
+
+.cabinet-finished-grid__remove:hover,
+.cabinet-finished-grid__remove:focus-visible {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
 .cabinet-works {
   display: flex;
   flex-direction: column;

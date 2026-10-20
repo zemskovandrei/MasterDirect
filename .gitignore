@@ -17,3 +17,6 @@ dist/
 .env
 dist-api/
 *.tsbuildinfo
+
+# Локальные промо-видео (не в репозиторий)
+promo-video/

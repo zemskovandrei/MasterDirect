@@ -312,6 +312,97 @@
                 </button>
               </form>
 
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.finishedUploadTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.finishedUploadLead') }}</p>
+
+              @if (finishedUploadSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.finishedUploadSuccess') }}
+                </p>
+              }
+
+              <form class="register-form" [formGroup]="finishedWorkForm" (ngSubmit)="uploadFinishedWorks()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workTitle') }}</span>
+                  <input
+                    type="text"
+                    class="field-input"
+                    formControlName="title"
+                    [placeholder]="translation.t('cabinet.workTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workDesc') }}</span>
+                  <textarea
+                    class="field-input field-textarea"
+                    formControlName="description"
+                    rows="3"
+                    [placeholder]="translation.t('cabinet.workDescPh')"
+                  ></textarea>
+                  <span
+                    class="cabinet-word-counter"
+                    [class.cabinet-word-counter--over]="
+                      countWords(finishedWorkForm.get('description')?.value ?? '') > maxTextWords
+                    "
+                  >
+                    {{ wordCountLabel(finishedWorkForm.get('description')?.value ?? '') }}
+                  </span>
+                  @if (finishedFieldInvalid('description')) {
+                    <span class="field__error">{{ maxWordsError() }}</span>
+                  }
+                </label>
+
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.finishedPhotosLabel') }}</span>
+                  <label
+                    class="cabinet-photo-drop"
+                    [class.cabinet-photo-drop--drag]="finishedDragging()"
+                    (dragover)="onFinishedDragOver($event)"
+                    (dragleave)="onFinishedDragLeave()"
+                    (drop)="onFinishedDrop($event)"
+                  >
+                    <input
+                      #finishedInput
+                      type="file"
+                      class="hidden"
+                      accept="image/*"
+                      multiple
+                      (change)="onFinishedFilesSelected($event)"
+                    />
+                    <span>{{ translation.t('cabinet.finishedDropHint') }}</span>
+                  </label>
+                </label>
+
+                @if (finishedPreviews().length > 0) {
+                  <div class="cabinet-finished-grid" role="list">
+                    @for (preview of finishedPreviews(); track $index) {
+                      <div class="cabinet-finished-grid__item" role="listitem">
+                        <img [src]="preview" alt="" />
+                        <button
+                          type="button"
+                          class="cabinet-finished-grid__remove"
+                          (click)="removeFinishedPreview($index)"
+                        >
+                          {{ translation.t('cabinet.finishedRemovePhoto') }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <button type="submit" class="btn-primary" [disabled]="finishedUploading()">
+                  {{
+                    finishedUploading()
+                      ? translation.t('cabinet.finishedUploading')
+                      : translation.t('cabinet.finishedUploadSubmit')
+                  }}
+                </button>
+              </form>
+
               @if (performer.works.length > 0) {
                 <h2 class="register-card__title cabinet-section-title">
                   {{ myWorksLabel(performer.works.length) }}
@@ -631,6 +722,97 @@
 
                 <button type="submit" class="btn-primary">
                   {{ translation.t('cabinet.uploadSubmit') }}
+                </button>
+              </form>
+
+              <h2 class="register-card__title cabinet-section-title">
+                {{ translation.t('cabinet.finishedUploadTitle') }}
+              </h2>
+              <p class="register-card__muted">{{ translation.t('cabinet.finishedUploadLead') }}</p>
+
+              @if (finishedUploadSuccess()) {
+                <p class="cabinet-status cabinet-status--ok" role="status">
+                  {{ translation.t('cabinet.finishedUploadSuccess') }}
+                </p>
+              }
+
+              <form class="register-form" [formGroup]="finishedWorkForm" (ngSubmit)="uploadFinishedWorks()">
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workTitle') }}</span>
+                  <input
+                    type="text"
+                    class="field-input"
+                    formControlName="title"
+                    [placeholder]="translation.t('cabinet.workTitlePh')"
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.workDesc') }}</span>
+                  <textarea
+                    class="field-input field-textarea"
+                    formControlName="description"
+                    rows="3"
+                    [placeholder]="translation.t('cabinet.workDescPh')"
+                  ></textarea>
+                  <span
+                    class="cabinet-word-counter"
+                    [class.cabinet-word-counter--over]="
+                      countWords(finishedWorkForm.get('description')?.value ?? '') > maxTextWords
+                    "
+                  >
+                    {{ wordCountLabel(finishedWorkForm.get('description')?.value ?? '') }}
+                  </span>
+                  @if (finishedFieldInvalid('description')) {
+                    <span class="field__error">{{ maxWordsError() }}</span>
+                  }
+                </label>
+
+                <label class="field">
+                  <span class="field__label">{{ translation.t('cabinet.finishedPhotosLabel') }}</span>
+                  <label
+                    class="cabinet-photo-drop"
+                    [class.cabinet-photo-drop--drag]="finishedDragging()"
+                    (dragover)="onFinishedDragOver($event)"
+                    (dragleave)="onFinishedDragLeave()"
+                    (drop)="onFinishedDrop($event)"
+                  >
+                    <input
+                      #finishedInput
+                      type="file"
+                      class="hidden"
+                      accept="image/*"
+                      multiple
+                      (change)="onFinishedFilesSelected($event)"
+                    />
+                    <span>{{ translation.t('cabinet.finishedDropHint') }}</span>
+                  </label>
+                </label>
+
+                @if (finishedPreviews().length > 0) {
+                  <div class="cabinet-finished-grid" role="list">
+                    @for (preview of finishedPreviews(); track $index) {
+                      <div class="cabinet-finished-grid__item" role="listitem">
+                        <img [src]="preview" alt="" />
+                        <button
+                          type="button"
+                          class="cabinet-finished-grid__remove"
+                          (click)="removeFinishedPreview($index)"
+                        >
+                          {{ translation.t('cabinet.finishedRemovePhoto') }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <button type="submit" class="btn-primary" [disabled]="finishedUploading()">
+                  {{
+                    finishedUploading()
+                      ? translation.t('cabinet.finishedUploading')
+                      : translation.t('cabinet.finishedUploadSubmit')
+                  }}
                 </button>
               </form>
 

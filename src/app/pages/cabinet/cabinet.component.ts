@@ -187,10 +187,19 @@ export class CabinetComponent {
     clientContact: [''],
   });
 
+  protected readonly finishedWorkForm = this.fb.nonNullable.group({
+    title: [''],
+    description: ['', [maxWordsValidator()]],
+  });
+
   protected beforePreview = signal<string | null>(null);
   protected afterPreview = signal<string | null>(null);
   protected beforeDragging = signal(false);
   protected afterDragging = signal(false);
+  protected readonly finishedPreviews = signal<string[]>([]);
+  protected readonly finishedDragging = signal(false);
+  protected readonly finishedUploadSuccess = signal(false);
+  protected readonly finishedUploading = signal(false);
   protected readonly videoTitle = signal('');
   protected readonly videoPreviewUrl = signal<string | null>(null);
   protected readonly videoUploading = signal(false);
@@ -198,8 +207,11 @@ export class CabinetComponent {
   protected readonly videoError = signal<string | null>(null);
   private videoFile: File | null = null;
 
+  private readonly maxFinishedPhotos = 12;
+
   private readonly beforeInput = viewChild<ElementRef<HTMLInputElement>>('beforeInput');
   private readonly afterInput = viewChild<ElementRef<HTMLInputElement>>('afterInput');
+  private readonly finishedInput = viewChild<ElementRef<HTMLInputElement>>('finishedInput');
   private readonly videoInputs = viewChildren<ElementRef<HTMLInputElement>>('videoInput');
   private readonly destroyRef = inject(DestroyRef);
 
@@ -476,6 +488,188 @@ export class CabinetComponent {
     this.afterPreview.set(null);
     this.resetFileInputs();
     setTimeout(() => this.uploadSuccess.set(false), 6000);
+  }
+
+  onFinishedFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    void this.addFinishedFiles(files, input);
+  }
+
+  onFinishedDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.finishedDragging.set(true);
+  }
+
+  onFinishedDragLeave() {
+    this.finishedDragging.set(false);
+  }
+
+  onFinishedDrop(event: DragEvent) {
+    event.preventDefault();
+    this.finishedDragging.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    void this.addFinishedFiles(files, this.finishedInput()?.nativeElement);
+  }
+
+  removeFinishedPreview(index: number) {
+    this.finishedPreviews.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  private async addFinishedFiles(files: File[], input?: HTMLInputElement) {
+    if (!files.length) {
+      return;
+    }
+
+    const images = files.filter((file) => file.type.startsWith('image/'));
+    if (!images.length) {
+      alert(this.translation.t('cabinet.alertImageOnly'));
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    const room = this.maxFinishedPhotos - this.finishedPreviews().length;
+    if (room <= 0) {
+      alert(this.translation.t('cabinet.alertFinishedTooMany'));
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    const selected = images.slice(0, room);
+    if (images.length > room) {
+      alert(this.translation.t('cabinet.alertFinishedTooMany'));
+    }
+
+    const next: string[] = [];
+    for (const file of selected) {
+      if (file.size > 15 * 1024 * 1024) {
+        alert(this.translation.t('cabinet.alertFileTooLarge'));
+        continue;
+      }
+      try {
+        next.push(await compressWorkImageFile(file));
+      } catch {
+        alert(this.translation.t('cabinet.alertImageCompressFailed'));
+      }
+    }
+
+    if (next.length) {
+      this.finishedPreviews.update((list) => [...list, ...next]);
+    }
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  private resetFinishedInputs() {
+    const input = this.finishedInput()?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  finishedFieldInvalid(name: 'title' | 'description'): boolean {
+    const control = this.finishedWorkForm.get(name);
+    return !!control && control.invalid && control.touched;
+  }
+
+  async uploadFinishedWorks() {
+    const performer = this.store.currentPerformer();
+    const company = this.furnitureStore.currentCompany();
+    if (!performer && !company) {
+      return;
+    }
+
+    if (this.finishedWorkForm.invalid) {
+      this.finishedWorkForm.markAllAsTouched();
+      return;
+    }
+
+    const photos = this.finishedPreviews();
+    if (!photos.length) {
+      alert(this.translation.t('cabinet.alertFinishedPhotoRequired'));
+      return;
+    }
+
+    const v = this.finishedWorkForm.getRawValue();
+    const baseTitle =
+      v.title.trim() ||
+      this.translation.t('cabinet.defaultFinishedWorkTitle') ||
+      this.translation.t('cabinet.defaultWorkTitle') ||
+      'Готовая работа';
+
+    this.finishedUploading.set(true);
+    try {
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        const title = photos.length > 1 ? `${baseTitle} (${i + 1})` : baseTitle;
+
+        if (company) {
+          const work = this.furnitureStore.addWork(company.id, {
+            title,
+            description: v.description,
+            beforeImage: photo,
+            afterImage: photo,
+          });
+          if (!work) {
+            continue;
+          }
+
+          const ownerId = company.dbId ?? company.id;
+          const saveResult = await firstValueFrom(
+            this.supabase.savePortfolioWork({
+              ownerId,
+              ownerType: 'furniture',
+              work,
+            }),
+          );
+
+          if (saveResult.error) {
+            this.furnitureStore.deleteWork(company.id, work.id);
+            alert(saveResult.error);
+            return;
+          }
+          continue;
+        }
+
+        const result = this.store.addWork(performer!.id, {
+          title,
+          description: v.description,
+          beforeImage: photo,
+          afterImage: photo,
+        });
+        if (!result) {
+          continue;
+        }
+
+        const ownerType = performer!.type === 'brigade' ? 'brigade' : 'worker';
+        const saveResult = await firstValueFrom(
+          this.supabase.savePortfolioWork({
+            ownerId: performer!.id,
+            ownerType,
+            work: result.work,
+          }),
+        );
+
+        if (saveResult.error) {
+          this.store.deleteWork(performer!.id, result.work.id);
+          alert(saveResult.error);
+          return;
+        }
+      }
+
+      this.finishedUploadSuccess.set(true);
+      this.finishedWorkForm.reset();
+      this.finishedPreviews.set([]);
+      this.resetFinishedInputs();
+      setTimeout(() => this.finishedUploadSuccess.set(false), 6000);
+    } finally {
+      this.finishedUploading.set(false);
+    }
   }
 
   async deletePerformerWork(workId: string, workTitle: string): Promise<void> {

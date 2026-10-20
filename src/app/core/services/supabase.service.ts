@@ -2336,12 +2336,24 @@ export class SupabaseService {
       return { data: null, error: SUPABASE_NOT_CONFIGURED };
     }
 
+    // RLS: insert/update require specialist_id = auth.uid().
+    const { data: sessionData } = await client.auth.getSession();
+    const authUserId = sessionData.session?.user?.id?.trim() ?? '';
+    if (!authUserId) {
+      return { data: null, error: 'Войдите в аккаунт, чтобы сохранить работу.' };
+    }
+    const ownerIdForDb = authUserId;
+    const ownerIdForCache = input.ownerId?.trim() || authUserId;
+
     if (this.portfolioWorksTableMissing) {
-      this.upsertWorkInCaches(input.ownerId, work);
+      this.upsertWorkInCaches(ownerIdForCache, work);
+      if (ownerIdForCache !== ownerIdForDb) {
+        this.upsertWorkInCaches(ownerIdForDb, work);
+      }
       return { data: work, error: null };
     }
 
-    const preparedWork = await this.preparePortfolioWorkImages(input.ownerId, work);
+    const preparedWork = await this.preparePortfolioWorkImages(ownerIdForDb, work);
     if (preparedWork.error) {
       return { data: null, error: preparedWork.error };
     }
@@ -2349,7 +2361,7 @@ export class SupabaseService {
     const workForSave = preparedWork.work;
 
     const payload = portfolioWorkToInsertRow({
-      ownerId: input.ownerId,
+      ownerId: ownerIdForDb,
       ownerType: input.ownerType,
       work: workForSave,
     });
@@ -2364,17 +2376,26 @@ export class SupabaseService {
       if (error) {
         if (isSupabaseMissingTableError(error, 'portfolio_works')) {
           this.portfolioWorksTableMissing = true;
-          this.upsertWorkInCaches(input.ownerId, workForSave);
+          this.upsertWorkInCaches(ownerIdForCache, workForSave);
+          if (ownerIdForCache !== ownerIdForDb) {
+            this.upsertWorkInCaches(ownerIdForDb, workForSave);
+          }
           return { data: workForSave, error: null };
         }
 
         console.error('Supabase Error Details:', error);
         logSupabaseError('savePortfolioWorkRow', error);
-        return { data: null, error: error.message };
+        const message = error.message.includes('row-level security')
+          ? 'Не удалось сохранить: войдите тем же аккаунтом, под которым регистрировались.'
+          : error.message;
+        return { data: null, error: message };
       }
 
       const saved = data ? portfolioWorkRowToProject(data as PortfolioWorkRow) : workForSave;
-      this.upsertWorkInCaches(input.ownerId, saved);
+      this.upsertWorkInCaches(ownerIdForCache, saved);
+      if (ownerIdForCache !== ownerIdForDb) {
+        this.upsertWorkInCaches(ownerIdForDb, saved);
+      }
       return { data: saved, error: null };
     } catch (err) {
       console.error('Unexpected Error:', err);

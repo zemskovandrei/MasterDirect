@@ -284,6 +284,10 @@ h2 {
   background-image: url('../../assets/fon.png');
 }
 
+.how-block {
+  background-image: url('../../assets/portfolio-03.jpg');
+}
+
 .services-block .services {
   background-image: url('../../assets/fon2.jpeg');
 }

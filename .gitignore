@@ -20,3 +20,6 @@ dist-api/
 
 # Локальные промо-видео (не в репозиторий)
 promo-video/
+
+# Supabase CLI local temp
+supabase/.temp/

@@ -11,8 +11,12 @@ import type { PortfolioWorkOwnerType } from '../models/portfolio-work.model';
 import {
   portfolioWorkRowToProject,
   portfolioWorkToInsertRow,
+  workProjectToWorksPortfolioInsert,
+  worksPortfolioRowToProject,
   type PortfolioWorkRow,
+  type WorksPortfolioRow,
 } from '../models/portfolio-work.model';
+import { isAlbumWork } from '../models/portfolio.models';
 import {
   furnitureCompanyToProfile,
   masterRowToProfile,
@@ -111,6 +115,7 @@ export class SupabaseService {
   private portfolioWorksStatusColumnMissing = false;
   private specialistAvatarColumnMissing = false;
   private workVideosTableMissing = false;
+  private worksPortfolioTableMissing = false;
 
   private readonly profilesSignal = signal<Profile[]>([]);
   private readonly portfolioWorksByOwnerSignal = signal<Map<string, WorkProject[]>>(new Map());
@@ -2331,6 +2336,14 @@ export class SupabaseService {
       id: input.work.id || crypto.randomUUID(),
     };
 
+    // Finished album works use the dedicated works_portfolio table.
+    if (isAlbumWork(work)) {
+      return this.saveWorksPortfolioRow({
+        ownerId: input.ownerId,
+        work,
+      });
+    }
+
     const client = await this.resolveClient();
     if (!client) {
       return { data: null, error: SUPABASE_NOT_CONFIGURED };
@@ -2400,6 +2413,97 @@ export class SupabaseService {
     } catch (err) {
       console.error('Unexpected Error:', err);
       logSupabaseError('savePortfolioWorkRow', err);
+      const message = err instanceof Error ? err.message : 'Save failed';
+      return { data: null, error: message };
+    }
+  }
+
+  private async saveWorksPortfolioRow(input: {
+    ownerId: string;
+    work: WorkProject;
+  }): Promise<SupabaseMutationResult<WorkProject>> {
+    const work: WorkProject = {
+      ...input.work,
+      id: input.work.id || crypto.randomUUID(),
+      kind: 'album',
+    };
+
+    const client = await this.resolveClient();
+    if (!client) {
+      return { data: null, error: SUPABASE_NOT_CONFIGURED };
+    }
+
+    const { data: sessionData } = await client.auth.getSession();
+    const authUserId = sessionData.session?.user?.id?.trim() ?? '';
+    if (!authUserId) {
+      return { data: null, error: 'Войдите в аккаунт, чтобы сохранить работу.' };
+    }
+    const ownerIdForDb = authUserId;
+    const ownerIdForCache = input.ownerId?.trim() || authUserId;
+
+    if (this.worksPortfolioTableMissing) {
+      this.upsertWorkInCaches(ownerIdForCache, work);
+      if (ownerIdForCache !== ownerIdForDb) {
+        this.upsertWorkInCaches(ownerIdForDb, work);
+      }
+      return { data: work, error: null };
+    }
+
+    const preparedWork = await this.preparePortfolioWorkImages(ownerIdForDb, work);
+    if (preparedWork.error) {
+      return { data: null, error: preparedWork.error };
+    }
+
+    const workForSave = preparedWork.work;
+    const payload = workProjectToWorksPortfolioInsert({
+      ownerId: ownerIdForDb,
+      work: workForSave,
+    });
+
+    if (!String(payload['image_url'] ?? '').trim()) {
+      return { data: null, error: 'Нужно хотя бы одно фото.' };
+    }
+
+    try {
+      // Table policies allow insert/delete only (no update).
+      const { data, error } = await client
+        .from('works_portfolio' as any)
+        .insert(payload as any)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        if (isSupabaseMissingTableError(error, 'works_portfolio')) {
+          this.worksPortfolioTableMissing = true;
+          this.upsertWorkInCaches(ownerIdForCache, workForSave);
+          if (ownerIdForCache !== ownerIdForDb) {
+            this.upsertWorkInCaches(ownerIdForDb, workForSave);
+          }
+          return { data: workForSave, error: null };
+        }
+
+        console.error('Supabase Error Details:', error);
+        logSupabaseError('saveWorksPortfolioRow', error);
+        const message = error.message.includes('row-level security')
+          ? 'Не удалось сохранить: войдите тем же аккаунтом, под которым регистрировались.'
+          : error.message;
+        return { data: null, error: message };
+      }
+
+      const saved = data
+        ? worksPortfolioRowToProject({
+            ...(data as WorksPortfolioRow),
+            image_url: this.normalizePortfolioImageUrl((data as WorksPortfolioRow).image_url),
+          })
+        : workForSave;
+      this.upsertWorkInCaches(ownerIdForCache, saved);
+      if (ownerIdForCache !== ownerIdForDb) {
+        this.upsertWorkInCaches(ownerIdForDb, saved);
+      }
+      return { data: saved, error: null };
+    } catch (err) {
+      console.error('Unexpected Error:', err);
+      logSupabaseError('saveWorksPortfolioRow', err);
       const message = err instanceof Error ? err.message : 'Save failed';
       return { data: null, error: message };
     }
@@ -2566,6 +2670,45 @@ export class SupabaseService {
     }
 
     const client = await this.resolveClient();
+
+    // Finished works live in works_portfolio.
+    if (client && !this.worksPortfolioTableMissing) {
+      const finished = await client
+        .from('works_portfolio' as any)
+        .select('id,specialist_id')
+        .eq('id', trimmedId)
+        .maybeSingle();
+
+      if (finished.error && isSupabaseMissingTableError(finished.error, 'works_portfolio')) {
+        this.worksPortfolioTableMissing = true;
+      } else if (finished.data) {
+        const session = await client.auth.getSession();
+        const userId = session.data.session?.user?.id?.trim() ?? '';
+        const ownerId = String((finished.data as { specialist_id?: string }).specialist_id ?? '').trim();
+        if (userId && ownerId && userId !== ownerId) {
+          return {
+            data: null,
+            error: 'Эту работу можно удалить только аккаунтом, которым она была загружена.',
+          };
+        }
+
+        const hard = await client
+          .from('works_portfolio' as any)
+          .delete()
+          .eq('id', trimmedId)
+          .select('id');
+        const hardRows = (hard.data as { id?: string }[] | null) ?? [];
+        if (!hard.error && hardRows.length > 0) {
+          this.removeWorkFromCaches(trimmedId);
+          return { data: null, error: null };
+        }
+        if (hard.error) {
+          logSupabaseError('deletePortfolioWorkRow.works_portfolio', hard.error);
+          return { data: null, error: hard.error.message };
+        }
+      }
+    }
+
     if (client && !this.portfolioWorksTableMissing) {
       // Is this work even in the database? Many cabinet items are local-only.
       const existing = await client
@@ -3194,7 +3337,48 @@ export class SupabaseService {
 
     console.log('mapped works', worksMap);
 
+    await this.mergeWorksPortfolioIntoMap(client, worksMap);
     return worksMap;
+  }
+
+  private async mergeWorksPortfolioIntoMap(
+    client: SupabaseClient,
+    worksMap: Map<string, WorkProject[]>,
+  ): Promise<void> {
+    if (this.worksPortfolioTableMissing) {
+      return;
+    }
+
+    const { data, error } = await client
+      .from('works_portfolio' as any)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (isSupabaseMissingTableError(error, 'works_portfolio')) {
+        this.worksPortfolioTableMissing = true;
+        return;
+      }
+      logSupabaseError('mergeWorksPortfolioIntoMap', error);
+      return;
+    }
+
+    for (const row of (data ?? []) as WorksPortfolioRow[]) {
+      const ownerId = String(row.specialist_id ?? '').trim();
+      if (!ownerId || !row.image_url?.trim()) {
+        continue;
+      }
+
+      const work = worksPortfolioRowToProject({
+        ...row,
+        image_url: this.normalizePortfolioImageUrl(row.image_url),
+      });
+      const existing = worksMap.get(ownerId) ?? [];
+      if (existing.some((item) => item.id === work.id)) {
+        continue;
+      }
+      worksMap.set(ownerId, [...existing, work]);
+    }
   }
 
   private async loadWorksTableFallback(client: SupabaseClient): Promise<Map<string, WorkProject[]>> {

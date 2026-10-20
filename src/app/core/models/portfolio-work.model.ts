@@ -161,3 +161,51 @@ export function splitFoldedWorkText(raw: string | null | undefined): {
   const line = value.trim();
   return { title: line, description: '' };
 }
+
+/** Finished works table: one cover image + optional album URLs in description. */
+export interface WorksPortfolioRow {
+  id: string;
+  specialist_id: string;
+  title?: string | null;
+  description?: string | null;
+  image_url: string;
+  created_at: string;
+}
+
+export function worksPortfolioRowToProject(row: WorksPortfolioRow): WorkProject {
+  const cover = row.image_url?.trim() || '';
+  const { description, albumImages } = splitAlbumFromDescription(row.description ?? '');
+  const resolvedAlbum =
+    albumImages.length > 0 ? albumImages : cover ? [cover] : [];
+
+  return {
+    id: row.id,
+    title: row.title?.trim() || 'Работа',
+    description,
+    beforeImage: cover || resolvedAlbum[0] || '',
+    afterImage: cover || resolvedAlbum[0] || '',
+    kind: 'album',
+    albumImages: resolvedAlbum.length > 0 ? resolvedAlbum : undefined,
+    createdAt: row.created_at,
+    verificationStatus: 'not_requested',
+  };
+}
+
+export function workProjectToWorksPortfolioInsert(input: {
+  ownerId: string;
+  work: WorkProject;
+}): Record<string, unknown> {
+  const album = resolveAlbumImages(input.work);
+  const cover = album[0] || input.work.beforeImage || input.work.afterImage || '';
+  const body = input.work.description?.trim() || '';
+  const description =
+    album.length > 1 ? foldAlbumIntoDescription(body, album) : body || null;
+
+  return {
+    id: input.work.id,
+    specialist_id: input.ownerId,
+    title: input.work.title?.trim() || null,
+    description,
+    image_url: cover,
+  };
+}

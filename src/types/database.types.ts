@@ -203,6 +203,33 @@ export type Database = {
         }
         Relationships: []
       }
+      works_portfolio: {
+        Row: {
+          id: string
+          specialist_id: string
+          title: string | null
+          description: string | null
+          image_url: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          specialist_id?: string
+          title?: string | null
+          description?: string | null
+          image_url: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          specialist_id?: string
+          title?: string | null
+          description?: string | null
+          image_url?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       work_videos: {
         Row: {
           created_at: string

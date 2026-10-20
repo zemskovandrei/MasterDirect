@@ -5,6 +5,8 @@ import {
   portfolioWorkRowToProject,
   portfolioWorkToInsertRow,
   splitFoldedWorkText,
+  workProjectToWorksPortfolioInsert,
+  worksPortfolioRowToProject,
   type PortfolioWorkRow,
 } from './portfolio-work.model';
 
@@ -94,6 +96,40 @@ describe('portfolio work title folding', () => {
     );
     expect(loaded.kind).toBe('album');
     expect(loaded.description).toBe('Плитка');
+    expect(loaded.albumImages).toEqual([
+      'https://example.com/a.jpg',
+      'https://example.com/b.jpg',
+    ]);
+  });
+
+  it('maps finished works into works_portfolio rows', () => {
+    const payload = workProjectToWorksPortfolioInsert({
+      ownerId: '11111111-1111-1111-1111-111111111111',
+      work: work({
+        id: '22222222-2222-2222-2222-222222222222',
+        title: 'Кухня',
+        description: 'Плитка',
+        kind: 'album',
+        albumImages: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+        beforeImage: 'https://example.com/a.jpg',
+        afterImage: 'https://example.com/a.jpg',
+      }),
+    });
+
+    expect(payload['specialist_id']).toBe('11111111-1111-1111-1111-111111111111');
+    expect(payload['image_url']).toBe('https://example.com/a.jpg');
+    expect(payload['title']).toBe('Кухня');
+    expect(String(payload['description'])).toContain('__MD_ALBUM__');
+
+    const loaded = worksPortfolioRowToProject({
+      id: String(payload['id']),
+      specialist_id: String(payload['specialist_id']),
+      title: payload['title'] as string,
+      description: payload['description'] as string,
+      image_url: String(payload['image_url']),
+      created_at: '2026-10-20T00:00:00.000Z',
+    });
+    expect(loaded.kind).toBe('album');
     expect(loaded.albumImages).toEqual([
       'https://example.com/a.jpg',
       'https://example.com/b.jpg',

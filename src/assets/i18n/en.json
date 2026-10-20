@@ -63,13 +63,16 @@
   },
   "home": {
     "hero": {
-      "title": "Find performers",
-      "primary": "Teams",
+      "eyebrow": "Batumi · masters and teams",
+      "title": "Renovation and furniture — without the search chaos",
+      "lead": "A catalog with real portfolios plus a Telegram chat for a quick request — from tiling to turnkey kitchens.",
+      "primary": "Browse catalog",
       "secondary": "Masters",
-      "telegramChat": "Telegram chat",
+      "telegramChat": "Message on Telegram",
       "estimate": "Get an estimate",
       "jobs": "Browse jobs",
       "tagsAria": "Main services",
+      "trustAria": "Why people trust us",
       "searchAria": "Search the site",
       "searchPlaceholder": "Master, team, furniture, or job…",
       "searchEmpty": "Nothing found",
@@ -77,6 +80,12 @@
       "searchBrigades": "Teams",
       "searchFurniture": "Furniture",
       "searchJobs": "Jobs",
+      "trust": {
+        "0": "Real project photos",
+        "1": "Direct Telegram contact",
+        "2": "Local teams and masters",
+        "3": "Request in a few minutes"
+      },
       "tags": {
         "0": "Tiling",
         "1": "Plumbing",
@@ -84,6 +93,29 @@
         "3": "Finishing",
         "4": "Custom furniture",
         "5": "Turnkey"
+      }
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From request to finished job — 4 steps",
+      "lead": "A clear path without endless calls or empty promises.",
+      "steps": {
+        "0": {
+          "title": "Find a performer",
+          "desc": "Open the catalog or message Telegram — we’ll point you to the right match."
+        },
+        "1": {
+          "title": "Review their work",
+          "desc": "Browse before/after and finished albums — real projects only."
+        },
+        "2": {
+          "title": "Talk directly",
+          "desc": "Agree on a site visit and quote with no middlemen or hidden fees."
+        },
+        "3": {
+          "title": "Start the job",
+          "desc": "Lock scope and timeline with the master or team you chose."
+        }
       }
     },
     "calculator": {

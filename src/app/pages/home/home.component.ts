@@ -15,7 +15,7 @@ import { BeforeAfterComponent } from '../../shared/components/before-after/befor
 import { TranslationService } from '../../core/services/translation.service';
 import { CatalogLocalizationService } from '../../core/services/catalog-localization.service';
 import { collectGalleryWorks } from '../../core/utils/gallery-works.util';
-import { TELEGRAM_BOT_URL } from '../../core/constants/brand';
+import { APP_BRAND_NAME, TELEGRAM_BOT_URL } from '../../core/constants/brand';
 import { homeHeroBackgroundStyle } from '../../core/constants/catalog-tab-backgrounds';
 import { resolveAssetUrl } from '../../core/utils/asset-url.util';
 import { normalizeSearchText, specialtySearchHaystack } from '../../core/utils/catalog-filter.util';
@@ -24,12 +24,6 @@ interface ServiceItem {
   image: string;
   title: string;
   description: string;
-}
-
-interface HeroTag {
-  labelKey: string;
-  path: string;
-  queryParams?: Record<string, string>;
 }
 
 interface SiteSearchHit {
@@ -57,18 +51,24 @@ export class HomeComponent implements OnInit {
   protected readonly catalogL10n = inject(CatalogLocalizationService);
   protected readonly heroBackground = homeHeroBackgroundStyle();
   protected readonly telegramBotUrl = TELEGRAM_BOT_URL;
+  protected readonly brandName = APP_BRAND_NAME;
 
   protected readonly searchQuery = signal('');
   protected readonly searchOpen = signal(false);
 
-  protected readonly heroTags: HeroTag[] = [
-    { labelKey: 'home.hero.tags.0', path: '/masters', queryParams: { specialty: 'tiler' } },
-    { labelKey: 'home.hero.tags.1', path: '/masters', queryParams: { specialty: 'plumber' } },
-    { labelKey: 'home.hero.tags.2', path: '/masters', queryParams: { specialty: 'electrician' } },
-    { labelKey: 'home.hero.tags.3', path: '/masters', queryParams: { specialty: 'painter' } },
-    { labelKey: 'home.hero.tags.4', path: '/furniture' },
-    { labelKey: 'home.hero.tags.5', path: '/brigades', queryParams: { specialty: 'turnkey' } },
-  ];
+  protected readonly heroTrust = [
+    'home.hero.trust.0',
+    'home.hero.trust.1',
+    'home.hero.trust.2',
+    'home.hero.trust.3',
+  ] as const;
+
+  protected readonly howSteps = [
+    { titleKey: 'home.how.steps.0.title', descKey: 'home.how.steps.0.desc' },
+    { titleKey: 'home.how.steps.1.title', descKey: 'home.how.steps.1.desc' },
+    { titleKey: 'home.how.steps.2.title', descKey: 'home.how.steps.2.desc' },
+    { titleKey: 'home.how.steps.3.title', descKey: 'home.how.steps.3.desc' },
+  ] as const;
 
   protected readonly galleryWorks = computed(() =>
     collectGalleryWorks({

@@ -125,7 +125,11 @@
                   </div>
                 }
                 <a [routerLink]="performerLink(p.id)" class="performer-more">
-                  {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
+                  @if (p.works.length > 0) {
+                    {{ translation.t('masters.allWorks') }} ({{ p.works.length }}) →
+                  } @else {
+                    {{ translation.t('masters.openProfile') }} →
+                  }
                 </a>
               </div>
             </div>

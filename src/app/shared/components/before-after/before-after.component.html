@@ -166,13 +166,15 @@
         </button>
       }
 
-      @if (activeAlbumImage(); as active) {
-        <img
-          class="ba-lightbox__image"
-          [src]="active"
-          [alt]="displayTitle()"
-        />
-      }
+      <div class="ba-lightbox__frame">
+        @if (activeAlbumImage(); as active) {
+          <img
+            class="ba-lightbox__image"
+            [src]="active"
+            [alt]="displayTitle()"
+          />
+        }
+      </div>
 
       <div class="ba-lightbox__meta">
         <span class="ba-lightbox__title">{{ displayTitle() }}</span>

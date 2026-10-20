@@ -2565,52 +2565,52 @@ export class SupabaseService {
         return { data: null, error: null };
       }
 
-      // Soft-delete first (UPDATE is allowed by current RLS for own specialist_id).
       const session = await client.auth.getSession();
       const userId = session.data.session?.user?.id?.trim() ?? '';
-      let softQuery = client
-        .from('portfolio_works' as any)
-        .update({ status: 'rejected' } as any)
-        .eq('id', trimmedId);
-      if (userId) {
-        softQuery = softQuery.eq('specialist_id', userId);
-      }
-      const soft = await softQuery.select('id');
-      const softRows = (soft.data as { id?: string }[] | null) ?? [];
-
-      if (!soft.error && softRows.length > 0) {
-        this.removeWorkFromCaches(trimmedId);
-        return { data: null, error: null };
-      }
-      if (soft.error) {
-        logSupabaseError('deletePortfolioWorkRow.soft', soft.error);
-      } else if (userId && String((existing.data as { specialist_id?: string }).specialist_id ?? '') !== userId) {
+      const ownerId = String((existing.data as { specialist_id?: string }).specialist_id ?? '').trim();
+      if (userId && ownerId && userId !== ownerId) {
         return {
           data: null,
           error: 'Эту работу можно удалить только аккаунтом, которым она была загружена.',
         };
       }
 
-      // Hard delete — verify a row was actually removed.
+      // Hard delete (RLS delete-own policy).
       const hard = await client
         .from('portfolio_works' as any)
         .delete()
         .eq('id', trimmedId)
         .select('id');
+      const hardRows = (hard.data as { id?: string }[] | null) ?? [];
 
-      if (!hard.error && Array.isArray(hard.data) && hard.data.length > 0) {
+      if (!hard.error && hardRows.length > 0) {
         this.removeWorkFromCaches(trimmedId);
         return { data: null, error: null };
       }
       if (hard.error) {
         logSupabaseError('deletePortfolioWorkRow.hard', hard.error);
       }
+
+      // Soft-delete fallback if UPDATE policy exists.
+      const soft = await client
+        .from('portfolio_works' as any)
+        .update({ status: 'rejected' } as any)
+        .eq('id', trimmedId)
+        .select('id');
+      const softRows = (soft.data as { id?: string }[] | null) ?? [];
+      if (!soft.error && softRows.length > 0) {
+        this.removeWorkFromCaches(trimmedId);
+        return { data: null, error: null };
+      }
+      if (soft.error) {
+        logSupabaseError('deletePortfolioWorkRow.soft', soft.error);
+      }
     } else if (!client || this.portfolioWorksTableMissing) {
       this.removeWorkFromCaches(trimmedId);
       return { data: null, error: null };
     }
 
-    // Railway API with service role (absolute URL on GitHub Pages).
+    // Railway API fallback (may be paused / old build).
     const apiError = await this.deleteViaApi(
       `/api/portfolio-works/${encodeURIComponent(trimmedId)}`,
     );
@@ -2619,23 +2619,13 @@ export class SupabaseService {
       return { data: null, error: null };
     }
 
-    // Old Railway builds return Forbidden when owner_id column is missing.
-    // If API is broken, still drop local cache so cabinet stays consistent,
-    // and ask the user to redeploy / run delete RLS for catalog cleanup.
-    if (apiError === 'Forbidden' || (typeof apiError === 'string' && /forbidden/i.test(apiError))) {
-      this.removeWorkFromCaches(trimmedId);
-      return {
-        data: null,
-        error:
-          'Работа убрана из кабинета. Чтобы удалить её с сайта полностью: Railway → Redeploy (build job-flow-v8) или выполните SQL-политику delete в Supabase.',
-      };
-    }
-
     return {
       data: null,
       error:
-        apiError ||
-        'Не удалось удалить работу. Войдите тем же аккаунтом, которым загружали фото.',
+        (typeof apiError === 'string' && apiError !== 'Forbidden'
+          ? apiError
+          : null) ||
+        'Не удалось удалить работу с сайта. Обновите страницу (Ctrl+F5) и попробуйте ещё раз под тем же аккаунтом.',
     };
   }
 

@@ -334,13 +334,14 @@ section.hero-section {
 
 .for-masters__card {
   position: relative;
-  overflow: hidden;
+  isolation: isolate;
+  overflow: visible;
   padding: clamp(1.6rem, 4vw, 2.5rem);
   border: 1px solid rgba(103, 232, 249, 0.22);
   border-radius: 1.35rem;
   background:
-    linear-gradient(135deg, rgba(14, 116, 144, 0.14), rgba(15, 23, 42, 0.78) 48%, rgba(20, 184, 166, 0.1)),
-    rgba(11, 24, 43, 0.92);
+    linear-gradient(135deg, rgba(14, 116, 144, 0.18), rgba(15, 23, 42, 0.96) 48%, rgba(20, 184, 166, 0.14)),
+    #0b182b;
   box-shadow:
     0 24px 60px rgba(2, 8, 23, 0.32),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -353,6 +354,7 @@ section.hero-section {
   height: 18rem;
   right: -11rem;
   bottom: -13rem;
+  z-index: 0;
   border-radius: 50%;
   background: rgba(45, 212, 191, 0.16);
   filter: blur(8px);
@@ -361,12 +363,15 @@ section.hero-section {
 
 .for-masters__copy {
   position: relative;
+  z-index: 1;
   max-width: 44rem;
   margin: 0 auto;
 }
 
 .for-masters__eyebrow {
   display: inline-flex;
+  position: relative;
+  z-index: 1;
   align-items: center;
   gap: 0.45rem;
   margin: 0 0 0.65rem;
@@ -397,6 +402,7 @@ section.hero-section {
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: #f8fafc;
+  text-shadow: 0 2px 18px rgba(2, 8, 23, 0.95);
 }
 
 .for-masters__lead {
@@ -404,10 +410,13 @@ section.hero-section {
   max-width: 39rem;
   font-size: clamp(0.98rem, 2vw, 1.12rem);
   line-height: 1.55;
-  color: rgba(226, 232, 240, 0.9);
+  color: #dbe7f3;
+  text-shadow: 0 1px 12px rgba(2, 8, 23, 0.95);
 }
 
 .for-masters__actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -471,6 +480,7 @@ section.hero-section {
 
 .for-masters__note {
   position: relative;
+  z-index: 1;
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.45;

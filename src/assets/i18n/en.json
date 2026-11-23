@@ -29,8 +29,8 @@
       "worksGalleryDesc": "Before and after project photos",
       "telegramChat": "Telegram chat",
       "telegramChatDesc": "Place an order, master profile, or review in the bot",
-      "addPortfolio": "Add portfolio",
-      "addPortfolioDesc": "Upload work photos in your dashboard"
+      "addPortfolio": "For masters: cabinet",
+      "addPortfolioDesc": "You can register and upload your work"
     },
     "actions": {
       "openMenu": "Open menu",
@@ -49,7 +49,7 @@
     },
     "auth": {
       "login": "Sign in",
-      "register": "Register",
+      "register": "Master registration",
       "cabinet": "Dashboard"
     },
     "footer": {
@@ -94,6 +94,14 @@
         "4": "Custom furniture",
         "5": "Turnkey"
       }
+    },
+    "forMasters": {
+      "eyebrow": "For masters and teams",
+      "title": "You can join the catalog",
+      "lead": "Register on the site and manage your cabinet — or publish a profile via the Telegram bot with no account.",
+      "ctaRegister": "Register",
+      "ctaBot": "Publish in Telegram",
+      "note": "Clients use the catalog and search above. This block is for performers."
     },
     "how": {
       "eyebrow": "How it works",

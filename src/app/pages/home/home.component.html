@@ -85,6 +85,34 @@
   </div>
 </section>
 
+<section class="for-masters" id="for-masters" aria-labelledby="for-masters-title">
+  <div class="for-masters__inner">
+    <p class="for-masters__eyebrow">{{ translation.t('home.forMasters.eyebrow') }}</p>
+    <h2 id="for-masters-title" class="for-masters__title">
+      {{ translation.t('home.forMasters.title') }}
+    </h2>
+    <p class="for-masters__lead">{{ translation.t('home.forMasters.lead') }}</p>
+    <div class="for-masters__actions">
+      <a
+        class="for-masters__btn for-masters__btn--primary"
+        routerLink="/cabinet"
+        fragment="register"
+      >
+        {{ translation.t('home.forMasters.ctaRegister') }}
+      </a>
+      <a
+        class="for-masters__btn for-masters__btn--telegram"
+        [href]="telegramBotUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ translation.t('home.forMasters.ctaBot') }}
+      </a>
+    </div>
+    <p class="for-masters__note">{{ translation.t('home.forMasters.note') }}</p>
+  </div>
+</section>
+
 <section class="features-block" id="features">
   <div class="features">
     <div class="features-container">

@@ -227,7 +227,8 @@
           <a [href]="telegramBotUrl" target="_blank" rel="noopener noreferrer">{{
             translation.t('app.nav.telegramChat')
           }}</a>
-          <a routerLink="/cabinet">{{ translation.t('app.nav.addPortfolio') }}</a>
+          <a routerLink="/" fragment="for-masters">{{ translation.t('home.forMasters.eyebrow') }}</a>
+          <a routerLink="/cabinet" fragment="register">{{ translation.t('app.nav.addPortfolio') }}</a>
           <a routerLink="/privacy">Политика конфиденциальности</a>
           <a routerLink="/terms">Условия использования</a>
         </div>

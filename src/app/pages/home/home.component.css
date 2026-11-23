@@ -315,6 +315,100 @@ section.hero-section {
   font-weight: 800;
 }
 
+.for-masters {
+  position: relative;
+  z-index: 2;
+  padding: clamp(2.75rem, 6vw, 4rem) clamp(1.1rem, 4vw, 2rem);
+  margin: 0;
+  background:
+    linear-gradient(180deg, #0a1526 0%, #0e1c32 55%, #0c182c 100%),
+    radial-gradient(ellipse 65% 55% at 50% 0%, rgba(0, 196, 224, 0.16), transparent 60%);
+  border-block: 1px solid rgba(103, 232, 249, 0.18);
+}
+
+.for-masters__inner {
+  width: min(40rem, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.for-masters__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
+.for-masters__title {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #f8fafc;
+}
+
+.for-masters__lead {
+  margin: 0 0 1.35rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.for-masters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 0 0 1rem;
+}
+
+.for-masters__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.85rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0.55rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.for-masters__btn--primary {
+  color: #062018;
+  background: linear-gradient(180deg, #5eead4 0%, #14b8a6 100%);
+  box-shadow: 0 8px 22px rgba(20, 184, 166, 0.28);
+}
+
+.for-masters__btn--primary:hover,
+.for-masters__btn--primary:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(20, 184, 166, 0.36);
+}
+
+.for-masters__btn--telegram {
+  color: #e0f2fe;
+  background: rgba(14, 116, 144, 0.35);
+  border: 1px solid rgba(103, 232, 249, 0.45);
+}
+
+.for-masters__btn--telegram:hover,
+.for-masters__btn--telegram:focus-visible {
+  background: rgba(14, 116, 144, 0.5);
+  transform: translateY(-1px);
+}
+
+.for-masters__note {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(148, 163, 184, 0.95);
+}
+
 .how-block {
   position: relative;
   z-index: 2;

@@ -87,29 +87,42 @@
 
 <section class="for-masters" id="for-masters" aria-labelledby="for-masters-title">
   <div class="for-masters__inner">
-    <p class="for-masters__eyebrow">{{ translation.t('home.forMasters.eyebrow') }}</p>
-    <h2 id="for-masters-title" class="for-masters__title">
-      {{ translation.t('home.forMasters.title') }}
-    </h2>
-    <p class="for-masters__lead">{{ translation.t('home.forMasters.lead') }}</p>
-    <div class="for-masters__actions">
-      <a
-        class="for-masters__btn for-masters__btn--primary"
-        routerLink="/cabinet"
-        fragment="register"
-      >
-        {{ translation.t('home.forMasters.ctaRegister') }}
-      </a>
-      <a
-        class="for-masters__btn for-masters__btn--telegram"
-        [href]="telegramBotUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ translation.t('home.forMasters.ctaBot') }}
-      </a>
+    <div class="for-masters__card">
+      <div class="for-masters__copy">
+        <p class="for-masters__eyebrow">{{ translation.t('home.forMasters.eyebrow') }}</p>
+        <h2 id="for-masters-title" class="for-masters__title">
+          {{ translation.t('home.forMasters.title') }}
+        </h2>
+        <p class="for-masters__lead">{{ translation.t('home.forMasters.lead') }}</p>
+      </div>
+      <div class="for-masters__actions">
+        <a
+          class="for-masters__btn for-masters__btn--primary"
+          routerLink="/cabinet"
+          fragment="register"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" />
+          </svg>
+          {{ translation.t('home.forMasters.ctaRegister') }}
+        </a>
+        <a
+          class="for-masters__btn for-masters__btn--telegram"
+          [href]="telegramBotUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M21.9 4.3c.3-.1.6 0 .7.3.1.2.1.5 0 .7L18.2 20c-.1.4-.5.6-.9.5l-5-1.6-2.7 2.6c-.3.3-.8.1-.9-.3l-.1-4.4L18 7.4c.1-.1 0-.2-.1-.2l-9.6 5.9-4.1-1.3c-.5-.2-.5-.8.1-1L21.9 4.3z"
+            />
+          </svg>
+          {{ translation.t('home.forMasters.ctaBot') }}
+        </a>
+      </div>
+      <p class="for-masters__note">{{ translation.t('home.forMasters.note') }}</p>
     </div>
-    <p class="for-masters__note">{{ translation.t('home.forMasters.note') }}</p>
   </div>
 </section>
 

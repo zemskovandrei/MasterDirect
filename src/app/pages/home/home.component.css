@@ -555,6 +555,8 @@ section.hero-section {
 }
 
 .how-block__heading {
+  position: relative;
+  z-index: 2;
   max-width: 40rem;
   margin: 0 auto 2.35rem;
   text-align: center;
@@ -1217,9 +1219,10 @@ section.hero-section {
 /* ——— Преимущества — подзаголовок внутри баннера с фоном ——— */
 .features-block {
   padding: 0;
-  margin-top: clamp(-8rem, -14vw, -5rem);
+  margin-top: 0;
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  isolation: isolate;
 }
 
 .features-container {
@@ -1236,15 +1239,22 @@ section.hero-section {
 }
 
 .features-heading {
+  position: relative;
+  z-index: 2;
   width: 100%;
   margin: 0;
-  padding: clamp(0.5rem, 2vh, 1.25rem) 0 clamp(1.5rem, 3vh, 2.5rem);
+  min-height: clamp(7rem, 10vw, 9rem);
+  padding: clamp(2.5rem, 5vw, 4rem) 1rem clamp(1.5rem, 3vh, 2.5rem);
   background: transparent;
   text-align: center;
   flex-shrink: 0;
 }
 
 .features-subtitle {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
   max-width: 48ch;
   margin: 0 auto;
   text-align: center;
@@ -1252,8 +1262,9 @@ section.hero-section {
   font-size: clamp(1.15rem, 2.4vw, 1.45rem);
   font-weight: 500;
   line-height: 1.65;
-  opacity: 0.95;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+  opacity: 1;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+  transform: none;
 }
 
 .features-block .features {
@@ -1364,7 +1375,9 @@ section.hero-section {
 
 @media (max-width: 700px) {
   .features-heading {
-    margin-bottom: 1.35rem;
+    min-height: 7.5rem;
+    margin-bottom: 0;
+    padding: 2.25rem 1rem 1.25rem;
   }
 
   .features-subtitle {
@@ -1374,7 +1387,7 @@ section.hero-section {
   }
 
   .features-block {
-    margin-top: -2.5rem;
+    margin-top: 0;
   }
 
   .features-block .features {
